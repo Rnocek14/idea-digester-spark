@@ -79,6 +79,23 @@ const Auth = () => {
     setLoading(false);
   };
 
+  const handleDevLogin = async () => {
+    setLoading(true);
+    
+    const { error } = await supabase.auth.signInWithPassword({
+      email: "admin@test.com",
+      password: "test123456",
+    });
+
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Dev login successful!");
+    }
+
+    setLoading(false);
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-muted/20 to-background p-4">
       <Card className="w-full max-w-md">
@@ -89,6 +106,17 @@ const Auth = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="mb-4">
+            <Button 
+              onClick={handleDevLogin} 
+              variant="outline" 
+              className="w-full"
+              disabled={loading}
+            >
+              🚀 Dev Test Login
+            </Button>
+          </div>
+          
           <Tabs defaultValue="signin" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="signin">Sign In</TabsTrigger>
