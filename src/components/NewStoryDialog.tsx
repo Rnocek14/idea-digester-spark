@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { logActivity } from "@/lib/logActivity";
 
 type NewStoryDialogProps = {
   open: boolean;
@@ -47,9 +48,22 @@ export function NewStoryDialog({ open, onOpenChange }: NewStoryDialogProps) {
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ["content-queue"] });
       toast.success("Story created successfully");
+
+      // Log activity
+      await logActivity({
+        entityType: "content",
+        entityId: null,
+        action: "created",
+        message: `Manually created story "${title}"`,
+        details: {
+          category,
+          status: "approved",
+        },
+      });
+
       onOpenChange(false);
       // Reset form
       setTitle("");

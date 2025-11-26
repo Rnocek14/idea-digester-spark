@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, Radio, Megaphone, Clock } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { ActivityFeed } from "@/components/ActivityFeed";
 
 const Dashboard = () => {
   const { data: pendingCount = 0 } = useQuery({
@@ -131,6 +132,8 @@ const Dashboard = () => {
           </div>
         </CardContent>
       </Card>
+
+      <ActivityFeed />
     </div>
   );
 };

@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Upload } from "lucide-react";
+import { logActivity } from "@/lib/logActivity";
 
 interface SponsorDialogProps {
   sponsorId: string | null;
@@ -103,10 +104,23 @@ export function SponsorDialog({ sponsorId, open, onOpenChange }: SponsorDialogPr
         if (error) throw error;
       }
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ["sponsors"] });
       queryClient.invalidateQueries({ queryKey: ["sponsor", sponsorId] });
       toast.success(sponsorId ? "Sponsor updated" : "Sponsor added");
+
+      // Log activity
+      await logActivity({
+        entityType: "sponsor",
+        entityId: sponsorId,
+        action: sponsorId ? "updated" : "created",
+        message: `${sponsorId ? "Updated" : "Created"} sponsor "${businessName}" (${tier})`,
+        details: {
+          tier,
+          status,
+        },
+      });
+
       onOpenChange(false);
     },
     onError: () => {
