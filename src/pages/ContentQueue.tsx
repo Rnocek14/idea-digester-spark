@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { ContentQueueDetail } from "@/components/ContentQueueDetail";
 import { NewStoryDialog } from "@/components/NewStoryDialog";
 import { format } from "date-fns";
+import { logActivity } from "@/lib/logActivity";
 
 type ContentStatus = "pending" | "approved" | "rejected" | "published";
 
@@ -82,11 +83,26 @@ const ContentQueue = () => {
 
       if (error) throw error;
     },
-    onSuccess: (_, variables) => {
+    onSuccess: async (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["content-queue"] });
-      toast.success(
-        `Story ${variables.status === "approved" ? "approved" : variables.status === "rejected" ? "rejected" : "published"}`
-      );
+      
+      const statusLabel = 
+        variables.status === "approved" ? "approved" :
+        variables.status === "rejected" ? "rejected" : "published";
+      
+      toast.success(`Story ${statusLabel}`);
+
+      // Log activity
+      const story = stories?.find(s => s.id === variables.id);
+      await logActivity({
+        entityType: "content",
+        entityId: variables.id,
+        action: variables.status,
+        message: `Story "${story?.title || variables.id}" ${statusLabel}`,
+        details: {
+          new_status: variables.status,
+        },
+      });
     },
     onError: () => {
       toast.error("Failed to update story status");

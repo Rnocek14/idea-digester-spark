@@ -23,6 +23,7 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
 import { ExternalLink, Check, X, Upload } from "lucide-react";
+import { logActivity } from "@/lib/logActivity";
 
 type ContentQueueDetailProps = {
   storyId: string | null;
@@ -77,10 +78,21 @@ export function ContentQueueDetail({
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ["content-queue"] });
       queryClient.invalidateQueries({ queryKey: ["content-queue-detail"] });
       toast.success("Story updated successfully");
+
+      // Log activity
+      await logActivity({
+        entityType: "content",
+        entityId: storyId,
+        action: "updated",
+        message: `Story "${editedTitle}" updated`,
+        details: {
+          fields_updated: ["title", "summary", "category"],
+        },
+      });
     },
     onError: () => {
       toast.error("Failed to update story");
@@ -107,10 +119,21 @@ export function ContentQueueDetail({
 
       if (error) throw error;
     },
-    onSuccess: (_, status) => {
+    onSuccess: async (_, status) => {
       queryClient.invalidateQueries({ queryKey: ["content-queue"] });
       queryClient.invalidateQueries({ queryKey: ["content-queue-detail"] });
       toast.success(`Story ${status}`);
+
+      // Log activity
+      await logActivity({
+        entityType: "content",
+        entityId: storyId,
+        action: status,
+        message: `Story "${story?.title || storyId}" ${status}`,
+        details: {
+          new_status: status,
+        },
+      });
     },
     onError: () => {
       toast.error("Failed to update status");

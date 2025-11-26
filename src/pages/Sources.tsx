@@ -15,6 +15,7 @@ import { Plus, Edit, Power } from "lucide-react";
 import { toast } from "sonner";
 import { SourceDialog } from "@/components/SourceDialog";
 import { format } from "date-fns";
+import { logActivity } from "@/lib/logActivity";
 
 const Sources = () => {
   const [selectedSourceId, setSelectedSourceId] = useState<string | null>(null);
@@ -45,9 +46,22 @@ const Sources = () => {
       if (error) throw error;
       return newStatus;
     },
-    onSuccess: (newStatus) => {
+    onSuccess: async (newStatus, variables) => {
       queryClient.invalidateQueries({ queryKey: ["sources"] });
       toast.success(`Source ${newStatus === "active" ? "activated" : "deactivated"}`);
+
+      // Log activity
+      const source = sources?.find(s => s.id === variables.id);
+      await logActivity({
+        entityType: "source",
+        entityId: variables.id,
+        action: "status_changed",
+        message: `Source "${source?.name || variables.id}" ${newStatus === "active" ? "activated" : "deactivated"}`,
+        details: {
+          old_status: variables.currentStatus,
+          new_status: newStatus,
+        },
+      });
     },
     onError: () => {
       toast.error("Failed to update source status");

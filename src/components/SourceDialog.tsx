@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { logActivity } from "@/lib/logActivity";
 
 type SourceDialogProps = {
   sourceId: string | null;
@@ -92,9 +93,23 @@ export function SourceDialog({ sourceId, open, onOpenChange }: SourceDialogProps
         if (error) throw error;
       }
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ["sources"] });
       toast.success(isEditing ? "Source updated" : "Source added");
+
+      // Log activity
+      await logActivity({
+        entityType: "source",
+        entityId: sourceId,
+        action: isEditing ? "updated" : "created",
+        message: `${isEditing ? "Updated" : "Created"} source "${name}"`,
+        details: {
+          type,
+          url,
+          category,
+        },
+      });
+
       onOpenChange(false);
     },
     onError: () => {
