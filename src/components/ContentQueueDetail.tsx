@@ -48,7 +48,7 @@ export function ContentQueueDetail({
         .from("content_queue")
         .select(`
           *,
-          source:sources(name)
+          source:sources!source_id(name)
         `)
         .eq("id", storyId)
         .single();
