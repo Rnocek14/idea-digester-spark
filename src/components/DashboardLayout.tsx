@@ -13,21 +13,18 @@ const DashboardLayout = () => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
 
   useEffect(() => {
+    // TEMPORARY: Auth disabled for development access
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        navigate("/auth");
-        return;
+      if (session) {
+        setUser(session.user);
       }
-      setUser(session.user);
     };
 
     checkAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!session) {
-        navigate("/auth");
-      } else {
+      if (session) {
         setUser(session.user);
       }
     });
@@ -45,8 +42,6 @@ const DashboardLayout = () => {
     }
   };
 
-  if (!user) return null;
-
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
@@ -55,14 +50,20 @@ const DashboardLayout = () => {
           <header className="h-16 border-b bg-background flex items-center justify-between px-6">
             <SidebarTrigger />
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 text-sm">
-                <User className="h-4 w-4" />
-                <span className="text-muted-foreground">{user.email}</span>
-              </div>
-              <Button variant="outline" size="sm" onClick={handleSignOut}>
-                <LogOut className="h-4 w-4 mr-2" />
-                Sign Out
-              </Button>
+              {user ? (
+                <>
+                  <div className="flex items-center gap-2 text-sm">
+                    <User className="h-4 w-4" />
+                    <span className="text-muted-foreground">{user.email}</span>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={handleSignOut}>
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sign Out
+                  </Button>
+                </>
+              ) : (
+                <span className="text-xs text-muted-foreground">Dev Mode (No Auth)</span>
+              )}
             </div>
           </header>
           <main className="flex-1 p-6 bg-muted/20">
