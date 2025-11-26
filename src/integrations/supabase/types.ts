@@ -122,6 +122,84 @@ export type Database = {
           },
         ]
       }
+      content_targets: {
+        Row: {
+          channel_id: string
+          content_id: string
+          created_at: string
+          error_message: string | null
+          external_post_id: string | null
+          id: string
+          posted_at: string | null
+          scheduled_for: string | null
+          status: string
+        }
+        Insert: {
+          channel_id: string
+          content_id: string
+          created_at?: string
+          error_message?: string | null
+          external_post_id?: string | null
+          id?: string
+          posted_at?: string | null
+          scheduled_for?: string | null
+          status?: string
+        }
+        Update: {
+          channel_id?: string
+          content_id?: string
+          created_at?: string
+          error_message?: string | null
+          external_post_id?: string | null
+          id?: string
+          posted_at?: string | null
+          scheduled_for?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_targets_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "distribution_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_targets_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content_queue"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      distribution_channels: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          metadata: Json | null
+          name: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          metadata?: Json | null
+          name: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          metadata?: Json | null
+          name?: string
+          type?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

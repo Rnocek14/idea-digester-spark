@@ -22,8 +22,9 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
-import { ExternalLink, Check, X, Upload } from "lucide-react";
+import { ExternalLink, Check, X, Upload, Send } from "lucide-react";
 import { logActivity } from "@/lib/logActivity";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type ContentQueueDetailProps = {
   storyId: string | null;
@@ -40,6 +41,7 @@ export function ContentQueueDetail({
   const [editedTitle, setEditedTitle] = useState("");
   const [editedSummary, setEditedSummary] = useState("");
   const [editedCategory, setEditedCategory] = useState("");
+  const [selectedTargets, setSelectedTargets] = useState<Set<string>>(new Set());
 
   const { data: story } = useQuery({
     queryKey: ["content-queue-detail", storyId],
@@ -60,6 +62,35 @@ export function ContentQueueDetail({
     enabled: !!storyId,
   });
 
+  const { data: channels = [] } = useQuery({
+    queryKey: ["distribution-channels"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("distribution_channels")
+        .select("*")
+        .eq("is_active", true)
+        .order("type");
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: existingTargets = [] } = useQuery({
+    queryKey: ["content-targets", storyId],
+    queryFn: async () => {
+      if (!storyId) return [];
+      const { data, error } = await supabase
+        .from("content_targets")
+        .select("channel_id")
+        .eq("content_id", storyId);
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!storyId,
+  });
+
   useEffect(() => {
     if (story) {
       setEditedTitle(story.title);
@@ -67,6 +98,12 @@ export function ContentQueueDetail({
       setEditedCategory(story.category || "");
     }
   }, [story]);
+
+  useEffect(() => {
+    if (existingTargets.length > 0) {
+      setSelectedTargets(new Set(existingTargets.map((t) => t.channel_id)));
+    }
+  }, [existingTargets]);
 
   const updateStoryMutation = useMutation({
     mutationFn: async (updates: any) => {
@@ -140,11 +177,67 @@ export function ContentQueueDetail({
     },
   });
 
+  const saveTargetsMutation = useMutation({
+    mutationFn: async () => {
+      if (!storyId) return;
+
+      // Delete existing targets
+      await supabase
+        .from("content_targets")
+        .delete()
+        .eq("content_id", storyId);
+
+      // Insert new targets
+      if (selectedTargets.size > 0) {
+        const targets = Array.from(selectedTargets).map((channelId) => ({
+          content_id: storyId,
+          channel_id: channelId,
+          status: "pending",
+        }));
+
+        const { error } = await supabase
+          .from("content_targets")
+          .insert(targets);
+
+        if (error) throw error;
+      }
+    },
+    onSuccess: async () => {
+      queryClient.invalidateQueries({ queryKey: ["content-targets"] });
+      toast.success("Publishing targets updated");
+
+      await logActivity({
+        entityType: "content",
+        entityId: storyId,
+        action: "targets_updated",
+        message: `Publishing targets updated for "${story?.title || storyId}"`,
+        details: {
+          target_count: selectedTargets.size,
+        },
+      });
+    },
+    onError: () => {
+      toast.error("Failed to update targets");
+    },
+  });
+
   const handleSaveChanges = () => {
     updateStoryMutation.mutate({
       title: editedTitle,
       summary: editedSummary,
       category: editedCategory,
+    });
+  };
+
+  const handleToggleTarget = (channelId: string) => {
+    setSelectedTargets((prev) => {
+      const next = new Set(prev);
+      if (next.has(channelId)) {
+        next.delete(channelId);
+      } else {
+        next.add(channelId);
+      }
+      return next;
     });
   };
 
@@ -265,6 +358,41 @@ export function ContentQueueDetail({
                   </a>
                 </div>
               )}
+            </div>
+
+            <Separator />
+
+            {/* Publishing Targets */}
+            <div>
+              <Label className="text-base font-semibold">Publishing Targets</Label>
+              <p className="text-sm text-muted-foreground mt-1 mb-4">
+                Select where this story should be published
+              </p>
+              <div className="space-y-3">
+                {channels.map((channel) => (
+                  <div key={channel.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={channel.id}
+                      checked={selectedTargets.has(channel.id)}
+                      onCheckedChange={() => handleToggleTarget(channel.id)}
+                    />
+                    <label
+                      htmlFor={channel.id}
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                    >
+                      {channel.name}
+                    </label>
+                  </div>
+                ))}
+              </div>
+              <Button
+                onClick={() => saveTargetsMutation.mutate()}
+                variant="outline"
+                className="mt-4 w-full"
+              >
+                <Send className="h-4 w-4 mr-2" />
+                Save Publishing Targets
+              </Button>
             </div>
 
             {/* Actions */}
