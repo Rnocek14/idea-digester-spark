@@ -1,7 +1,56 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, Radio, Megaphone, Clock } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const Dashboard = () => {
+  const { data: pendingCount = 0 } = useQuery({
+    queryKey: ["dashboard-pending-count"],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("content_queue")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "pending");
+      return count || 0;
+    },
+  });
+
+  const { data: activeSourcesCount = 0 } = useQuery({
+    queryKey: ["dashboard-sources-count"],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("sources")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "active");
+      return count || 0;
+    },
+  });
+
+  const { data: activeSponsorsCount = 0 } = useQuery({
+    queryKey: ["dashboard-sponsors-count"],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("sponsors")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "active");
+      return count || 0;
+    },
+  });
+
+  const { data: publishedTodayCount = 0 } = useQuery({
+    queryKey: ["dashboard-published-today-count"],
+    queryFn: async () => {
+      const today = new Date().toISOString().split("T")[0];
+      const { count } = await supabase
+        .from("content_queue")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "published")
+        .gte("publish_date", today)
+        .lt("publish_date", `${today}T23:59:59.999Z`);
+      return count || 0;
+    },
+  });
+
   return (
     <div className="space-y-6">
       <div>
@@ -18,7 +67,7 @@ const Dashboard = () => {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0</div>
+            <div className="text-2xl font-bold">{pendingCount}</div>
             <p className="text-xs text-muted-foreground">Articles awaiting review</p>
           </CardContent>
         </Card>
@@ -29,7 +78,7 @@ const Dashboard = () => {
             <Radio className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0</div>
+            <div className="text-2xl font-bold">{activeSourcesCount}</div>
             <p className="text-xs text-muted-foreground">Content sources monitored</p>
           </CardContent>
         </Card>
@@ -40,7 +89,7 @@ const Dashboard = () => {
             <Megaphone className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0</div>
+            <div className="text-2xl font-bold">{activeSponsorsCount}</div>
             <p className="text-xs text-muted-foreground">Business partnerships</p>
           </CardContent>
         </Card>
@@ -51,7 +100,7 @@ const Dashboard = () => {
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0</div>
+            <div className="text-2xl font-bold">{publishedTodayCount}</div>
             <p className="text-xs text-muted-foreground">Articles published</p>
           </CardContent>
         </Card>
