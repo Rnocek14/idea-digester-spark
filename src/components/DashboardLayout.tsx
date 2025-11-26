@@ -4,29 +4,61 @@ import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { DashboardSidebar } from "@/components/DashboardSidebar";
 import { Button } from "@/components/ui/button";
-import { LogOut, User } from "lucide-react";
+import { LogOut, User, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 const DashboardLayout = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // TEMPORARY: Auth disabled for development access
-    const checkAuth = async () => {
+    const checkAuthAndRole = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        setUser(session.user);
+      
+      if (!session) {
+        navigate("/auth");
+        return;
+      }
+
+      setUser(session.user);
+
+      // Check if user has admin role
+      const { data: roles } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", session.user.id);
+
+      const hasAdminRole = roles?.some((r) => r.role === "admin");
+      setIsAdmin(hasAdminRole || false);
+      setLoading(false);
+
+      if (!hasAdminRole) {
+        toast.error("Access denied. Admin role required.");
       }
     };
 
-    checkAuth();
+    checkAuthAndRole();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session) {
-        setUser(session.user);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!session) {
+        navigate("/auth");
+        return;
       }
+
+      setUser(session.user);
+
+      // Recheck role on auth change
+      const { data: roles } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", session.user.id);
+
+      const hasAdminRole = roles?.some((r) => r.role === "admin");
+      setIsAdmin(hasAdminRole || false);
     });
 
     return () => subscription.unsubscribe();
@@ -41,6 +73,39 @@ const DashboardLayout = () => {
       navigate("/auth");
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isAdmin === false) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Alert variant="destructive" className="max-w-md">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Access Denied</AlertTitle>
+          <AlertDescription>
+            You don't have permission to access the admin dashboard. Admin role is required.
+          </AlertDescription>
+          <Button
+            variant="outline"
+            className="mt-4 w-full"
+            onClick={handleSignOut}
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Sign Out
+          </Button>
+        </Alert>
+      </div>
+    );
+  }
 
   return (
     <SidebarProvider>
@@ -61,9 +126,7 @@ const DashboardLayout = () => {
                     Sign Out
                   </Button>
                 </>
-              ) : (
-                <span className="text-xs text-muted-foreground">Dev Mode (No Auth)</span>
-              )}
+              ) : null}
             </div>
           </header>
           <main className="flex-1 p-6 bg-muted/20">
