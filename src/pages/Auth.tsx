@@ -82,7 +82,7 @@ const Auth = () => {
   const handleDevLogin = async () => {
     setLoading(true);
     
-    const devEmail = "admin@test.com";
+    const devEmail = "dev@example.com";
     const devPassword = "test123456";
     
     // Try to sign in first
