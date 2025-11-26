@@ -82,12 +82,46 @@ const Auth = () => {
   const handleDevLogin = async () => {
     setLoading(true);
     
-    const { error } = await supabase.auth.signInWithPassword({
-      email: "admin@test.com",
-      password: "test123456",
+    const devEmail = "admin@test.com";
+    const devPassword = "test123456";
+    
+    // Try to sign in first
+    let { error } = await supabase.auth.signInWithPassword({
+      email: devEmail,
+      password: devPassword,
     });
 
-    if (error) {
+    // If user doesn't exist, create account then sign in
+    if (error && error.message.includes("Invalid login credentials")) {
+      const { error: signUpError } = await supabase.auth.signUp({
+        email: devEmail,
+        password: devPassword,
+        options: {
+          emailRedirectTo: `${window.location.origin}/dashboard`,
+          data: {
+            full_name: "Dev Admin",
+          },
+        },
+      });
+
+      if (signUpError) {
+        toast.error(signUpError.message);
+        setLoading(false);
+        return;
+      }
+
+      // Try signing in again after signup
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: devEmail,
+        password: devPassword,
+      });
+
+      if (signInError) {
+        toast.error(signInError.message);
+      } else {
+        toast.success("Dev account created and logged in!");
+      }
+    } else if (error) {
       toast.error(error.message);
     } else {
       toast.success("Dev login successful!");
