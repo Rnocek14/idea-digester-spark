@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Power } from "lucide-react";
+import { Plus, Edit, Power, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { SourceDialog } from "@/components/SourceDialog";
 import { format } from "date-fns";
@@ -32,6 +32,59 @@ const Sources = () => {
 
       if (error) throw error;
       return data;
+    },
+  });
+
+  const seedSampleSourcesMutation = useMutation({
+    mutationFn: async () => {
+      const sampleSources = [
+        {
+          name: "City of Lake Geneva – Civic Alerts",
+          type: "rss",
+          url: "https://www.cityoflakegeneva.gov/rss.aspx",
+          category: "news",
+          status: "active",
+          fetch_frequency_minutes: 60,
+          metadata: { location_tags: ["Lake Geneva"] },
+        },
+        {
+          name: "Walworth County Community News – Lake Geneva",
+          type: "rss",
+          url: "https://walworthcountycommunitynews.com/feed/",
+          category: "news",
+          status: "active",
+          fetch_frequency_minutes: 60,
+          metadata: { location_tags: ["Lake Geneva"] },
+        },
+        {
+          name: "Visit Lake Geneva – Events",
+          type: "scrape",
+          url: "https://www.visitlakegeneva.com/events/",
+          category: "events",
+          status: "active",
+          fetch_frequency_minutes: 120,
+          metadata: { location_tags: ["Lake Geneva"], scrape_selector: ".event-item" },
+        },
+      ];
+
+      const { error } = await supabase.from("sources").insert(sampleSources);
+      if (error) throw error;
+      return sampleSources.length;
+    },
+    onSuccess: async (count) => {
+      queryClient.invalidateQueries({ queryKey: ["sources"] });
+      toast.success(`Successfully seeded ${count} Lake Geneva sources`);
+
+      await logActivity({
+        entityType: "source",
+        entityId: null,
+        action: "seeded",
+        message: `Seeded ${count} sample Lake Geneva sources`,
+        details: { count },
+      });
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to seed sample sources");
     },
   });
 
@@ -113,10 +166,22 @@ const Sources = () => {
             Manage RSS feeds, APIs, and web scraping sources
           </p>
         </div>
-        <Button onClick={handleNew}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Source
-        </Button>
+        <div className="flex gap-2">
+          {(!sources || sources.length === 0) && (
+            <Button
+              variant="outline"
+              onClick={() => seedSampleSourcesMutation.mutate()}
+              disabled={seedSampleSourcesMutation.isPending}
+            >
+              <Sparkles className="h-4 w-4 mr-2" />
+              {seedSampleSourcesMutation.isPending ? "Seeding..." : "Seed Lake Geneva Sources"}
+            </Button>
+          )}
+          <Button onClick={handleNew}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Source
+          </Button>
+        </div>
       </div>
 
       {/* Sources Table */}
