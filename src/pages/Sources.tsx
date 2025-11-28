@@ -191,20 +191,28 @@ const Sources = () => {
       console.log("🔄 Toggling source status:", { id, currentStatus });
       const newStatus = currentStatus === "active" ? "inactive" : "active";
       
-      const { data, error } = await supabase
-        .from("sources")
-        .update({ status: newStatus })
-        .eq("id", id)
-        .select()
-        .single();
+      try {
+        const { error, count } = await supabase
+          .from("sources")
+          .update({ status: newStatus })
+          .eq("id", id);
 
-      if (error) {
-        console.error("❌ Toggle failed:", error);
-        throw error;
+        if (error) {
+          console.error("❌ Toggle failed:", error);
+          throw new Error(error.message || "Database update failed");
+        }
+        
+        // Verify the update actually happened
+        if (count === 0) {
+          throw new Error("No rows updated - check permissions");
+        }
+        
+        console.log("✅ Toggle succeeded, rows updated:", count);
+        return newStatus;
+      } catch (err: any) {
+        console.error("❌ Toggle exception:", err);
+        throw err;
       }
-      
-      console.log("✅ Toggle succeeded:", data);
-      return newStatus;
     },
     onSuccess: async (newStatus, variables) => {
       queryClient.invalidateQueries({ queryKey: ["sources"] });
@@ -386,6 +394,7 @@ const Sources = () => {
                       <Button
                         variant="ghost"
                         size="sm"
+                        disabled={toggleStatusMutation.isPending}
                         onClick={() =>
                           toggleStatusMutation.mutate({
                             id: source.id,
