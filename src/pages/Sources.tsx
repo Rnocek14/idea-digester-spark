@@ -35,6 +35,46 @@ const Sources = () => {
     },
   });
 
+  const fixScrapeSelectorMutation = useMutation({
+    mutationFn: async () => {
+      const { data: scrapeSource, error: fetchError } = await supabase
+        .from("sources")
+        .select("*")
+        .eq("type", "scrape")
+        .eq("name", "Visit Lake Geneva – Events")
+        .single();
+
+      if (fetchError) throw fetchError;
+      if (!scrapeSource) throw new Error("Scrape source not found");
+
+      const currentMetadata = (scrapeSource.metadata || {}) as Record<string, any>;
+      const updatedMetadata = {
+        ...currentMetadata,
+        scrape_selector: "article.slide"
+      };
+
+      const { error: updateError } = await supabase
+        .from("sources")
+        .update({ metadata: updatedMetadata })
+        .eq("id", scrapeSource.id);
+
+      if (updateError) throw updateError;
+      return scrapeSource.id;
+    },
+    onSuccess: async () => {
+      queryClient.invalidateQueries({ queryKey: ["sources"] });
+      toast.success("Updated scrape selector to 'article.slide'");
+      
+      // Automatically trigger sync after fixing selector
+      setTimeout(() => {
+        syncRssMutation.mutate();
+      }, 500);
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to update scrape selector");
+    },
+  });
+
   const seedSampleSourcesMutation = useMutation({
     mutationFn: async () => {
       const sampleSources = [
@@ -63,7 +103,7 @@ const Sources = () => {
           category: "events",
           status: "active",
           fetch_frequency_minutes: 120,
-          metadata: { location_tags: ["Lake Geneva"], scrape_selector: ".event-item" },
+          metadata: { location_tags: ["Lake Geneva"], scrape_selector: "article.slide" },
         },
       ];
 
@@ -224,6 +264,14 @@ const Sources = () => {
               {seedSampleSourcesMutation.isPending ? "Seeding..." : "Seed Lake Geneva Sources"}
             </Button>
           )}
+          <Button
+            variant="outline"
+            onClick={() => fixScrapeSelectorMutation.mutate()}
+            disabled={fixScrapeSelectorMutation.isPending}
+          >
+            <Sparkles className="h-4 w-4 mr-2" />
+            {fixScrapeSelectorMutation.isPending ? "Fixing..." : "Fix & Test Scraper"}
+          </Button>
           <Button
             variant="outline"
             onClick={() => syncRssMutation.mutate()}
