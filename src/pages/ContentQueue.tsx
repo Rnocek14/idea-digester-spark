@@ -34,6 +34,7 @@ const ContentQueue = () => {
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [selectedStoryId, setSelectedStoryId] = useState<string | null>(null);
   const [isNewStoryOpen, setIsNewStoryOpen] = useState(false);
+  const [updatingStoryId, setUpdatingStoryId] = useState<string | null>(null);
 
   // Track drawer state changes for debugging
   useEffect(() => {
@@ -73,12 +74,11 @@ const ContentQueue = () => {
       id: string;
       status: ContentStatus;
     }) => {
-      console.log("🔄 Updating story status:", { id, status });
+      console.log("🔄 ContentQueue: Updating status:", id, status);
+      setUpdatingStoryId(id);
       
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        console.log("👤 Current user:", user?.id);
-        
         const updates: any = {
           status,
           reviewed_at: new Date().toISOString(),
@@ -89,26 +89,27 @@ const ContentQueue = () => {
           updates.publish_date = new Date().toISOString();
         }
 
-        const { error, count } = await supabase
+        const { data: updated, error } = await supabase
           .from("content_queue")
           .update(updates)
-          .eq("id", id);
+          .eq("id", id)
+          .select()
+          .single();
 
         if (error) {
-          console.error("❌ Update failed:", error);
+          console.error("❌ Status update failed:", error);
           throw new Error(error.message);
         }
-        
-        if (count === 0) {
-          console.error("❌ No rows updated - check RLS permissions");
-          throw new Error("No rows updated - check permissions");
+
+        if (!updated) {
+          console.error("❌ No row returned after update - check RLS");
+          throw new Error("Update failed - no data returned");
         }
-        
-        console.log("✅ Status updated successfully");
-        return status;
-      } catch (err: any) {
-        console.error("❌ Exception during update:", err);
-        throw err;
+
+        console.log("✅ Status updated successfully:", updated.status);
+        return updated;
+      } finally {
+        setUpdatingStoryId(null);
       }
     },
     onSuccess: async (_, variables) => {
@@ -286,7 +287,7 @@ const ContentQueue = () => {
                           <Button
                             variant="ghost"
                             size="sm"
-                            disabled={updateStatusMutation.isPending}
+                            disabled={updatingStoryId === story.id}
                             onClick={(e) => {
                               e.stopPropagation();
                               updateStatusMutation.mutate({
@@ -295,12 +296,12 @@ const ContentQueue = () => {
                               });
                             }}
                           >
-                            <Check className={cn("h-4 w-4 text-green-500", updateStatusMutation.isPending && "animate-pulse")} />
+                            <Check className={cn("h-4 w-4 text-green-500", updatingStoryId === story.id && "animate-pulse")} />
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
-                            disabled={updateStatusMutation.isPending}
+                            disabled={updatingStoryId === story.id}
                             onClick={(e) => {
                               e.stopPropagation();
                               updateStatusMutation.mutate({
@@ -309,7 +310,7 @@ const ContentQueue = () => {
                               });
                             }}
                           >
-                            <X className={cn("h-4 w-4 text-red-500", updateStatusMutation.isPending && "animate-pulse")} />
+                            <X className={cn("h-4 w-4 text-red-500", updatingStoryId === story.id && "animate-pulse")} />
                           </Button>
                         </>
                       )}
@@ -317,7 +318,7 @@ const ContentQueue = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          disabled={updateStatusMutation.isPending}
+                          disabled={updatingStoryId === story.id}
                           onClick={(e) => {
                             e.stopPropagation();
                             updateStatusMutation.mutate({
@@ -326,7 +327,7 @@ const ContentQueue = () => {
                             });
                           }}
                         >
-                          <Upload className={cn("h-4 w-4 text-blue-500", updateStatusMutation.isPending && "animate-pulse")} />
+                          <Upload className={cn("h-4 w-4 text-blue-500", updatingStoryId === story.id && "animate-pulse")} />
                         </Button>
                       )}
                     </div>

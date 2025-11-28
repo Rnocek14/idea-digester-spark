@@ -47,16 +47,41 @@ export function ContentQueueDetail({
     queryKey: ["content-queue-detail", storyId],
     queryFn: async () => {
       if (!storyId) return null;
-      console.log("🔍 Fetching story details:", storyId);
       
-      const { data, error } = await supabase
+      // Verify auth session first
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      console.log("🔐 Auth session check:", { 
+        hasSession: !!session, 
+        userId: session?.user?.id,
+        error: sessionError?.message 
+      });
+      
+      if (!session) {
+        throw new Error("No active session - please sign in again");
+      }
+      
+      console.log("🔍 Fetching story details:", storyId);
+
+      // Try with join first
+      let { data, error } = await supabase
         .from("content_queue")
-        .select(`
-          *,
-          source:sources(name)
-        `)
+        .select(`*, source:sources(name)`)
         .eq("id", storyId)
         .maybeSingle();
+
+      // If that fails, try without join as fallback
+      if (!data && !error) {
+        console.log("⚠️ Join query returned null, trying without join");
+        const fallback = await supabase
+          .from("content_queue")
+          .select("*")
+          .eq("id", storyId)
+          .maybeSingle();
+        
+        error = fallback.error;
+        // Add source property to match type when we have data
+        data = fallback.data ? { ...fallback.data, source: null } as any : null;
+      }
 
       if (error) {
         console.error("❌ Story detail fetch failed:", error);
@@ -120,14 +145,27 @@ export function ContentQueueDetail({
   }, [existingTargets]);
 
   const updateStoryMutation = useMutation({
-    mutationFn: async (updates: any) => {
-      if (!storyId) return;
-      const { error } = await supabase
+    mutationFn: async (updates: { title?: string; summary?: string; category?: string }) => {
+      console.log("📝 Updating story:", storyId, updates);
+      
+      const { data: updated, error } = await supabase
         .from("content_queue")
         .update(updates)
-        .eq("id", storyId);
+        .eq("id", storyId!)
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("❌ Update failed:", error);
+        throw new Error(error.message);
+      }
+
+      if (!updated) {
+        console.error("❌ No row returned after update - check RLS");
+        throw new Error("Update failed - no data returned");
+      }
+
+      console.log("✅ Story updated successfully:", updated.title);
     },
     onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ["content-queue"] });
@@ -155,38 +193,35 @@ export function ContentQueueDetail({
       if (!storyId) return;
       console.log("🔄 Updating story status (from drawer):", { storyId, status });
       
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        const updates: any = {
-          status,
-          reviewed_at: new Date().toISOString(),
-          reviewed_by: user?.id,
-        };
+      const { data: { user } } = await supabase.auth.getUser();
+      const updates: any = {
+        status,
+        reviewed_at: new Date().toISOString(),
+        reviewed_by: user?.id,
+      };
 
-        if (status === "published") {
-          updates.publish_date = new Date().toISOString();
-        }
-
-        const { error, count } = await supabase
-          .from("content_queue")
-          .update(updates)
-          .eq("id", storyId);
-
-        if (error) {
-          console.error("❌ Update failed:", error);
-          throw new Error(error.message);
-        }
-        
-        if (count === 0) {
-          console.error("❌ No rows updated - check RLS permissions");
-          throw new Error("No rows updated - check permissions");
-        }
-        
-        console.log("✅ Status updated successfully");
-      } catch (err: any) {
-        console.error("❌ Exception during update:", err);
-        throw err;
+      if (status === "published") {
+        updates.publish_date = new Date().toISOString();
       }
+
+      const { data: updated, error } = await supabase
+        .from("content_queue")
+        .update(updates)
+        .eq("id", storyId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error("❌ Update failed:", error);
+        throw new Error(error.message);
+      }
+
+      if (!updated) {
+        console.error("❌ No row returned after update - check RLS");
+        throw new Error("Update failed - no data returned");
+      }
+
+      console.log("✅ Status updated successfully:", updated.status);
     },
     onSuccess: async (_, status) => {
       queryClient.invalidateQueries({ queryKey: ["content-queue"] });
@@ -311,8 +346,9 @@ export function ContentQueueDetail({
       <DrawerContent className="max-h-[90vh]">
         {isLoadingStory ? (
           <div className="p-8 text-center space-y-2">
-            <p className="text-muted-foreground">Loading story...</p>
-            <p className="text-xs text-muted-foreground">If this takes more than 10 seconds, try closing and reopening</p>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <p className="text-muted-foreground">Loading story details...</p>
+            <p className="text-xs text-muted-foreground">Verifying permissions...</p>
           </div>
         ) : storyError ? (
           <div className="p-8 text-center space-y-4">
@@ -327,6 +363,17 @@ export function ContentQueueDetail({
         ) : !story ? (
           <div className="p-8 text-center space-y-4">
             <p className="text-muted-foreground">Story not found</p>
+            <p className="text-xs text-muted-foreground">
+              The story may have been deleted or you may not have permission to view it
+            </p>
+            {process.env.NODE_ENV === 'development' && (
+              <div className="p-2 bg-muted text-xs font-mono text-left">
+                <p>Story ID: {storyId}</p>
+                <p>Loading: {isLoadingStory ? 'yes' : 'no'}</p>
+                <p>Error: {storyError?.message || 'none'}</p>
+                <p>Data: {story ? 'loaded' : 'null'}</p>
+              </div>
+            )}
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Close
             </Button>
