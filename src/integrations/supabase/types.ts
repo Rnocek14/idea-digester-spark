@@ -107,13 +107,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "content_queue_source_fk"
-            columns: ["source_id"]
-            isOneToOne: false
-            referencedRelation: "sources"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "content_queue_source_id_fkey"
             columns: ["source_id"]
             isOneToOne: false
