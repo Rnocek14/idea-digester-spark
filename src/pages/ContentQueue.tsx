@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,11 @@ const ContentQueue = () => {
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [selectedStoryId, setSelectedStoryId] = useState<string | null>(null);
   const [isNewStoryOpen, setIsNewStoryOpen] = useState(false);
+
+  // Track drawer state changes for debugging
+  useEffect(() => {
+    console.log("📦 Drawer state changed:", { selectedStoryId, open: !!selectedStoryId });
+  }, [selectedStoryId]);
   const queryClient = useQueryClient();
 
   const { data: stories, isLoading, error } = useQuery({
@@ -282,27 +287,29 @@ const ContentQueue = () => {
                             variant="ghost"
                             size="sm"
                             disabled={updateStatusMutation.isPending}
-                            onClick={() =>
+                            onClick={(e) => {
+                              e.stopPropagation();
                               updateStatusMutation.mutate({
                                 id: story.id,
                                 status: "approved",
-                              })
-                            }
+                              });
+                            }}
                           >
-                            <Check className={`h-4 w-4 text-green-500 ${updateStatusMutation.isPending ? "animate-pulse" : ""}`} />
+                            <Check className={cn("h-4 w-4 text-green-500", updateStatusMutation.isPending && "animate-pulse")} />
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
                             disabled={updateStatusMutation.isPending}
-                            onClick={() =>
+                            onClick={(e) => {
+                              e.stopPropagation();
                               updateStatusMutation.mutate({
                                 id: story.id,
                                 status: "rejected",
-                              })
-                            }
+                              });
+                            }}
                           >
-                            <X className={`h-4 w-4 text-red-500 ${updateStatusMutation.isPending ? "animate-pulse" : ""}`} />
+                            <X className={cn("h-4 w-4 text-red-500", updateStatusMutation.isPending && "animate-pulse")} />
                           </Button>
                         </>
                       )}
@@ -311,14 +318,15 @@ const ContentQueue = () => {
                           variant="ghost"
                           size="sm"
                           disabled={updateStatusMutation.isPending}
-                          onClick={() =>
+                          onClick={(e) => {
+                            e.stopPropagation();
                             updateStatusMutation.mutate({
                               id: story.id,
                               status: "published",
-                            })
-                          }
+                            });
+                          }}
                         >
-                          <Upload className={`h-4 w-4 text-blue-500 ${updateStatusMutation.isPending ? "animate-pulse" : ""}`} />
+                          <Upload className={cn("h-4 w-4 text-blue-500", updateStatusMutation.isPending && "animate-pulse")} />
                         </Button>
                       )}
                     </div>
