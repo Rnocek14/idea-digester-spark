@@ -38,8 +38,23 @@ type AutoPublishRule = {
 function decideStatusForStory(
   rules: AutoPublishRule[] | null,
   sourceId: string,
-  category: string | null
+  category: string | null,
+  safetyLevel: string
 ): string {
+  // SAFETY GATE: Check safety level FIRST before applying auto-publish rules
+  // This ensures unsafe content never auto-publishes regardless of rules
+  
+  if (safetyLevel === "blocked") {
+    // Never publish blocked content
+    return "blocked";
+  }
+  
+  if (safetyLevel === "sensitive") {
+    // Sensitive content always requires manual review, regardless of auto-publish rules
+    return "pending";
+  }
+  
+  // Safety level is "safe" — proceed with auto-publish rule evaluation
   if (!rules || rules.length === 0) return "pending";
   
   const cat = category || null;
@@ -326,11 +341,12 @@ When in doubt between safe and sensitive, choose sensitive. Only use blocked for
             safety_reason: "Fallback processing"
           };
 
-          // Compute category and status based on rules
+          // Compute category and status based on safety + rules
           const aiCategory = aiResult.category || source.category || "news";
-          const status = decideStatusForStory(rules as AutoPublishRule[], source.id, aiCategory);
+          const safetyLevel = aiResult.safety_level || "safe";
+          const status = decideStatusForStory(rules as AutoPublishRule[], source.id, aiCategory, safetyLevel);
 
-          console.log(`📋 Story "${title.substring(0, 40)}..." → category: ${aiCategory}, safety: ${aiResult.safety_level}, status: ${status}`);
+          console.log(`📋 Story "${title.substring(0, 40)}..." → category: ${aiCategory}, safety: ${safetyLevel}, status: ${status}`);
 
           // Insert into content_queue
           const { error: insertError } = await supabase
