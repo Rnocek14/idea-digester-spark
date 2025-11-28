@@ -18,7 +18,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Eye, Check, X, Upload } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Plus, Eye, Check, X, Upload, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { ContentQueueDetail } from "@/components/ContentQueueDetail";
 import { NewStoryDialog } from "@/components/NewStoryDialog";
@@ -34,14 +35,14 @@ const ContentQueue = () => {
   const [isNewStoryOpen, setIsNewStoryOpen] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data: stories, isLoading } = useQuery({
+  const { data: stories, isLoading, error } = useQuery({
     queryKey: ["content-queue", statusFilter, categoryFilter],
     queryFn: async () => {
       let query = supabase
         .from("content_queue")
         .select(`
           *,
-          source:sources!content_queue_source_id_fkey(name)
+          source:sources(name)
         `)
         .order("created_at", { ascending: false });
 
@@ -132,6 +133,20 @@ const ContentQueue = () => {
     "real-estate",
     "community",
   ];
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error loading content queue</AlertTitle>
+          <AlertDescription>
+            {error.message || "Failed to load stories. Please try again."}
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
