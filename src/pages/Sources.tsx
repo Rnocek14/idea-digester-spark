@@ -37,6 +37,8 @@ const Sources = () => {
 
   const fixScrapeSelectorMutation = useMutation({
     mutationFn: async () => {
+      console.log("🔧 Attempting to fix scrape selector...");
+      
       const { data: scrapeSource, error: fetchError } = await supabase
         .from("sources")
         .select("*")
@@ -44,8 +46,15 @@ const Sources = () => {
         .eq("name", "Visit Lake Geneva – Events")
         .single();
 
-      if (fetchError) throw fetchError;
-      if (!scrapeSource) throw new Error("Scrape source not found");
+      if (fetchError) {
+        console.error("❌ Failed to fetch source:", fetchError);
+        throw new Error(`Failed to fetch source: ${fetchError.message}`);
+      }
+      if (!scrapeSource) {
+        throw new Error("Scrape source not found");
+      }
+
+      console.log("📝 Current metadata:", scrapeSource.metadata);
 
       const currentMetadata = (scrapeSource.metadata || {}) as Record<string, any>;
       const updatedMetadata = {
@@ -53,17 +62,24 @@ const Sources = () => {
         scrape_selector: "article.slide"
       };
 
+      console.log("📝 Updating to new metadata:", updatedMetadata);
+
       const { error: updateError } = await supabase
         .from("sources")
         .update({ metadata: updatedMetadata })
         .eq("id", scrapeSource.id);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error("❌ Failed to update source:", updateError);
+        throw new Error(`Failed to update: ${updateError.message}. Check console for auth status.`);
+      }
+      
+      console.log("✅ Successfully updated scrape selector");
       return scrapeSource.id;
     },
     onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ["sources"] });
-      toast.success("Updated scrape selector to 'article.slide'");
+      toast.success("Updated scrape selector to 'article.slide' - triggering sync...");
       
       // Automatically trigger sync after fixing selector
       setTimeout(() => {
@@ -71,7 +87,8 @@ const Sources = () => {
       }, 500);
     },
     onError: (error: any) => {
-      toast.error(error.message || "Failed to update scrape selector");
+      console.error("❌ Fix mutation error:", error);
+      toast.error(`Fix failed: ${error.message}. The edge function will auto-fix on next sync.`);
     },
   });
 

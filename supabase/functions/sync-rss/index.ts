@@ -120,10 +120,25 @@ serve(async (req) => {
             throw new Error("Failed to parse HTML");
           }
 
-          // Get selector from metadata or use default
-          const selector = source.metadata?.scrape_selector || ".event-item";
-          const elements = doc.querySelectorAll(selector);
+          // Get selector from metadata with fallback logic
+          let selector = source.metadata?.scrape_selector || ".event-item";
+          
+          // HARDCODED FIX: For Visit Lake Geneva Events, use correct selector
+          if (source.name === "Visit Lake Geneva – Events" && selector === ".event-item") {
+            console.log(`⚠️ Detected incorrect selector "${selector}" for ${source.name}, using fallback "article.slide"`);
+            selector = "article.slide";
+            
+            // Auto-fix the database
+            const updatedMetadata = { ...source.metadata, scrape_selector: "article.slide" };
+            await supabase
+              .from("sources")
+              .update({ metadata: updatedMetadata })
+              .eq("id", source.id);
+            console.log(`✅ Updated ${source.name} selector in database to "article.slide"`);
+          }
 
+          console.log(`🔍 Using selector "${selector}" for ${source.name}`);
+          const elements = doc.querySelectorAll(selector);
           console.log(`Found ${elements.length} elements with selector "${selector}" in ${source.name}`);
 
           // Convert DOM elements to RSS-like items
