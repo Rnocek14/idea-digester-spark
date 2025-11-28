@@ -198,13 +198,19 @@ const Sources = () => {
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 
-  const { data: rulesCount } = useQuery({
+  const { data: rulesCount, isLoading: isLoadingRulesCount } = useQuery({
     queryKey: ["auto-publish-rules-count"],
     queryFn: async () => {
+      console.log("🔍 Fetching auto-publish rules count...");
       const { count, error } = await supabase
         .from("auto_publish_rules")
         .select("*", { count: "exact", head: true });
-      if (error) throw error;
+      
+      console.log("📊 Rules count result:", { count, error });
+      if (error) {
+        console.error("❌ Rules count error:", error);
+        throw error;
+      }
       return count || 0;
     },
   });
@@ -225,6 +231,8 @@ const Sources = () => {
 
   const seedAutoPublishRulesMutation = useMutation({
     mutationFn: async () => {
+      console.log("🌱 Starting auto-publish rules seeding...");
+      
       const rules = [
         {
           source_id: 'b219479c-5c29-49d0-82df-adaa230e8761', // Visit Lake Geneva
@@ -243,23 +251,49 @@ const Sources = () => {
         }
       ];
       
-      const { error } = await supabase.from("auto_publish_rules").insert(rules);
-      if (error) throw error;
-      return rules.length;
+      console.log("📝 Rules to insert:", rules);
+      
+      const { data, error } = await supabase
+        .from("auto_publish_rules")
+        .insert(rules)
+        .select();
+      
+      console.log("📊 Insert result:", { data, error, count: data?.length });
+      
+      if (error) {
+        console.error("❌ Insert error:", error);
+        throw error;
+      }
+      
+      if (!data || data.length === 0) {
+        console.error("❌ No rows inserted - possible RLS issue");
+        throw new Error("No rows inserted. Check RLS policies and authentication.");
+      }
+      
+      console.log("✅ Successfully inserted", data.length, "rules");
+      return data.length;
     },
     onSuccess: async (count) => {
+      console.log("🎉 Mutation success, invalidating queries...");
       queryClient.invalidateQueries({ queryKey: ["auto-publish-rules-count"] });
       queryClient.invalidateQueries({ queryKey: ["auto-publish-rules"] });
       toast.success(`Seeded ${count} auto-publish rules`);
-      await logActivity({
-        entityType: "system",
-        entityId: null,
-        action: "rules_seeded",
-        message: `Seeded ${count} auto-publish rules for Lake Geneva sources`,
-        details: { count }
-      });
+      
+      try {
+        await logActivity({
+          entityType: "system",
+          entityId: null,
+          action: "rules_seeded",
+          message: `Seeded ${count} auto-publish rules for Lake Geneva sources`,
+          details: { count }
+        });
+      } catch (logError) {
+        console.error("⚠️ Failed to log activity:", logError);
+        // Don't fail the mutation just because logging failed
+      }
     },
     onError: (error: any) => {
+      console.error("❌ Mutation error:", error);
       toast.error(error.message || "Failed to seed rules");
     }
   });
@@ -377,7 +411,7 @@ const Sources = () => {
               {seedSampleSourcesMutation.isPending ? "Seeding..." : "Seed Lake Geneva Sources"}
             </Button>
           )}
-          {rulesCount === 0 && (
+          {(rulesCount === 0 || rulesCount === undefined) && !isLoadingRulesCount && (
             <Button
               variant="outline"
               onClick={() => seedAutoPublishRulesMutation.mutate()}
