@@ -25,6 +25,7 @@ import { ContentQueueDetail } from "@/components/ContentQueueDetail";
 import { NewStoryDialog } from "@/components/NewStoryDialog";
 import { format } from "date-fns";
 import { logActivity } from "@/lib/logActivity";
+import { cn } from "@/lib/utils";
 
 type ContentStatus = "pending" | "approved" | "rejected" | "published";
 
@@ -67,22 +68,43 @@ const ContentQueue = () => {
       id: string;
       status: ContentStatus;
     }) => {
-      const updates: any = {
-        status,
-        reviewed_at: new Date().toISOString(),
-        reviewed_by: (await supabase.auth.getUser()).data.user?.id,
-      };
+      console.log("🔄 Updating story status:", { id, status });
+      
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        console.log("👤 Current user:", user?.id);
+        
+        const updates: any = {
+          status,
+          reviewed_at: new Date().toISOString(),
+          reviewed_by: user?.id,
+        };
 
-      if (status === "published") {
-        updates.publish_date = new Date().toISOString();
+        if (status === "published") {
+          updates.publish_date = new Date().toISOString();
+        }
+
+        const { error, count } = await supabase
+          .from("content_queue")
+          .update(updates)
+          .eq("id", id);
+
+        if (error) {
+          console.error("❌ Update failed:", error);
+          throw new Error(error.message);
+        }
+        
+        if (count === 0) {
+          console.error("❌ No rows updated - check RLS permissions");
+          throw new Error("No rows updated - check permissions");
+        }
+        
+        console.log("✅ Status updated successfully");
+        return status;
+      } catch (err: any) {
+        console.error("❌ Exception during update:", err);
+        throw err;
       }
-
-      const { error } = await supabase
-        .from("content_queue")
-        .update(updates)
-        .eq("id", id);
-
-      if (error) throw error;
     },
     onSuccess: async (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["content-queue"] });
@@ -105,8 +127,9 @@ const ContentQueue = () => {
         },
       });
     },
-    onError: () => {
-      toast.error("Failed to update story status");
+    onError: (error: any) => {
+      console.error("❌ Mutation error:", error);
+      toast.error(`Failed to update status: ${error.message || "Unknown error"}`);
     },
   });
 
@@ -258,6 +281,7 @@ const ContentQueue = () => {
                           <Button
                             variant="ghost"
                             size="sm"
+                            disabled={updateStatusMutation.isPending}
                             onClick={() =>
                               updateStatusMutation.mutate({
                                 id: story.id,
@@ -265,11 +289,12 @@ const ContentQueue = () => {
                               })
                             }
                           >
-                            <Check className="h-4 w-4 text-green-500" />
+                            <Check className={`h-4 w-4 text-green-500 ${updateStatusMutation.isPending ? "animate-pulse" : ""}`} />
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
+                            disabled={updateStatusMutation.isPending}
                             onClick={() =>
                               updateStatusMutation.mutate({
                                 id: story.id,
@@ -277,7 +302,7 @@ const ContentQueue = () => {
                               })
                             }
                           >
-                            <X className="h-4 w-4 text-red-500" />
+                            <X className={`h-4 w-4 text-red-500 ${updateStatusMutation.isPending ? "animate-pulse" : ""}`} />
                           </Button>
                         </>
                       )}
@@ -285,6 +310,7 @@ const ContentQueue = () => {
                         <Button
                           variant="ghost"
                           size="sm"
+                          disabled={updateStatusMutation.isPending}
                           onClick={() =>
                             updateStatusMutation.mutate({
                               id: story.id,
@@ -292,7 +318,7 @@ const ContentQueue = () => {
                             })
                           }
                         >
-                          <Upload className="h-4 w-4 text-blue-500" />
+                          <Upload className={`h-4 w-4 text-blue-500 ${updateStatusMutation.isPending ? "animate-pulse" : ""}`} />
                         </Button>
                       )}
                     </div>

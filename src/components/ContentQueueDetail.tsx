@@ -43,10 +43,12 @@ export function ContentQueueDetail({
   const [editedCategory, setEditedCategory] = useState("");
   const [selectedTargets, setSelectedTargets] = useState<Set<string>>(new Set());
 
-  const { data: story } = useQuery({
+  const { data: story, isLoading: isLoadingStory, error: storyError } = useQuery({
     queryKey: ["content-queue-detail", storyId],
     queryFn: async () => {
       if (!storyId) return null;
+      console.log("🔍 Fetching story details:", storyId);
+      
       const { data, error } = await supabase
         .from("content_queue")
         .select(`
@@ -56,7 +58,11 @@ export function ContentQueueDetail({
         .eq("id", storyId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("❌ Story detail fetch failed:", error);
+        throw error;
+      }
+      console.log("✅ Story loaded:", data?.title);
       return data;
     },
     enabled: !!storyId,
@@ -139,22 +145,40 @@ export function ContentQueueDetail({
   const updateStatusMutation = useMutation({
     mutationFn: async (status: string) => {
       if (!storyId) return;
-      const updates: any = {
-        status,
-        reviewed_at: new Date().toISOString(),
-        reviewed_by: (await supabase.auth.getUser()).data.user?.id,
-      };
+      console.log("🔄 Updating story status (from drawer):", { storyId, status });
+      
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        const updates: any = {
+          status,
+          reviewed_at: new Date().toISOString(),
+          reviewed_by: user?.id,
+        };
 
-      if (status === "published") {
-        updates.publish_date = new Date().toISOString();
+        if (status === "published") {
+          updates.publish_date = new Date().toISOString();
+        }
+
+        const { error, count } = await supabase
+          .from("content_queue")
+          .update(updates)
+          .eq("id", storyId);
+
+        if (error) {
+          console.error("❌ Update failed:", error);
+          throw new Error(error.message);
+        }
+        
+        if (count === 0) {
+          console.error("❌ No rows updated - check RLS permissions");
+          throw new Error("No rows updated - check permissions");
+        }
+        
+        console.log("✅ Status updated successfully");
+      } catch (err: any) {
+        console.error("❌ Exception during update:", err);
+        throw err;
       }
-
-      const { error } = await supabase
-        .from("content_queue")
-        .update(updates)
-        .eq("id", storyId);
-
-      if (error) throw error;
     },
     onSuccess: async (_, status) => {
       queryClient.invalidateQueries({ queryKey: ["content-queue"] });
@@ -172,34 +196,51 @@ export function ContentQueueDetail({
         },
       });
     },
-    onError: () => {
-      toast.error("Failed to update status");
+    onError: (error: any) => {
+      console.error("❌ Mutation error:", error);
+      toast.error(`Failed to update status: ${error.message || "Unknown error"}`);
     },
   });
 
   const saveTargetsMutation = useMutation({
     mutationFn: async () => {
       if (!storyId) return;
+      console.log("🎯 Saving publishing targets:", { storyId, targets: Array.from(selectedTargets) });
 
-      // Delete existing targets
-      await supabase
-        .from("content_targets")
-        .delete()
-        .eq("content_id", storyId);
-
-      // Insert new targets
-      if (selectedTargets.size > 0) {
-        const targets = Array.from(selectedTargets).map((channelId) => ({
-          content_id: storyId,
-          channel_id: channelId,
-          status: "pending",
-        }));
-
-        const { error } = await supabase
+      try {
+        // Delete existing targets
+        const { error: deleteError } = await supabase
           .from("content_targets")
-          .insert(targets);
+          .delete()
+          .eq("content_id", storyId);
 
-        if (error) throw error;
+        if (deleteError) {
+          console.error("❌ Failed to delete existing targets:", deleteError);
+          throw new Error(deleteError.message);
+        }
+
+        // Insert new targets
+        if (selectedTargets.size > 0) {
+          const targets = Array.from(selectedTargets).map((channelId) => ({
+            content_id: storyId,
+            channel_id: channelId,
+            status: "pending",
+          }));
+
+          const { error: insertError } = await supabase
+            .from("content_targets")
+            .insert(targets);
+
+          if (insertError) {
+            console.error("❌ Failed to insert new targets:", insertError);
+            throw new Error(insertError.message);
+          }
+        }
+        
+        console.log("✅ Publishing targets saved successfully");
+      } catch (err: any) {
+        console.error("❌ Exception during targets save:", err);
+        throw err;
       }
     },
     onSuccess: async () => {
@@ -216,8 +257,9 @@ export function ContentQueueDetail({
         },
       });
     },
-    onError: () => {
-      toast.error("Failed to update targets");
+    onError: (error: any) => {
+      console.error("❌ Mutation error:", error);
+      toast.error(`Failed to update targets: ${error.message || "Unknown error"}`);
     },
   });
 
@@ -241,8 +283,6 @@ export function ContentQueueDetail({
     });
   };
 
-  if (!story) return null;
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case "pending":
@@ -261,8 +301,22 @@ export function ContentQueueDetail({
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="max-h-[90vh]">
-        <div className="mx-auto w-full max-w-4xl overflow-y-auto p-6">
-          <DrawerHeader className="px-0">
+        {isLoadingStory ? (
+          <div className="p-8 text-center">
+            <p className="text-muted-foreground">Loading story...</p>
+          </div>
+        ) : storyError ? (
+          <div className="p-8 text-center text-destructive">
+            <p className="font-semibold">Failed to load story</p>
+            <p className="text-sm mt-2">{(storyError as any)?.message || "Unknown error"}</p>
+          </div>
+        ) : !story ? (
+          <div className="p-8 text-center text-muted-foreground">
+            <p>Story not found</p>
+          </div>
+        ) : (
+          <div className="mx-auto w-full max-w-4xl overflow-y-auto p-6">
+            <DrawerHeader className="px-0">
             <div className="flex items-start justify-between">
               <div className="space-y-2 flex-1">
                 <DrawerTitle className="text-2xl">Story Details</DrawerTitle>
@@ -389,31 +443,38 @@ export function ContentQueueDetail({
                 onClick={() => saveTargetsMutation.mutate()}
                 variant="outline"
                 className="mt-4 w-full"
+                disabled={saveTargetsMutation.isPending}
               >
-                <Send className="h-4 w-4 mr-2" />
+                <Send className={`h-4 w-4 mr-2 ${saveTargetsMutation.isPending ? "animate-pulse" : ""}`} />
                 Save Publishing Targets
               </Button>
             </div>
 
             {/* Actions */}
             <div className="flex gap-2 pt-4">
-              <Button onClick={handleSaveChanges} className="flex-1">
+              <Button 
+                onClick={handleSaveChanges} 
+                className="flex-1"
+                disabled={updateStoryMutation.isPending}
+              >
                 Save Changes
               </Button>
               {story.status === "pending" && (
                 <>
                   <Button
                     variant="outline"
+                    disabled={updateStatusMutation.isPending}
                     onClick={() => updateStatusMutation.mutate("approved")}
                   >
-                    <Check className="h-4 w-4 mr-2" />
+                    <Check className={`h-4 w-4 mr-2 ${updateStatusMutation.isPending ? "animate-pulse" : ""}`} />
                     Approve
                   </Button>
                   <Button
                     variant="outline"
+                    disabled={updateStatusMutation.isPending}
                     onClick={() => updateStatusMutation.mutate("rejected")}
                   >
-                    <X className="h-4 w-4 mr-2" />
+                    <X className={`h-4 w-4 mr-2 ${updateStatusMutation.isPending ? "animate-pulse" : ""}`} />
                     Reject
                   </Button>
                 </>
@@ -421,15 +482,17 @@ export function ContentQueueDetail({
               {story.status === "approved" && (
                 <Button
                   variant="outline"
+                  disabled={updateStatusMutation.isPending}
                   onClick={() => updateStatusMutation.mutate("published")}
                 >
-                  <Upload className="h-4 w-4 mr-2" />
+                  <Upload className={`h-4 w-4 mr-2 ${updateStatusMutation.isPending ? "animate-pulse" : ""}`} />
                   Publish
                 </Button>
               )}
             </div>
           </div>
         </div>
+        )}
       </DrawerContent>
     </Drawer>
   );
