@@ -236,6 +236,7 @@ const ContentQueue = () => {
               <TableHead>Category</TableHead>
               <TableHead>Source</TableHead>
               <TableHead>Safety</TableHead>
+              <TableHead>Voice</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Created</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -244,14 +245,14 @@ const ContentQueue = () => {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8">
+                <TableCell colSpan={8} className="text-center py-8">
                   Loading stories...
                 </TableCell>
               </TableRow>
             ) : !stories || stories.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={7}
+                  colSpan={8}
                   className="text-center py-8 text-muted-foreground"
                 >
                   No stories found
@@ -282,6 +283,15 @@ const ContentQueue = () => {
                         }
                       >
                         {story.safety_level}
+                      </Badge>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {story.voice_generated_at ? (
+                      <Badge variant="outline" className="bg-purple-500/10 text-purple-500 border-purple-500/20">
+                        Ready
                       </Badge>
                     ) : (
                       <span className="text-muted-foreground text-sm">—</span>

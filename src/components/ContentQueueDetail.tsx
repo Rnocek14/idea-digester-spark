@@ -22,9 +22,10 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
-import { ExternalLink, Check, X, Upload, Send } from "lucide-react";
+import { ExternalLink, Check, X, Upload, Send, Sparkles } from "lucide-react";
 import { logActivity } from "@/lib/logActivity";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type ContentQueueDetailProps = {
   storyId: string | null;
@@ -42,6 +43,7 @@ export function ContentQueueDetail({
   const [editedSummary, setEditedSummary] = useState("");
   const [editedCategory, setEditedCategory] = useState("");
   const [selectedTargets, setSelectedTargets] = useState<Set<string>>(new Set());
+  const [activeVoiceTab, setActiveVoiceTab] = useState("base");
 
   const { data: story, isLoading: isLoadingStory, error: storyError } = useQuery({
     queryKey: ["content-queue-detail", storyId],
@@ -341,6 +343,43 @@ export function ContentQueueDetail({
     });
   };
 
+  const generateVoiceMutation = useMutation({
+    mutationFn: async () => {
+      if (!storyId) return;
+      console.log("✨ Generating Lake Geneva voice for:", storyId);
+
+      const { data, error } = await supabase.functions.invoke('transform-voice', {
+        body: { mode: 'single', id: storyId }
+      });
+
+      if (error) {
+        console.error("❌ Voice generation failed:", error);
+        throw error;
+      }
+
+      console.log("✅ Voice generated successfully:", data);
+      return data;
+    },
+    onSuccess: async () => {
+      queryClient.invalidateQueries({ queryKey: ["content-queue-detail"] });
+      toast.success("Lake Geneva voice generated!");
+
+      await logActivity({
+        entityType: "content",
+        entityId: storyId,
+        action: "voice_generated",
+        message: `Lake Geneva voice generated for "${story?.title || storyId}"`,
+        details: {
+          voice_version: 'lg_voice_v1',
+        },
+      });
+    },
+    onError: (error: any) => {
+      console.error("❌ Voice generation error:", error);
+      toast.error(`Failed to generate voice: ${error.message || "Unknown error"}`);
+    },
+  });
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "pending":
@@ -524,6 +563,116 @@ export function ContentQueueDetail({
                     <ExternalLink className="h-3 w-3" />
                   </a>
                 </div>
+              )}
+            </div>
+
+            <Separator />
+
+            {/* Lake Geneva Voice */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <Label className="text-base font-semibold">Lake Geneva Voice</Label>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Generate channel-specific branded content
+                  </p>
+                </div>
+                {story.voice_generated_at && (
+                  <Badge variant="secondary" className="text-xs">
+                    Generated {new Date(story.voice_generated_at).toLocaleDateString()}
+                  </Badge>
+                )}
+              </div>
+
+              {!story.voice_generated_at ? (
+                <div className="border border-dashed rounded-lg p-8 text-center">
+                  <Sparkles className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Generate Lake Geneva-branded versions for all distribution channels
+                  </p>
+                  <Button
+                    onClick={() => generateVoiceMutation.mutate()}
+                    disabled={generateVoiceMutation.isPending || story.safety_level === 'blocked'}
+                    className="gap-2"
+                  >
+                    <Sparkles className={`h-4 w-4 ${generateVoiceMutation.isPending ? "animate-pulse" : ""}`} />
+                    {generateVoiceMutation.isPending ? "Generating..." : "Generate Lake Geneva Voice"}
+                  </Button>
+                  {story.safety_level === 'blocked' && (
+                    <p className="text-xs text-destructive mt-2">
+                      Cannot generate voice for blocked content
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <Tabs value={activeVoiceTab} onValueChange={setActiveVoiceTab}>
+                  <TabsList className="grid w-full grid-cols-6">
+                    <TabsTrigger value="base">Base</TabsTrigger>
+                    <TabsTrigger value="website">Website</TabsTrigger>
+                    <TabsTrigger value="newsletter">Newsletter</TabsTrigger>
+                    <TabsTrigger value="facebook">Facebook</TabsTrigger>
+                    <TabsTrigger value="instagram">Instagram</TabsTrigger>
+                    <TabsTrigger value="x">X</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="base" className="mt-4">
+                    <div className="border rounded-lg p-4 bg-muted/20 min-h-[120px]">
+                      <p className="text-sm whitespace-pre-wrap">
+                        {story.content_lg_base || "No content generated"}
+                      </p>
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="website" className="mt-4">
+                    <div className="border rounded-lg p-4 bg-muted/20 min-h-[120px]">
+                      <p className="text-sm whitespace-pre-wrap">
+                        {story.content_website || "No content generated"}
+                      </p>
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="newsletter" className="mt-4">
+                    <div className="border rounded-lg p-4 bg-muted/20 min-h-[120px]">
+                      <p className="text-sm whitespace-pre-wrap">
+                        {story.content_newsletter || "No content generated"}
+                      </p>
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="facebook" className="mt-4">
+                    <div className="border rounded-lg p-4 bg-muted/20 min-h-[120px]">
+                      <p className="text-sm whitespace-pre-wrap">
+                        {story.content_facebook || "No content generated"}
+                      </p>
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="instagram" className="mt-4">
+                    <div className="border rounded-lg p-4 bg-muted/20 min-h-[120px]">
+                      <p className="text-sm whitespace-pre-wrap">
+                        {story.content_instagram || "No content generated"}
+                      </p>
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="x" className="mt-4">
+                    <div className="border rounded-lg p-4 bg-muted/20 min-h-[120px]">
+                      <p className="text-sm whitespace-pre-wrap">
+                        {story.content_x || "No content generated"}
+                      </p>
+                    </div>
+                  </TabsContent>
+
+                  <Button
+                    onClick={() => generateVoiceMutation.mutate()}
+                    variant="outline"
+                    disabled={generateVoiceMutation.isPending}
+                    className="mt-4 w-full gap-2"
+                  >
+                    <Sparkles className={`h-4 w-4 ${generateVoiceMutation.isPending ? "animate-pulse" : ""}`} />
+                    Regenerate Voice
+                  </Button>
+                </Tabs>
               )}
             </div>
 
