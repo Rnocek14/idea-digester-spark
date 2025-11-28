@@ -53,19 +53,27 @@ export function ContentQueueDetail({
         .from("content_queue")
         .select(`
           *,
-          source:sources!source_id(name)
+          source:sources(name)
         `)
         .eq("id", storyId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error("❌ Story detail fetch failed:", error);
         throw error;
       }
+      
+      if (!data) {
+        console.warn("⚠️ No story found for id:", storyId);
+        return null;
+      }
+      
       console.log("✅ Story loaded:", data?.title);
       return data;
     },
     enabled: !!storyId,
+    retry: 1,
+    staleTime: 30000,
   });
 
   const { data: channels = [] } = useQuery({
@@ -302,17 +310,26 @@ export function ContentQueueDetail({
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="max-h-[90vh]">
         {isLoadingStory ? (
-          <div className="p-8 text-center">
+          <div className="p-8 text-center space-y-2">
             <p className="text-muted-foreground">Loading story...</p>
+            <p className="text-xs text-muted-foreground">If this takes more than 10 seconds, try closing and reopening</p>
           </div>
         ) : storyError ? (
-          <div className="p-8 text-center text-destructive">
-            <p className="font-semibold">Failed to load story</p>
-            <p className="text-sm mt-2">{(storyError as any)?.message || "Unknown error"}</p>
+          <div className="p-8 text-center space-y-4">
+            <p className="text-destructive font-semibold">Failed to load story</p>
+            <p className="text-sm text-muted-foreground">
+              {(storyError as any)?.message || "Unknown error - please try closing and reopening"}
+            </p>
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Close
+            </Button>
           </div>
         ) : !story ? (
-          <div className="p-8 text-center text-muted-foreground">
-            <p>Story not found</p>
+          <div className="p-8 text-center space-y-4">
+            <p className="text-muted-foreground">Story not found</p>
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Close
+            </Button>
           </div>
         ) : (
           <div className="mx-auto w-full max-w-4xl overflow-y-auto p-6">
