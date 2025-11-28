@@ -50,6 +50,44 @@ export type Database = {
         }
         Relationships: []
       }
+      auto_publish_rules: {
+        Row: {
+          action: string
+          category: string | null
+          created_at: string
+          enabled: boolean
+          id: string
+          source_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          action: string
+          category?: string | null
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          source_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          action?: string
+          category?: string | null
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          source_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auto_publish_rules_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       content_queue: {
         Row: {
           author: string | null
