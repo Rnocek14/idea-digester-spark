@@ -198,6 +198,72 @@ const Sources = () => {
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 
+  const { data: rulesCount } = useQuery({
+    queryKey: ["auto-publish-rules-count"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("auto_publish_rules")
+        .select("*", { count: "exact", head: true });
+      if (error) throw error;
+      return count || 0;
+    },
+  });
+
+  const { data: activeRules } = useQuery({
+    queryKey: ["auto-publish-rules"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("auto_publish_rules")
+        .select("*, sources(name)")
+        .eq("enabled", true)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: (rulesCount ?? 0) > 0,
+  });
+
+  const seedAutoPublishRulesMutation = useMutation({
+    mutationFn: async () => {
+      const rules = [
+        {
+          source_id: 'b219479c-5c29-49d0-82df-adaa230e8761', // Visit Lake Geneva
+          category: 'events',
+          action: 'auto_publish'
+        },
+        {
+          source_id: 'b36bbc11-b579-4b69-bd23-751612c6c1d7', // Walworth County
+          category: 'community', 
+          action: 'auto_publish'
+        },
+        {
+          source_id: null, // Global rule
+          category: 'news',
+          action: 'needs_review'
+        }
+      ];
+      
+      const { error } = await supabase.from("auto_publish_rules").insert(rules);
+      if (error) throw error;
+      return rules.length;
+    },
+    onSuccess: async (count) => {
+      queryClient.invalidateQueries({ queryKey: ["auto-publish-rules-count"] });
+      queryClient.invalidateQueries({ queryKey: ["auto-publish-rules"] });
+      toast.success(`Seeded ${count} auto-publish rules`);
+      await logActivity({
+        entityType: "system",
+        entityId: null,
+        action: "rules_seeded",
+        message: `Seeded ${count} auto-publish rules for Lake Geneva sources`,
+        details: { count }
+      });
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to seed rules");
+    }
+  });
+
   const toggleStatusMutation = useMutation({
     mutationFn: async ({ id, currentStatus }: { id: string; currentStatus: string }) => {
       console.log("🔄 Toggling source status:", { id, currentStatus });
@@ -309,6 +375,16 @@ const Sources = () => {
             >
               <Sparkles className="h-4 w-4 mr-2" />
               {seedSampleSourcesMutation.isPending ? "Seeding..." : "Seed Lake Geneva Sources"}
+            </Button>
+          )}
+          {rulesCount === 0 && (
+            <Button
+              variant="outline"
+              onClick={() => seedAutoPublishRulesMutation.mutate()}
+              disabled={seedAutoPublishRulesMutation.isPending}
+            >
+              <Sparkles className="h-4 w-4 mr-2" />
+              {seedAutoPublishRulesMutation.isPending ? "Seeding..." : "Seed Auto-Publish Rules"}
             </Button>
           )}
           <Button
@@ -446,6 +522,40 @@ const Sources = () => {
         </Table>
         )}
       </div>
+
+      {/* Auto-Publish Rules Display */}
+      {(rulesCount ?? 0) > 0 && activeRules && (
+        <div className="border rounded-lg bg-card p-6">
+          <h3 className="text-lg font-semibold mb-4">Active Auto-Publish Rules</h3>
+          <div className="space-y-3">
+            {activeRules.map((rule) => (
+              <div key={rule.id} className="flex items-center justify-between py-2 border-b last:border-0">
+                <div className="flex items-center gap-4">
+                  <Badge variant="outline" className="capitalize">
+                    {rule.category || "All"}
+                  </Badge>
+                  <span className="text-sm text-muted-foreground">
+                    {rule.source_id 
+                      ? `From: ${(rule.sources as any)?.name || "Unknown Source"}`
+                      : "Global rule"}
+                  </span>
+                </div>
+                <Badge 
+                  variant="outline" 
+                  className={rule.action === 'auto_publish' 
+                    ? "bg-green-500/10 text-green-500 border-green-500/20" 
+                    : "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"}
+                >
+                  {rule.action === 'auto_publish' ? 'Auto-Publish' : 'Needs Review'}
+                </Badge>
+              </div>
+            ))}
+          </div>
+          <p className="text-sm text-muted-foreground mt-4">
+            {rulesCount} {rulesCount === 1 ? 'rule' : 'rules'} configured • Events auto-publish, News needs review
+          </p>
+        </div>
+      )}
 
       {/* Add/Edit Dialog */}
       <SourceDialog
