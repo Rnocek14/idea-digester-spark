@@ -27,7 +27,7 @@ import { format } from "date-fns";
 import { logActivity } from "@/lib/logActivity";
 import { cn } from "@/lib/utils";
 
-type ContentStatus = "pending" | "approved" | "rejected" | "published";
+type ContentStatus = "pending" | "approved" | "rejected" | "published" | "auto_published" | "flagged";
 
 const ContentQueue = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -149,6 +149,10 @@ const ContentQueue = () => {
         return "bg-red-500/10 text-red-500 border-red-500/20";
       case "published":
         return "bg-blue-500/10 text-blue-500 border-blue-500/20";
+      case "auto_published":
+        return "bg-emerald-500/10 text-emerald-500 border-emerald-500/20";
+      case "flagged":
+        return "bg-orange-500/10 text-orange-500 border-orange-500/20";
       default:
         return "bg-muted text-muted-foreground";
     }
@@ -198,13 +202,15 @@ const ContentQueue = () => {
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Filter by status" />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="approved">Approved</SelectItem>
-            <SelectItem value="rejected">Rejected</SelectItem>
-            <SelectItem value="published">Published</SelectItem>
-          </SelectContent>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="approved">Approved</SelectItem>
+              <SelectItem value="rejected">Rejected</SelectItem>
+              <SelectItem value="published">Published</SelectItem>
+              <SelectItem value="auto_published">Auto-Published</SelectItem>
+              <SelectItem value="flagged">Flagged</SelectItem>
+            </SelectContent>
         </Select>
 
         <Select value={categoryFilter} onValueChange={setCategoryFilter}>

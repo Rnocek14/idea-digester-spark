@@ -27,6 +27,48 @@ interface SyncResult {
   errors: string[];
 }
 
+type AutoPublishRule = {
+  id: string;
+  source_id: string | null;
+  category: string | null;
+  action: "auto_publish" | "needs_review" | "flag";
+  enabled: boolean;
+};
+
+function decideStatusForStory(
+  rules: AutoPublishRule[] | null,
+  sourceId: string,
+  category: string | null
+): string {
+  if (!rules || rules.length === 0) return "pending";
+  
+  const cat = category || null;
+  
+  // Most specific: exact source + category match
+  const specific = rules.find(r => 
+    r.enabled && 
+    r.source_id === sourceId && 
+    (r.category === cat || r.category === null)
+  );
+  
+  // Global: any source + matching category
+  const global = rules.find(r => 
+    r.enabled && 
+    r.source_id === null && 
+    (r.category === cat || r.category === null)
+  );
+  
+  const rule = specific || global;
+  if (!rule) return "pending";
+  
+  switch (rule.action) {
+    case "auto_publish": return "auto_published";
+    case "flag": return "flagged";
+    case "needs_review":
+    default: return "pending";
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -38,6 +80,18 @@ serve(async (req) => {
     const openaiApiKey = Deno.env.get("OPENAI_API_KEY")!;
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Load auto-publish rules
+    const { data: rules, error: rulesError } = await supabase
+      .from("auto_publish_rules")
+      .select("*")
+      .eq("enabled", true);
+
+    if (rulesError) {
+      console.error("Failed to load auto_publish_rules:", rulesError);
+    } else {
+      console.log(`Loaded ${rules?.length || 0} active auto-publish rules`);
+    }
 
     // Fetch active RSS and scrape sources
     const { data: sources, error: sourcesError } = await supabase
@@ -237,6 +291,12 @@ serve(async (req) => {
           const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
           const aiResult = toolCall ? JSON.parse(toolCall.function.arguments) : { summary: rawContent.substring(0, 200), category: "news" };
 
+          // Compute category and status based on rules
+          const aiCategory = aiResult.category || source.category || "news";
+          const status = decideStatusForStory(rules as AutoPublishRule[], source.id, aiCategory);
+
+          console.log(`📋 Story "${title.substring(0, 40)}..." → category: ${aiCategory}, status: ${status}`);
+
           // Insert into content_queue
           const { error: insertError } = await supabase
             .from("content_queue")
@@ -245,10 +305,10 @@ serve(async (req) => {
               title: title,
               content: rawContent,
               summary: aiResult.summary || "",
-              category: aiResult.category || source.category || "news",
+              category: aiCategory,
               original_url: originalUrl,
               publish_date: pubDate,
-              status: "pending",
+              status,
               metadata: {
                 source_name: source.name,
                 original_published_at: pubDate,
