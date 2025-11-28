@@ -39,12 +39,12 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Fetch active RSS sources
+    // Fetch active RSS and scrape sources
     const { data: sources, error: sourcesError } = await supabase
       .from("sources")
       .select("*")
       .eq("status", "active")
-      .eq("type", "rss");
+      .in("type", ["rss", "scrape"]);
 
     if (sourcesError) throw sourcesError;
 
@@ -61,40 +61,89 @@ serve(async (req) => {
       result.sourcesProcessed++;
 
       try {
-        console.log(`Fetching RSS from: ${source.name}`);
+        console.log(`Processing ${source.type} source: ${source.name}`);
 
-        // Fetch RSS feed
-        const rssResponse = await fetch(source.url, {
-          headers: {
-            "User-Agent": "Mozilla/5.0 (compatible; LakeGenevaBot/1.0)",
-          },
-        });
+        let items: RSSItem[] = [];
 
-        if (!rssResponse.ok) {
-          throw new Error(`HTTP ${rssResponse.status}: ${rssResponse.statusText}`);
+        if (source.type === "rss") {
+          // Fetch RSS feed
+          const rssResponse = await fetch(source.url, {
+            headers: {
+              "User-Agent": "Mozilla/5.0 (compatible; LakeGenevaBot/1.0)",
+            },
+          });
+
+          if (!rssResponse.ok) {
+            throw new Error(`HTTP ${rssResponse.status}: ${rssResponse.statusText}`);
+          }
+
+          const xmlText = await rssResponse.text();
+
+          // Parse RSS using fast-xml-parser
+          const { XMLParser } = await import("https://esm.sh/fast-xml-parser@4.3.2");
+          const parser = new XMLParser({
+            ignoreAttributes: false,
+            attributeNamePrefix: "@_",
+          });
+
+          const parsed = parser.parse(xmlText);
+          const channel = parsed.rss?.channel || parsed.feed;
+
+          if (!channel) {
+            throw new Error("Invalid RSS format");
+          }
+
+          // Extract items (handle both RSS 2.0 and Atom)
+          items = channel.item || channel.entry || [];
+          if (!Array.isArray(items)) items = [items];
+
+          console.log(`Found ${items.length} RSS items in ${source.name}`);
+        } else if (source.type === "scrape") {
+          // Fetch HTML page
+          const htmlResponse = await fetch(source.url, {
+            headers: {
+              "User-Agent": "Mozilla/5.0 (compatible; LakeGenevaBot/1.0)",
+            },
+          });
+
+          if (!htmlResponse.ok) {
+            throw new Error(`HTTP ${htmlResponse.status}: ${htmlResponse.statusText}`);
+          }
+
+          const htmlText = await htmlResponse.text();
+
+          // Parse HTML using deno-dom
+          const { DOMParser } = await import("https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts");
+          const doc = new DOMParser().parseFromString(htmlText, "text/html");
+
+          if (!doc) {
+            throw new Error("Failed to parse HTML");
+          }
+
+          // Get selector from metadata or use default
+          const selector = source.metadata?.scrape_selector || ".event-item";
+          const elements = doc.querySelectorAll(selector);
+
+          console.log(`Found ${elements.length} elements with selector "${selector}" in ${source.name}`);
+
+          // Convert DOM elements to RSS-like items
+          items = Array.from(elements).map((el) => {
+            const element = el as any; // Type assertion for deno-dom Element
+            const titleEl = element.querySelector("h2, h3, .title, .event-title");
+            const linkEl = element.querySelector("a");
+            const dateEl = element.querySelector("time, .date, .event-date");
+            const descEl = element.querySelector("p, .description, .event-description");
+
+            return {
+              title: titleEl?.textContent?.trim() || "",
+              link: linkEl?.getAttribute("href") || "",
+              pubDate: dateEl?.getAttribute("datetime") || dateEl?.textContent?.trim() || new Date().toISOString(),
+              description: descEl?.textContent?.trim() || "",
+            };
+          }).filter(item => item.title && item.link);
+
+          console.log(`Extracted ${items.length} valid items from scraped content`);
         }
-
-        const xmlText = await rssResponse.text();
-
-        // Parse RSS using fast-xml-parser
-        const { XMLParser } = await import("https://esm.sh/fast-xml-parser@4.3.2");
-        const parser = new XMLParser({
-          ignoreAttributes: false,
-          attributeNamePrefix: "@_",
-        });
-
-        const parsed = parser.parse(xmlText);
-        const channel = parsed.rss?.channel || parsed.feed;
-
-        if (!channel) {
-          throw new Error("Invalid RSS format");
-        }
-
-        // Extract items (handle both RSS 2.0 and Atom)
-        let items: RSSItem[] = channel.item || channel.entry || [];
-        if (!Array.isArray(items)) items = [items];
-
-        console.log(`Found ${items.length} items in ${source.name}`);
 
         // Process each item
         for (const item of items) {
