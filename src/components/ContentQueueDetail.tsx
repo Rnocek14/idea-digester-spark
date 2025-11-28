@@ -404,6 +404,48 @@ export function ContentQueueDetail({
               </Badge>
             </div>
 
+            {/* Safety Information */}
+            {story.safety_level && (
+              <div className="mt-4 p-4 border rounded-lg bg-muted/30">
+                <Label className="text-sm font-semibold mb-2 block">Safety Evaluation</Label>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">Level:</span>
+                    <Badge
+                      variant="outline"
+                      className={
+                        story.safety_level === "safe"
+                          ? "bg-green-500/10 text-green-500 border-green-500/20"
+                          : story.safety_level === "sensitive"
+                          ? "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
+                          : "bg-red-500/10 text-red-500 border-red-500/20"
+                      }
+                    >
+                      {story.safety_level}
+                    </Badge>
+                  </div>
+                  {story.safety_tags && Array.isArray(story.safety_tags) && story.safety_tags.length > 0 && (
+                    <div className="flex items-start gap-2">
+                      <span className="text-sm text-muted-foreground min-w-fit">Tags:</span>
+                      <div className="flex flex-wrap gap-1">
+                        {story.safety_tags.map((tag: string, idx: number) => (
+                          <Badge key={idx} variant="secondary" className="text-xs">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {story.safety_reason && (
+                    <div className="flex items-start gap-2">
+                      <span className="text-sm text-muted-foreground min-w-fit">Reason:</span>
+                      <p className="text-sm">{story.safety_reason}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
           <div className="space-y-6 mt-6">
             {/* Editable Fields */}
             <div className="space-y-4">

@@ -238,7 +238,7 @@ serve(async (req) => {
             continue;
           }
 
-          // Call OpenAI for summarization and categorization
+          // Call OpenAI for summarization, categorization, and safety evaluation
           const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
             method: "POST",
             headers: {
@@ -250,7 +250,22 @@ serve(async (req) => {
               messages: [
                 {
                   role: "system",
-                  content: "You are a content normalizer for Lake Geneva local news. Return structured JSON with summary (2-3 sentences) and category (one of: news, events, dining, real-estate, community)."
+                  content: `You are a content normalizer and safety reviewer for a family-friendly Lake Geneva local media brand.
+
+For each article, you must:
+1. Write a clear, neutral, 2-3 sentence summary in a friendly local-news tone.
+2. Assign a category: one of events, news, community, dining, or real-estate.
+3. Evaluate safety and assign:
+   - safety_level: safe, sensitive, or blocked
+   - safety_tags: zero or more labels like crime, public-safety, politics, tragedy, dining, family, graphic-violence, sexual-content, hate, scam
+   - safety_reason: a short sentence explaining why
+
+Guidelines:
+- SAFE: family-friendly events, dining, attractions, community info, basic weather/traffic, non-controversial business content
+- SENSITIVE: crime, arrests, police logs, non-graphic accidents or fires, political campaigns or protests, obituaries and tragedies, contentious public issues
+- BLOCKED: graphic violence, sexual content, hate/extremist content, obvious scams, or anything inappropriate for a general-audience local community brand
+
+When in doubt between safe and sensitive, choose sensitive. Only use blocked for clearly inappropriate content.`
                 },
                 {
                   role: "user",
@@ -261,18 +276,32 @@ serve(async (req) => {
                 type: "function",
                 function: {
                   name: "normalize_article",
-                  description: "Normalize article with summary and category",
+                  description: "Normalize article with summary, category, and safety evaluation",
                   parameters: {
                     type: "object",
                     properties: {
-                      summary: { type: "string", description: "2-3 sentence summary" },
+                      summary: { type: "string", description: "2-3 sentence summary in friendly local-news tone" },
                       category: { 
                         type: "string", 
                         enum: ["news", "events", "dining", "real-estate", "community"],
                         description: "Article category"
+                      },
+                      safety_level: {
+                        type: "string",
+                        enum: ["safe", "sensitive", "blocked"],
+                        description: "Safety evaluation level"
+                      },
+                      safety_tags: {
+                        type: "array",
+                        items: { type: "string" },
+                        description: "Array of safety labels"
+                      },
+                      safety_reason: {
+                        type: "string",
+                        description: "Short explanation of why this safety level was chosen"
                       }
                     },
-                    required: ["summary", "category"],
+                    required: ["summary", "category", "safety_level", "safety_tags", "safety_reason"],
                     additionalProperties: false
                   }
                 }
@@ -289,13 +318,19 @@ serve(async (req) => {
 
           const aiData = await aiResponse.json();
           const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
-          const aiResult = toolCall ? JSON.parse(toolCall.function.arguments) : { summary: rawContent.substring(0, 200), category: "news" };
+          const aiResult = toolCall ? JSON.parse(toolCall.function.arguments) : { 
+            summary: rawContent.substring(0, 200), 
+            category: "news",
+            safety_level: "safe",
+            safety_tags: [],
+            safety_reason: "Fallback processing"
+          };
 
           // Compute category and status based on rules
           const aiCategory = aiResult.category || source.category || "news";
           const status = decideStatusForStory(rules as AutoPublishRule[], source.id, aiCategory);
 
-          console.log(`📋 Story "${title.substring(0, 40)}..." → category: ${aiCategory}, status: ${status}`);
+          console.log(`📋 Story "${title.substring(0, 40)}..." → category: ${aiCategory}, safety: ${aiResult.safety_level}, status: ${status}`);
 
           // Insert into content_queue
           const { error: insertError } = await supabase
@@ -309,6 +344,9 @@ serve(async (req) => {
               original_url: originalUrl,
               publish_date: pubDate,
               status,
+              safety_level: aiResult.safety_level || "safe",
+              safety_tags: aiResult.safety_tags || [],
+              safety_reason: aiResult.safety_reason || "",
               metadata: {
                 source_name: source.name,
                 original_published_at: pubDate,
