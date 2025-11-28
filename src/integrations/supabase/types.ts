@@ -101,6 +101,9 @@ export type Database = {
           publish_date: string | null
           reviewed_at: string | null
           reviewed_by: string | null
+          safety_level: string | null
+          safety_reason: string | null
+          safety_tags: Json | null
           source_id: string | null
           status: string
           summary: string | null
@@ -119,6 +122,9 @@ export type Database = {
           publish_date?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
+          safety_level?: string | null
+          safety_reason?: string | null
+          safety_tags?: Json | null
           source_id?: string | null
           status?: string
           summary?: string | null
@@ -137,6 +143,9 @@ export type Database = {
           publish_date?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
+          safety_level?: string | null
+          safety_reason?: string | null
+          safety_tags?: Json | null
           source_id?: string | null
           status?: string
           summary?: string | null

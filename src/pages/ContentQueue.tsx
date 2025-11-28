@@ -235,6 +235,7 @@ const ContentQueue = () => {
               <TableHead>Title</TableHead>
               <TableHead>Category</TableHead>
               <TableHead>Source</TableHead>
+              <TableHead>Safety</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Created</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -243,14 +244,14 @@ const ContentQueue = () => {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8">
+                <TableCell colSpan={7} className="text-center py-8">
                   Loading stories...
                 </TableCell>
               </TableRow>
             ) : !stories || stories.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={6}
+                  colSpan={7}
                   className="text-center py-8 text-muted-foreground"
                 >
                   No stories found
@@ -268,6 +269,24 @@ const ContentQueue = () => {
                     </Badge>
                   </TableCell>
                   <TableCell>{story.source?.name || "Unknown"}</TableCell>
+                  <TableCell>
+                    {story.safety_level ? (
+                      <Badge
+                        variant="outline"
+                        className={
+                          story.safety_level === "safe"
+                            ? "bg-green-500/10 text-green-500 border-green-500/20"
+                            : story.safety_level === "sensitive"
+                            ? "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
+                            : "bg-red-500/10 text-red-500 border-red-500/20"
+                        }
+                      >
+                        {story.safety_level}
+                      </Badge>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">—</span>
+                    )}
+                  </TableCell>
                   <TableCell>
                     <Badge
                       variant="outline"
