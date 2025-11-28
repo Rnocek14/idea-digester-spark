@@ -188,13 +188,22 @@ const Sources = () => {
 
   const toggleStatusMutation = useMutation({
     mutationFn: async ({ id, currentStatus }: { id: string; currentStatus: string }) => {
+      console.log("🔄 Toggling source status:", { id, currentStatus });
       const newStatus = currentStatus === "active" ? "inactive" : "active";
-      const { error } = await supabase
+      
+      const { data, error } = await supabase
         .from("sources")
         .update({ status: newStatus })
-        .eq("id", id);
+        .eq("id", id)
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("❌ Toggle failed:", error);
+        throw error;
+      }
+      
+      console.log("✅ Toggle succeeded:", data);
       return newStatus;
     },
     onSuccess: async (newStatus, variables) => {
@@ -214,8 +223,9 @@ const Sources = () => {
         },
       });
     },
-    onError: () => {
-      toast.error("Failed to update source status");
+    onError: (error: any) => {
+      console.error("❌ Toggle mutation error:", error);
+      toast.error(`Failed to update: ${error.message || "Unknown error"}`);
     },
   });
 
