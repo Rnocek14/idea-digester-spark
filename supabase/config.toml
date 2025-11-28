@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.backfill-safety]
 verify_jwt = false
+
+[functions.transform-voice]
+verify_jwt = true

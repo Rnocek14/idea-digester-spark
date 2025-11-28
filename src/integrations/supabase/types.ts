@@ -93,6 +93,12 @@ export type Database = {
           author: string | null
           category: string | null
           content: string
+          content_facebook: string | null
+          content_instagram: string | null
+          content_lg_base: string | null
+          content_newsletter: string | null
+          content_website: string | null
+          content_x: string | null
           created_at: string
           id: string
           image_url: string | null
@@ -109,11 +115,19 @@ export type Database = {
           summary: string | null
           title: string
           updated_at: string
+          voice_generated_at: string | null
+          voice_version: string | null
         }
         Insert: {
           author?: string | null
           category?: string | null
           content: string
+          content_facebook?: string | null
+          content_instagram?: string | null
+          content_lg_base?: string | null
+          content_newsletter?: string | null
+          content_website?: string | null
+          content_x?: string | null
           created_at?: string
           id?: string
           image_url?: string | null
@@ -130,11 +144,19 @@ export type Database = {
           summary?: string | null
           title: string
           updated_at?: string
+          voice_generated_at?: string | null
+          voice_version?: string | null
         }
         Update: {
           author?: string | null
           category?: string | null
           content?: string
+          content_facebook?: string | null
+          content_instagram?: string | null
+          content_lg_base?: string | null
+          content_newsletter?: string | null
+          content_website?: string | null
+          content_x?: string | null
           created_at?: string
           id?: string
           image_url?: string | null
@@ -151,6 +173,8 @@ export type Database = {
           summary?: string | null
           title?: string
           updated_at?: string
+          voice_generated_at?: string | null
+          voice_version?: string | null
         }
         Relationships: [
           {
