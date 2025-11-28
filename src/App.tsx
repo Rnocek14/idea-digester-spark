@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import ContentQueue from "./pages/ContentQueue";
 import Sources from "./pages/Sources";
 import Sponsors from "./pages/Sponsors";
+import Newsletter from "./pages/Newsletter";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="content" element={<ContentQueue />} />
             <Route path="sources" element={<Sources />} />
             <Route path="sponsors" element={<Sponsors />} />
+            <Route path="newsletter" element={<Newsletter />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
