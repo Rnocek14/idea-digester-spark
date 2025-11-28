@@ -22,18 +22,30 @@ const Sources = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data: sources, isLoading } = useQuery({
+  const { data: sources, isLoading, error: sourcesError } = useQuery({
     queryKey: ["sources"],
     queryFn: async () => {
+      console.log("🔍 Fetching sources...");
       const { data, error } = await supabase
         .from("sources")
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      console.log("📊 Sources query result:", { data, error });
+      if (error) {
+        console.error("❌ Sources query error:", error);
+        throw error;
+      }
+      console.log("✅ Sources loaded:", data?.length || 0);
       return data;
     },
+    retry: 1,
   });
+  
+  // Log error if query failed
+  if (sourcesError) {
+    console.error("❌ Sources query failed:", sourcesError);
+  }
 
   const fixScrapeSelectorMutation = useMutation({
     mutationFn: async () => {
@@ -324,7 +336,22 @@ const Sources = () => {
 
       {/* Sources Table */}
       <div className="border rounded-lg bg-card">
-        <Table>
+        {sourcesError && (
+          <div className="p-8 text-center text-destructive">
+            <p className="font-semibold">Failed to load sources</p>
+            <p className="text-sm mt-2">{(sourcesError as any)?.message || "Unknown error"}</p>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="mt-4"
+              onClick={() => queryClient.invalidateQueries({ queryKey: ["sources"] })}
+            >
+              Retry
+            </Button>
+          </div>
+        )}
+        {!sourcesError && (
+          <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
@@ -417,6 +444,7 @@ const Sources = () => {
             )}
           </TableBody>
         </Table>
+        )}
       </div>
 
       {/* Add/Edit Dialog */}
