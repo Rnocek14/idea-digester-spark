@@ -11,10 +11,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Power, Sparkles } from "lucide-react";
+import { Plus, Edit, Power, Sparkles, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { SourceDialog } from "@/components/SourceDialog";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { logActivity } from "@/lib/logActivity";
 
 const Sources = () => {
@@ -86,6 +86,47 @@ const Sources = () => {
     onError: (error: any) => {
       toast.error(error.message || "Failed to seed sample sources");
     },
+  });
+
+  const syncRssMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("sync-rss");
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: async (data) => {
+      queryClient.invalidateQueries({ queryKey: ["sources"] });
+      queryClient.invalidateQueries({ queryKey: ["content"] });
+      
+      toast.success(
+        `RSS sync completed: ${data.articlesInserted} articles added, ${data.skipped} skipped`
+      );
+      
+      if (data.errors?.length > 0) {
+        toast.warning(`${data.errors.length} errors occurred during sync`);
+        console.log("Sync errors:", data.errors);
+      }
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to sync RSS feeds");
+    },
+  });
+
+  const { data: lastSync } = useQuery({
+    queryKey: ["last-sync"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("activity_log")
+        .select("*")
+        .eq("action", "rss_sync")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    },
+    refetchInterval: 30000, // Refresh every 30 seconds
   });
 
   const toggleStatusMutation = useMutation({
@@ -165,6 +206,12 @@ const Sources = () => {
           <p className="text-muted-foreground mt-2">
             Manage RSS feeds, APIs, and web scraping sources
           </p>
+          {lastSync && (
+            <p className="text-sm text-muted-foreground mt-1">
+              Last synced {formatDistanceToNow(new Date(lastSync.created_at), { addSuffix: true })} •{" "}
+              {(lastSync.details as any)?.articlesInserted || 0} articles added
+            </p>
+          )}
         </div>
         <div className="flex gap-2">
           {(!sources || sources.length === 0) && (
@@ -177,6 +224,14 @@ const Sources = () => {
               {seedSampleSourcesMutation.isPending ? "Seeding..." : "Seed Lake Geneva Sources"}
             </Button>
           )}
+          <Button
+            variant="outline"
+            onClick={() => syncRssMutation.mutate()}
+            disabled={syncRssMutation.isPending}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${syncRssMutation.isPending ? "animate-spin" : ""}`} />
+            {syncRssMutation.isPending ? "Syncing..." : "Sync RSS Now"}
+          </Button>
           <Button onClick={handleNew}>
             <Plus className="h-4 w-4 mr-2" />
             Add Source
