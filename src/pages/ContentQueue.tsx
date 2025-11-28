@@ -41,7 +41,7 @@ const ContentQueue = () => {
         .from("content_queue")
         .select(`
           *,
-          source:sources!source_id(name)
+          source:sources!content_queue_source_id_fkey(name)
         `)
         .order("created_at", { ascending: false });
 
