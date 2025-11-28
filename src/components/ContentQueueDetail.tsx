@@ -46,11 +46,16 @@ export function ContentQueueDetail({
   const { data: story, isLoading: isLoadingStory, error: storyError } = useQuery({
     queryKey: ["content-queue-detail", storyId],
     queryFn: async () => {
-      if (!storyId) return null;
+      console.log("🚀 Query function STARTING for story:", storyId);
+      
+      if (!storyId) {
+        console.log("⚠️ No storyId, returning null");
+        return null;
+      }
       
       // Verify auth session first
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      console.log("🔐 Auth session check:", { 
+      console.log("🔐 Auth session result:", { 
         hasSession: !!session, 
         userId: session?.user?.id,
         error: sessionError?.message 
@@ -60,8 +65,8 @@ export function ContentQueueDetail({
         throw new Error("No active session - please sign in again");
       }
       
-      console.log("🔍 Fetching story details:", storyId);
-
+      console.log("🔍 Fetching story from database:", storyId);
+      
       // Try with join first
       let { data, error } = await supabase
         .from("content_queue")
@@ -69,7 +74,9 @@ export function ContentQueueDetail({
         .eq("id", storyId)
         .maybeSingle();
 
-      // If that fails, try without join as fallback
+      console.log("📦 Query result:", { hasData: !!data, error: error?.message });
+
+      // If that fails, try without join
       if (!data && !error) {
         console.log("⚠️ Join query returned null, trying without join");
         const fallback = await supabase
@@ -78,9 +85,10 @@ export function ContentQueueDetail({
           .eq("id", storyId)
           .maybeSingle();
         
+        if (fallback.data) {
+          data = { ...fallback.data, source: null };
+        }
         error = fallback.error;
-        // Add source property to match type when we have data
-        data = fallback.data ? { ...fallback.data, source: null } as any : null;
       }
 
       if (error) {
@@ -88,18 +96,25 @@ export function ContentQueueDetail({
         throw error;
       }
       
-      if (!data) {
-        console.warn("⚠️ No story found for id:", storyId);
-        return null;
-      }
-      
-      console.log("✅ Story loaded:", data?.title);
+      console.log("✅ Query completed, data:", data ? "found" : "null");
       return data;
     },
-    enabled: !!storyId,
+    enabled: !!storyId && open,
     retry: 1,
-    staleTime: 30000,
+    staleTime: 0,
+    gcTime: 0,
   });
+
+  // Debug log on component mount/update
+  useEffect(() => {
+    console.log("🔧 ContentQueueDetail mounted/updated:", { 
+      storyId, 
+      open, 
+      isLoadingStory, 
+      hasStory: !!story,
+      error: storyError?.message 
+    });
+  }, [storyId, open, isLoadingStory, story, storyError]);
 
   const { data: channels = [] } = useQuery({
     queryKey: ["distribution-channels"],
@@ -344,6 +359,19 @@ export function ContentQueueDetail({
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="max-h-[90vh]">
+        <DrawerHeader className="px-6">
+          <DrawerTitle>Story Details</DrawerTitle>
+          <DrawerDescription>
+            {isLoadingStory 
+              ? "Loading story information..." 
+              : storyError 
+              ? "Error loading story" 
+              : !story 
+              ? "Story not available"
+              : "Review and edit story information"}
+          </DrawerDescription>
+        </DrawerHeader>
+
         {isLoadingStory ? (
           <div className="p-8 text-center space-y-2">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
@@ -353,9 +381,7 @@ export function ContentQueueDetail({
         ) : storyError ? (
           <div className="p-8 text-center space-y-4">
             <p className="text-destructive font-semibold">Failed to load story</p>
-            <p className="text-sm text-muted-foreground">
-              {(storyError as any)?.message || "Unknown error - please try closing and reopening"}
-            </p>
+            <p className="text-sm text-muted-foreground">{storyError.message}</p>
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Close
             </Button>
@@ -363,31 +389,13 @@ export function ContentQueueDetail({
         ) : !story ? (
           <div className="p-8 text-center space-y-4">
             <p className="text-muted-foreground">Story not found</p>
-            <p className="text-xs text-muted-foreground">
-              The story may have been deleted or you may not have permission to view it
-            </p>
-            {process.env.NODE_ENV === 'development' && (
-              <div className="p-2 bg-muted text-xs font-mono text-left">
-                <p>Story ID: {storyId}</p>
-                <p>Loading: {isLoadingStory ? 'yes' : 'no'}</p>
-                <p>Error: {storyError?.message || 'none'}</p>
-                <p>Data: {story ? 'loaded' : 'null'}</p>
-              </div>
-            )}
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Close
             </Button>
           </div>
         ) : (
           <div className="mx-auto w-full max-w-4xl overflow-y-auto p-6">
-            <DrawerHeader className="px-0">
-            <div className="flex items-start justify-between">
-              <div className="space-y-2 flex-1">
-                <DrawerTitle className="text-2xl">Story Details</DrawerTitle>
-                <DrawerDescription>
-                  Review and edit story information
-                </DrawerDescription>
-              </div>
+            <div className="flex items-start justify-between mb-6">
               <Badge
                 variant="outline"
                 className={getStatusColor(story.status)}
@@ -395,7 +403,6 @@ export function ContentQueueDetail({
                 {story.status}
               </Badge>
             </div>
-          </DrawerHeader>
 
           <div className="space-y-6 mt-6">
             {/* Editable Fields */}
