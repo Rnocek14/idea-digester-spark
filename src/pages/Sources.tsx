@@ -181,6 +181,25 @@ const Sources = () => {
     },
   });
 
+  const backfillSafetyMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("backfill-safety");
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: async (data) => {
+      queryClient.invalidateQueries({ queryKey: ["content"] });
+      toast.success(`Safety analysis complete: ${data.analyzed} articles analyzed`);
+      
+      if (data.failed > 0) {
+        toast.warning(`${data.failed} articles failed analysis`);
+      }
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to backfill safety data");
+    },
+  });
+
   const { data: lastSync } = useQuery({
     queryKey: ["last-sync"],
     queryFn: async () => {
@@ -436,6 +455,14 @@ const Sources = () => {
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${syncRssMutation.isPending ? "animate-spin" : ""}`} />
             {syncRssMutation.isPending ? "Syncing..." : "Sync RSS Now"}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => backfillSafetyMutation.mutate()}
+            disabled={backfillSafetyMutation.isPending}
+          >
+            <Sparkles className={`h-4 w-4 mr-2 ${backfillSafetyMutation.isPending ? "animate-pulse" : ""}`} />
+            {backfillSafetyMutation.isPending ? "Analyzing..." : "Backfill Safety"}
           </Button>
           <Button onClick={handleNew}>
             <Plus className="h-4 w-4 mr-2" />

@@ -2,3 +2,6 @@ project_id = "mzumvkrpnxhkvhdyzgqa"
 
 [functions.sync-rss]
 verify_jwt = false
+
+[functions.backfill-safety]
+verify_jwt = false
