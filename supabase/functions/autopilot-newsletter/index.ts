@@ -128,7 +128,12 @@ serve(async (req) => {
     
     const { data: optimizeData, error: optimizeError } = await supabase.functions.invoke(
       "optimize-newsletter-flow",
-      { body: { storyIds } }
+      { 
+        body: { storyIds },
+        headers: {
+          Authorization: `Bearer ${supabaseServiceKey}`
+        }
+      }
     );
 
     if (optimizeError) {
@@ -256,8 +261,12 @@ async function ensureVoiceForStories(supabase: any, stories: Story[]) {
 
     console.log(`🎤 Story ${i + 1}/${stories.length}: Generating voice for "${story.title.substring(0, 50)}..."`);
 
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const { error } = await supabase.functions.invoke("transform-voice", {
-      body: { mode: "single", id: story.id }
+      body: { mode: "single", id: story.id },
+      headers: {
+        Authorization: `Bearer ${serviceRoleKey}`
+      }
     });
 
     if (error) {
