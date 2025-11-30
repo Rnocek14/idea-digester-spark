@@ -66,9 +66,10 @@ serve(async (req) => {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(today.getDate() - 7);
 
-    console.log(`🔍 Fetching eligible stories (last 7 days, not previously sent)...`);
+    console.log(`🔍 Fetching eligible stories (strict: approved/auto_published/published + safe)...`);
 
-    const { data: candidates, error: fetchError } = await supabase
+    // STRICT: Try approved/auto_published/published first
+    const { data: strictCandidates, error: fetchError } = await supabase
       .from("content_queue")
       .select("id, title, content, summary, category, content_newsletter, voice_generated_at, status, created_at")
       .in("status", ["approved", "auto_published", "published"])
@@ -78,6 +79,28 @@ serve(async (req) => {
       .order("created_at", { ascending: false });
 
     if (fetchError) throw fetchError;
+
+    let candidates = strictCandidates || [];
+    console.log(`✅ Found ${candidates.length} strict candidates`);
+
+    // FALLBACK: If fewer than 5 strict candidates, include pending+safe stories
+    if (candidates.length < 5) {
+      console.log(`⚠️ Only ${candidates.length} strict candidates, adding pending+safe stories as fallback...`);
+      
+      const { data: relaxedCandidates, error: relaxedError } = await supabase
+        .from("content_queue")
+        .select("id, title, content, summary, category, content_newsletter, voice_generated_at, status, created_at")
+        .in("status", ["approved", "auto_published", "published", "pending"])
+        .eq("safety_level", "safe")
+        .is("last_newsletter_id", null)
+        .gte("created_at", sevenDaysAgo.toISOString())
+        .order("created_at", { ascending: false });
+
+      if (relaxedError) throw relaxedError;
+      
+      candidates = relaxedCandidates || [];
+      console.log(`✅ Found ${candidates.length} total candidates (including pending+safe)`);
+    }
 
     if (!candidates || candidates.length === 0) {
       console.log("⚠️ No eligible stories found, creating skipped newsletter");
@@ -173,11 +196,14 @@ serve(async (req) => {
 
     if (saveError) throw saveError;
 
-    // Update stories with newsletter reference (dedupe marker)
-    console.log("🔗 Updating stories with newsletter reference...");
+    // Update stories with newsletter reference (dedupe marker) + auto-mark as published
+    console.log("🔗 Updating stories with newsletter reference + marking as auto_published...");
     const { error: updateError } = await supabase
       .from("content_queue")
-      .update({ last_newsletter_id: savedNewsletter.id })
+      .update({ 
+        last_newsletter_id: savedNewsletter.id,
+        status: "auto_published"
+      })
       .in("id", storyIds);
 
     if (updateError) throw updateError;
