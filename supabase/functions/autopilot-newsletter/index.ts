@@ -136,7 +136,7 @@ serve(async (req) => {
       throw new Error(`Failed to optimize flow: ${optimizeError.message}`);
     }
 
-    const optimizedStories = optimizeData.optimizedStories as { id: string; newsletter_voice: string }[];
+    const optimizedStories = optimizeData?.optimizedStories ?? [];
     console.log(`✅ Optimized ${optimizedStories.length} stories`);
 
     // Build newsletter
@@ -311,7 +311,8 @@ function buildNewsletter(
   const htmlSections = Object.entries(grouped).map(([category, categoryStories]) => {
     const emoji = categoryEmoji[category.toLowerCase()] || "📌";
     const items = categoryStories.map(s => {
-      const body = optimizedMap.get(s.id) || s.content_newsletter || s.summary || s.content.substring(0, 200);
+      const rawContent = s.content ?? "";
+      const body = optimizedMap.get(s.id) || s.content_newsletter || s.summary || rawContent.substring(0, 200);
       return `
         <div style="margin-bottom: 24px;">
           <h3 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: #1a202c;">${escapeHtml(s.title)}</h3>
@@ -368,7 +369,8 @@ function buildNewsletter(
   // Build plain text
   const textSections = Object.entries(grouped).map(([category, categoryStories]) => {
     const items = categoryStories.map(s => {
-      const body = optimizedMap.get(s.id) || s.content_newsletter || s.summary || s.content.substring(0, 200);
+      const rawContent = s.content ?? "";
+      const body = optimizedMap.get(s.id) || s.content_newsletter || s.summary || rawContent.substring(0, 200);
       return `${s.title}\n${body}\n`;
     }).join("\n");
 
