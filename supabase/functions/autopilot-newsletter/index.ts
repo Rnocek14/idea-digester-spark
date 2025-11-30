@@ -363,6 +363,40 @@ function buildNewsletter(
     "real-estate": "🏡"
   };
 
+  // Build At-a-Glance section (scannable summary)
+  const atAGlanceItems = Object.entries(grouped).flatMap(([category, categoryStories]) => {
+    return categoryStories.map(s => {
+      // Extract date/time/venue from content_newsletter or summary
+      const content = s.content_newsletter || s.summary || "";
+      return {
+        title: s.title,
+        category: category,
+        content: content
+      };
+    });
+  });
+
+  const atAGlanceHtml = `
+    <div style="margin-bottom: 32px; padding: 20px; background-color: #f7fafc; border-left: 4px solid #667eea; border-radius: 4px;">
+      <h2 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 700; color: #2d3748;">
+        📋 This Week at a Glance
+      </h2>
+      ${Object.entries(grouped).map(([category, categoryStories]) => {
+        const categoryItems = categoryStories.map(s => {
+          return `<li style="margin-bottom: 6px; font-size: 14px; line-height: 1.5; color: #4a5568;"><strong>${escapeHtml(s.title)}</strong></li>`;
+        }).join("\n");
+        return `
+          <div style="margin-bottom: 12px;">
+            <p style="margin: 0 0 6px 0; font-size: 13px; font-weight: 600; color: #718096; text-transform: uppercase; letter-spacing: 0.5px;">${category}</p>
+            <ul style="margin: 0; padding-left: 20px;">
+              ${categoryItems}
+            </ul>
+          </div>
+        `;
+      }).join("\n")}
+    </div>
+  `;
+
   // Build HTML sections
   const htmlSections = Object.entries(grouped).map(([category, categoryStories]) => {
     const emoji = categoryEmoji[category.toLowerCase()] || "📌";
@@ -408,6 +442,8 @@ function buildNewsletter(
         Here's what's happening around town this week.
       </p>
       
+      ${atAGlanceHtml}
+      
       ${htmlSections}
       
       <div style="margin-top: 40px; padding-top: 24px; border-top: 1px solid #e2e8f0; text-align: center;">
@@ -421,6 +457,12 @@ function buildNewsletter(
 </body>
 </html>
   `.trim();
+
+  // Build plain text At-a-Glance
+  const atAGlanceText = Object.entries(grouped).map(([category, categoryStories]) => {
+    const items = categoryStories.map(s => `• ${s.title}`).join("\n");
+    return `${category.toUpperCase()}\n${items}`;
+  }).join("\n\n");
 
   // Build plain text
   const textSections = Object.entries(grouped).map(([category, categoryStories]) => {
@@ -439,6 +481,10 @@ ${dateLabel}
 
 Good morning, Lake Geneva! 👋
 Here's what's happening around town this week.
+
+== THIS WEEK AT A GLANCE ==
+
+${atAGlanceText}
 
 ${textSections}
 
