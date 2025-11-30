@@ -106,6 +106,17 @@ const Sources = () => {
 
   const seedSampleSourcesMutation = useMutation({
     mutationFn: async () => {
+      // Check if sources already exist
+      const { count, error: countError } = await supabase
+        .from("sources")
+        .select("*", { count: "exact", head: true });
+
+      if (countError) throw countError;
+
+      if (count && count > 0) {
+        throw new Error(`${count} sources already exist. Delete existing sources first to re-seed.`);
+      }
+
       const sampleSources = [
         {
           name: "City of Lake Geneva – Civic Alerts",
@@ -153,6 +164,7 @@ const Sources = () => {
       });
     },
     onError: (error: any) => {
+      console.error("❌ Seed mutation error:", error);
       toast.error(error.message || "Failed to seed sample sources");
     },
   });
