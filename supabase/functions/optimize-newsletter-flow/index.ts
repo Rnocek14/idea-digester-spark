@@ -131,6 +131,14 @@ SENTENCE STRUCTURE RULES:
 3. Keep each blurb to 1-2 sentences max
 4. No exclamation marks except when already present in the event title itself
 
+ALLOWED CONTEXTUAL ADDITIONS (only if present in source content):
+- Venue name and location
+- Format descriptors: drop-in, ticketed, reservation required, free, recurring, advance tickets recommended
+- Audience indicators: family-friendly, all ages, adults, all skill levels
+- Schedule details: weekly, one-time, specific date range, runs through [date]
+- Setting: indoors, outdoors
+- Only include details that appear in the original source content. Do not invent or assume information.
+
 VARIATION TECHNIQUES (prioritize date/time/location when available):
 - Date-first: "This Saturday, the Geneva Theater hosts..."
 - Venue-first: "The Abbey Resort hosts brunch with Santa every Sunday through December 21st."
@@ -139,10 +147,11 @@ VARIATION TECHNIQUES (prioritize date/time/location when available):
 
 RULES:
 1. Never start two stories with the same phrase or structure
-2. Maintain factual accuracy - don't change or add details
-3. Same length or shorter than original
-4. Output must be valid JSON array
-5. Prefer concrete specifics (dates, venues, times, names) over vibe/hype words
+2. Vary sentence length and structure across blurbs so they don't all read identically
+3. Maintain factual accuracy - don't change or add details not in the source
+4. Same length or shorter than original
+5. Output must be valid JSON array
+6. Prefer concrete specifics (dates, venues, times, names) over vibe/hype words
 
 OUTPUT FORMAT:
 Return a valid JSON array with this exact structure:
