@@ -25,8 +25,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarIcon, Copy, CheckCircle2, Sparkles, Loader2, Zap, AlertCircle, CheckCircle, Eye } from "lucide-react";
+import { CalendarIcon, Copy, CheckCircle2, Sparkles, Loader2, Zap, AlertCircle, CheckCircle, Eye, Trash2 } from "lucide-react";
 import { format, subDays } from "date-fns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -67,6 +77,8 @@ const Newsletter = () => {
   const [previewOptimized, setPreviewOptimized] = useState<Record<string, string> | null>(null);
   const [previewNewsletter, setPreviewNewsletter] = useState<any | null>(null);
   const [forceRegenerate, setForceRegenerate] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [newsletterToDelete, setNewsletterToDelete] = useState<string | null>(null);
 
   // Query recent newsletters
   const { data: recentNewsletters } = useQuery({
@@ -80,6 +92,40 @@ const Newsletter = () => {
       if (error) throw error;
       return data;
     },
+  });
+
+  // Delete newsletter mutation
+  const deleteNewsletterMutation = useMutation({
+    mutationFn: async (newsletterId: string) => {
+      // First, clear last_newsletter_id from stories that reference this newsletter
+      const { error: updateError } = await supabase
+        .from('content_queue')
+        .update({ last_newsletter_id: null })
+        .eq('last_newsletter_id', newsletterId);
+      
+      if (updateError) throw updateError;
+
+      // Then delete the newsletter
+      const { error: deleteError } = await supabase
+        .from('newsletters')
+        .delete()
+        .eq('id', newsletterId);
+      
+      if (deleteError) throw deleteError;
+    },
+    onSuccess: () => {
+      toast.success("Newsletter deleted", {
+        description: "Stories are now eligible for next newsletter"
+      });
+      queryClient.invalidateQueries({ queryKey: ['recent-newsletters'] });
+      setDeleteDialogOpen(false);
+      setNewsletterToDelete(null);
+    },
+    onError: (error: any) => {
+      toast.error("Failed to delete newsletter", {
+        description: error.message
+      });
+    }
   });
 
   // Autopilot newsletter mutation
@@ -508,15 +554,28 @@ const Newsletter = () => {
                         {newsletter.subject}
                       </TableCell>
                       <TableCell>
-                        {(newsletter.status === 'ready' || newsletter.status === 'sent') && (
+                        <div className="flex items-center gap-1">
+                          {(newsletter.status === 'ready' || newsletter.status === 'sent') && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setPreviewNewsletter(newsletter)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => setPreviewNewsletter(newsletter)}
+                            onClick={() => {
+                              setNewsletterToDelete(newsletter.id);
+                              setDeleteDialogOpen(true);
+                            }}
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
                           >
-                            <Eye className="h-4 w-4" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
-                        )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -944,6 +1003,34 @@ const Newsletter = () => {
           </Tabs>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Newsletter?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the newsletter and make all its stories eligible for the next edition.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => newsletterToDelete && deleteNewsletterMutation.mutate(newsletterToDelete)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteNewsletterMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
