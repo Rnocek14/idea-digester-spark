@@ -125,8 +125,12 @@ RULES:
 5. Keep factual accuracy - don't change or add details
 6. Same length or shorter than original
 7. Output must be valid JSON array
+8. Keep each blurb to 1-2 sentences max
+9. If the story has a specific date, time, or venue in the source, lead with it in the first sentence
+10. Avoid generic marketing phrases like "truly unique," "holiday magic," "wonderful chance," "delightful," "charming adventure"
+11. Prefer concrete specifics (dates, venues, times, names) over vibe/hype words
 
-VARIATION TECHNIQUES (use at least 3 different ones across all stories):
+VARIATION TECHNIQUES (use at least 3 different ones, but PRIORITIZE date/time/location when available):
 - Date-first: "This Saturday, downtown Lake Geneva comes alive with..."
 - Question hook: "Looking for something fun this weekend?"
 - Direct statement: "Live music returns to the lakefront..."
