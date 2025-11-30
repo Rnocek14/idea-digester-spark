@@ -10,7 +10,7 @@ verify_jwt = false
 verify_jwt = true
 
 [functions.optimize-newsletter-flow]
-verify_jwt = true
+verify_jwt = false
 
 [functions.autopilot-newsletter]
 verify_jwt = false
