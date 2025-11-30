@@ -138,7 +138,9 @@ serve(async (req) => {
 
     if (optimizeError) {
       console.error("Optimize flow error:", optimizeError);
-      throw new Error(`Failed to optimize flow: ${optimizeError.message}`);
+      console.error("Optimize flow error details:", JSON.stringify(optimizeError, null, 2));
+      // If optimization fails, continue with existing newsletter voices
+      console.log("⚠️ Optimization failed, using existing content_newsletter values");
     }
 
     const optimizedStories = optimizeData?.optimizedStories ?? [];
