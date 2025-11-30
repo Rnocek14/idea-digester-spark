@@ -42,6 +42,9 @@ serve(async (req) => {
       try {
         console.log(`[backfill-safety] Analyzing: ${article.title}`);
 
+        // Truncate content to avoid token overflow
+        const truncatedContent = (article.content || '').substring(0, 1000);
+
         // Call Lovable AI Gateway for safety evaluation
         const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
           method: 'POST',
@@ -72,7 +75,7 @@ When in doubt between safe and sensitive, choose sensitive. Only use blocked for
               },
               {
                 role: 'user',
-                content: `Analyze this article:\n\nTitle: ${article.title}\n\nContent: ${article.content}\n\nSummary: ${article.summary || 'None'}`
+                content: `Analyze this article:\n\nTitle: ${article.title}\n\nContent: ${truncatedContent}\n\nSummary: ${article.summary || 'None'}`
               }
             ],
             tools: [{
