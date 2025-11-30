@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -18,10 +18,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { CalendarIcon, Copy, CheckCircle2 } from "lucide-react";
+import { CalendarIcon, Copy, CheckCircle2, Sparkles, Loader2 } from "lucide-react";
 import { format, subDays } from "date-fns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { logActivity } from "@/lib/logActivity";
 
 type Story = {
   id: string;
@@ -36,6 +37,7 @@ type Story = {
 };
 
 const Newsletter = () => {
+  const queryClient = useQueryClient();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
     from: subDays(new Date(), 7),
@@ -43,6 +45,8 @@ const Newsletter = () => {
   });
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [safetyFilter, setSafetyFilter] = useState<"safe" | "safe_and_sensitive">("safe");
+  const [generatingStoryId, setGeneratingStoryId] = useState<string | null>(null);
+  const [batchProgress, setBatchProgress] = useState<{ current: number; total: number } | null>(null);
 
   const { data: stories, isLoading } = useQuery({
     queryKey: ["newsletter-stories", dateRange, categoryFilter, safetyFilter],
@@ -95,6 +99,59 @@ const Newsletter = () => {
 
     return groups;
   }, [selectedStories]);
+
+  // Single voice generation mutation
+  const generateVoiceMutation = useMutation({
+    mutationFn: async (storyId: string) => {
+      const { data, error } = await supabase.functions.invoke('transform-voice', {
+        body: { mode: 'single', id: storyId }
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: async (_, storyId) => {
+      await queryClient.invalidateQueries({ queryKey: ["newsletter-stories", dateRange, categoryFilter, safetyFilter] });
+      toast.success("Voice generated successfully!");
+      
+      await logActivity({
+        entityType: "content",
+        entityId: storyId,
+        action: "voice_generated",
+        message: "Voice variants generated from Newsletter page",
+      });
+    },
+    onError: (error) => {
+      console.error("Voice generation error:", error);
+      toast.error("Failed to generate voice variants");
+    },
+    onSettled: () => {
+      setGeneratingStoryId(null);
+    }
+  });
+
+  // Batch voice generation
+  const generateBatchVoice = async () => {
+    const storiesNeedingVoice = selectedStories.filter(s => !s.voice_generated_at);
+    if (storiesNeedingVoice.length === 0) return;
+
+    setBatchProgress({ current: 0, total: storiesNeedingVoice.length });
+    
+    for (let i = 0; i < storiesNeedingVoice.length; i++) {
+      const story = storiesNeedingVoice[i];
+      setGeneratingStoryId(story.id);
+      setBatchProgress({ current: i + 1, total: storiesNeedingVoice.length });
+      
+      try {
+        await generateVoiceMutation.mutateAsync(story.id);
+      } catch (error) {
+        console.error(`Failed to generate voice for story ${story.id}:`, error);
+      }
+    }
+    
+    setBatchProgress(null);
+    setGeneratingStoryId(null);
+    toast.success(`Generated voice for ${storiesNeedingVoice.length} stories!`);
+  };
 
   const toggleStory = (id: string) => {
     setSelectedIds((prev) => {
@@ -211,7 +268,29 @@ const Newsletter = () => {
         {/* Left Column: Story Picker */}
         <Card className="p-6 space-y-6">
           <div>
-            <h2 className="text-xl font-semibold mb-4">Select Stories</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">Select Stories</h2>
+              {selectedStories.filter(s => !s.voice_generated_at).length > 0 && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={generateBatchVoice}
+                  disabled={!!batchProgress || !!generatingStoryId}
+                >
+                  {batchProgress ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Generating {batchProgress.current}/{batchProgress.total}
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Generate Voice for {selectedStories.filter(s => !s.voice_generated_at).length} Selected
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
             
             {/* Filters */}
             <div className="space-y-4 mb-6">
@@ -322,9 +401,29 @@ const Newsletter = () => {
                           Voice: Ready
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="text-xs text-muted-foreground">
-                          Voice: Not generated
-                        </Badge>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-6 text-xs"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setGeneratingStoryId(story.id);
+                            generateVoiceMutation.mutate(story.id);
+                          }}
+                          disabled={generatingStoryId === story.id || !!batchProgress}
+                        >
+                          {generatingStoryId === story.id ? (
+                            <>
+                              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                              Generating...
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles className="h-3 w-3 mr-1" />
+                              Generate Voice
+                            </>
+                          )}
+                        </Button>
                       )}
                     </div>
                   </div>
