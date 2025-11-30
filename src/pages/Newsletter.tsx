@@ -47,6 +47,7 @@ const Newsletter = () => {
   const [safetyFilter, setSafetyFilter] = useState<"safe" | "safe_and_sensitive">("safe");
   const [generatingStoryId, setGeneratingStoryId] = useState<string | null>(null);
   const [batchProgress, setBatchProgress] = useState<{ current: number; total: number } | null>(null);
+  const [isOptimizing, setIsOptimizing] = useState(false);
 
   const { data: stories, isLoading } = useQuery({
     queryKey: ["newsletter-stories", dateRange, categoryFilter, safetyFilter],
@@ -126,6 +127,36 @@ const Newsletter = () => {
     },
     onSettled: () => {
       setGeneratingStoryId(null);
+    }
+  });
+
+  // Newsletter flow optimization mutation
+  const optimizeFlowMutation = useMutation({
+    mutationFn: async (storyIds: string[]) => {
+      const { data, error } = await supabase.functions.invoke('optimize-newsletter-flow', {
+        body: { storyIds }
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: async (data) => {
+      await queryClient.invalidateQueries({ queryKey: ["newsletter-stories", dateRange, categoryFilter, safetyFilter] });
+      toast.success(`Optimized newsletter flow for ${data.updatedCount} stories!`);
+      
+      await logActivity({
+        entityType: "content",
+        entityId: null,
+        action: "newsletter_flow_optimized",
+        message: `Optimized newsletter flow for ${data.updatedCount} stories`,
+        details: { count: data.updatedCount }
+      });
+    },
+    onError: (error) => {
+      console.error("Flow optimization error:", error);
+      toast.error("Failed to optimize newsletter flow");
+    },
+    onSettled: () => {
+      setIsOptimizing(false);
     }
   });
 
@@ -268,28 +299,60 @@ const Newsletter = () => {
         {/* Left Column: Story Picker */}
         <Card className="p-6 space-y-6">
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">Select Stories</h2>
-              {selectedStories.filter(s => !s.voice_generated_at).length > 0 && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={generateBatchVoice}
-                  disabled={!!batchProgress || !!generatingStoryId}
-                >
-                  {batchProgress ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Generating {batchProgress.current}/{batchProgress.total}
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="h-4 w-4 mr-2" />
-                      Generate Voice for {selectedStories.filter(s => !s.voice_generated_at).length} Selected
-                    </>
-                  )}
-                </Button>
-              )}
+            <div className="flex flex-col gap-3 mb-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold">Select Stories</h2>
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="flex gap-2">
+                {selectedStories.filter(s => !s.voice_generated_at).length > 0 && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={generateBatchVoice}
+                    disabled={!!batchProgress || !!generatingStoryId || isOptimizing}
+                    className="flex-1"
+                  >
+                    {batchProgress ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Generating {batchProgress.current}/{batchProgress.total}
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        Generate Voice ({selectedStories.filter(s => !s.voice_generated_at).length})
+                      </>
+                    )}
+                  </Button>
+                )}
+                
+                {selectedStories.length >= 2 && (
+                  <Button
+                    size="sm"
+                    variant="default"
+                    onClick={() => {
+                      setIsOptimizing(true);
+                      optimizeFlowMutation.mutate(Array.from(selectedIds));
+                    }}
+                    disabled={isOptimizing || !!batchProgress || !!generatingStoryId}
+                    className="flex-1"
+                  >
+                    {isOptimizing ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Optimizing...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        ✨ Optimize Flow ({selectedStories.length})
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
             </div>
             
             {/* Filters */}
