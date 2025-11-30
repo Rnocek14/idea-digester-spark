@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.84.0";
+import { Resend } from "https://esm.sh/resend@4.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,6 +17,12 @@ interface Story {
   voice_generated_at: string | null;
   status: string;
   created_at: string;
+}
+
+interface Subscriber {
+  id: string;
+  email: string;
+  unsubscribe_token: string;
 }
 
 serve(async (req) => {
@@ -227,13 +234,41 @@ serve(async (req) => {
 
     if (updateError) throw updateError;
 
-    // GUARDRAIL: Email sending stubbed out for now
-    // In the future, uncomment this to enable real sending:
-    // await sendNewsletterEmail(savedNewsletter);
-    // await supabase.from("newsletters").update({ status: "sent", sent_at: new Date().toISOString() }).eq("id", savedNewsletter.id);
+    // Check if auto-send is enabled for this newsletter
+    const shouldSend = savedNewsletter.auto_send_enabled === true;
+
+    if (shouldSend) {
+      console.log("📧 Auto-send enabled, sending newsletter...");
+      const { sent, failed } = await sendNewsletterEmail(supabase, savedNewsletter, supabaseUrl);
+      
+      if (sent > 0) {
+        await supabase
+          .from("newsletters")
+          .update({ status: "sent", sent_at: new Date().toISOString() })
+          .eq("id", savedNewsletter.id);
+        
+        console.log(`✅ Newsletter sent to ${sent} subscribers (${failed} failed)`);
+        
+        return new Response(
+          JSON.stringify({
+            success: true,
+            newsletter_id: savedNewsletter.id,
+            status: "sent",
+            story_count: selectedStories.length,
+            subject: newsletter.subject,
+            sent_count: sent,
+            failed_count: failed,
+            message: `Newsletter sent to ${sent} subscribers`
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+        );
+      }
+    } else {
+      console.log("📧 Auto-send disabled, newsletter saved as 'ready'");
+    }
 
     console.log(`✅ Newsletter generated successfully! ID: ${savedNewsletter.id}`);
-    console.log(`📧 Status: ${savedNewsletter.status} (email sending disabled for safety)`);
+    console.log(`📧 Status: ${savedNewsletter.status}`);
 
     return new Response(
       JSON.stringify({
@@ -518,39 +553,71 @@ function escapeHtml(text: string): string {
   return text.replace(/[&<>"']/g, m => map[m]);
 }
 
-// GUARDRAIL: Email sending stubbed out for safety
-// Uncomment when ready to enable real sending
-/*
-async function sendNewsletterEmail(newsletter: any) {
-  const emailApiKey = Deno.env.get("EMAIL_API_KEY");
-  const listId = Deno.env.get("EMAIL_LIST_ID");
-
-  if (!emailApiKey || !listId) {
-    console.log("⚠️ Email provider not configured, skipping send");
-    return;
+// Send newsletter email via Resend
+async function sendNewsletterEmail(
+  supabase: any,
+  newsletter: any,
+  baseUrl: string
+): Promise<{ sent: number; failed: number }> {
+  const resendApiKey = Deno.env.get("RESEND_API_KEY");
+  
+  if (!resendApiKey) {
+    console.log("⚠️ RESEND_API_KEY not configured, skipping send");
+    return { sent: 0, failed: 0 };
   }
 
-  console.log("📧 Sending newsletter via email provider...");
+  const resend = new Resend(resendApiKey);
 
-  const res = await fetch("https://api.your-email-provider.com/send", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${emailApiKey}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      listId,
+  // Fetch active subscribers
+  const { data: subscribers, error } = await supabase
+    .from("subscribers")
+    .select("id, email, unsubscribe_token")
+    .eq("status", "active");
+    // Future: .eq("city_id", newsletter.city_id) for multi-city
+
+  if (error || !subscribers?.length) {
+    console.log("⚠️ No active subscribers found");
+    return { sent: 0, failed: 0 };
+  }
+
+  console.log(`📧 Sending to ${subscribers.length} subscribers...`);
+
+  // Batch in chunks of 100 for Resend limits
+  const BATCH_SIZE = 100;
+  let totalSent = 0;
+  let totalFailed = 0;
+
+  for (let i = 0; i < subscribers.length; i += BATCH_SIZE) {
+    const batch = subscribers.slice(i, i + BATCH_SIZE);
+    
+    const emails = batch.map((sub: Subscriber) => ({
+      from: "Lake Geneva Local <onboarding@resend.dev>", // Test mode
+      to: sub.email,
       subject: newsletter.subject,
-      html: newsletter.html_body,
-      text: newsletter.text_body
-    })
-  });
+      html: newsletter.html_body.replace(
+        'href="#"', // Replace placeholder unsubscribe link
+        `href="${baseUrl}/functions/v1/unsubscribe?token=${sub.unsubscribe_token}"`
+      ),
+      text: newsletter.text_body.replace(
+        "Unsubscribe: [link]",
+        `Unsubscribe: ${baseUrl}/functions/v1/unsubscribe?token=${sub.unsubscribe_token}`
+      )
+    }));
 
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Failed to send newsletter: ${res.status} ${text}`);
+    try {
+      const { data, error } = await resend.batch.send(emails);
+      if (error) {
+        console.error(`Batch ${i / BATCH_SIZE + 1} failed:`, error);
+        totalFailed += batch.length;
+      } else {
+        totalSent += batch.length;
+        console.log(`✅ Batch ${i / BATCH_SIZE + 1}: ${batch.length} sent`);
+      }
+    } catch (e) {
+      console.error(`Batch ${i / BATCH_SIZE + 1} exception:`, e);
+      totalFailed += batch.length;
+    }
   }
 
-  console.log("✅ Newsletter sent successfully");
+  return { sent: totalSent, failed: totalFailed };
 }
-*/
