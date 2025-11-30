@@ -25,7 +25,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { CalendarIcon, Copy, CheckCircle2, Sparkles, Loader2, Zap, AlertCircle, CheckCircle } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CalendarIcon, Copy, CheckCircle2, Sparkles, Loader2, Zap, AlertCircle, CheckCircle, Eye } from "lucide-react";
 import { format, subDays } from "date-fns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -64,6 +65,7 @@ const Newsletter = () => {
   const [batchProgress, setBatchProgress] = useState<{ current: number; total: number } | null>(null);
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [previewOptimized, setPreviewOptimized] = useState<Record<string, string> | null>(null);
+  const [previewNewsletter, setPreviewNewsletter] = useState<any | null>(null);
 
   // Query recent newsletters
   const { data: recentNewsletters } = useQuery({
@@ -392,6 +394,16 @@ const Newsletter = () => {
     toast.success("HTML copied to clipboard!");
   };
 
+  const copyNewsletterHTML = (html: string) => {
+    navigator.clipboard.writeText(html);
+    toast.success("HTML copied to clipboard!");
+  };
+
+  const copyNewsletterPlainText = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success("Plain text copied to clipboard!");
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'sent':
@@ -459,6 +471,7 @@ const Newsletter = () => {
                     <TableHead>Status</TableHead>
                     <TableHead>Stories</TableHead>
                     <TableHead>Subject</TableHead>
+                    <TableHead className="w-24">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -475,6 +488,17 @@ const Newsletter = () => {
                       </TableCell>
                       <TableCell className="max-w-md truncate">
                         {newsletter.subject}
+                      </TableCell>
+                      <TableCell>
+                        {(newsletter.status === 'ready' || newsletter.status === 'sent') && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setPreviewNewsletter(newsletter)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -847,6 +871,61 @@ const Newsletter = () => {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Newsletter Preview Modal */}
+      <Dialog open={!!previewNewsletter} onOpenChange={(open) => !open && setPreviewNewsletter(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle>{previewNewsletter?.subject}</DialogTitle>
+            <DialogDescription className="flex items-center gap-4 text-sm">
+              <span>Edition: {previewNewsletter?.edition_date && format(new Date(previewNewsletter.edition_date), 'MMM d, yyyy')}</span>
+              <span>•</span>
+              <span>{previewNewsletter?.story_count} stories</span>
+              <span>•</span>
+              {previewNewsletter?.status && getStatusBadge(previewNewsletter.status)}
+            </DialogDescription>
+          </DialogHeader>
+
+          <Tabs defaultValue="html" className="flex-1 flex flex-col overflow-hidden">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="html">HTML Preview</TabsTrigger>
+              <TabsTrigger value="text">Plain Text</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="html" className="flex-1 overflow-hidden flex flex-col gap-4">
+              <div className="flex-1 overflow-auto border rounded-lg bg-background">
+                <iframe
+                  srcDoc={previewNewsletter?.html_body}
+                  className="w-full h-full min-h-[500px]"
+                  title="Newsletter Preview"
+                />
+              </div>
+              <Button
+                onClick={() => copyNewsletterHTML(previewNewsletter?.html_body)}
+                className="w-full"
+              >
+                <Copy className="h-4 w-4 mr-2" />
+                Copy HTML
+              </Button>
+            </TabsContent>
+
+            <TabsContent value="text" className="flex-1 overflow-hidden flex flex-col gap-4">
+              <div className="flex-1 overflow-auto border rounded-lg p-4 bg-muted">
+                <pre className="text-sm whitespace-pre-wrap font-mono">
+                  {previewNewsletter?.text_body}
+                </pre>
+              </div>
+              <Button
+                onClick={() => copyNewsletterPlainText(previewNewsletter?.text_body)}
+                className="w-full"
+              >
+                <Copy className="h-4 w-4 mr-2" />
+                Copy Plain Text
+              </Button>
+            </TabsContent>
+          </Tabs>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
