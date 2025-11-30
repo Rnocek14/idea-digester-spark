@@ -138,9 +138,39 @@ const Newsletter = () => {
     }
   });
 
-  // Newsletter flow optimization mutation
+  // Newsletter flow optimization mutation (with auto voice generation)
   const optimizeFlowMutation = useMutation({
     mutationFn: async (storyIds: string[]) => {
+      // First, check which stories need voice generation
+      const storiesNeedingVoice = selectedStories.filter(
+        s => !s.content_newsletter || !s.voice_generated_at
+      );
+
+      // Generate voice for stories that need it
+      if (storiesNeedingVoice.length > 0) {
+        setBatchProgress({ current: 0, total: storiesNeedingVoice.length });
+        
+        for (let i = 0; i < storiesNeedingVoice.length; i++) {
+          const story = storiesNeedingVoice[i];
+          setBatchProgress({ current: i + 1, total: storiesNeedingVoice.length });
+          
+          const { error } = await supabase.functions.invoke('transform-voice', {
+            body: { mode: 'single', id: story.id }
+          });
+          
+          if (error) {
+            console.error(`Failed to generate voice for story ${story.id}:`, error);
+            toast.error(`Failed to generate voice for "${story.title}"`);
+          }
+          
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+        
+        setBatchProgress(null);
+        await queryClient.invalidateQueries({ queryKey: ["newsletter-stories", dateRange, categoryFilter, safetyFilter] });
+      }
+
+      // Now optimize flow for all stories
       const { data, error } = await supabase.functions.invoke('optimize-newsletter-flow', {
         body: { storyIds }
       });
@@ -158,22 +188,23 @@ const Newsletter = () => {
       }
 
       await queryClient.invalidateQueries({ queryKey: ["newsletter-stories", dateRange, categoryFilter, safetyFilter] });
-      toast.success(`Optimized newsletter flow for ${data.updatedCount} stories!`);
+      toast.success(`Newsletter prepared for ${data.updatedCount} stories!`);
       
       await logActivity({
         entityType: "content",
         entityId: null,
         action: "newsletter_flow_optimized",
-        message: `Optimized newsletter flow for ${data.updatedCount} stories`,
+        message: `Newsletter prepared with optimized flow for ${data.updatedCount} stories`,
         details: { count: data.updatedCount }
       });
     },
     onError: (error) => {
-      console.error("Flow optimization error:", error);
-      toast.error("Failed to optimize newsletter flow");
+      console.error("Newsletter preparation error:", error);
+      toast.error("Failed to prepare newsletter");
     },
     onSettled: () => {
       setIsOptimizing(false);
+      setBatchProgress(null);
     }
   });
 
@@ -359,12 +390,15 @@ const Newsletter = () => {
                     {isOptimizing ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Optimizing...
+                        {batchProgress 
+                          ? `Generating (${batchProgress.current}/${batchProgress.total})...`
+                          : 'Optimizing flow...'
+                        }
                       </>
                     ) : (
                       <>
                         <Sparkles className="h-4 w-4 mr-2" />
-                        ✨ Optimize Flow ({selectedStories.length})
+                        ✨ Prepare Newsletter ({selectedStories.length})
                       </>
                     )}
                   </Button>
