@@ -21,6 +21,13 @@ serve(async (req) => {
       );
     }
 
+    if (storyIds.length > 20) {
+      return new Response(
+        JSON.stringify({ error: 'Too many stories selected; max is 20 per optimization run' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const lovableApiKey = Deno.env.get('LOVABLE_API_KEY')!;
@@ -51,13 +58,19 @@ serve(async (req) => {
     console.log(`Optimizing newsletter flow for ${stories.length} stories`);
 
     // Build the combined prompt
-    const storiesContext = stories.map((story, index) => `
+    const storiesContext = stories.map((story, index) => {
+      const fallbackContent = story.content_newsletter || 
+                              story.summary || 
+                              (story.content ? story.content.substring(0, 300) : 'No content available');
+      
+      return `
 Story ${index + 1}:
 ID: ${story.id}
 Title: ${story.title}
 Category: ${story.category || 'uncategorized'}
-Current Newsletter Copy: ${story.content_newsletter || story.summary || story.content.substring(0, 300)}
-`).join('\n---\n');
+Current Newsletter Copy: ${fallbackContent}
+`;
+    }).join('\n---\n');
 
     const systemPrompt = `You are the newsletter editor for Lake Geneva Local, a conversational, friendly, trustworthy hyperlocal news brand. Your job is to rewrite newsletter blurbs so they are varied, human, and enjoyable to read as a set.
 
@@ -125,14 +138,20 @@ Return a valid JSON array with this exact structure:
     }
 
     const aiData = await aiResponse.json();
-    const aiContent = aiData.choices?.[0]?.message?.content;
+    let rawContent = aiData.choices?.[0]?.message?.content;
 
-    if (!aiContent) {
+    if (!rawContent) {
       console.error('No content in AI response');
       return new Response(
         JSON.stringify({ error: 'No content generated' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+    }
+
+    // Ensure content is a string (handle Gemini-style array responses)
+    if (typeof rawContent !== 'string') {
+      console.log('AI returned non-string content, converting...');
+      rawContent = JSON.stringify(rawContent);
     }
 
     console.log('AI response received, parsing JSON...');
@@ -141,14 +160,14 @@ Return a valid JSON array with this exact structure:
     let optimizedStories;
     try {
       // Try to extract JSON from markdown code blocks if present
-      const jsonMatch = aiContent.match(/```json\s*([\s\S]*?)\s*```/) || 
-                       aiContent.match(/```\s*([\s\S]*?)\s*```/) ||
-                       [null, aiContent];
-      const jsonContent = jsonMatch[1] || aiContent;
+      const jsonMatch = rawContent.match(/```json\s*([\s\S]*?)\s*```/) || 
+                       rawContent.match(/```\s*([\s\S]*?)\s*```/) ||
+                       [null, rawContent];
+      const jsonContent = jsonMatch[1] || rawContent;
       optimizedStories = JSON.parse(jsonContent.trim());
     } catch (parseError) {
       console.error('Failed to parse AI response as JSON:', parseError);
-      console.error('AI response:', aiContent);
+      console.error('AI response:', rawContent);
       return new Response(
         JSON.stringify({ error: 'Failed to parse AI response' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
