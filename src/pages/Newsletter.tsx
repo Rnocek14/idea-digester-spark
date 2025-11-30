@@ -18,6 +18,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { CalendarIcon, Copy, CheckCircle2, Sparkles, Loader2 } from "lucide-react";
 import { format, subDays } from "date-fns";
 import { toast } from "sonner";
@@ -48,6 +55,7 @@ const Newsletter = () => {
   const [generatingStoryId, setGeneratingStoryId] = useState<string | null>(null);
   const [batchProgress, setBatchProgress] = useState<{ current: number; total: number } | null>(null);
   const [isOptimizing, setIsOptimizing] = useState(false);
+  const [previewOptimized, setPreviewOptimized] = useState<Record<string, string> | null>(null);
 
   const { data: stories, isLoading } = useQuery({
     queryKey: ["newsletter-stories", dateRange, categoryFilter, safetyFilter],
@@ -140,6 +148,15 @@ const Newsletter = () => {
       return data;
     },
     onSuccess: async (data) => {
+      // Map optimized stories by id for preview
+      if (data?.optimizedStories) {
+        const map: Record<string, string> = {};
+        for (const item of data.optimizedStories) {
+          map[item.id] = item.newsletter_voice;
+        }
+        setPreviewOptimized(map);
+      }
+
       await queryClient.invalidateQueries({ queryKey: ["newsletter-stories", dateRange, categoryFilter, safetyFilter] });
       toast.success(`Optimized newsletter flow for ${data.updatedCount} stories!`);
       
@@ -608,6 +625,52 @@ const Newsletter = () => {
           )}
         </Card>
       </div>
+
+      {/* Before/After Preview Dialog */}
+      {previewOptimized && selectedStories.length > 0 && (
+        <Dialog open={true} onOpenChange={() => setPreviewOptimized(null)}>
+          <DialogContent className="max-h-[80vh] overflow-y-auto max-w-4xl">
+            <DialogHeader>
+              <DialogTitle>Newsletter Flow Optimization Preview</DialogTitle>
+              <DialogDescription>
+                Before and after comparison for {selectedStories.length} stories.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-6">
+              {selectedStories.map((story) => {
+                const hasOptimized = previewOptimized[story.id];
+                if (!hasOptimized) return null;
+
+                return (
+                  <div key={story.id} className="border rounded-lg p-4">
+                    <div className="text-sm font-semibold mb-3 flex items-center gap-2">
+                      <span className="truncate">{story.title}</span>
+                      <Badge variant="outline" className="shrink-0">
+                        {story.category || 'other'}
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <div className="font-medium mb-2 text-muted-foreground">Before</div>
+                        <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                          {story.content_newsletter || story.summary || "No newsletter copy yet"}
+                        </p>
+                      </div>
+                      <div>
+                        <div className="font-medium mb-2 text-primary">After</div>
+                        <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                          {previewOptimized[story.id]}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };
