@@ -102,6 +102,7 @@ export type Database = {
           created_at: string
           id: string
           image_url: string | null
+          last_newsletter_id: string | null
           metadata: Json | null
           original_url: string | null
           publish_date: string | null
@@ -131,6 +132,7 @@ export type Database = {
           created_at?: string
           id?: string
           image_url?: string | null
+          last_newsletter_id?: string | null
           metadata?: Json | null
           original_url?: string | null
           publish_date?: string | null
@@ -160,6 +162,7 @@ export type Database = {
           created_at?: string
           id?: string
           image_url?: string | null
+          last_newsletter_id?: string | null
           metadata?: Json | null
           original_url?: string | null
           publish_date?: string | null
@@ -177,6 +180,13 @@ export type Database = {
           voice_version?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "content_queue_last_newsletter_id_fkey"
+            columns: ["last_newsletter_id"]
+            isOneToOne: false
+            referencedRelation: "newsletters"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "content_queue_source_id_fkey"
             columns: ["source_id"]
@@ -261,6 +271,54 @@ export type Database = {
           metadata?: Json | null
           name?: string
           type?: string
+        }
+        Relationships: []
+      }
+      newsletters: {
+        Row: {
+          created_at: string
+          edition_date: string
+          error_message: string | null
+          html_body: string
+          id: string
+          metadata: Json | null
+          preheader: string | null
+          sent_at: string | null
+          status: string
+          story_count: number
+          story_ids: string[]
+          subject: string
+          text_body: string
+        }
+        Insert: {
+          created_at?: string
+          edition_date: string
+          error_message?: string | null
+          html_body: string
+          id?: string
+          metadata?: Json | null
+          preheader?: string | null
+          sent_at?: string | null
+          status?: string
+          story_count?: number
+          story_ids?: string[]
+          subject: string
+          text_body: string
+        }
+        Update: {
+          created_at?: string
+          edition_date?: string
+          error_message?: string | null
+          html_body?: string
+          id?: string
+          metadata?: Json | null
+          preheader?: string | null
+          sent_at?: string | null
+          status?: string
+          story_count?: number
+          story_ids?: string[]
+          subject?: string
+          text_body?: string
         }
         Relationships: []
       }

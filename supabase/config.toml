@@ -11,3 +11,6 @@ verify_jwt = true
 
 [functions.optimize-newsletter-flow]
 verify_jwt = true
+
+[functions.autopilot-newsletter]
+verify_jwt = false
