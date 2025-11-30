@@ -14,10 +14,17 @@ serve(async (req) => {
   try {
     const { storyIds } = await req.json();
 
-    if (!Array.isArray(storyIds) || storyIds.length < 2) {
+    // Handle 0 stories gracefully
+    if (!Array.isArray(storyIds) || storyIds.length === 0) {
+      console.log('No stories provided, returning empty result');
       return new Response(
-        JSON.stringify({ error: 'At least 2 story IDs required for flow optimization' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ 
+          success: true,
+          optimizedStories: [],
+          updatedCount: 0,
+          totalStories: 0
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -48,10 +55,38 @@ serve(async (req) => {
       );
     }
 
-    if (!stories || stories.length < 2) {
+    if (!stories || stories.length === 0) {
       return new Response(
-        JSON.stringify({ error: 'Not enough stories found' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ 
+          success: true,
+          optimizedStories: [],
+          updatedCount: 0,
+          totalStories: 0
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Handle single story: just return original content_newsletter
+    if (stories.length === 1) {
+      const story = stories[0];
+      const fallbackContent = story.content_newsletter || 
+                              story.summary || 
+                              (story.content ? story.content.substring(0, 300) : 'No content available');
+      
+      console.log(`Single story optimization: returning original content for "${story.title}"`);
+      
+      return new Response(
+        JSON.stringify({
+          success: true,
+          optimizedStories: [
+            { id: story.id, newsletter_voice: fallbackContent }
+          ],
+          updatedCount: 0,
+          totalStories: 1,
+          message: 'Single story - no optimization needed'
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
