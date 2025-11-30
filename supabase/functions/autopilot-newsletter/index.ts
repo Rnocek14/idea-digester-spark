@@ -24,7 +24,8 @@ serve(async (req) => {
   }
 
   try {
-    console.log("🚀 Autopilot Newsletter Engine starting...");
+    const { force = false } = await req.json().catch(() => ({}));
+    console.log(`🚀 Autopilot Newsletter Engine starting... (force=${force})`);
 
     // Initialize Supabase client with service role
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
@@ -45,20 +46,38 @@ serve(async (req) => {
     // Check if newsletter already exists for today
     const { data: existingNewsletter } = await supabase
       .from("newsletters")
-      .select("id, status")
+      .select("id, status, subject, story_count")
       .eq("edition_date", editionDate)
       .maybeSingle();
 
-    if (existingNewsletter && ["ready", "sent"].includes(existingNewsletter.status)) {
-      console.log(`✅ Newsletter already ${existingNewsletter.status} for today, skipping`);
+    if (existingNewsletter && !force) {
+      console.log(`✅ Newsletter already exists for today (status: ${existingNewsletter.status})`);
       return new Response(
         JSON.stringify({ 
-          message: `Newsletter already ${existingNewsletter.status} for today`,
           newsletter_id: existingNewsletter.id,
-          status: existingNewsletter.status
+          status: existingNewsletter.status,
+          subject: existingNewsletter.subject,
+          edition_date: editionDate,
+          already_exists: true,
+          existing_story_count: existingNewsletter.story_count
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
       );
+    }
+    
+    // If force=true and newsletter exists, delete it first
+    if (existingNewsletter && force) {
+      console.log(`🔄 Force regenerate: deleting existing newsletter ${existingNewsletter.id}`);
+      const { error: deleteError } = await supabase
+        .from("newsletters")
+        .delete()
+        .eq("id", existingNewsletter.id);
+      
+      if (deleteError) {
+        console.error("Failed to delete existing newsletter:", deleteError);
+        throw deleteError;
+      }
+      console.log("✅ Existing newsletter deleted, proceeding with fresh generation");
     }
 
     // Select eligible stories

@@ -66,6 +66,7 @@ const Newsletter = () => {
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [previewOptimized, setPreviewOptimized] = useState<Record<string, string> | null>(null);
   const [previewNewsletter, setPreviewNewsletter] = useState<any | null>(null);
+  const [forceRegenerate, setForceRegenerate] = useState(false);
 
   // Query recent newsletters
   const { data: recentNewsletters } = useQuery({
@@ -84,7 +85,9 @@ const Newsletter = () => {
   // Autopilot newsletter mutation
   const autopilotMutation = useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke('autopilot-newsletter');
+      const { data, error } = await supabase.functions.invoke('autopilot-newsletter', {
+        body: { force: forceRegenerate }
+      });
       if (error) throw error;
       return data;
     },
@@ -95,11 +98,17 @@ const Newsletter = () => {
         toast.info(`Newsletter skipped: ${data.reason}`, {
           description: `Edition date: ${format(new Date(data.edition_date), 'MMM d, yyyy')}`
         });
+      } else if (data.already_exists) {
+        toast.info("Newsletter already exists for today", {
+          description: `${data.subject} (${data.existing_story_count} stories)`
+        });
       } else {
         toast.success(`Newsletter generated! ${data.story_count} stories`, {
           description: data.subject
         });
       }
+      
+      setForceRegenerate(false);
       
       await logActivity({
         entityType: "system",
@@ -431,7 +440,7 @@ const Newsletter = () => {
       {/* Autopilot Section */}
       <Card className="p-6 border-primary/20 bg-primary/5">
         <div className="flex items-start justify-between mb-4">
-          <div>
+          <div className="flex-1">
             <h2 className="text-xl font-semibold flex items-center gap-2">
               <Zap className="h-5 w-5 text-primary" />
               Autopilot Newsletter
@@ -439,6 +448,15 @@ const Newsletter = () => {
             <p className="text-sm text-muted-foreground mt-1">
               Generate today's newsletter automatically using the best available stories
             </p>
+            <label className="flex items-center gap-2 mt-3 cursor-pointer">
+              <Checkbox 
+                checked={forceRegenerate} 
+                onCheckedChange={(checked) => setForceRegenerate(checked as boolean)}
+              />
+              <span className="text-sm text-muted-foreground">
+                Force regenerate (delete existing newsletter for today)
+              </span>
+            </label>
           </div>
           <Button
             onClick={() => autopilotMutation.mutate()}
