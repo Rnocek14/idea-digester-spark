@@ -25,11 +25,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { CalendarIcon, Copy, CheckCircle2, Sparkles, Loader2 } from "lucide-react";
+import { CalendarIcon, Copy, CheckCircle2, Sparkles, Loader2, Zap, AlertCircle, CheckCircle } from "lucide-react";
 import { format, subDays } from "date-fns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { logActivity } from "@/lib/logActivity";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 type Story = {
   id: string;
@@ -56,6 +64,56 @@ const Newsletter = () => {
   const [batchProgress, setBatchProgress] = useState<{ current: number; total: number } | null>(null);
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [previewOptimized, setPreviewOptimized] = useState<Record<string, string> | null>(null);
+
+  // Query recent newsletters
+  const { data: recentNewsletters } = useQuery({
+    queryKey: ["recent-newsletters"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("newsletters")
+        .select("*")
+        .order("edition_date", { ascending: false })
+        .limit(10);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Autopilot newsletter mutation
+  const autopilotMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke('autopilot-newsletter');
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: async (data) => {
+      await queryClient.invalidateQueries({ queryKey: ["recent-newsletters"] });
+      
+      if (data.status === 'skipped') {
+        toast.info(`Newsletter skipped: ${data.reason}`, {
+          description: `Edition date: ${format(new Date(data.edition_date), 'MMM d, yyyy')}`
+        });
+      } else {
+        toast.success(`Newsletter generated! ${data.story_count} stories`, {
+          description: data.subject
+        });
+      }
+      
+      await logActivity({
+        entityType: "system",
+        entityId: data.newsletter_id,
+        action: "autopilot_newsletter_generated",
+        message: `Autopilot newsletter ${data.status}: ${data.subject}`,
+        details: { story_count: data.story_count, status: data.status }
+      });
+    },
+    onError: (error: any) => {
+      console.error("Autopilot error:", error);
+      toast.error("Failed to generate autopilot newsletter", {
+        description: error.message
+      });
+    }
+  });
 
   const { data: stories, isLoading } = useQuery({
     queryKey: ["newsletter-stories", dateRange, categoryFilter, safetyFilter],
@@ -334,6 +392,21 @@ const Newsletter = () => {
     toast.success("HTML copied to clipboard!");
   };
 
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'sent':
+        return <Badge className="bg-green-500"><CheckCircle className="h-3 w-3 mr-1" />Sent</Badge>;
+      case 'ready':
+        return <Badge className="bg-yellow-500"><Sparkles className="h-3 w-3 mr-1" />Ready</Badge>;
+      case 'skipped':
+        return <Badge variant="secondary"><AlertCircle className="h-3 w-3 mr-1" />Skipped</Badge>;
+      case 'error':
+        return <Badge variant="destructive"><AlertCircle className="h-3 w-3 mr-1" />Error</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -342,6 +415,75 @@ const Newsletter = () => {
           Select stories to create your weekly Lake Geneva newsletter
         </p>
       </div>
+
+      {/* Autopilot Section */}
+      <Card className="p-6 border-primary/20 bg-primary/5">
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <h2 className="text-xl font-semibold flex items-center gap-2">
+              <Zap className="h-5 w-5 text-primary" />
+              Autopilot Newsletter
+            </h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Generate today's newsletter automatically using the best available stories
+            </p>
+          </div>
+          <Button
+            onClick={() => autopilotMutation.mutate()}
+            disabled={autopilotMutation.isPending}
+            size="lg"
+          >
+            {autopilotMutation.isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <Zap className="h-4 w-4 mr-2" />
+                Generate Autopilot Newsletter
+              </>
+            )}
+          </Button>
+        </div>
+
+        {/* Recent Newsletters Status */}
+        {recentNewsletters && recentNewsletters.length > 0 && (
+          <div className="mt-6">
+            <h3 className="text-sm font-medium mb-3">Recent Newsletters</h3>
+            <div className="border rounded-lg overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Stories</TableHead>
+                    <TableHead>Subject</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {recentNewsletters.map((newsletter) => (
+                    <TableRow key={newsletter.id}>
+                      <TableCell className="font-medium">
+                        {format(new Date(newsletter.edition_date), 'MMM d, yyyy')}
+                      </TableCell>
+                      <TableCell>
+                        {getStatusBadge(newsletter.status)}
+                      </TableCell>
+                      <TableCell>
+                        {newsletter.story_count}
+                      </TableCell>
+                      <TableCell className="max-w-md truncate">
+                        {newsletter.subject}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+        )}
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column: Story Picker */}
