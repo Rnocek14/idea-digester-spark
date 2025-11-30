@@ -213,7 +213,8 @@ Return a valid JSON array with this exact structure:
         success: true,
         updatedCount,
         totalStories: stories.length,
-        errors: errors.length > 0 ? errors : undefined
+        errors: errors.length > 0 ? errors : undefined,
+        optimizedStories // Return the optimized content for preview
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
