@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.transform-voice]
 verify_jwt = true
+
+[functions.optimize-newsletter-flow]
+verify_jwt = true
