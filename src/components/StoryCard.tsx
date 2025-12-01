@@ -7,6 +7,10 @@ type StoryCardProps = {
   category: string | null;
   url: string | null;
   sponsored?: boolean;
+  meta?: {
+    time?: string | null;
+    source?: string | null;
+  };
 };
 
 const getCategoryEmoji = (category: string | null) => {
@@ -28,6 +32,7 @@ export const StoryCard = ({
   category,
   url,
   sponsored = false,
+  meta,
 }: StoryCardProps) => {
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow">
@@ -63,6 +68,18 @@ export const StoryCard = ({
           <p className="mt-1 text-sm text-gray-600 line-clamp-3 leading-relaxed">
             {summary}
           </p>
+        )}
+
+        {meta && (meta.time || meta.source) && (
+          <div className="mt-2 flex items-center gap-2 text-[11px] text-gray-500">
+            {meta.source && (
+              <span className="truncate max-w-[50%]">
+                {meta.source}
+              </span>
+            )}
+            {meta.source && meta.time && <span>•</span>}
+            {meta.time && <span>{meta.time}</span>}
+          </div>
         )}
 
         {url && (
