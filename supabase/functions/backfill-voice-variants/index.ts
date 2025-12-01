@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
     if (!stories || stories.length === 0) {
       console.log('[backfill-voice-variants] No stories need voice generation');
       return new Response(
-        JSON.stringify({ success: true, processed: 0, message: 'No stories need voice generation' }),
+        JSON.stringify({ success: true, processed: 0, total: 0, message: 'No stories need voice generation' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -39,10 +39,11 @@ Deno.serve(async (req) => {
     let successCount = 0;
     let errorCount = 0;
 
-    // Process each story
-    for (const story of stories) {
+    // Process each story with progress updates
+    for (let i = 0; i < stories.length; i++) {
+      const story = stories[i];
       try {
-        console.log(`[backfill-voice-variants] Generating voice for story: ${story.title}`);
+        console.log(`[backfill-voice-variants] [${i + 1}/${stories.length}] Generating voice for: ${story.title}`);
         
         // Call transform-voice edge function
         const { error: voiceError } = await supabase.functions.invoke('transform-voice', {

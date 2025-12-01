@@ -7,8 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { Calendar, Clock, Instagram, Facebook, Twitter, RefreshCw, Play } from "lucide-react";
+import { Calendar, Clock, Instagram, Facebook, Twitter, RefreshCw, Play, Sparkles } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { OperationProgress } from "@/components/ui/OperationProgress";
 
 const SocialQueue = () => {
   const queryClient = useQueryClient();
@@ -61,6 +62,10 @@ const SocialQueue = () => {
   // Prepare posts mutation
   const prepareMutation = useMutation({
     mutationFn: async () => {
+      toast.info("Preparing posts in background. This may take 2-4 minutes...", {
+        duration: 5000
+      });
+
       const { data, error } = await supabase.functions.invoke("prepare-posts");
       if (error) throw error;
       return data;
@@ -93,13 +98,21 @@ const SocialQueue = () => {
   // Backfill voice variants mutation
   const backfillMutation = useMutation({
     mutationFn: async () => {
+      const storiesCount = needsVoiceCount || 1;
+      const estimatedMinutes = Math.ceil(storiesCount * 0.15); // ~9 seconds per story
+      
+      toast.info(`Processing ${storiesCount} stories. This will take approximately ${estimatedMinutes} minute${estimatedMinutes !== 1 ? 's' : ''}...`, {
+        duration: 5000
+      });
+
       const { data, error } = await supabase.functions.invoke("backfill-voice-variants");
       if (error) throw error;
       return data;
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["needs-voice-count"] });
-      toast.success(`Generated voice for ${data.processed} stories`);
+      queryClient.invalidateQueries({ queryKey: ["post-queue"] });
+      toast.success(`Generated voice for ${data.processed} stories (${data.errors || 0} errors)`);
     },
     onError: (error: any) => {
       toast.error(`Failed to generate voice: ${error.message}`);
@@ -207,14 +220,15 @@ const SocialQueue = () => {
             disabled={backfillMutation.isPending}
             variant="secondary"
           >
-            {backfillMutation.isPending ? "Generating..." : `Generate Voice${needsVoiceCount && needsVoiceCount > 0 ? ` (${needsVoiceCount})` : ''}`}
+            <Sparkles className="mr-2 h-4 w-4" />
+            {backfillMutation.isPending ? "Processing..." : `Generate Voice${needsVoiceCount && needsVoiceCount > 0 ? ` (${needsVoiceCount})` : ''}`}
           </Button>
           <Button
             onClick={() => prepareMutation.mutate()}
             disabled={prepareMutation.isPending}
           >
             <RefreshCw className={`mr-2 h-4 w-4 ${prepareMutation.isPending ? "animate-spin" : ""}`} />
-            Prepare Posts
+            {prepareMutation.isPending ? "Processing..." : "Prepare Posts"}
           </Button>
           <Button
             onClick={() => processMutation.mutate()}
@@ -222,10 +236,27 @@ const SocialQueue = () => {
             variant="default"
           >
             <Play className="mr-2 h-4 w-4" />
-            Process Queue Now
+            {processMutation.isPending ? "Processing..." : "Process Queue Now"}
           </Button>
         </div>
       </div>
+
+      {(backfillMutation.isPending || prepareMutation.isPending) && (
+        <Card className="bg-muted/50">
+          <CardContent className="pt-6">
+            <OperationProgress 
+              current={1} 
+              total={2}
+              message={backfillMutation.isPending 
+                ? `Generating voice variants for ${needsVoiceCount || 0} stories (2-3 min)...` 
+                : "Preparing social media posts (2-4 min)..."}
+            />
+            <p className="text-xs text-muted-foreground mt-3">
+              The operation is running in the background. You can navigate away and check back later.
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
