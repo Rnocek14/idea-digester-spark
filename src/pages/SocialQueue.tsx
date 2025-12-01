@@ -24,17 +24,64 @@ const SocialQueue = () => {
   const [selectedPost, setSelectedPost] = useState<any>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
-  // Count stories needing voice generation
-  const { data: needsVoiceCount } = useQuery({
-    queryKey: ["needs-voice-count"],
+  // Pipeline health metrics
+  const { data: pipelineHealth } = useQuery({
+    queryKey: ["pipeline-health"],
     queryFn: async () => {
-      const { count } = await supabase
+      // Pending safe stories (needs approval)
+      const { count: pendingSafe } = await supabase
+        .from("content_queue")
+        .select("*", { count: 'exact', head: true })
+        .eq("status", "pending")
+        .eq("safety_level", "safe");
+
+      // Needs voice generation
+      const { count: needsVoice } = await supabase
         .from("content_queue")
         .select("*", { count: 'exact', head: true })
         .in("status", ["approved", "auto_published", "published"])
+        .eq("safety_level", "safe")
         .or("content_instagram.is.null,content_facebook.is.null,content_x.is.null");
-      return count || 0;
+
+      // Needs images (has voice but no image)
+      const { count: needsImages } = await supabase
+        .from("content_queue")
+        .select("*", { count: 'exact', head: true })
+        .in("status", ["approved", "auto_published", "published"])
+        .eq("safety_level", "safe")
+        .not("content_instagram", "is", null)
+        .is("image_url", null);
+
+      // Ready to post (has voice and image, not yet queued)
+      const { data: readyStories } = await supabase
+        .from("content_queue")
+        .select("id")
+        .in("status", ["approved", "auto_published", "published"])
+        .eq("safety_level", "safe")
+        .not("content_instagram", "is", null)
+        .not("image_url", "is", null);
+
+      // Check which ready stories haven't been queued yet
+      let readyToPost = 0;
+      if (readyStories && readyStories.length > 0) {
+        const storyIds = readyStories.map(s => s.id);
+        const { data: queuedStories } = await supabase
+          .from("post_queue")
+          .select("story_id")
+          .in("story_id", storyIds);
+        
+        const queuedIds = new Set(queuedStories?.map(q => q.story_id) || []);
+        readyToPost = storyIds.filter(id => !queuedIds.has(id)).length;
+      }
+
+      return {
+        pendingSafe: pendingSafe || 0,
+        needsVoice: needsVoice || 0,
+        needsImages: needsImages || 0,
+        readyToPost: readyToPost || 0,
+      };
     },
+    refetchInterval: 10000, // Refresh every 10 seconds
   });
 
   // Fetch upcoming posts
@@ -107,7 +154,7 @@ const SocialQueue = () => {
   // Backfill voice variants mutation
   const backfillMutation = useMutation({
     mutationFn: async () => {
-      const storiesCount = needsVoiceCount || 1;
+      const storiesCount = pipelineHealth?.needsVoice || 1;
       const estimatedMinutes = Math.ceil(storiesCount * 0.15); // ~9 seconds per story
       
       toast.info(`Processing ${storiesCount} stories. This will take approximately ${estimatedMinutes} minute${estimatedMinutes !== 1 ? 's' : ''}...`, {
@@ -119,7 +166,7 @@ const SocialQueue = () => {
       return data;
     },
     onSuccess: (data: any) => {
-      queryClient.invalidateQueries({ queryKey: ["needs-voice-count"] });
+      queryClient.invalidateQueries({ queryKey: ["pipeline-health"] });
       queryClient.invalidateQueries({ queryKey: ["post-queue"] });
       toast.success(`Generated voice for ${data.processed} stories (${data.errors || 0} errors)`);
     },
@@ -177,7 +224,7 @@ const SocialQueue = () => {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["post-queue"] });
-      queryClient.invalidateQueries({ queryKey: ["needs-voice-count"] });
+      queryClient.invalidateQueries({ queryKey: ["pipeline-health"] });
       toast.success(data.message || "Images generated successfully!");
     },
     onError: (error: any) => {
@@ -266,7 +313,7 @@ const SocialQueue = () => {
             variant="secondary"
           >
             <Sparkles className="mr-2 h-4 w-4" />
-            {backfillMutation.isPending ? "Processing..." : `Generate Voice${needsVoiceCount && needsVoiceCount > 0 ? ` (${needsVoiceCount})` : ''}`}
+            {backfillMutation.isPending ? "Processing..." : `Generate Voice${pipelineHealth?.needsVoice && pipelineHealth.needsVoice > 0 ? ` (${pipelineHealth.needsVoice})` : ''}`}
           </Button>
           <Button
             onClick={() => bulkGenerateImagesMutation.mutate()}
@@ -294,6 +341,108 @@ const SocialQueue = () => {
         </div>
       </div>
 
+      {/* Pipeline Health Card */}
+      <Card className="bg-gradient-to-br from-primary/5 to-primary/10">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+            Pipeline Health
+          </CardTitle>
+          <CardDescription>Content flow through the automation pipeline</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* Pending Safe */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-muted-foreground">Pending Approval</span>
+                <Badge variant="outline" className="text-lg font-bold">
+                  {pipelineHealth?.pendingSafe || 0}
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground">Safe stories awaiting review</p>
+              {pipelineHealth && pipelineHealth.pendingSafe > 0 && (
+                <Button size="sm" variant="outline" className="w-full" asChild>
+                  <a href="/dashboard/content-queue?status=pending">
+                    <Clock className="h-3 w-3 mr-1" />
+                    Review Now
+                  </a>
+                </Button>
+              )}
+            </div>
+
+            {/* Needs Voice */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-muted-foreground">Needs Voice</span>
+                <Badge variant={pipelineHealth && pipelineHealth.needsVoice > 0 ? "default" : "outline"} className="text-lg font-bold">
+                  {pipelineHealth?.needsVoice || 0}
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground">Missing platform variants</p>
+              {pipelineHealth && pipelineHealth.needsVoice > 0 && (
+                <Button 
+                  size="sm" 
+                  variant="secondary" 
+                  className="w-full"
+                  onClick={() => backfillMutation.mutate()}
+                  disabled={backfillMutation.isPending}
+                >
+                  <Sparkles className="h-3 w-3 mr-1" />
+                  Generate
+                </Button>
+              )}
+            </div>
+
+            {/* Needs Images */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-muted-foreground">Needs Images</span>
+                <Badge variant={pipelineHealth && pipelineHealth.needsImages > 0 ? "default" : "outline"} className="text-lg font-bold">
+                  {pipelineHealth?.needsImages || 0}
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground">Missing visual assets</p>
+              {pipelineHealth && pipelineHealth.needsImages > 0 && (
+                <Button 
+                  size="sm" 
+                  variant="secondary" 
+                  className="w-full"
+                  onClick={() => bulkGenerateImagesMutation.mutate()}
+                  disabled={bulkGenerateImagesMutation.isPending}
+                >
+                  <ImagePlus className="h-3 w-3 mr-1" />
+                  Generate
+                </Button>
+              )}
+            </div>
+
+            {/* Ready to Post */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-muted-foreground">Ready to Post</span>
+                <Badge variant={pipelineHealth && pipelineHealth.readyToPost > 0 ? "default" : "outline"} className="text-lg font-bold bg-green-500">
+                  {pipelineHealth?.readyToPost || 0}
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground">Complete & unqueued</p>
+              {pipelineHealth && pipelineHealth.readyToPost > 0 && (
+                <Button 
+                  size="sm" 
+                  variant="default" 
+                  className="w-full"
+                  onClick={() => prepareMutation.mutate()}
+                  disabled={prepareMutation.isPending}
+                >
+                  <RefreshCw className="h-3 w-3 mr-1" />
+                  Queue Posts
+                </Button>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {(backfillMutation.isPending || bulkGenerateImagesMutation.isPending || prepareMutation.isPending) && (
         <Card className="bg-muted/50">
           <CardContent className="pt-6">
@@ -301,7 +450,7 @@ const SocialQueue = () => {
               current={1} 
               total={2}
               message={backfillMutation.isPending 
-                ? `Generating voice variants for ${needsVoiceCount || 0} stories (2-3 min)...` 
+                ? `Generating voice variants for ${pipelineHealth?.needsVoice || 0} stories (2-3 min)...` 
                 : bulkGenerateImagesMutation.isPending 
                 ? "Generating AI images for stories without images (3-5 min)..."
                 : "Preparing social media posts (2-4 min)..."}
