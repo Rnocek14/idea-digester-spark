@@ -36,6 +36,19 @@ const ContentQueue = () => {
   const [isNewStoryOpen, setIsNewStoryOpen] = useState(false);
   const [updatingStoryId, setUpdatingStoryId] = useState<string | null>(null);
 
+  // Query for pending safe content count
+  const { data: pendingSafeCount } = useQuery({
+    queryKey: ["pending-safe-count"],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("content_queue")
+        .select("*", { count: 'exact', head: true })
+        .eq("status", "pending")
+        .eq("safety_level", "safe");
+      return count || 0;
+    },
+  });
+
   // Track drawer state changes for debugging
   useEffect(() => {
     console.log("📦 Drawer state changed:", { selectedStoryId, open: !!selectedStoryId });
@@ -167,6 +180,22 @@ const ContentQueue = () => {
     },
   });
 
+  const bulkApproveMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke('bulk-approve-content');
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["content-queue"] });
+      queryClient.invalidateQueries({ queryKey: ["pending-safe-count"] });
+      toast.success(`Approved ${data.approved} safe stories`);
+    },
+    onError: (error: any) => {
+      toast.error(`Failed to bulk approve: ${error.message}`);
+    },
+  });
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "pending":
@@ -218,10 +247,22 @@ const ContentQueue = () => {
             Review and manage AI-generated articles
           </p>
         </div>
-        <Button onClick={() => setIsNewStoryOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          New Story
-        </Button>
+        <div className="flex gap-2">
+          {pendingSafeCount && pendingSafeCount > 0 && (
+            <Button 
+              variant="outline"
+              onClick={() => bulkApproveMutation.mutate()}
+              disabled={bulkApproveMutation.isPending}
+            >
+              <Check className="h-4 w-4 mr-2" />
+              Bulk Approve Safe ({pendingSafeCount})
+            </Button>
+          )}
+          <Button onClick={() => setIsNewStoryOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            New Story
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}

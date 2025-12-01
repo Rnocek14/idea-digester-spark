@@ -14,6 +14,19 @@ const SocialQueue = () => {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("upcoming");
 
+  // Count stories needing voice generation
+  const { data: needsVoiceCount } = useQuery({
+    queryKey: ["needs-voice-count"],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("content_queue")
+        .select("*", { count: 'exact', head: true })
+        .in("status", ["approved", "auto_published", "published"])
+        .or("content_instagram.is.null,content_facebook.is.null,content_x.is.null");
+      return count || 0;
+    },
+  });
+
   // Fetch upcoming posts
   const { data: upcomingPosts, isLoading: upcomingLoading } = useQuery({
     queryKey: ["post-queue", "upcoming"],
@@ -85,6 +98,7 @@ const SocialQueue = () => {
       return data;
     },
     onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["needs-voice-count"] });
       toast.success(`Generated voice for ${data.processed} stories`);
     },
     onError: (error: any) => {
@@ -193,7 +207,7 @@ const SocialQueue = () => {
             disabled={backfillMutation.isPending}
             variant="secondary"
           >
-            {backfillMutation.isPending ? "Generating..." : "Generate Voice"}
+            {backfillMutation.isPending ? "Generating..." : `Generate Voice${needsVoiceCount && needsVoiceCount > 0 ? ` (${needsVoiceCount})` : ''}`}
           </Button>
           <Button
             onClick={() => prepareMutation.mutate()}
