@@ -77,6 +77,21 @@ const SocialQueue = () => {
     },
   });
 
+  // Backfill voice variants mutation
+  const backfillMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("backfill-voice-variants");
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data: any) => {
+      toast.success(`Generated voice for ${data.processed} stories`);
+    },
+    onError: (error: any) => {
+      toast.error(`Failed to generate voice: ${error.message}`);
+    },
+  });
+
   const getPlatformIcon = (platform: string) => {
     switch (platform) {
       case "instagram":
@@ -122,6 +137,13 @@ const SocialQueue = () => {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button
+            onClick={() => backfillMutation.mutate()}
+            disabled={backfillMutation.isPending}
+            variant="secondary"
+          >
+            {backfillMutation.isPending ? "Generating..." : "Generate Voice"}
+          </Button>
           <Button
             onClick={() => prepareMutation.mutate()}
             disabled={prepareMutation.isPending}
