@@ -285,11 +285,17 @@ const LakeGeneva = () => {
 
       {/* Footer */}
       <footer className="border-t mt-12 py-8 bg-muted/20">
-        <div className="container max-w-4xl mx-auto px-4 text-center text-sm text-muted-foreground">
+        <div className="container max-w-4xl mx-auto px-4 text-center text-sm text-muted-foreground space-y-2">
+          <div className="flex items-center justify-center gap-4">
+            <a href="/lake-geneva" className="hover:text-primary transition-colors">
+              Lake Geneva Brief
+            </a>
+            <span>•</span>
+            <a href="/directory" className="hover:text-primary transition-colors">
+              Business Directory
+            </a>
+          </div>
           <p>© {new Date().getFullYear()} Lake Geneva Brief. All rights reserved.</p>
-          <p className="mt-2">
-            Powered by autonomous local media technology
-          </p>
         </div>
       </footer>
     </div>

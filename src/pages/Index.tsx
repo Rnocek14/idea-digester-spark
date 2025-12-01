@@ -17,6 +17,9 @@ const Index = () => {
           <Button size="lg" onClick={() => navigate("/lake-geneva")}>
             View Lake Geneva Brief
           </Button>
+          <Button size="lg" variant="secondary" onClick={() => navigate("/directory")}>
+            Business Directory
+          </Button>
           <Button size="lg" variant="outline" onClick={() => navigate("/auth")}>
             Access Dashboard
           </Button>
