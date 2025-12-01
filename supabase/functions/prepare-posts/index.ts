@@ -68,8 +68,58 @@ serve(async (req) => {
     const now = new Date();
 
     for (const story of eligibleStories) {
-      // Check each platform
+      // STEP 1: Determine image ONCE per story (before platform loop)
+      let finalImageUrl = story.image_url;
+      let generatedImageUrl = null;
+      const isSponsored = story.is_sponsored || false;
+      
+      // Generate AI image if needed (sponsored OR missing image)
+      const needsAiImage = isSponsored || !story.image_url;
+      
+      if (needsAiImage) {
+        console.log(`[prepare-posts] Story ${story.id} needs AI image (sponsored: ${isSponsored}, has OG: ${!!story.image_url})`);
+        
+        try {
+          const { data: aiImageData, error: aiError } = await supabaseClient.functions.invoke(
+            'generate-post-image',
+            {
+              body: { story_id: story.id, platform: 'instagram' }
+            }
+          );
+
+          if (aiError) {
+            console.error(`[prepare-posts] AI image generation failed for story ${story.id}:`, aiError);
+            // If sponsored and no AI image, skip entire story
+            if (isSponsored) {
+              console.log(`[prepare-posts] BLOCKING sponsored story ${story.id} - no AI image`);
+              continue; // Skip to next story
+            }
+          } else if (aiImageData?.image_url) {
+            generatedImageUrl = aiImageData.image_url;
+            finalImageUrl = generatedImageUrl;
+            console.log(`[prepare-posts] Generated AI image for story ${story.id}: ${generatedImageUrl}`);
+          } else if (isSponsored) {
+            console.log(`[prepare-posts] BLOCKING sponsored story ${story.id} - AI image generation returned no URL`);
+            continue; // Skip to next story
+          }
+        } catch (err) {
+          console.error(`[prepare-posts] Exception generating AI image:`, err);
+          // If sponsored and exception, skip entire story
+          if (isSponsored) {
+            console.log(`[prepare-posts] BLOCKING sponsored story ${story.id} - exception during AI generation`);
+            continue; // Skip to next story
+          }
+        }
+      }
+      
+      // STEP 2: Now loop through platforms using the SAME image
       for (const [platform, config] of Object.entries(platformConfig)) {
+        // Skip Instagram if no image available
+        if (platform === 'instagram' && !finalImageUrl) {
+          console.log(`[prepare-posts] Skipping Instagram for story ${story.id} - no image`);
+          continue;
+        }
+        
         // Check if this story has already been queued/posted to this platform
         const { data: existing } = await supabaseClient
           .from("post_queue")
@@ -81,76 +131,6 @@ serve(async (req) => {
         if (existing) {
           console.log(`[prepare-posts] Story ${story.id} already queued for ${platform}, skipping`);
           continue;
-        }
-
-        // Determine image handling
-        let finalImageUrl = story.image_url;
-        let generatedImageUrl = null;
-        const isSponsored = story.is_sponsored || false;
-
-        // SPONSORED SAFETY RULE: Sponsored posts MUST use AI-generated images only
-        if (isSponsored && !generatedImageUrl) {
-          console.log(`[prepare-posts] Story ${story.id} is sponsored, generating AI image for ${platform}...`);
-          
-          try {
-            const { data: aiImageData, error: aiError } = await supabaseClient.functions.invoke(
-              'generate-post-image',
-              {
-                body: { story_id: story.id, platform }
-              }
-            );
-
-            if (aiError) {
-              console.error(`[prepare-posts] AI image generation failed for sponsored story ${story.id}:`, aiError);
-              console.log(`[prepare-posts] BLOCKING sponsored post for ${platform} - no AI image available`);
-              continue; // Never queue sponsored posts without AI images
-            }
-
-            if (aiImageData?.image_url) {
-              generatedImageUrl = aiImageData.image_url;
-              finalImageUrl = generatedImageUrl;
-              console.log(`[prepare-posts] Generated AI image for sponsored story ${story.id}: ${generatedImageUrl}`);
-            } else {
-              console.log(`[prepare-posts] BLOCKING sponsored post for ${platform} - AI image generation returned no URL`);
-              continue; // Never queue sponsored posts without AI images
-            }
-          } catch (err) {
-            console.error(`[prepare-posts] Exception generating AI image for sponsored story:`, err);
-            console.log(`[prepare-posts] BLOCKING sponsored post for ${platform}`);
-            continue; // Never queue sponsored posts without AI images
-          }
-        }
-        // Instagram requires an image - try to generate if none available
-        else if (platform === 'instagram' && !story.image_url) {
-          console.log(`[prepare-posts] No image for story ${story.id}, generating AI image for Instagram...`);
-          
-          try {
-            const { data: aiImageData, error: aiError } = await supabaseClient.functions.invoke(
-              'generate-post-image',
-              {
-                body: { story_id: story.id, platform: 'instagram' }
-              }
-            );
-
-            if (aiError) {
-              console.error(`[prepare-posts] AI image generation failed for ${story.id}:`, aiError);
-              console.log(`[prepare-posts] Skipping Instagram for story ${story.id} - no image available`);
-              continue;
-            }
-
-            if (aiImageData?.image_url) {
-              generatedImageUrl = aiImageData.image_url;
-              finalImageUrl = generatedImageUrl;
-              console.log(`[prepare-posts] Generated AI image for story ${story.id}: ${generatedImageUrl}`);
-            } else {
-              console.log(`[prepare-posts] No image generated, skipping Instagram for story ${story.id}`);
-              continue;
-            }
-          } catch (err) {
-            console.error(`[prepare-posts] Exception generating AI image:`, err);
-            console.log(`[prepare-posts] Skipping Instagram for story ${story.id}`);
-            continue;
-          }
         }
 
         // Find the next available slot for this platform
