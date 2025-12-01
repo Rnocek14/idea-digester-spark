@@ -87,6 +87,37 @@ serve(async (req) => {
   }
 });
 
+// Add tracking pixel to HTML
+function addTrackingPixel(htmlBody: string, newsletterId: string, subscriberId: string, baseUrl: string): string {
+  const trackingPixelUrl = `${baseUrl}/functions/v1/track-open?nid=${newsletterId}&sid=${subscriberId}`;
+  const trackingPixel = `<img src="${trackingPixelUrl}" width="1" height="1" alt="" style="display:block;" />`;
+  
+  // Insert before </body> if exists, otherwise at end
+  if (htmlBody.includes('</body>')) {
+    return htmlBody.replace('</body>', `${trackingPixel}</body>`);
+  }
+  return htmlBody + trackingPixel;
+}
+
+// Rewrite all links to use click tracking
+function rewriteLinksForTracking(htmlBody: string, newsletterId: string, subscriberId: string, baseUrl: string): string {
+  // Match href="..." or href='...'
+  const linkRegex = /href=["']([^"']+)["']/gi;
+  
+  return htmlBody.replace(linkRegex, (match, url) => {
+    // Skip tracking for unsubscribe links, anchors, mailto, tel
+    if (url.includes('unsubscribe') || url.startsWith('#') || url.startsWith('mailto:') || url.startsWith('tel:')) {
+      return match;
+    }
+    
+    // Build tracking URL
+    const encodedUrl = encodeURIComponent(url);
+    const trackingUrl = `${baseUrl}/functions/v1/track-click?nid=${newsletterId}&sid=${subscriberId}&url=${encodedUrl}`;
+    
+    return `href="${trackingUrl}"`;
+  });
+}
+
 // Send newsletter to subscribers via Resend
 async function sendNewsletterEmail(supabase: any, newsletter: any, supabaseUrl: string) {
   const resendApiKey = Deno.env.get("RESEND_API_KEY");
@@ -127,7 +158,7 @@ async function sendNewsletterEmail(supabase: any, newsletter: any, supabaseUrl: 
       try {
         // Replace placeholder unsubscribe link with real token-based link
         const unsubscribeUrl = `${supabaseUrl}/functions/v1/unsubscribe?token=${subscriber.unsubscribe_token}`;
-        const htmlBody = newsletter.html_body.replace(
+        let htmlBody = newsletter.html_body.replace(
           /\[UNSUBSCRIBE_URL\]/g,
           unsubscribeUrl
         );
@@ -135,6 +166,10 @@ async function sendNewsletterEmail(supabase: any, newsletter: any, supabaseUrl: 
           /\[UNSUBSCRIBE_URL\]/g,
           unsubscribeUrl
         );
+
+        // Add tracking pixel and rewrite links
+        htmlBody = rewriteLinksForTracking(htmlBody, newsletter.id, subscriber.id, supabaseUrl);
+        htmlBody = addTrackingPixel(htmlBody, newsletter.id, subscriber.id, supabaseUrl);
 
         const { error: sendError } = await resend.emails.send({
           from: "onboarding@resend.dev",

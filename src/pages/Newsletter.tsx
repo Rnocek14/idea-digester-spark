@@ -36,11 +36,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarIcon, Copy, CheckCircle2, Sparkles, Loader2, Zap, AlertCircle, CheckCircle, Eye, Trash2, Send } from "lucide-react";
+import { CalendarIcon, Copy, CheckCircle2, Sparkles, Loader2, Zap, AlertCircle, CheckCircle, Eye, Trash2, Send, BarChart3 } from "lucide-react";
 import { format, subDays } from "date-fns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { logActivity } from "@/lib/logActivity";
+import { NewsletterAnalyticsDrawer } from "@/components/NewsletterAnalyticsDrawer";
 import {
   Table,
   TableBody,
@@ -81,6 +82,8 @@ const Newsletter = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [newsletterToDelete, setNewsletterToDelete] = useState<string | null>(null);
   const [sendingNewsletterId, setSendingNewsletterId] = useState<string | null>(null);
+  const [analyticsNewsletter, setAnalyticsNewsletter] = useState<any | null>(null);
+  const [analyticsOpen, setAnalyticsOpen] = useState(false);
 
   // Query recent newsletters
   const { data: recentNewsletters } = useQuery({
@@ -615,6 +618,19 @@ const Newsletter = () => {
                               <Eye className="h-4 w-4" />
                             </Button>
                           )}
+                          {newsletter.status === 'sent' && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setAnalyticsNewsletter(newsletter);
+                                setAnalyticsOpen(true);
+                              }}
+                              className="text-primary hover:text-primary hover:bg-primary/10"
+                            >
+                              <BarChart3 className="h-4 w-4" />
+                            </Button>
+                          )}
                           {newsletter.status === 'ready' && (
                             <Button
                               variant="ghost"
@@ -1097,6 +1113,16 @@ const Newsletter = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Newsletter Analytics Drawer */}
+      <NewsletterAnalyticsDrawer
+        newsletter={analyticsNewsletter}
+        open={analyticsOpen}
+        onOpenChange={(open) => {
+          setAnalyticsOpen(open);
+          if (!open) setAnalyticsNewsletter(null);
+        }}
+      />
     </div>
   );
 };
