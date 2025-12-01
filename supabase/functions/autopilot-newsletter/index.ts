@@ -654,7 +654,7 @@ async function sendNewsletterEmail(
         htmlBody = addTrackingPixel(htmlBody, newsletter.id, subscriber.id, baseUrl);
 
         const { error: sendError } = await resend.emails.send({
-          from: "onboarding@resend.dev",
+          from: "Lake Geneva Brief <newsletter@citybrief.info>",
           to: subscriber.email,
           subject: newsletter.subject,
           html: htmlBody,
