@@ -180,25 +180,34 @@ const SocialQueue = () => {
                           key={post.id}
                           className="border rounded-lg p-4 space-y-2"
                         >
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
+                          <div className="flex gap-4">
+                            {post.image_url && (
+                              <div className="flex-shrink-0">
+                                <img
+                                  src={post.image_url}
+                                  alt=""
+                                  className="w-24 h-24 object-cover rounded-md"
+                                />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-2">
                                 {getStatusBadge(post.status)}
-                                <span className="text-sm text-muted-foreground">
+                                <span className="text-sm text-muted-foreground truncate">
                                   {post.content_queue?.title}
                                 </span>
                               </div>
                               <p className="text-sm line-clamp-3">{post.post_text}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                              <Calendar className="h-3 w-3" />
-                              {format(new Date(post.scheduled_for), "MMM d, yyyy")}
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              {format(new Date(post.scheduled_for), "h:mm a")}
+                              <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
+                                <div className="flex items-center gap-1">
+                                  <Calendar className="h-3 w-3" />
+                                  {format(new Date(post.scheduled_for), "MMM d, yyyy")}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Clock className="h-3 w-3" />
+                                  {format(new Date(post.scheduled_for), "h:mm a")}
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -237,28 +246,37 @@ const SocialQueue = () => {
                     key={post.id}
                     className="border rounded-lg p-4 space-y-2"
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
+                    <div className="flex gap-4">
+                      {post.image_url && (
+                        <div className="flex-shrink-0">
+                          <img
+                            src={post.image_url}
+                            alt=""
+                            className="w-24 h-24 object-cover rounded-md"
+                          />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2">
                           {getPlatformIcon(post.platform)}
                           {getStatusBadge(post.status)}
-                          <span className="text-sm text-muted-foreground">
+                          <span className="text-sm text-muted-foreground truncate">
                             {post.content_queue?.title}
                           </span>
                         </div>
                         <p className="text-sm line-clamp-2">{post.post_text}</p>
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
+                          <div className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {post.sent_at
+                              ? format(new Date(post.sent_at), "MMM d, yyyy h:mm a")
+                              : "Not sent"}
+                          </div>
+                          {post.error_message && (
+                            <span className="text-destructive">{post.error_message}</span>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {post.sent_at
-                          ? format(new Date(post.sent_at), "MMM d, yyyy h:mm a")
-                          : "Not sent"}
-                      </div>
-                      {post.error_message && (
-                        <span className="text-destructive">{post.error_message}</span>
-                      )}
                     </div>
                   </div>
                 ))}
