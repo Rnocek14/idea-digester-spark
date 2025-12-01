@@ -85,7 +85,7 @@ const SocialQueue = () => {
   });
 
   // Fetch upcoming posts
-  const { data: upcomingPosts, isLoading: upcomingLoading } = useQuery({
+  const { data: upcomingPosts, isLoading: upcomingLoading, refetch: refetchUpcoming } = useQuery({
     queryKey: ["post-queue", "upcoming"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -97,10 +97,12 @@ const SocialQueue = () => {
       if (error) throw error;
       return data;
     },
+    retry: 2,
+    staleTime: 30000,
   });
 
   // Fetch sent/simulated posts
-  const { data: sentPosts, isLoading: sentLoading } = useQuery({
+  const { data: sentPosts, isLoading: sentLoading, refetch: refetchSent } = useQuery({
     queryKey: ["post-queue", "sent"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -113,6 +115,8 @@ const SocialQueue = () => {
       if (error) throw error;
       return data;
     },
+    retry: 2,
+    staleTime: 30000,
   });
 
   // Prepare posts mutation
@@ -470,10 +474,22 @@ const SocialQueue = () => {
 
         <TabsContent value="upcoming" className="space-y-4">
           {upcomingLoading ? (
-            <div className="space-y-4">
-              <Skeleton className="h-32 w-full" />
-              <Skeleton className="h-32 w-full" />
-            </div>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex flex-col items-center gap-3 py-8">
+                  <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
+                  <span className="text-muted-foreground">Loading upcoming posts...</span>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => refetchUpcoming()}
+                    className="mt-2"
+                  >
+                    Taking too long? Click to retry
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           ) : !upcomingPosts || upcomingPosts.length === 0 ? (
             <Card>
               <CardContent className="pt-6">
@@ -581,10 +597,22 @@ const SocialQueue = () => {
 
         <TabsContent value="history" className="space-y-4">
           {sentLoading ? (
-            <div className="space-y-4">
-              <Skeleton className="h-24 w-full" />
-              <Skeleton className="h-24 w-full" />
-            </div>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex flex-col items-center gap-3 py-8">
+                  <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
+                  <span className="text-muted-foreground">Loading post history...</span>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => refetchSent()}
+                    className="mt-2"
+                  >
+                    Taking too long? Click to retry
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           ) : !sentPosts || sentPosts.length === 0 ? (
             <Card>
               <CardContent className="pt-6">

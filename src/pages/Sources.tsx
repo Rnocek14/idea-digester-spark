@@ -22,7 +22,7 @@ const Sources = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data: sources, isLoading, error: sourcesError } = useQuery({
+  const { data: sources, isLoading, error: sourcesError, refetch } = useQuery({
     queryKey: ["sources"],
     queryFn: async () => {
       console.log("🔍 Fetching sources...");
@@ -39,7 +39,8 @@ const Sources = () => {
       console.log("✅ Sources loaded:", data?.length || 0);
       return data;
     },
-    retry: 1,
+    retry: 2,
+    staleTime: 30000,
   });
   
   // Log error if query failed
@@ -516,7 +517,18 @@ const Sources = () => {
             {isLoading ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8">
-                  Loading sources...
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full" />
+                    <span>Loading sources...</span>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => refetch()}
+                      className="mt-2"
+                    >
+                      Taking too long? Click to retry
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : !sources || sources.length === 0 ? (

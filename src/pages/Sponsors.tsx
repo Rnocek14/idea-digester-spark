@@ -47,7 +47,7 @@ const Sponsors = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data: sponsors, isLoading } = useQuery({
+  const { data: sponsors, isLoading, refetch } = useQuery({
     queryKey: ["sponsors"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -58,6 +58,8 @@ const Sponsors = () => {
       if (error) throw error;
       return data;
     },
+    retry: 2,
+    staleTime: 30000,
   });
 
   const toggleStatusMutation = useMutation({
@@ -104,8 +106,17 @@ const Sponsors = () => {
       </div>
 
       {isLoading ? (
-        <div className="text-center py-12 text-muted-foreground">
-          Loading sponsors...
+        <div className="flex flex-col items-center gap-3 py-16">
+          <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
+          <span className="text-muted-foreground">Loading sponsors...</span>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => refetch()}
+            className="mt-2"
+          >
+            Taking too long? Click to retry
+          </Button>
         </div>
       ) : sponsors && sponsors.length > 0 ? (
         <div className="border rounded-lg">
