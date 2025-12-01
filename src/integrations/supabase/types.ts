@@ -140,6 +140,59 @@ export type Database = {
         }
         Relationships: []
       }
+      advertiser_leads: {
+        Row: {
+          business_name: string
+          business_profile_id: string | null
+          contact_name: string
+          created_at: string
+          email: string
+          id: string
+          notes: string | null
+          phone: string | null
+          source: string
+          status: string
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          business_name: string
+          business_profile_id?: string | null
+          contact_name: string
+          created_at?: string
+          email: string
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          business_name?: string
+          business_profile_id?: string | null
+          contact_name?: string
+          created_at?: string
+          email?: string
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "advertiser_leads_business_profile_id_fkey"
+            columns: ["business_profile_id"]
+            isOneToOne: false
+            referencedRelation: "business_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       auto_publish_rules: {
         Row: {
           action: string
