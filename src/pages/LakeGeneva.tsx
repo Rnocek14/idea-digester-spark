@@ -34,6 +34,18 @@ type Sponsor = {
 
 const categoryOrder = ["news", "schools", "events", "dining", "real_estate", "community"];
 
+const getRelativeTime = (dateString?: string | null) => {
+  if (!dateString) return null;
+  const date = new Date(dateString);
+  const diffMs = Date.now() - date.getTime();
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  if (diffHours < 1) return 'Just now';
+  if (diffHours < 24) return `${diffHours}h ago`;
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays === 1) return '1 day ago';
+  return `${diffDays} days ago`;
+};
+
 const getCategoryEmoji = (category: string | null) => {
   switch (category?.toLowerCase()) {
     case "news": return "📰";
@@ -203,6 +215,7 @@ const LakeGeneva = () => {
                           </span>
                         </span>
                       )}
+                      <span>{getRelativeTime(featured.publish_date || featured.created_at) || 'Today'} • 3 min read</span>
                       {featured.original_url && (
                         <a
                           href={featured.original_url}
@@ -304,7 +317,7 @@ const LakeGeneva = () => {
           </div>
         ) : (
           <section className="bg-gray-50 border-t border-gray-100">
-            <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8 sm:py-10 space-y-12">
+            <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8 sm:py-10 space-y-10">
               {sortedCategories.map((category) => (
                 <div key={category} id={category} className="scroll-mt-24">
                   <div className="flex items-baseline justify-between gap-2 mb-4">
@@ -319,7 +332,7 @@ const LakeGeneva = () => {
                     </div>
                   </div>
 
-                  <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="grid gap-4 sm:gap-5 sm:grid-cols-2">
                     {storiesByCategory[category].map((story) => (
                       <StoryCard
                         key={story.id}
@@ -328,6 +341,9 @@ const LakeGeneva = () => {
                         imageUrl={story.image_url}
                         category={story.category}
                         url={story.original_url}
+                        meta={{
+                          time: getRelativeTime(story.publish_date || story.created_at),
+                        }}
                       />
                     ))}
                   </div>
