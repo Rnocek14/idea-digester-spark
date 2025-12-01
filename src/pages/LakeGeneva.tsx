@@ -71,7 +71,7 @@ const LakeGeneva = () => {
 
       const { data, error } = await supabase
         .from("content_queue")
-        .select("*")
+        .select("*, source:sources(name)")
         .in("status", ["published", "auto_published"])
         .eq("safety_level", "safe")
         .gte("created_at", weekAgo.toISOString())
@@ -79,7 +79,7 @@ const LakeGeneva = () => {
         .limit(20);
 
       if (error) throw error;
-      return data as Story[];
+      return data as any[];
     },
     staleTime: 60000,
   });
@@ -333,19 +333,32 @@ const LakeGeneva = () => {
                   </div>
 
                   <div className="grid gap-4 sm:gap-5 sm:grid-cols-2">
-                    {storiesByCategory[category].map((story) => (
-                      <StoryCard
-                        key={story.id}
-                        title={story.title}
-                        summary={story.content_website || story.content_lg_base || story.summary}
-                        imageUrl={story.image_url}
-                        category={story.category}
-                        url={story.original_url}
-                        meta={{
-                          time: getRelativeTime(story.publish_date || story.created_at),
-                        }}
-                      />
-                    ))}
+                    {storiesByCategory[category].map((story) => {
+                      const time = getRelativeTime(story.publish_date || story.created_at);
+                      let source: string | null = (story as any).source?.name || null;
+
+                      // Fallback: derive domain from original_url
+                      if (!source && story.original_url) {
+                        try {
+                          const url = new URL(story.original_url);
+                          source = url.hostname.replace(/^www\./, '');
+                        } catch {
+                          // ignore parse error
+                        }
+                      }
+
+                      return (
+                        <StoryCard
+                          key={story.id}
+                          title={story.title}
+                          summary={story.content_website || story.content_lg_base || story.summary}
+                          imageUrl={story.image_url}
+                          category={story.category}
+                          url={story.original_url}
+                          meta={{ time, source }}
+                        />
+                      );
+                    })}
                   </div>
                 </div>
               ))}
