@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useOperations } from "@/contexts/OperationsContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +22,7 @@ import {
 
 const SocialQueue = () => {
   const queryClient = useQueryClient();
+  const operations = useOperations();
   const [activeTab, setActiveTab] = useState("upcoming");
   const [selectedPost, setSelectedPost] = useState<any>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -123,20 +125,27 @@ const SocialQueue = () => {
   // Prepare posts mutation
   const prepareMutation = useMutation({
     mutationFn: async () => {
-      toast.info("Preparing posts in background. This may take 2-4 minutes...", {
-        duration: 5000
-      });
+      const operationId = operations.startOperation(
+        'post-preparation',
+        'Preparing posts for social platforms...',
+        3 // 2-4 minutes estimate
+      );
 
-      const { data, error } = await supabase.functions.invoke("prepare-posts");
-      if (error) throw error;
-      return data;
+      try {
+        const { data, error } = await supabase.functions.invoke("prepare-posts");
+        if (error) throw error;
+        return { data, operationId };
+      } catch (error) {
+        operations.failOperation(operationId, `Failed to prepare posts: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        throw error;
+      }
     },
-    onSuccess: (data) => {
+    onSuccess: ({ data, operationId }: any) => {
       queryClient.invalidateQueries({ queryKey: ["post-queue"] });
-      toast.success(`Prepared ${data.prepared} posts for social media`);
+      operations.completeOperation(operationId, `Prepared ${data.prepared} posts for social media`);
     },
-    onError: (error: any) => {
-      toast.error(`Failed to prepare posts: ${error.message}`);
+    onError: () => {
+      // Error already handled in mutationFn
     },
   });
 
@@ -162,21 +171,28 @@ const SocialQueue = () => {
       const storiesCount = pipelineHealth?.needsVoice || 1;
       const estimatedMinutes = Math.ceil(storiesCount * 0.15); // ~9 seconds per story
       
-      toast.info(`Processing ${storiesCount} stories. This will take approximately ${estimatedMinutes} minute${estimatedMinutes !== 1 ? 's' : ''}...`, {
-        duration: 5000
-      });
+      const operationId = operations.startOperation(
+        'voice-generation',
+        `Generating voice for ${storiesCount} stories...`,
+        estimatedMinutes
+      );
 
-      const { data, error } = await supabase.functions.invoke("backfill-voice-variants");
-      if (error) throw error;
-      return data;
+      try {
+        const { data, error } = await supabase.functions.invoke("backfill-voice-variants");
+        if (error) throw error;
+        return { data, operationId };
+      } catch (error) {
+        operations.failOperation(operationId, `Failed to generate voice: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        throw error;
+      }
     },
-    onSuccess: (data: any) => {
+    onSuccess: ({ data, operationId }: any) => {
       queryClient.invalidateQueries({ queryKey: ["pipeline-health"] });
       queryClient.invalidateQueries({ queryKey: ["post-queue"] });
-      toast.success(`Generated voice for ${data.processed} stories (${data.errors || 0} errors)`);
+      operations.completeOperation(operationId, `Generated voice for ${data.processed} stories (${data.errors || 0} errors)`);
     },
-    onError: (error: any) => {
-      toast.error(`Failed to generate voice: ${error.message}`);
+    onError: () => {
+      // Error already handled in mutationFn
     },
   });
 
@@ -219,21 +235,28 @@ const SocialQueue = () => {
   // Bulk generate images mutation
   const bulkGenerateImagesMutation = useMutation({
     mutationFn: async () => {
-      toast.info("Generating AI images for stories (this may take 3-5 minutes)...", {
-        duration: 5000
-      });
+      const operationId = operations.startOperation(
+        'image-generation',
+        'Generating AI images for stories...',
+        4 // 3-5 minutes estimate
+      );
 
-      const { data, error } = await supabase.functions.invoke("bulk-generate-images");
-      if (error) throw error;
-      return data;
+      try {
+        const { data, error } = await supabase.functions.invoke("bulk-generate-images");
+        if (error) throw error;
+        return { data, operationId };
+      } catch (error) {
+        operations.failOperation(operationId, `Failed to generate images: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        throw error;
+      }
     },
-    onSuccess: (data) => {
+    onSuccess: ({ data, operationId }: any) => {
       queryClient.invalidateQueries({ queryKey: ["post-queue"] });
       queryClient.invalidateQueries({ queryKey: ["pipeline-health"] });
-      toast.success(data.message || "Images generated successfully!");
+      operations.completeOperation(operationId, data.message || "Images generated successfully!");
     },
-    onError: (error: any) => {
-      toast.error(`Failed to generate images: ${error.message}`);
+    onError: () => {
+      // Error already handled in mutationFn
     },
   });
 
