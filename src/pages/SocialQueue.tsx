@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { Calendar, Clock, Instagram, Facebook, Twitter, RefreshCw, Play, Sparkles, ImagePlus, X, ExternalLink, Check, Circle, Settings } from "lucide-react";
+import { Calendar, Clock, Instagram, Facebook, Twitter, RefreshCw, Play, Sparkles, ImagePlus, X, ExternalLink, Check, Circle, Settings, AlertCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { OperationProgress } from "@/components/ui/OperationProgress";
 import {
@@ -52,7 +52,7 @@ const SocialQueue = () => {
   });
 
   // Pipeline health metrics
-  const { data: pipelineHealth } = useQuery({
+  const { data: pipelineHealth, refetch: refetchPipelineHealth } = useQuery({
     queryKey: ["pipeline-health"],
     queryFn: async () => {
       // Pending safe stories (needs approval)
@@ -108,7 +108,7 @@ const SocialQueue = () => {
         readyToPost: readyToPost || 0,
       };
     },
-    refetchInterval: 10000, // Refresh every 10 seconds
+    refetchInterval: 30000, // Refresh every 30 seconds (reduced from 10s)
   });
 
   // Fetch prep history from activity log (both completed and failed)

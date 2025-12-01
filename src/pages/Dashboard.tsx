@@ -1,11 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { FileText, Radio, Megaphone, Clock } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ActivityFeed } from "@/components/ActivityFeed";
 
 const Dashboard = () => {
-  const { data: pendingCount = 0 } = useQuery({
+  const { data: pendingCount = 0, isLoading: pendingLoading, refetch: refetchPending } = useQuery({
     queryKey: ["dashboard-pending-count"],
     queryFn: async () => {
       const { count } = await supabase
@@ -16,7 +17,7 @@ const Dashboard = () => {
     },
   });
 
-  const { data: activeSourcesCount = 0 } = useQuery({
+  const { data: activeSourcesCount = 0, isLoading: sourcesLoading, refetch: refetchSources } = useQuery({
     queryKey: ["dashboard-sources-count"],
     queryFn: async () => {
       const { count } = await supabase
@@ -27,7 +28,7 @@ const Dashboard = () => {
     },
   });
 
-  const { data: activeSponsorsCount = 0 } = useQuery({
+  const { data: activeSponsorsCount = 0, isLoading: sponsorsLoading, refetch: refetchSponsors } = useQuery({
     queryKey: ["dashboard-sponsors-count"],
     queryFn: async () => {
       const { count } = await supabase
@@ -38,7 +39,7 @@ const Dashboard = () => {
     },
   });
 
-  const { data: publishedTodayCount = 0 } = useQuery({
+  const { data: publishedTodayCount = 0, isLoading: publishedLoading, refetch: refetchPublished } = useQuery({
     queryKey: ["dashboard-published-today-count"],
     queryFn: async () => {
       const today = new Date().toISOString().split("T")[0];
@@ -51,6 +52,29 @@ const Dashboard = () => {
       return count || 0;
     },
   });
+
+  const isLoading = pendingLoading || sourcesLoading || sponsorsLoading || publishedLoading;
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 space-y-4">
+        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+        <p className="text-muted-foreground">Loading dashboard...</p>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => {
+            refetchPending();
+            refetchSources();
+            refetchSponsors();
+            refetchPublished();
+          }}
+        >
+          Taking too long? Click to retry
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

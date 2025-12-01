@@ -11,7 +11,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Edit, Power } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Plus, Edit, Power, AlertCircle, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { SponsorDialog } from "@/components/SponsorDialog";
 import { format } from "date-fns";
@@ -47,7 +48,7 @@ const Sponsors = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data: sponsors, isLoading, refetch } = useQuery({
+  const { data: sponsors, isLoading, error, refetch } = useQuery({
     queryKey: ["sponsors"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -61,6 +62,34 @@ const Sponsors = () => {
     retry: 2,
     staleTime: 30000,
   });
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Sponsors</h1>
+            <p className="text-muted-foreground mt-2">
+              Manage local business sponsors and advertising campaigns
+            </p>
+          </div>
+        </div>
+        <Card className="p-6">
+          <div className="flex flex-col items-center gap-3 py-12 text-center">
+            <AlertCircle className="h-12 w-12 text-destructive" />
+            <h3 className="text-lg font-semibold">Failed to load sponsors</h3>
+            <p className="text-muted-foreground max-w-md">
+              {error.message || "An error occurred while loading sponsors"}
+            </p>
+            <Button onClick={() => refetch()} variant="outline">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Try Again
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   const toggleStatusMutation = useMutation({
     mutationFn: async ({ id, currentStatus }: { id: string; currentStatus: string }) => {

@@ -36,7 +36,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarIcon, Copy, CheckCircle2, Sparkles, Loader2, Zap, AlertCircle, CheckCircle, Eye, Trash2, Send, BarChart3, Users } from "lucide-react";
+import { CalendarIcon, Copy, CheckCircle2, Sparkles, Loader2, Zap, AlertCircle, CheckCircle, Eye, Trash2, Send, BarChart3, Users, RefreshCw } from "lucide-react";
 import { format, subDays } from "date-fns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -217,7 +217,7 @@ const Newsletter = () => {
     }
   });
 
-  const { data: stories, isLoading, refetch } = useQuery({
+  const { data: stories, isLoading, error, refetch } = useQuery({
     queryKey: ["newsletter-stories", dateRange, categoryFilter, safetyFilter],
     queryFn: async () => {
       let query = supabase
@@ -244,6 +244,34 @@ const Newsletter = () => {
     retry: 2,
     staleTime: 30000,
   });
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Newsletter Composer</h1>
+            <p className="text-muted-foreground mt-2">
+              Select stories to create your weekly Lake Geneva newsletter
+            </p>
+          </div>
+        </div>
+        <Card className="p-6">
+          <div className="flex flex-col items-center gap-3 py-12 text-center">
+            <AlertCircle className="h-12 w-12 text-destructive" />
+            <h3 className="text-lg font-semibold">Failed to load stories</h3>
+            <p className="text-muted-foreground max-w-md">
+              {error.message || "An error occurred while loading newsletter stories"}
+            </p>
+            <Button onClick={() => refetch()} variant="outline">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Try Again
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   const selectedStories = useMemo(() => {
     if (!stories) return [];
