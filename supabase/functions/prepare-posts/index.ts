@@ -69,12 +69,6 @@ serve(async (req) => {
     for (const story of eligibleStories) {
       // Check each platform
       for (const [platform, config] of Object.entries(platformConfig)) {
-        // Instagram requires an image - skip if none available
-        if (platform === 'instagram' && !story.image_url) {
-          console.log(`[prepare-posts] No image for story ${story.id}, skipping Instagram`);
-          continue;
-        }
-
         // Check if this story has already been queued/posted to this platform
         const { data: existing } = await supabaseClient
           .from("post_queue")
@@ -86,6 +80,43 @@ serve(async (req) => {
         if (existing) {
           console.log(`[prepare-posts] Story ${story.id} already queued for ${platform}, skipping`);
           continue;
+        }
+
+        // Determine image handling
+        let finalImageUrl = story.image_url;
+        let generatedImageUrl = null;
+
+        // Instagram requires an image - try to generate if none available
+        if (platform === 'instagram' && !story.image_url) {
+          console.log(`[prepare-posts] No image for story ${story.id}, generating AI image for Instagram...`);
+          
+          try {
+            const { data: aiImageData, error: aiError } = await supabaseClient.functions.invoke(
+              'generate-post-image',
+              {
+                body: { story_id: story.id, platform: 'instagram' }
+              }
+            );
+
+            if (aiError) {
+              console.error(`[prepare-posts] AI image generation failed for ${story.id}:`, aiError);
+              console.log(`[prepare-posts] Skipping Instagram for story ${story.id} - no image available`);
+              continue;
+            }
+
+            if (aiImageData?.image_url) {
+              generatedImageUrl = aiImageData.image_url;
+              finalImageUrl = generatedImageUrl;
+              console.log(`[prepare-posts] Generated AI image for story ${story.id}: ${generatedImageUrl}`);
+            } else {
+              console.log(`[prepare-posts] No image generated, skipping Instagram for story ${story.id}`);
+              continue;
+            }
+          } catch (err) {
+            console.error(`[prepare-posts] Exception generating AI image:`, err);
+            console.log(`[prepare-posts] Skipping Instagram for story ${story.id}`);
+            continue;
+          }
         }
 
         // Find the next available slot for this platform
@@ -121,12 +152,14 @@ serve(async (req) => {
             story_id: story.id,
             platform,
             post_text: postText,
-            image_url: story.image_url,
+            image_url: finalImageUrl,
+            generated_image_url: generatedImageUrl,
             scheduled_for: scheduledFor.toISOString(),
             status: "pending",
             metadata: {
               story_title: story.title,
               story_category: story.category,
+              image_generated: generatedImageUrl ? true : false,
             },
           });
 
