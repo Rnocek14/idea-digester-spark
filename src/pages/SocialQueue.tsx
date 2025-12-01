@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { Calendar, Clock, Instagram, Facebook, Twitter, RefreshCw, Play, Sparkles } from "lucide-react";
+import { Calendar, Clock, Instagram, Facebook, Twitter, RefreshCw, Play, Sparkles, ImagePlus } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { OperationProgress } from "@/components/ui/OperationProgress";
 
@@ -155,6 +155,27 @@ const SocialQueue = () => {
     },
   });
 
+  // Bulk generate images mutation
+  const bulkGenerateImagesMutation = useMutation({
+    mutationFn: async () => {
+      toast.info("Generating AI images for stories (this may take 3-5 minutes)...", {
+        duration: 5000
+      });
+
+      const { data, error } = await supabase.functions.invoke("bulk-generate-images");
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["post-queue"] });
+      queryClient.invalidateQueries({ queryKey: ["needs-voice-count"] });
+      toast.success(data.message || "Images generated successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(`Failed to generate images: ${error.message}`);
+    },
+  });
+
   const getPlatformIcon = (platform: string) => {
     switch (platform) {
       case "instagram":
@@ -224,6 +245,14 @@ const SocialQueue = () => {
             {backfillMutation.isPending ? "Processing..." : `Generate Voice${needsVoiceCount && needsVoiceCount > 0 ? ` (${needsVoiceCount})` : ''}`}
           </Button>
           <Button
+            onClick={() => bulkGenerateImagesMutation.mutate()}
+            disabled={bulkGenerateImagesMutation.isPending}
+            variant="secondary"
+          >
+            <ImagePlus className="mr-2 h-4 w-4" />
+            {bulkGenerateImagesMutation.isPending ? "Processing..." : "Generate Images"}
+          </Button>
+          <Button
             onClick={() => prepareMutation.mutate()}
             disabled={prepareMutation.isPending}
           >
@@ -241,7 +270,7 @@ const SocialQueue = () => {
         </div>
       </div>
 
-      {(backfillMutation.isPending || prepareMutation.isPending) && (
+      {(backfillMutation.isPending || bulkGenerateImagesMutation.isPending || prepareMutation.isPending) && (
         <Card className="bg-muted/50">
           <CardContent className="pt-6">
             <OperationProgress 
@@ -249,6 +278,8 @@ const SocialQueue = () => {
               total={2}
               message={backfillMutation.isPending 
                 ? `Generating voice variants for ${needsVoiceCount || 0} stories (2-3 min)...` 
+                : bulkGenerateImagesMutation.isPending 
+                ? "Generating AI images for stories without images (3-5 min)..."
                 : "Preparing social media posts (2-4 min)..."}
             />
             <p className="text-xs text-muted-foreground mt-3">
