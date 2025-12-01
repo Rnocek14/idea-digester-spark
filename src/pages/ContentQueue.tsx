@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Plus, Eye, Check, X, Upload, AlertCircle } from "lucide-react";
+import { Plus, Eye, Check, X, Upload, AlertCircle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { ContentQueueDetail } from "@/components/ContentQueueDetail";
 import { NewStoryDialog } from "@/components/NewStoryDialog";
@@ -136,6 +136,34 @@ const ContentQueue = () => {
     onError: (error: any) => {
       console.error("❌ Mutation error:", error);
       toast.error(`Failed to update status: ${error.message || "Unknown error"}`);
+    },
+  });
+
+  const deleteStoryMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("content_queue")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: async (id) => {
+      queryClient.invalidateQueries({ queryKey: ["content-queue"] });
+      toast.success("Story deleted");
+
+      // Log activity
+      const story = stories?.find(s => s.id === id);
+      await logActivity({
+        entityType: "content",
+        entityId: id,
+        action: "deleted",
+        message: `Story "${story?.title || id}" deleted`,
+      });
+    },
+    onError: (error: any) => {
+      toast.error(`Failed to delete story: ${error.message}`);
     },
   });
 
@@ -365,6 +393,19 @@ const ContentQueue = () => {
                           <Upload className={cn("h-4 w-4 text-blue-500", updatingStoryId === story.id && "animate-pulse")} />
                         </Button>
                       )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={deleteStoryMutation.isPending}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (confirm(`Delete "${story.title}"? This will allow it to be re-ingested with OG images.`)) {
+                            deleteStoryMutation.mutate(story.id);
+                          }
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 text-muted-foreground hover:text-red-500" />
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
