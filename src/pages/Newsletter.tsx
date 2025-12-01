@@ -36,12 +36,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarIcon, Copy, CheckCircle2, Sparkles, Loader2, Zap, AlertCircle, CheckCircle, Eye, Trash2, Send, BarChart3 } from "lucide-react";
+import { CalendarIcon, Copy, CheckCircle2, Sparkles, Loader2, Zap, AlertCircle, CheckCircle, Eye, Trash2, Send, BarChart3, Users } from "lucide-react";
 import { format, subDays } from "date-fns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { logActivity } from "@/lib/logActivity";
 import { NewsletterAnalyticsDrawer } from "@/components/NewsletterAnalyticsDrawer";
+import { SubscriberManagementModal } from "@/components/SubscriberManagementModal";
 import {
   Table,
   TableBody,
@@ -84,6 +85,7 @@ const Newsletter = () => {
   const [sendingNewsletterId, setSendingNewsletterId] = useState<string | null>(null);
   const [analyticsNewsletter, setAnalyticsNewsletter] = useState<any | null>(null);
   const [analyticsOpen, setAnalyticsOpen] = useState(false);
+  const [subscribersModalOpen, setSubscribersModalOpen] = useState(false);
 
   // Query recent newsletters
   const { data: recentNewsletters } = useQuery({
@@ -519,11 +521,20 @@ const Newsletter = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Newsletter Composer</h1>
-        <p className="text-muted-foreground mt-2">
-          Select stories to create your weekly Lake Geneva newsletter
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Newsletter Composer</h1>
+          <p className="text-muted-foreground mt-2">
+            Select stories to create your weekly Lake Geneva newsletter
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          onClick={() => setSubscribersModalOpen(true)}
+        >
+          <Users className="h-4 w-4 mr-2" />
+          Manage Subscribers
+        </Button>
       </div>
 
       {/* Autopilot Section */}
@@ -1122,6 +1133,12 @@ const Newsletter = () => {
           setAnalyticsOpen(open);
           if (!open) setAnalyticsNewsletter(null);
         }}
+      />
+
+      {/* Subscriber Management Modal */}
+      <SubscriberManagementModal
+        open={subscribersModalOpen}
+        onOpenChange={setSubscribersModalOpen}
       />
     </div>
   );
