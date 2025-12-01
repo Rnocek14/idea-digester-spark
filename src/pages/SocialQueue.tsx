@@ -27,6 +27,15 @@ const SocialQueue = () => {
   const [selectedPost, setSelectedPost] = useState<any>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [fullPrepStep, setFullPrepStep] = useState<'idle' | 'images' | 'voice' | 'posts' | 'complete'>('idle');
+  const [prepProgress, setPrepProgress] = useState<{
+    images: { current: number; total: number };
+    voice: { current: number; total: number };
+    posts: { current: number; total: number };
+  }>({
+    images: { current: 0, total: 0 },
+    voice: { current: 0, total: 0 },
+    posts: { current: 0, total: 0 },
+  });
 
   // Pipeline health metrics
   const { data: pipelineHealth } = useQuery({
@@ -291,9 +300,16 @@ const SocialQueue = () => {
         10 // 8-12 minutes estimate
       );
 
+      // Capture initial counts for progress tracking
+      const initialNeedsImages = pipelineHealth?.needsImages || 0;
+      const initialNeedsVoice = pipelineHealth?.needsVoice || 0;
+      const initialReadyToPost = pipelineHealth?.readyToPost || 0;
+
       try {
         // Step 1: Generate Images
         setFullPrepStep('images');
+        setPrepProgress(prev => ({ ...prev, images: { current: 0, total: initialNeedsImages } }));
+        
         let totalImages = 0;
         let hasMore = true;
         const batchSize = 10;
@@ -304,19 +320,24 @@ const SocialQueue = () => {
           });
           if (error) throw error;
           totalImages += data.generated;
+          setPrepProgress(prev => ({ ...prev, images: { current: totalImages, total: initialNeedsImages } }));
           hasMore = data.generated === batchSize;
           if (hasMore) await new Promise(resolve => setTimeout(resolve, 2000));
         }
 
         // Step 2: Generate Voice
         setFullPrepStep('voice');
+        setPrepProgress(prev => ({ ...prev, voice: { current: 0, total: initialNeedsVoice } }));
         const { data: voiceData, error: voiceError } = await supabase.functions.invoke("backfill-voice-variants");
         if (voiceError) throw voiceError;
+        setPrepProgress(prev => ({ ...prev, voice: { current: voiceData.processed, total: initialNeedsVoice } }));
 
         // Step 3: Prepare Posts
         setFullPrepStep('posts');
+        setPrepProgress(prev => ({ ...prev, posts: { current: 0, total: initialReadyToPost } }));
         const { data: postData, error: postError } = await supabase.functions.invoke("prepare-posts");
         if (postError) throw postError;
+        setPrepProgress(prev => ({ ...prev, posts: { current: postData.prepared, total: postData.prepared } }));
 
         setFullPrepStep('complete');
         return { 
@@ -327,6 +348,7 @@ const SocialQueue = () => {
         };
       } catch (error) {
         setFullPrepStep('idle');
+        setPrepProgress({ images: { current: 0, total: 0 }, voice: { current: 0, total: 0 }, posts: { current: 0, total: 0 } });
         operations.failOperation(operationId, `Full prep failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
         throw error;
       }
@@ -340,9 +362,11 @@ const SocialQueue = () => {
         `Full prep complete: ${images} images, ${voice} voice variants, ${posts} posts queued`
       );
       setFullPrepStep('idle');
+      setPrepProgress({ images: { current: 0, total: 0 }, voice: { current: 0, total: 0 }, posts: { current: 0, total: 0 } });
     },
     onError: () => {
       setFullPrepStep('idle');
+      setPrepProgress({ images: { current: 0, total: 0 }, voice: { current: 0, total: 0 }, posts: { current: 0, total: 0 } });
     },
   });
 
@@ -480,37 +504,73 @@ const SocialQueue = () => {
               </div>
               
               <div className="space-y-2">
-                <div className={`flex items-center gap-2 ${fullPrepStep === 'images' ? 'text-primary' : fullPrepStep !== 'idle' ? 'text-muted-foreground' : ''}`}>
-                  {fullPrepStep === 'images' ? (
-                    <RefreshCw className="h-4 w-4 animate-spin" />
-                  ) : ['voice', 'posts', 'complete'].includes(fullPrepStep) ? (
-                    <Check className="h-4 w-4 text-green-500" />
-                  ) : (
-                    <Circle className="h-4 w-4" />
+                <div className={`flex items-center justify-between ${fullPrepStep === 'images' ? 'text-primary' : fullPrepStep !== 'idle' ? 'text-muted-foreground' : ''}`}>
+                  <div className="flex items-center gap-2">
+                    {fullPrepStep === 'images' ? (
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                    ) : ['voice', 'posts', 'complete'].includes(fullPrepStep) ? (
+                      <Check className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <Circle className="h-4 w-4" />
+                    )}
+                    <span>Step 1/3: Generate AI Images</span>
+                  </div>
+                  {fullPrepStep === 'images' && prepProgress.images.total > 0 && (
+                    <Badge variant="outline" className="text-xs">
+                      {prepProgress.images.current} / {prepProgress.images.total}
+                    </Badge>
                   )}
-                  <span>Step 1/3: Generate AI Images</span>
+                  {['voice', 'posts', 'complete'].includes(fullPrepStep) && prepProgress.images.current > 0 && (
+                    <Badge variant="outline" className="text-xs text-green-500">
+                      {prepProgress.images.current} done
+                    </Badge>
+                  )}
                 </div>
                 
-                <div className={`flex items-center gap-2 ${fullPrepStep === 'voice' ? 'text-primary' : ['posts', 'complete'].includes(fullPrepStep) ? 'text-muted-foreground' : ''}`}>
-                  {fullPrepStep === 'voice' ? (
-                    <RefreshCw className="h-4 w-4 animate-spin" />
-                  ) : ['posts', 'complete'].includes(fullPrepStep) ? (
-                    <Check className="h-4 w-4 text-green-500" />
-                  ) : (
-                    <Circle className="h-4 w-4" />
+                <div className={`flex items-center justify-between ${fullPrepStep === 'voice' ? 'text-primary' : ['posts', 'complete'].includes(fullPrepStep) ? 'text-muted-foreground' : ''}`}>
+                  <div className="flex items-center gap-2">
+                    {fullPrepStep === 'voice' ? (
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                    ) : ['posts', 'complete'].includes(fullPrepStep) ? (
+                      <Check className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <Circle className="h-4 w-4" />
+                    )}
+                    <span>Step 2/3: Generate Voice Variants</span>
+                  </div>
+                  {fullPrepStep === 'voice' && prepProgress.voice.total > 0 && (
+                    <Badge variant="outline" className="text-xs">
+                      Processing {prepProgress.voice.total} stories...
+                    </Badge>
                   )}
-                  <span>Step 2/3: Generate Voice Variants</span>
+                  {['posts', 'complete'].includes(fullPrepStep) && prepProgress.voice.current > 0 && (
+                    <Badge variant="outline" className="text-xs text-green-500">
+                      {prepProgress.voice.current} done
+                    </Badge>
+                  )}
                 </div>
                 
-                <div className={`flex items-center gap-2 ${fullPrepStep === 'posts' ? 'text-primary' : fullPrepStep === 'complete' ? 'text-muted-foreground' : ''}`}>
-                  {fullPrepStep === 'posts' ? (
-                    <RefreshCw className="h-4 w-4 animate-spin" />
-                  ) : fullPrepStep === 'complete' ? (
-                    <Check className="h-4 w-4 text-green-500" />
-                  ) : (
-                    <Circle className="h-4 w-4" />
+                <div className={`flex items-center justify-between ${fullPrepStep === 'posts' ? 'text-primary' : fullPrepStep === 'complete' ? 'text-muted-foreground' : ''}`}>
+                  <div className="flex items-center gap-2">
+                    {fullPrepStep === 'posts' ? (
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                    ) : fullPrepStep === 'complete' ? (
+                      <Check className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <Circle className="h-4 w-4" />
+                    )}
+                    <span>Step 3/3: Prepare & Queue Posts</span>
+                  </div>
+                  {fullPrepStep === 'posts' && (
+                    <Badge variant="outline" className="text-xs">
+                      Queueing posts...
+                    </Badge>
                   )}
-                  <span>Step 3/3: Prepare & Queue Posts</span>
+                  {fullPrepStep === 'complete' && prepProgress.posts.current > 0 && (
+                    <Badge variant="outline" className="text-xs text-green-500">
+                      {prepProgress.posts.current} queued
+                    </Badge>
+                  )}
                 </div>
               </div>
               
