@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { Calendar, Clock, Instagram, Facebook, Twitter, RefreshCw, Play, Sparkles, ImagePlus, X, ExternalLink, Check, Circle } from "lucide-react";
+import { Calendar, Clock, Instagram, Facebook, Twitter, RefreshCw, Play, Sparkles, ImagePlus, X, ExternalLink, Check, Circle, Settings } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { OperationProgress } from "@/components/ui/OperationProgress";
 import {
@@ -19,6 +19,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 const SocialQueue = () => {
   const queryClient = useQueryClient();
@@ -26,6 +29,7 @@ const SocialQueue = () => {
   const [activeTab, setActiveTab] = useState("upcoming");
   const [selectedPost, setSelectedPost] = useState<any>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isScheduleSettingsOpen, setIsScheduleSettingsOpen] = useState(false);
   const [fullPrepStep, setFullPrepStep] = useState<'idle' | 'images' | 'voice' | 'posts' | 'complete'>('idle');
   const [prepProgress, setPrepProgress] = useState<{
     images: { current: number; total: number };
@@ -37,6 +41,15 @@ const SocialQueue = () => {
     posts: { current: 0, total: 0 },
   });
   const cancelRequestedRef = useRef(false);
+  
+  // Schedule settings (stored in localStorage)
+  const [scheduleEnabled, setScheduleEnabled] = useState(() => {
+    const stored = localStorage.getItem('fullPrepScheduleEnabled');
+    return stored === 'true';
+  });
+  const [scheduleTime, setScheduleTime] = useState(() => {
+    return localStorage.getItem('fullPrepScheduleTime') || '02:00';
+  });
 
   // Pipeline health metrics
   const { data: pipelineHealth } = useQuery({
@@ -393,6 +406,13 @@ const SocialQueue = () => {
     toast.info('Cancelling Full Queue Prep after current step...');
   };
 
+  const handleSaveSchedule = () => {
+    localStorage.setItem('fullPrepScheduleEnabled', scheduleEnabled.toString());
+    localStorage.setItem('fullPrepScheduleTime', scheduleTime);
+    toast.success('Schedule settings saved');
+    setIsScheduleSettingsOpen(false);
+  };
+
   const getPlatformIcon = (platform: string) => {
     switch (platform) {
       case "instagram":
@@ -513,6 +533,13 @@ const SocialQueue = () => {
             <Play className="mr-2 h-4 w-4" />
             {processMutation.isPending ? "Processing..." : "Process Queue Now"}
           </Button>
+          <Button
+            onClick={() => setIsScheduleSettingsOpen(true)}
+            variant="outline"
+            size="icon"
+          >
+            <Settings className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
@@ -611,6 +638,37 @@ const SocialQueue = () => {
               <p className="text-xs text-muted-foreground">
                 The operation runs in the background. You can navigate away and check back later.
               </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Automated Schedule Status */}
+      {!fullPrepMutation.isPending && (
+        <Card className="bg-muted/30">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={`h-3 w-3 rounded-full ${scheduleEnabled ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
+                <div>
+                  <p className="text-sm font-medium">
+                    Automated Daily Run: {scheduleEnabled ? 'Enabled' : 'Disabled'}
+                  </p>
+                  {scheduleEnabled && (
+                    <p className="text-xs text-muted-foreground">
+                      Scheduled for {scheduleTime} daily (UTC)
+                    </p>
+                  )}
+                </div>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setIsScheduleSettingsOpen(true)}
+              >
+                <Settings className="h-4 w-4 mr-2" />
+                Configure
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -1067,6 +1125,111 @@ const SocialQueue = () => {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Schedule Settings Dialog */}
+      <Dialog open={isScheduleSettingsOpen} onOpenChange={setIsScheduleSettingsOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Automated Full Queue Prep Schedule</DialogTitle>
+            <DialogDescription>
+              Configure when Full Queue Prep should run automatically each day
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="schedule-enabled" className="text-base">
+                  Enable Automated Runs
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Automatically run Full Queue Prep daily
+                </p>
+              </div>
+              <Switch
+                id="schedule-enabled"
+                checked={scheduleEnabled}
+                onCheckedChange={setScheduleEnabled}
+              />
+            </div>
+
+            {scheduleEnabled && (
+              <div className="space-y-2">
+                <Label htmlFor="schedule-time">Run Time (UTC)</Label>
+                <Input
+                  id="schedule-time"
+                  type="time"
+                  value={scheduleTime}
+                  onChange={(e) => setScheduleTime(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Full Queue Prep will run automatically at this time every day (UTC timezone)
+                </p>
+              </div>
+            )}
+
+            <Card className="bg-yellow-500/10 border-yellow-500/20">
+              <CardContent className="pt-6">
+                <div className="space-y-3">
+                  <h4 className="text-sm font-semibold flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    Setup Required
+                  </h4>
+                  <p className="text-xs text-muted-foreground">
+                    To enable automated runs, you need to set up a pg_cron job in Supabase. 
+                    Click below to view the SQL setup instructions.
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => {
+                      const cronTime = scheduleTime.split(':');
+                      const cronMinute = cronTime[1] || '0';
+                      const cronHour = cronTime[0] || '2';
+                      
+                      const sql = `-- Enable pg_cron extension (run once)
+-- CREATE EXTENSION IF NOT EXISTS pg_cron;
+
+-- Schedule Full Queue Prep to run daily at ${scheduleTime} UTC
+SELECT cron.schedule(
+  'full-queue-prep-daily',
+  '${cronMinute} ${cronHour} * * *', -- ${scheduleTime} UTC daily
+  $$
+  SELECT
+    net.http_post(
+      url:='https://mzumvkrpnxhkvhdyzgqa.supabase.co/functions/v1/full-queue-prep',
+      headers:='{"Content-Type": "application/json", "Authorization": "Bearer ${process.env.SUPABASE_ANON_KEY}"}'::jsonb
+    ) as request_id;
+  $$
+);
+
+-- To view scheduled jobs:
+-- SELECT * FROM cron.job;
+
+-- To remove the schedule:
+-- SELECT cron.unschedule('full-queue-prep-daily');`;
+                      
+                      navigator.clipboard.writeText(sql);
+                      toast.success('SQL copied to clipboard!');
+                    }}
+                  >
+                    Copy SQL Setup Code
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setIsScheduleSettingsOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSaveSchedule}>
+                Save Settings
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
