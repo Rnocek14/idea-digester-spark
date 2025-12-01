@@ -50,6 +50,96 @@ export type Database = {
         }
         Relationships: []
       }
+      ad_placements: {
+        Row: {
+          business_id: string | null
+          created_at: string | null
+          creative_url: string | null
+          end_date: string
+          id: string
+          label: string | null
+          metadata: Json | null
+          notes: string | null
+          slot_id: string | null
+          start_date: string
+          status: string | null
+        }
+        Insert: {
+          business_id?: string | null
+          created_at?: string | null
+          creative_url?: string | null
+          end_date: string
+          id?: string
+          label?: string | null
+          metadata?: Json | null
+          notes?: string | null
+          slot_id?: string | null
+          start_date: string
+          status?: string | null
+        }
+        Update: {
+          business_id?: string | null
+          created_at?: string | null
+          creative_url?: string | null
+          end_date?: string
+          id?: string
+          label?: string | null
+          metadata?: Json | null
+          notes?: string | null
+          slot_id?: string | null
+          start_date?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_placements_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ad_placements_slot_id_fkey"
+            columns: ["slot_id"]
+            isOneToOne: false
+            referencedRelation: "ad_slots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ad_slots: {
+        Row: {
+          channel: string
+          description: string | null
+          dimensions: string | null
+          id: string
+          is_active: boolean | null
+          metadata: Json | null
+          name: string
+          price_monthly: number | null
+        }
+        Insert: {
+          channel: string
+          description?: string | null
+          dimensions?: string | null
+          id: string
+          is_active?: boolean | null
+          metadata?: Json | null
+          name: string
+          price_monthly?: number | null
+        }
+        Update: {
+          channel?: string
+          description?: string | null
+          dimensions?: string | null
+          id?: string
+          is_active?: boolean | null
+          metadata?: Json | null
+          name?: string
+          price_monthly?: number | null
+        }
+        Relationships: []
+      }
       auto_publish_rules: {
         Row: {
           action: string
@@ -87,6 +177,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      business_profiles: {
+        Row: {
+          address: string | null
+          category: string | null
+          created_at: string | null
+          description: string | null
+          email: string | null
+          id: string
+          is_featured: boolean | null
+          logo_url: string | null
+          metadata: Json | null
+          name: string
+          phone: string | null
+          status: string | null
+          updated_at: string | null
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          email?: string | null
+          id?: string
+          is_featured?: boolean | null
+          logo_url?: string | null
+          metadata?: Json | null
+          name: string
+          phone?: string | null
+          status?: string | null
+          updated_at?: string | null
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          email?: string | null
+          id?: string
+          is_featured?: boolean | null
+          logo_url?: string | null
+          metadata?: Json | null
+          name?: string
+          phone?: string | null
+          status?: string | null
+          updated_at?: string | null
+          website?: string | null
+        }
+        Relationships: []
       }
       content_queue: {
         Row: {
