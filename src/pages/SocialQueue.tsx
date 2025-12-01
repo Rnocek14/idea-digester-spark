@@ -367,7 +367,7 @@ const SocialQueue = () => {
               <p className="text-xs text-muted-foreground">Safe stories awaiting review</p>
               {pipelineHealth && pipelineHealth.pendingSafe > 0 && (
                 <Button size="sm" variant="outline" className="w-full" asChild>
-                  <a href="/dashboard/content-queue?status=pending">
+                  <a href="/dashboard/content?status=pending">
                     <Clock className="h-3 w-3 mr-1" />
                     Review Now
                   </a>
