@@ -258,8 +258,17 @@ serve(async (req) => {
           let imageSource: string | null = null;
 
           try {
-            console.log(`🖼️ Attempting to extract image from: ${originalUrl}`);
-            const pageResponse = await fetch(originalUrl, {
+            // Convert relative URLs to absolute URLs for fetching
+            let fullUrl = originalUrl;
+            if (originalUrl.startsWith('/')) {
+              // Extract base URL from source URL
+              const sourceUrlObj = new URL(source.url);
+              fullUrl = `${sourceUrlObj.protocol}//${sourceUrlObj.host}${originalUrl}`;
+              console.log(`🔗 Converted relative URL: ${originalUrl} → ${fullUrl}`);
+            }
+
+            console.log(`🖼️ Attempting to extract image from: ${fullUrl}`);
+            const pageResponse = await fetch(fullUrl, {
               headers: {
                 "User-Agent": "Mozilla/5.0 (compatible; LakeGenevaBot/1.0)",
               },
