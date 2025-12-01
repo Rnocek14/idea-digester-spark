@@ -14,7 +14,10 @@ const Index = () => {
           AI-powered local news automation and content management platform
         </p>
         <div className="flex gap-4 justify-center pt-4">
-          <Button size="lg" onClick={() => navigate("/auth")}>
+          <Button size="lg" onClick={() => navigate("/lake-geneva")}>
+            View Lake Geneva Brief
+          </Button>
+          <Button size="lg" variant="outline" onClick={() => navigate("/auth")}>
             Access Dashboard
           </Button>
         </div>
