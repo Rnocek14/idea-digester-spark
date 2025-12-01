@@ -103,6 +103,7 @@ export type Database = {
           id: string
           image_source: string | null
           image_url: string | null
+          is_sponsored: boolean | null
           last_newsletter_id: string | null
           metadata: Json | null
           original_url: string | null
@@ -113,6 +114,7 @@ export type Database = {
           safety_reason: string | null
           safety_tags: Json | null
           source_id: string | null
+          sponsor_id: string | null
           status: string
           summary: string | null
           title: string
@@ -134,6 +136,7 @@ export type Database = {
           id?: string
           image_source?: string | null
           image_url?: string | null
+          is_sponsored?: boolean | null
           last_newsletter_id?: string | null
           metadata?: Json | null
           original_url?: string | null
@@ -144,6 +147,7 @@ export type Database = {
           safety_reason?: string | null
           safety_tags?: Json | null
           source_id?: string | null
+          sponsor_id?: string | null
           status?: string
           summary?: string | null
           title: string
@@ -165,6 +169,7 @@ export type Database = {
           id?: string
           image_source?: string | null
           image_url?: string | null
+          is_sponsored?: boolean | null
           last_newsletter_id?: string | null
           metadata?: Json | null
           original_url?: string | null
@@ -175,6 +180,7 @@ export type Database = {
           safety_reason?: string | null
           safety_tags?: Json | null
           source_id?: string | null
+          sponsor_id?: string | null
           status?: string
           summary?: string | null
           title?: string
@@ -195,6 +201,13 @@ export type Database = {
             columns: ["source_id"]
             isOneToOne: false
             referencedRelation: "sources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_queue_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "sponsors"
             referencedColumns: ["id"]
           },
         ]

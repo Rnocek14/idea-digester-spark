@@ -85,9 +85,42 @@ serve(async (req) => {
         // Determine image handling
         let finalImageUrl = story.image_url;
         let generatedImageUrl = null;
+        const isSponsored = story.is_sponsored || false;
 
+        // SPONSORED SAFETY RULE: Sponsored posts MUST use AI-generated images only
+        if (isSponsored && !generatedImageUrl) {
+          console.log(`[prepare-posts] Story ${story.id} is sponsored, generating AI image for ${platform}...`);
+          
+          try {
+            const { data: aiImageData, error: aiError } = await supabaseClient.functions.invoke(
+              'generate-post-image',
+              {
+                body: { story_id: story.id, platform }
+              }
+            );
+
+            if (aiError) {
+              console.error(`[prepare-posts] AI image generation failed for sponsored story ${story.id}:`, aiError);
+              console.log(`[prepare-posts] BLOCKING sponsored post for ${platform} - no AI image available`);
+              continue; // Never queue sponsored posts without AI images
+            }
+
+            if (aiImageData?.image_url) {
+              generatedImageUrl = aiImageData.image_url;
+              finalImageUrl = generatedImageUrl;
+              console.log(`[prepare-posts] Generated AI image for sponsored story ${story.id}: ${generatedImageUrl}`);
+            } else {
+              console.log(`[prepare-posts] BLOCKING sponsored post for ${platform} - AI image generation returned no URL`);
+              continue; // Never queue sponsored posts without AI images
+            }
+          } catch (err) {
+            console.error(`[prepare-posts] Exception generating AI image for sponsored story:`, err);
+            console.log(`[prepare-posts] BLOCKING sponsored post for ${platform}`);
+            continue; // Never queue sponsored posts without AI images
+          }
+        }
         // Instagram requires an image - try to generate if none available
-        if (platform === 'instagram' && !story.image_url) {
+        else if (platform === 'instagram' && !story.image_url) {
           console.log(`[prepare-posts] No image for story ${story.id}, generating AI image for Instagram...`);
           
           try {
@@ -154,12 +187,15 @@ serve(async (req) => {
             post_text: postText,
             image_url: finalImageUrl,
             generated_image_url: generatedImageUrl,
+            is_sponsored: isSponsored,
+            sponsor_id: story.sponsor_id || null,
             scheduled_for: scheduledFor.toISOString(),
             status: "pending",
             metadata: {
               story_title: story.title,
               story_category: story.category,
               image_generated: generatedImageUrl ? true : false,
+              sponsored_safe: isSponsored ? (generatedImageUrl ? true : false) : true,
             },
           });
 
@@ -168,7 +204,8 @@ serve(async (req) => {
           continue;
         }
 
-        console.log(`[prepare-posts] Scheduled ${platform} post for ${scheduledFor.toISOString()}`);
+        const imageSource = isSponsored ? 'AI (sponsored)' : (generatedImageUrl ? 'AI' : 'OG');
+        console.log(`[prepare-posts] Scheduled ${platform} post for ${scheduledFor.toISOString()} [${imageSource}]`);
         preparedCount++;
       }
     }
