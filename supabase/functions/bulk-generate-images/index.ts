@@ -13,6 +13,8 @@ serve(async (req) => {
   }
 
   try {
+    const { limit = 10 } = await req.json().catch(() => ({}));
+    
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
@@ -24,16 +26,16 @@ serve(async (req) => {
       }
     );
 
-    console.log("[bulk-generate-images] Starting bulk image generation...");
+    console.log(`[bulk-generate-images] Starting bulk image generation (limit: ${limit})...`);
 
-    // Fetch stories with voice variants but missing images
+    // Fetch stories missing images (regardless of status - process all safe stories)
     const { data: storiesNeedingImages, error: fetchError } = await supabaseClient
       .from("content_queue")
       .select("*")
-      .in("status", ["approved", "auto_published", "published"])
       .eq("safety_level", "safe")
       .not("content_instagram", "is", null)
-      .is("image_url", null);
+      .is("image_url", null)
+      .limit(limit);
 
     if (fetchError) {
       console.error("[bulk-generate-images] Error fetching stories:", fetchError);

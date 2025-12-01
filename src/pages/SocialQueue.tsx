@@ -232,28 +232,49 @@ const SocialQueue = () => {
     },
   });
 
-  // Bulk generate images mutation
+  // Bulk generate images mutation with batching
   const bulkGenerateImagesMutation = useMutation({
     mutationFn: async () => {
       const operationId = operations.startOperation(
         'image-generation',
-        'Generating AI images for stories...',
-        4 // 3-5 minutes estimate
+        'Generating AI images in batches...',
+        5 // 4-6 minutes estimate for batching
       );
 
       try {
-        const { data, error } = await supabase.functions.invoke("bulk-generate-images");
-        if (error) throw error;
-        return { data, operationId };
+        let totalGenerated = 0;
+        let hasMore = true;
+        const batchSize = 10;
+        
+        while (hasMore) {
+          const { data, error } = await supabase.functions.invoke("bulk-generate-images", {
+            body: { limit: batchSize }
+          });
+          
+          if (error) throw error;
+          
+          totalGenerated += data.generated;
+          console.log(`[Batch] Generated ${data.generated} images (total: ${totalGenerated})`);
+          
+          // If this batch generated fewer than limit, we're done
+          hasMore = data.generated === batchSize;
+          
+          if (hasMore) {
+            await new Promise(resolve => setTimeout(resolve, 2000)); // 2s delay between batches
+          }
+        }
+        
+        return { totalGenerated, operationId };
       } catch (error) {
         operations.failOperation(operationId, `Failed to generate images: ${error instanceof Error ? error.message : 'Unknown error'}`);
         throw error;
       }
     },
-    onSuccess: ({ data, operationId }: any) => {
+    onSuccess: ({ totalGenerated, operationId }: any) => {
       queryClient.invalidateQueries({ queryKey: ["post-queue"] });
       queryClient.invalidateQueries({ queryKey: ["pipeline-health"] });
-      operations.completeOperation(operationId, data.message || "Images generated successfully!");
+      queryClient.invalidateQueries({ queryKey: ["content-queue"] });
+      operations.completeOperation(operationId, `Generated ${totalGenerated} images`);
     },
     onError: () => {
       // Error already handled in mutationFn

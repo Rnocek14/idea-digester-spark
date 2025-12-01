@@ -73,11 +73,10 @@ serve(async (req) => {
       let generatedImageUrl = null;
       const isSponsored = story.is_sponsored || false;
       
-      // Generate AI image if needed (sponsored OR missing image)
-      const needsAiImage = isSponsored || !story.image_url;
-      
-      if (needsAiImage) {
-        console.log(`[prepare-posts] Story ${story.id} needs AI image (sponsored: ${isSponsored}, has OG: ${!!story.image_url})`);
+      // ONLY generate AI image for sponsored posts (mandatory)
+      // For non-sponsored: use OG image if available, skip if missing
+      if (isSponsored && !story.image_url) {
+        console.log(`[prepare-posts] Sponsored story ${story.id} needs AI image`);
         
         try {
           const { data: aiImageData, error: aiError } = await supabaseClient.functions.invoke(
@@ -87,29 +86,26 @@ serve(async (req) => {
             }
           );
 
-          if (aiError) {
-            console.error(`[prepare-posts] AI image generation failed for story ${story.id}:`, aiError);
-            // If sponsored and no AI image, skip entire story
-            if (isSponsored) {
-              console.log(`[prepare-posts] BLOCKING sponsored story ${story.id} - no AI image`);
-              continue; // Skip to next story
-            }
-          } else if (aiImageData?.image_url) {
-            generatedImageUrl = aiImageData.image_url;
-            finalImageUrl = generatedImageUrl;
-            console.log(`[prepare-posts] Generated AI image for story ${story.id}: ${generatedImageUrl}`);
-          } else if (isSponsored) {
-            console.log(`[prepare-posts] BLOCKING sponsored story ${story.id} - AI image generation returned no URL`);
-            continue; // Skip to next story
+          if (aiError || !aiImageData?.image_url) {
+            console.log(`[prepare-posts] BLOCKING sponsored story ${story.id} - AI generation failed`);
+            continue; // Skip entire story if sponsored and no AI image
           }
+          
+          generatedImageUrl = aiImageData.image_url;
+          finalImageUrl = generatedImageUrl;
+          console.log(`[prepare-posts] Generated AI image for sponsored story ${story.id}`);
         } catch (err) {
           console.error(`[prepare-posts] Exception generating AI image:`, err);
-          // If sponsored and exception, skip entire story
-          if (isSponsored) {
-            console.log(`[prepare-posts] BLOCKING sponsored story ${story.id} - exception during AI generation`);
-            continue; // Skip to next story
-          }
+          console.log(`[prepare-posts] BLOCKING sponsored story ${story.id} - exception during AI generation`);
+          continue; // Skip to next story
         }
+      } else if (isSponsored && story.image_url) {
+        // Sponsored with existing image - use it
+        finalImageUrl = story.image_url;
+        console.log(`[prepare-posts] Sponsored story ${story.id} using existing image`);
+      } else {
+        // Non-sponsored: use whatever image exists (OG or pre-generated AI)
+        finalImageUrl = story.image_url;
       }
       
       // STEP 2: Now loop through platforms using the SAME image
