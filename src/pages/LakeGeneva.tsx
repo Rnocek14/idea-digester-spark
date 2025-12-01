@@ -77,7 +77,7 @@ const LakeGeneva = () => {
         .eq("safety_level", "safe")
         .gte("created_at", weekAgo.toISOString())
         .order("publish_date", { ascending: false })
-        .limit(20);
+        .limit(100);
 
       if (error) throw error;
       return data as any[];
