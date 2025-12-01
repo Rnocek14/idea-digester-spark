@@ -217,7 +217,7 @@ const Newsletter = () => {
     }
   });
 
-  const { data: stories, isLoading } = useQuery({
+  const { data: stories, isLoading, refetch } = useQuery({
     queryKey: ["newsletter-stories", dateRange, categoryFilter, safetyFilter],
     queryFn: async () => {
       let query = supabase
@@ -241,6 +241,8 @@ const Newsletter = () => {
       if (error) throw error;
       return data as Story[];
     },
+    retry: 2,
+    staleTime: 30000,
   });
 
   const selectedStories = useMemo(() => {
@@ -813,7 +815,18 @@ const Newsletter = () => {
           {/* Story List */}
           <div className="space-y-2 max-h-[600px] overflow-y-auto">
             {isLoading ? (
-              <p className="text-muted-foreground text-center py-8">Loading stories...</p>
+              <div className="flex flex-col items-center gap-3 py-12">
+                <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
+                <span className="text-muted-foreground">Loading stories...</span>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => refetch()}
+                  className="mt-2"
+                >
+                  Taking too long? Click to retry
+                </Button>
+              </div>
             ) : !stories || stories.length === 0 ? (
               <p className="text-muted-foreground text-center py-8">No stories found</p>
             ) : (

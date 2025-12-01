@@ -55,7 +55,7 @@ const ContentQueue = () => {
   }, [selectedStoryId]);
   const queryClient = useQueryClient();
 
-  const { data: stories, isLoading, error } = useQuery({
+  const { data: stories, isLoading, error, refetch } = useQuery({
     queryKey: ["content-queue", statusFilter, categoryFilter],
     queryFn: async () => {
       let query = supabase
@@ -77,6 +77,8 @@ const ContentQueue = () => {
       if (error) throw error;
       return data;
     },
+    retry: 2,
+    staleTime: 30000, // 30 seconds
   });
 
   const updateStatusMutation = useMutation({
@@ -315,7 +317,18 @@ const ContentQueue = () => {
             {isLoading ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-8">
-                  Loading stories...
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full" />
+                    <span>Loading stories...</span>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => refetch()}
+                      className="mt-2"
+                    >
+                      Taking too long? Click to retry
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : !stories || stories.length === 0 ? (
