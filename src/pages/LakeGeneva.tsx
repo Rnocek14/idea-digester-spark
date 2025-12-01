@@ -26,6 +26,8 @@ type Sponsor = {
   name: string;
   logo_url: string | null;
   website: string | null;
+  placementId?: string;
+  businessId?: string;
 };
 
 const categoryOrder = ["news", "events", "dining", "real_estate", "community"];
@@ -67,7 +69,7 @@ const LakeGeneva = () => {
     staleTime: 60000, // 1 minute
   });
 
-  // Fetch active sponsor
+  // Query recent newsletters
   const { data: sponsor } = useQuery({
     queryKey: ["public-sponsor"],
     queryFn: async () => {
@@ -76,7 +78,8 @@ const LakeGeneva = () => {
       const { data, error } = await supabase
         .from("ad_placements")
         .select(`
-          *,
+          id,
+          business_id,
           business:business_profiles(name, logo_url, website)
         `)
         .eq("slot_id", "newsletter_header")
@@ -86,7 +89,7 @@ const LakeGeneva = () => {
         .maybeSingle();
 
       if (error) throw error;
-      return data?.business as Sponsor | null;
+      return data ? { ...data.business, placementId: data.id, businessId: data.business_id } as Sponsor & { placementId: string; businessId: string } : null;
     },
     staleTime: 300000, // 5 minutes
   });
@@ -188,7 +191,7 @@ const LakeGeneva = () => {
                 <p className="text-lg font-bold text-foreground">{sponsor.name}</p>
                 {sponsor.website && (
                   <a
-                    href={sponsor.website}
+                    href={`https://mzumvkrpnxhkvhdyzgqa.supabase.co/functions/v1/track-click?url=${encodeURIComponent(sponsor.website)}&source=web_brief&bid=${sponsor.businessId}&pid=${sponsor.placementId}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm text-primary hover:underline inline-flex items-center gap-1 mt-1"

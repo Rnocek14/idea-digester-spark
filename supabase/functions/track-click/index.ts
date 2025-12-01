@@ -17,6 +17,9 @@ serve(async (req) => {
     const subscriberId = url.searchParams.get("sid");
     const email = url.searchParams.get("email");
     const targetUrl = url.searchParams.get("url");
+    const businessId = url.searchParams.get("bid");
+    const placementId = url.searchParams.get("pid");
+    const clickSource = url.searchParams.get("source");
 
     // Must have target URL
     if (!targetUrl) {
@@ -31,8 +34,9 @@ serve(async (req) => {
       decodedUrl = targetUrl;
     }
 
-    // Log click if we have newsletter ID
-    if (newsletterId) {
+    // Log click (newsletter or web)
+    const shouldLog = newsletterId || (businessId && clickSource);
+    if (shouldLog) {
       const supabaseUrl = Deno.env.get("SUPABASE_URL");
       const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
       
@@ -40,10 +44,13 @@ serve(async (req) => {
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
         const { error } = await supabase.from("newsletter_clicks").insert({
-          newsletter_id: newsletterId,
+          newsletter_id: newsletterId || null,
           subscriber_id: subscriberId || null,
           subscriber_email: email || null,
           link_url: decodedUrl,
+          business_id: businessId || null,
+          ad_placement_id: placementId || null,
+          click_source: clickSource || (newsletterId ? 'newsletter_sponsor' : null),
           user_agent: req.headers.get("user-agent") || null,
           ip_address: req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || null,
         });
@@ -51,7 +58,7 @@ serve(async (req) => {
         if (error) {
           console.error("Failed to log click:", error);
         } else {
-          console.log(`🔗 Click tracked: newsletter=${newsletterId}, url=${decodedUrl}`);
+          console.log(`🔗 Click tracked: source=${clickSource || 'newsletter'}, business=${businessId}, url=${decodedUrl}`);
         }
       }
     }

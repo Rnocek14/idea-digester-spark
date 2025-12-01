@@ -30,6 +30,7 @@ type Business = {
 
 type BusinessWithSponsor = Business & {
   is_sponsor: boolean;
+  placementId?: string;
 };
 
 const getCategoryColor = (category: string | null) => {
@@ -63,16 +64,17 @@ const PublicDirectory = () => {
       const today = new Date().toISOString().split("T")[0];
       const { data: sponsorData } = await supabase
         .from("ad_placements")
-        .select("business_id")
+        .select("business_id, id")
         .eq("status", "active")
         .lte("start_date", today)
         .gte("end_date", today);
 
-      const sponsorIds = new Set(sponsorData?.map((s) => s.business_id) || []);
+      const sponsorMap = new Map(sponsorData?.map((s) => [s.business_id, s.id]) || []);
 
       return (businessData as Business[]).map((business) => ({
         ...business,
-        is_sponsor: sponsorIds.has(business.id),
+        is_sponsor: sponsorMap.has(business.id),
+        placementId: sponsorMap.get(business.id),
       })) as BusinessWithSponsor[];
     },
     staleTime: 60000, // 1 minute
@@ -229,7 +231,11 @@ const PublicDirectory = () => {
                   {/* Website Link */}
                   {business.website && (
                     <a
-                      href={business.website}
+                      href={
+                        business.is_sponsor
+                          ? `https://mzumvkrpnxhkvhdyzgqa.supabase.co/functions/v1/track-click?url=${encodeURIComponent(business.website)}&source=directory&bid=${business.id}&pid=${business.placementId}`
+                          : business.website
+                      }
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 text-sm text-primary hover:underline"

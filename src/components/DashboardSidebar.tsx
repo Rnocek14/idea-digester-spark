@@ -1,4 +1,4 @@
-import { FileText, Radio, Megaphone, LayoutDashboard, Mail, CalendarDays, Building2 } from "lucide-react";
+import { FileText, Radio, Megaphone, LayoutDashboard, Mail, CalendarDays, Building2, BarChart3 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import {
@@ -21,6 +21,7 @@ const menuItems = [
   { title: "Sources", url: "/dashboard/sources", icon: Radio },
   { title: "Sponsors", url: "/dashboard/sponsors", icon: Megaphone },
   { title: "Directory", url: "/dashboard/directory", icon: Building2 },
+  { title: "Analytics", url: "/dashboard/sponsor-analytics", icon: BarChart3 },
 ];
 
 export function DashboardSidebar() {
