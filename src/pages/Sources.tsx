@@ -213,6 +213,25 @@ const Sources = () => {
     },
   });
 
+  const backfillVerticalsMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("backfill-verticals");
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: async (data) => {
+      queryClient.invalidateQueries({ queryKey: ["content-queue"] });
+      toast.success(`Verticals backfill complete: ${data.processed} articles classified`);
+      
+      if (data.errors > 0) {
+        toast.warning(`${data.errors} articles failed classification`);
+      }
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to backfill verticals");
+    },
+  });
+
   const { data: lastSync } = useQuery({
     queryKey: ["last-sync"],
     queryFn: async () => {
@@ -476,6 +495,14 @@ const Sources = () => {
           >
             <Sparkles className={`h-4 w-4 mr-2 ${backfillSafetyMutation.isPending ? "animate-pulse" : ""}`} />
             {backfillSafetyMutation.isPending ? "Analyzing..." : "Backfill Safety"}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => backfillVerticalsMutation.mutate()}
+            disabled={backfillVerticalsMutation.isPending}
+          >
+            <Sparkles className={`h-4 w-4 mr-2 ${backfillVerticalsMutation.isPending ? "animate-pulse" : ""}`} />
+            {backfillVerticalsMutation.isPending ? "Classifying..." : "Backfill Verticals"}
           </Button>
           <Button onClick={handleNew}>
             <Plus className="h-4 w-4 mr-2" />
