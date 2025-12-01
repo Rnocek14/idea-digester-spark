@@ -427,6 +427,59 @@ export type Database = {
         }
         Relationships: []
       }
+      post_queue: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          external_post_id: string | null
+          id: string
+          image_url: string | null
+          metadata: Json | null
+          platform: string
+          post_text: string
+          scheduled_for: string
+          sent_at: string | null
+          status: string
+          story_id: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          external_post_id?: string | null
+          id?: string
+          image_url?: string | null
+          metadata?: Json | null
+          platform: string
+          post_text: string
+          scheduled_for: string
+          sent_at?: string | null
+          status?: string
+          story_id: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          external_post_id?: string | null
+          id?: string
+          image_url?: string | null
+          metadata?: Json | null
+          platform?: string
+          post_text?: string
+          scheduled_for?: string
+          sent_at?: string | null
+          status?: string
+          story_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_queue_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "content_queue"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null

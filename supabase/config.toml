@@ -29,3 +29,9 @@ verify_jwt = false
 
 [functions.update-engagement-scores]
 verify_jwt = false
+
+[functions.prepare-posts]
+verify_jwt = false
+
+[functions.process-post-queue]
+verify_jwt = false
