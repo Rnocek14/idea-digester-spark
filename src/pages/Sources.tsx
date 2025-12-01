@@ -172,16 +172,40 @@ const Sources = () => {
 
   const syncRssMutation = useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke("sync-rss");
-      if (error) throw error;
-      return data;
+      console.log("🚀 Starting RSS sync...");
+      
+      // Create abort controller for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minute timeout
+      
+      try {
+        const { data, error } = await supabase.functions.invoke("sync-rss", {
+          body: {},
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (error) {
+          console.error("❌ Sync function error:", error);
+          throw error;
+        }
+        
+        console.log("✅ Sync completed:", data);
+        return data;
+      } catch (err: any) {
+        clearTimeout(timeoutId);
+        if (err.name === 'AbortError') {
+          throw new Error("Sync timed out after 2 minutes. Check edge function logs for details.");
+        }
+        throw err;
+      }
     },
     onSuccess: async (data) => {
       queryClient.invalidateQueries({ queryKey: ["sources"] });
       queryClient.invalidateQueries({ queryKey: ["content"] });
       
       toast.success(
-        `RSS sync completed: ${data.articlesInserted} articles added, ${data.skipped} skipped`
+        `RSS sync completed: ${data.articlesInserted || 0} articles added, ${data.skipped || 0} skipped`
       );
       
       if (data.errors?.length > 0) {
@@ -190,6 +214,7 @@ const Sources = () => {
       }
     },
     onError: (error: any) => {
+      console.error("❌ Sync mutation error:", error);
       toast.error(error.message || "Failed to sync RSS feeds");
     },
   });

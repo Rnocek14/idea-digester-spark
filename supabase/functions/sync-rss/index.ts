@@ -219,20 +219,40 @@ serve(async (req) => {
           console.log(`🎯 Using extraction selectors - title: "${titleSelector}", link: "${linkSelector}"`);
 
           // Convert DOM elements to RSS-like items
-          items = Array.from(elements).map((el) => {
+          items = Array.from(elements).map((el, idx) => {
             const element = el as any; // Type assertion for deno-dom Element
+            
+            // For title selector, check if it's also a link (e.g., ".fsTitle a")
             const titleEl = element.querySelector(titleSelector);
-            const linkEl = element.querySelector(linkSelector);
+            const linkEl = titleSelector === linkSelector 
+              ? titleEl  // If title and link use same selector, reuse titleEl
+              : element.querySelector(linkSelector);
+            
             const dateEl = element.querySelector(dateSelector);
             const descEl = element.querySelector(descSelector);
 
+            const title = titleEl?.textContent?.trim() || "";
+            const link = linkEl?.getAttribute("href") || "";
+            
+            // Debug logging for first few items
+            if (idx < 3) {
+              console.log(`  Item ${idx + 1}: title="${title.substring(0, 50)}...", link="${link}"`);
+            }
+
             return {
-              title: titleEl?.textContent?.trim() || "",
-              link: linkEl?.getAttribute("href") || "",
+              title,
+              link,
               pubDate: dateEl?.getAttribute("datetime") || dateEl?.textContent?.trim() || new Date().toISOString(),
               description: descEl?.textContent?.trim() || "",
             };
-          }).filter(item => item.title && item.link);
+          }).filter(item => {
+            const hasTitle = Boolean(item.title);
+            const hasLink = Boolean(item.link);
+            if (!hasTitle || !hasLink) {
+              console.log(`  ⚠️ Filtered item - hasTitle: ${hasTitle}, hasLink: ${hasLink}`);
+            }
+            return hasTitle && hasLink;
+          });
 
           console.log(`Extracted ${items.length} valid items from scraped content`);
         }
