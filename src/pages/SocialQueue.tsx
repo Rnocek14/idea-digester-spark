@@ -204,6 +204,11 @@ const SocialQueue = () => {
     return !post.generated_image_url && (!post.image_url || post.is_sponsored);
   };
 
+  const shouldShowRegenerateButton = (post: any) => {
+    // Show regenerate button if already has AI-generated image
+    return !!post.generated_image_url;
+  };
+
   const getStatusBadge = (status: string) => {
     const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
       pending: "default",
@@ -368,17 +373,31 @@ const SocialQueue = () => {
                               </div>
                             </div>
                           </div>
-                          {shouldShowGenerateButton(post) && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => generateImageMutation.mutate(post.id)}
-                              disabled={generateImageMutation.isPending}
-                              className="w-full"
-                            >
-                              {generateImageMutation.isPending ? "Generating..." : "Generate AI Image"}
-                            </Button>
-                          )}
+                          <div className="flex gap-2">
+                            {shouldShowGenerateButton(post) && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => generateImageMutation.mutate(post.id)}
+                                disabled={generateImageMutation.isPending}
+                                className="flex-1"
+                              >
+                                {generateImageMutation.isPending ? "Generating..." : "Generate AI Image"}
+                              </Button>
+                            )}
+                            {shouldShowRegenerateButton(post) && (
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                onClick={() => generateImageMutation.mutate(post.id)}
+                                disabled={generateImageMutation.isPending}
+                                className="flex-1"
+                              >
+                                <RefreshCw className={`h-3 w-3 mr-1 ${generateImageMutation.isPending ? "animate-spin" : ""}`} />
+                                {generateImageMutation.isPending ? "Regenerating..." : "Regenerate Image"}
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </CardContent>
