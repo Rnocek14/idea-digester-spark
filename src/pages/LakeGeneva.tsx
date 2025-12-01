@@ -61,6 +61,7 @@ const getCategoryEmoji = (category: string | null) => {
 const LakeGeneva = () => {
   const [email, setEmail] = useState("");
   const [isSubscribing, setIsSubscribing] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<'all' | string>('all');
 
   // Fetch today's published stories
   const { data: stories = [], isLoading: storiesLoading } = useQuery({
@@ -169,6 +170,12 @@ const LakeGeneva = () => {
   const sortedCategories = categoryOrder
     .filter((cat) => storiesByCategory[cat]?.length > 0)
     .concat(Object.keys(storiesByCategory).filter((cat) => !categoryOrder.includes(cat)));
+
+  // Filter visible categories based on active selection
+  const visibleCategories =
+    activeCategory === 'all'
+      ? sortedCategories
+      : sortedCategories.filter((c) => c === activeCategory);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -316,9 +323,31 @@ const LakeGeneva = () => {
             No stories published yet. Check back soon!
           </div>
         ) : (
-          <section className="bg-gray-50 border-t border-gray-100">
-            <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8 sm:py-10 space-y-10">
-              {sortedCategories.map((category) => (
+          <>
+            {/* Category Filter Pills */}
+            <section className="border-b border-gray-200 bg-white sticky top-[73px] z-20">
+              <div className="mx-auto max-w-5xl px-4 sm:px-6 py-3">
+                <div className="flex flex-wrap gap-2">
+                  {['all', ...categoryOrder].map((cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => setActiveCategory(cat)}
+                      className={`rounded-full px-3 py-1.5 text-xs border transition-colors ${
+                        activeCategory === cat
+                          ? "bg-brand-accent text-white border-brand-accent"
+                          : "bg-gray-50 text-gray-600 border-gray-200 hover:border-brand-accent hover:text-brand-accent"
+                      }`}
+                    >
+                      {cat === 'all' ? 'All stories' : `${getCategoryEmoji(cat)} ${cat.replace('_', ' ')}`}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            <section className="bg-gray-50 border-t border-gray-100">
+              <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8 sm:py-10 space-y-10">
+              {visibleCategories.map((category) => (
                 <div key={category} id={category} className="scroll-mt-24">
                   <div className="flex items-baseline justify-between gap-2 mb-4">
                     <div className="flex items-center gap-2">
@@ -364,6 +393,7 @@ const LakeGeneva = () => {
               ))}
             </div>
           </section>
+          </>
         )}
 
         {/* Subscribe CTA */}
