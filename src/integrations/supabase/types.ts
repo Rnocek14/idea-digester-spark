@@ -101,6 +101,7 @@ export type Database = {
           content_x: string | null
           created_at: string
           id: string
+          image_source: string | null
           image_url: string | null
           last_newsletter_id: string | null
           metadata: Json | null
@@ -131,6 +132,7 @@ export type Database = {
           content_x?: string | null
           created_at?: string
           id?: string
+          image_source?: string | null
           image_url?: string | null
           last_newsletter_id?: string | null
           metadata?: Json | null
@@ -161,6 +163,7 @@ export type Database = {
           content_x?: string | null
           created_at?: string
           id?: string
+          image_source?: string | null
           image_url?: string | null
           last_newsletter_id?: string | null
           metadata?: Json | null

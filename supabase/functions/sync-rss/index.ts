@@ -253,6 +253,54 @@ serve(async (req) => {
             continue;
           }
 
+          // Try to extract OG image from the article page
+          let imageUrl: string | null = null;
+          let imageSource: string | null = null;
+
+          try {
+            console.log(`🖼️ Attempting to extract image from: ${originalUrl}`);
+            const pageResponse = await fetch(originalUrl, {
+              headers: {
+                "User-Agent": "Mozilla/5.0 (compatible; LakeGenevaBot/1.0)",
+              },
+            });
+
+            if (pageResponse.ok) {
+              const pageHtml = await pageResponse.text();
+              const { DOMParser } = await import("https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts");
+              const pageDoc = new DOMParser().parseFromString(pageHtml, "text/html");
+
+              if (pageDoc) {
+                // Try og:image first (most common and reliable)
+                const ogImage = pageDoc.querySelector('meta[property="og:image"]');
+                if (ogImage) {
+                  const content = ogImage.getAttribute("content");
+                  if (content && content.length > 10 && !content.includes("1x1")) {
+                    imageUrl = content;
+                    imageSource = "source_og";
+                    console.log(`✅ Found OG image: ${imageUrl.substring(0, 60)}...`);
+                  }
+                }
+
+                // Fallback to twitter:image if og:image not found
+                if (!imageUrl) {
+                  const twitterImage = pageDoc.querySelector('meta[name="twitter:image"]');
+                  if (twitterImage) {
+                    const content = twitterImage.getAttribute("content");
+                    if (content && content.length > 10 && !content.includes("1x1")) {
+                      imageUrl = content;
+                      imageSource = "source_og";
+                      console.log(`✅ Found Twitter image: ${imageUrl.substring(0, 60)}...`);
+                    }
+                  }
+                }
+              }
+            }
+          } catch (imageError: any) {
+            console.warn(`⚠️ Failed to extract image from ${originalUrl}: ${imageError.message}`);
+            // Continue without image - not a fatal error
+          }
+
           // Call OpenAI for summarization, categorization, and safety evaluation
           const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
             method: "POST",
@@ -358,6 +406,8 @@ When in doubt between safe and sensitive, choose sensitive. Only use blocked for
               summary: aiResult.summary || "",
               category: aiCategory,
               original_url: originalUrl,
+              image_url: imageUrl,
+              image_source: imageSource,
               publish_date: pubDate,
               status,
               safety_level: aiResult.safety_level || "safe",

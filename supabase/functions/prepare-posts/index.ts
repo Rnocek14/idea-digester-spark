@@ -69,6 +69,12 @@ serve(async (req) => {
     for (const story of eligibleStories) {
       // Check each platform
       for (const [platform, config] of Object.entries(platformConfig)) {
+        // Instagram requires an image - skip if none available
+        if (platform === 'instagram' && !story.image_url) {
+          console.log(`[prepare-posts] No image for story ${story.id}, skipping Instagram`);
+          continue;
+        }
+
         // Check if this story has already been queued/posted to this platform
         const { data: existing } = await supabaseClient
           .from("post_queue")
