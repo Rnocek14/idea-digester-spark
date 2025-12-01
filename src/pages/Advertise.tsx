@@ -42,17 +42,45 @@ const Advertise = () => {
 
   const submitLeadMutation = useMutation({
     mutationFn: async (data: z.infer<typeof leadSchema>) => {
-      const { error } = await supabase.from("advertiser_leads").insert({
-        business_name: data.businessName,
-        contact_name: data.contactName,
-        email: data.email,
-        phone: data.phone || null,
-        website: data.website || null,
-        notes: data.notes || null,
-        source: "advertise_page",
-        status: "new",
-      });
+      // 1) Insert lead and get id back
+      const { data: inserted, error } = await supabase
+        .from("advertiser_leads")
+        .insert({
+          business_name: data.businessName,
+          contact_name: data.contactName,
+          email: data.email,
+          phone: data.phone || null,
+          website: data.website || null,
+          notes: data.notes || null,
+          source: "advertise_page",
+          status: "new",
+        })
+        .select("id, created_at")
+        .single();
+
       if (error) throw error;
+
+      // 2) Fire notification (best-effort; don't block user on failure)
+      try {
+        await supabase.functions.invoke("notify-on-lead", {
+          body: {
+            lead: {
+              id: inserted.id,
+              created_at: inserted.created_at,
+              business_name: data.businessName,
+              contact_name: data.contactName,
+              email: data.email,
+              phone: data.phone || null,
+              website: data.website || null,
+              notes: data.notes || null,
+              source: "advertise_page",
+            },
+          },
+        });
+      } catch (notifyErr) {
+        // Log, but don't surface as a form failure
+        console.error("notify-on-lead failed:", notifyErr);
+      }
     },
     onSuccess: () => {
       toast.success("Thank you! We'll be in touch within 1 business day.");
