@@ -327,7 +327,15 @@ serve(async (req) => {
 For each article, you must:
 1. Write a clear, neutral, 2-3 sentence summary in a friendly local-news tone.
 2. Assign a category: one of events, news, community, dining, or real-estate.
-3. Evaluate safety and assign:
+3. Assign content_tags (granular attributes): one or more tags like brunch, lunch, dinner, coffee, bar, cocktails, wine, brewery, live-music, dj, late-night, kids, family-friendly, meeting, ordinance, road-closure, school-board, open-house, market-update, etc.
+4. Assign verticals (which accounts should show this): array from ["local", "eats", "nightlife", "civic", "family", "real_estate"]
+   - Dining content: ["local", "eats"]
+   - Bars/breweries/late-night/live-music: ["local", "nightlife"] or ["local", "eats", "nightlife"] for food+drink+music
+   - City meetings, school board, road closures, public notices: ["local", "civic"]
+   - Family events, kids activities: ["local", "family"]
+   - Open houses, market updates: ["local", "real_estate"]
+   - Most events also get "local" - it's the main feed
+5. Evaluate safety and assign:
    - safety_level: safe, sensitive, or blocked
    - safety_tags: zero or more labels like crime, public-safety, politics, tragedy, dining, family, graphic-violence, sexual-content, hate, scam
    - safety_reason: a short sentence explaining why
@@ -358,6 +366,19 @@ When in doubt between safe and sensitive, choose sensitive. Only use blocked for
                         enum: ["news", "events", "dining", "real-estate", "community"],
                         description: "Article category"
                       },
+                      content_tags: {
+                        type: "array",
+                        items: { type: "string" },
+                        description: "Granular content attributes like brunch, live-music, kids, meeting, road-closure"
+                      },
+                      verticals: {
+                        type: "array",
+                        items: { 
+                          type: "string",
+                          enum: ["local", "eats", "nightlife", "civic", "family", "real_estate"]
+                        },
+                        description: "Which account feeds should show this content"
+                      },
                       safety_level: {
                         type: "string",
                         enum: ["safe", "sensitive", "blocked"],
@@ -373,7 +394,7 @@ When in doubt between safe and sensitive, choose sensitive. Only use blocked for
                         description: "Short explanation of why this safety level was chosen"
                       }
                     },
-                    required: ["summary", "category", "safety_level", "safety_tags", "safety_reason"],
+                    required: ["summary", "category", "content_tags", "verticals", "safety_level", "safety_tags", "safety_reason"],
                     additionalProperties: false
                   }
                 }
@@ -427,6 +448,8 @@ When in doubt between safe and sensitive, choose sensitive. Only use blocked for
                 original_published_at: pubDate,
                 location_tags: source.metadata?.location_tags || ["Lake Geneva"],
                 ai_model: "gpt-4o-mini",
+                content_tags: aiResult.content_tags || [],
+                verticals: aiResult.verticals || ["local"],
               },
             });
 

@@ -36,6 +36,7 @@ const ContentQueue = () => {
   
   const [statusFilter, setStatusFilter] = useState<string>(initialStatus);
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [verticalFilter, setVerticalFilter] = useState<string>("all");
   const [selectedStoryId, setSelectedStoryId] = useState<string | null>(null);
   const [isNewStoryOpen, setIsNewStoryOpen] = useState(false);
   const [updatingStoryId, setUpdatingStoryId] = useState<string | null>(null);
@@ -60,7 +61,7 @@ const ContentQueue = () => {
   const queryClient = useQueryClient();
 
   const { data: stories, isLoading, error, refetch } = useQuery({
-    queryKey: ["content-queue", statusFilter, categoryFilter],
+    queryKey: ["content-queue", statusFilter, categoryFilter, verticalFilter],
     queryFn: async () => {
       let query = supabase
         .from("content_queue")
@@ -79,6 +80,16 @@ const ContentQueue = () => {
 
       const { data, error } = await query;
       if (error) throw error;
+      
+      // Client-side filter for verticals since it's in metadata JSONB
+      if (verticalFilter !== "all" && data) {
+        return data.filter(story => {
+          const metadata = story.metadata as any;
+          const verticals = metadata?.verticals || [];
+          return verticals.includes(verticalFilter);
+        });
+      }
+      
       return data;
     },
     retry: 2,
@@ -230,6 +241,16 @@ const ContentQueue = () => {
     "community",
   ];
 
+  const verticals = [
+    "all",
+    "local",
+    "eats",
+    "nightlife",
+    "civic",
+    "family",
+    "real_estate",
+  ];
+
   if (error) {
     return (
       <div className="space-y-6">
@@ -300,6 +321,19 @@ const ContentQueue = () => {
             ))}
           </SelectContent>
         </Select>
+
+        <Select value={verticalFilter} onValueChange={setVerticalFilter}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filter by vertical" />
+          </SelectTrigger>
+          <SelectContent>
+            {verticals.map((vert) => (
+              <SelectItem key={vert} value={vert}>
+                {vert.charAt(0).toUpperCase() + vert.slice(1).replace("_", " ")}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Content Table */}
@@ -309,6 +343,7 @@ const ContentQueue = () => {
             <TableRow>
               <TableHead>Title</TableHead>
               <TableHead>Category</TableHead>
+              <TableHead>Verticals</TableHead>
               <TableHead>Source</TableHead>
               <TableHead>Safety</TableHead>
               <TableHead>Voice</TableHead>
@@ -320,7 +355,7 @@ const ContentQueue = () => {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8">
+                <TableCell colSpan={9} className="text-center py-8">
                   <div className="flex flex-col items-center gap-2">
                     <div className="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full" />
                     <span>Loading stories...</span>
@@ -338,7 +373,7 @@ const ContentQueue = () => {
             ) : !stories || stories.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={8}
+                  colSpan={9}
                   className="text-center py-8 text-muted-foreground"
                 >
                   No stories found
@@ -354,6 +389,27 @@ const ContentQueue = () => {
                     <Badge variant="outline" className="capitalize">
                       {story.category || "Uncategorized"}
                     </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1">
+                      {(() => {
+                        const metadata = story.metadata as any;
+                        const verticals = metadata?.verticals || [];
+                        return verticals.length > 0 ? (
+                          verticals.map((vertical: string) => (
+                            <Badge 
+                              key={vertical} 
+                              variant="outline" 
+                              className="text-xs bg-blue-500/10 text-blue-500 border-blue-500/20"
+                            >
+                              {vertical}
+                            </Badge>
+                          ))
+                        ) : (
+                          <span className="text-muted-foreground text-sm">—</span>
+                        );
+                      })()}
+                    </div>
                   </TableCell>
                   <TableCell>{story.source?.name || "Unknown"}</TableCell>
                   <TableCell>
