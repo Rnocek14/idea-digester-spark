@@ -433,6 +433,9 @@ export type Database = {
       }
       newsletter_clicks: {
         Row: {
+          ad_placement_id: string | null
+          business_id: string | null
+          click_source: string | null
           clicked_at: string
           created_at: string
           id: string
@@ -444,6 +447,9 @@ export type Database = {
           user_agent: string | null
         }
         Insert: {
+          ad_placement_id?: string | null
+          business_id?: string | null
+          click_source?: string | null
           clicked_at?: string
           created_at?: string
           id?: string
@@ -455,6 +461,9 @@ export type Database = {
           user_agent?: string | null
         }
         Update: {
+          ad_placement_id?: string | null
+          business_id?: string | null
+          click_source?: string | null
           clicked_at?: string
           created_at?: string
           id?: string
@@ -466,6 +475,20 @@ export type Database = {
           user_agent?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "newsletter_clicks_ad_placement_id_fkey"
+            columns: ["ad_placement_id"]
+            isOneToOne: false
+            referencedRelation: "ad_placements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "newsletter_clicks_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "newsletter_clicks_newsletter_id_fkey"
             columns: ["newsletter_id"]

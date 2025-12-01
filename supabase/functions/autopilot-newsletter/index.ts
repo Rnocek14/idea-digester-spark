@@ -220,7 +220,7 @@ serve(async (req) => {
         status: "ready",
         subject: newsletter.subject,
         preheader: newsletter.preheader,
-        html_body: newsletter.htmlBody,
+        html_body: newsletter.htmlBody.replace(/\{\{NEWSLETTER_ID\}\}/g, "PLACEHOLDER"), // Temporary placeholder
         text_body: newsletter.textBody,
         story_ids: storyIds,
         story_count: selectedStories.length,
@@ -234,6 +234,19 @@ serve(async (req) => {
       .single();
 
     if (saveError) throw saveError;
+
+    // Replace newsletter ID placeholder in HTML
+    const finalHtmlBody = newsletter.htmlBody.replace(/\{\{NEWSLETTER_ID\}\}/g, savedNewsletter.id);
+    
+    // Update newsletter with final HTML containing real newsletter ID
+    const { error: updateHtmlError } = await supabase
+      .from("newsletters")
+      .update({ html_body: finalHtmlBody })
+      .eq("id", savedNewsletter.id);
+
+    if (updateHtmlError) {
+      console.error("Failed to update newsletter HTML:", updateHtmlError);
+    }
 
     // Update stories with newsletter reference (dedupe marker) + auto-mark as published
     console.log("🔗 Updating stories with newsletter reference + marking as auto_published...");
@@ -493,7 +506,7 @@ function buildNewsletter(
             ${sponsor.label || sponsor.business_profiles.name}
           </p>
           ${sponsor.business_profiles.website ? `
-            <a href="${sponsor.business_profiles.website}" 
+            <a href="https://mzumvkrpnxhkvhdyzgqa.supabase.co/functions/v1/track-click?url=${encodeURIComponent(sponsor.business_profiles.website)}&source=newsletter_sponsor&bid=${sponsor.business_id}&pid=${sponsor.id}&nid={{NEWSLETTER_ID}}" 
                style="color: #667eea; text-decoration: none; font-size: 14px;">
               Visit Website →
             </a>
@@ -624,8 +637,12 @@ function rewriteLinksForTracking(htmlBody: string, newsletterId: string, subscri
   const linkRegex = /href=["']([^"']+)["']/gi;
   
   return htmlBody.replace(linkRegex, (match, url) => {
-    // Skip tracking for unsubscribe links, anchors, mailto, tel
-    if (url.includes('unsubscribe') || url.startsWith('#') || url.startsWith('mailto:') || url.startsWith('tel:')) {
+    // Skip tracking for unsubscribe links, anchors, mailto, tel, and links already using track-click
+    if (url.includes('unsubscribe') || 
+        url.startsWith('#') || 
+        url.startsWith('mailto:') || 
+        url.startsWith('tel:') ||
+        url.includes('/track-click?')) {
       return match;
     }
     
