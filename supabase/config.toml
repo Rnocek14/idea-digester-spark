@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.track-click]
 verify_jwt = false
+
+[functions.update-engagement-scores]
+verify_jwt = false

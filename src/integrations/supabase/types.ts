@@ -558,10 +558,15 @@ export type Database = {
           city_id: string | null
           created_at: string
           email: string
+          engagement_score: number | null
           id: string
+          last_clicked_at: string | null
+          last_opened_at: string | null
           metadata: Json | null
+          source: string | null
           status: string
           subscribed_at: string
+          tags: string[] | null
           unsubscribe_reason: string | null
           unsubscribe_token: string
           unsubscribed_at: string | null
@@ -571,10 +576,15 @@ export type Database = {
           city_id?: string | null
           created_at?: string
           email: string
+          engagement_score?: number | null
           id?: string
+          last_clicked_at?: string | null
+          last_opened_at?: string | null
           metadata?: Json | null
+          source?: string | null
           status?: string
           subscribed_at?: string
+          tags?: string[] | null
           unsubscribe_reason?: string | null
           unsubscribe_token?: string
           unsubscribed_at?: string | null
@@ -584,10 +594,15 @@ export type Database = {
           city_id?: string | null
           created_at?: string
           email?: string
+          engagement_score?: number | null
           id?: string
+          last_clicked_at?: string | null
+          last_opened_at?: string | null
           metadata?: Json | null
+          source?: string | null
           status?: string
           subscribed_at?: string
+          tags?: string[] | null
           unsubscribe_reason?: string | null
           unsubscribe_token?: string
           unsubscribed_at?: string | null
