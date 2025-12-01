@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,7 +31,10 @@ import { cn } from "@/lib/utils";
 type ContentStatus = "pending" | "approved" | "rejected" | "published" | "auto_published" | "flagged";
 
 const ContentQueue = () => {
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [searchParams] = useSearchParams();
+  const initialStatus = searchParams.get("status") || "all";
+  
+  const [statusFilter, setStatusFilter] = useState<string>(initialStatus);
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [selectedStoryId, setSelectedStoryId] = useState<string | null>(null);
   const [isNewStoryOpen, setIsNewStoryOpen] = useState(false);
