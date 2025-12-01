@@ -111,6 +111,24 @@ const SocialQueue = () => {
     refetchInterval: 10000, // Refresh every 10 seconds
   });
 
+  // Fetch prep history from activity log
+  const { data: prepHistory } = useQuery({
+    queryKey: ["full-prep-history"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("activity_log")
+        .select("id, created_at, message, details")
+        .eq("entity_type", "system")
+        .eq("action", "full_queue_prep_completed")
+        .order("created_at", { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+      return data;
+    },
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
+
   // Fetch upcoming posts
   const { data: upcomingPosts, isLoading: upcomingLoading, refetch: refetchUpcoming } = useQuery({
     queryKey: ["post-queue", "upcoming"],
@@ -775,6 +793,42 @@ const SocialQueue = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Prep History Card */}
+      {prepHistory && prepHistory.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Prep History</CardTitle>
+            <CardDescription>Last 10 Full Queue Prep runs</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {prepHistory.map((entry: any) => (
+                <div 
+                  key={entry.id}
+                  className="flex items-center justify-between p-3 rounded-lg border bg-muted/30"
+                >
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">
+                      {format(new Date(entry.created_at), "MMM d, yyyy 'at' h:mm a")} UTC
+                    </p>
+                    <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
+                      <span>{entry.details?.images || 0} images</span>
+                      <span>•</span>
+                      <span>{entry.details?.voice || 0} voice</span>
+                      <span>•</span>
+                      <span>{entry.details?.posts || 0} posts</span>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="text-green-600">
+                    Completed
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {(backfillMutation.isPending || bulkGenerateImagesMutation.isPending || prepareMutation.isPending) && (
         <Card className="bg-muted/50">
