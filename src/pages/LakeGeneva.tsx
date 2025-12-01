@@ -8,7 +8,6 @@ import { ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { PublicHeader } from "@/components/PublicHeader";
 import { PublicFooter } from "@/components/PublicFooter";
-import { BriefHero } from "@/components/BriefHero";
 import { StoryCard } from "@/components/StoryCard";
 
 type Story = {
@@ -182,106 +181,144 @@ const LakeGeneva = () => {
       <PublicHeader />
 
       <main>
-        {/* Featured Story Spotlight */}
+        {/* Unified Hero Section */}
         {featured && (
           <section className="border-b border-gray-200 bg-white">
-            <div className="mx-auto max-w-5xl px-4 sm:px-6 py-6 sm:py-8">
-              <div className="grid gap-6 sm:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] items-stretch">
-                {/* Featured Story with Image Overlay */}
-                <article className="relative overflow-hidden rounded-2xl bg-gray-100 shadow-sm">
-                  {featured.image_url && (
-                    <div className="relative h-64 sm:h-80">
-                      <img
-                        src={featured.image_url}
-                        alt={featured.title}
-                        className="h-full w-full object-cover transition-transform duration-500 hover:scale-[1.03]"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                    </div>
-                  )}
-
-                  <div className="absolute inset-x-0 bottom-0 p-4 sm:p-6 text-white">
-                    <p className="mb-2 text-xs font-semibold tracking-[0.22em] uppercase text-blue-200">
-                      Top story
+            <div className="mx-auto max-w-5xl px-4 sm:px-6 py-10">
+              <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1.2fr)]">
+                {/* Left: greeting, headline, category links, featured card */}
+                <div className="space-y-5">
+                  {/* Greeting + headline */}
+                  <div className="space-y-1">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
+                      Good morning, Lake Geneva
                     </p>
-                    <h1 className="font-display text-2xl sm:text-3xl leading-tight">
-                      {featured.title}
+                    <h1 className="font-display text-2xl sm:text-3xl md:text-[32px] leading-tight text-brand">
+                      Here's what's happening this week
                     </h1>
-                    {(featured.content_website || featured.content_lg_base || featured.summary) && (
-                      <p className="mt-2 text-sm text-gray-100 line-clamp-3">
-                        {featured.content_website || featured.content_lg_base || featured.summary}
-                      </p>
-                    )}
+                    <p className="max-w-xl text-sm text-gray-600 leading-relaxed">
+                      Short, trustworthy updates on city hall, schools, events, and real estate — in under 5 minutes.
+                    </p>
+                  </div>
 
-                    <div className="mt-3 flex items-center gap-3 text-xs text-gray-200">
-                      {featured.category && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-black/40 px-2 py-0.5">
-                          {getCategoryEmoji(featured.category)}
-                          <span className="capitalize">
-                            {featured.category.replace('_', ' ')}
-                          </span>
+                  {/* Category quick links */}
+                  <div className="flex flex-wrap gap-2">
+                    {sortedCategories.slice(0, 4).map((cat) => (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => {
+                          const el = document.getElementById(cat);
+                          if (el) el.scrollIntoView({ behavior: 'smooth' });
+                        }}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs text-gray-700 hover:border-brand-accent hover:bg-blue-50 hover:text-brand-accent transition-colors"
+                      >
+                        <span>{getCategoryEmoji(cat)}</span>
+                        <span className="capitalize font-medium">
+                          {cat.replace('_', ' ')}
                         </span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Featured story card */}
+                  <article className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-gray-100">
+                    <div className="relative h-56 sm:h-60">
+                      {featured.image_url && (
+                        <img
+                          src={featured.image_url}
+                          alt={featured.title}
+                          className="h-full w-full object-cover transition-transform duration-500 hover:scale-[1.03]"
+                        />
                       )}
-                      <span>{getRelativeTime(featured.publish_date || featured.created_at) || 'Today'} • 3 min read</span>
+                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-black/30 to-transparent" />
+                      <div className="pointer-events-none absolute inset-x-0 bottom-0 p-4 sm:p-5">
+                        <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-200">
+                          Top story
+                        </p>
+                        <h2 className="text-lg sm:text-xl font-semibold text-white">
+                          {featured.title}
+                        </h2>
+                        {(featured.content_website || featured.content_lg_base || featured.summary) && (
+                          <p className="mt-1 line-clamp-2 text-xs sm:text-sm text-gray-100/90">
+                            {featured.content_website || featured.content_lg_base || featured.summary}
+                          </p>
+                        )}
+                        <div className="mt-3 flex items-center gap-3 text-[11px] text-gray-200/90">
+                          {featured.category && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-black/30 px-2 py-0.5">
+                              {getCategoryEmoji(featured.category)}
+                              <span className="capitalize">
+                                {featured.category.replace('_', ' ')}
+                              </span>
+                            </span>
+                          )}
+                          <span className="opacity-80">
+                            {getRelativeTime(featured.publish_date || featured.created_at) || 'Today'} · 3 min read
+                          </span>
+                        </div>
+                      </div>
                       {featured.original_url && (
                         <a
                           href={featured.original_url}
                           target="_blank"
-                          rel="noopener noreferrer"
-                          className="ml-auto inline-flex items-center gap-1 text-blue-200 hover:text-white transition-colors"
+                          rel="noreferrer"
+                          className="absolute inset-0"
                         >
-                          Read more
-                          <ExternalLink className="h-3 w-3" />
+                          <span className="sr-only">Read more</span>
                         </a>
                       )}
                     </div>
-                  </div>
-                </article>
-
-                {/* Also Today Mini List */}
-                <div className="flex flex-col gap-4">
-                  <div className="rounded-2xl border border-gray-200 bg-gray-50/80 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500 mb-3">
-                      Also today
-                    </p>
-                    <ul className="space-y-3">
-                      {restStories.slice(0, 4).map((story) => (
-                        <li key={story.id}>
-                          <button
-                            onClick={() =>
-                              document.getElementById(
-                                (story.category || 'other').toLowerCase(),
-                              )?.scrollIntoView({ behavior: 'smooth' })
-                            }
-                            className="text-left group"
-                          >
-                            <p className="text-sm text-brand group-hover:text-brand-accent transition-colors line-clamp-2">
-                              {story.title}
-                            </p>
-                            {story.category && (
-                              <span className="mt-1 inline-flex items-center gap-1 text-xs text-gray-500">
-                                {getCategoryEmoji(story.category)}
-                                <span className="capitalize">{story.category.replace('_', ' ')}</span>
-                              </span>
-                            )}
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+                  </article>
                 </div>
+
+                {/* Right: Also today */}
+                <aside className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-gray-100">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">
+                    Also today
+                  </p>
+                  <ul className="mt-3 space-y-3">
+                    {restStories.slice(0, 5).map((story) => (
+                      <li key={story.id}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const el = document.getElementById(
+                              (story.category || 'other').toLowerCase(),
+                            );
+                            if (el) el.scrollIntoView({ behavior: 'smooth' });
+                          }}
+                          className="w-full text-left"
+                        >
+                          <p className="text-sm font-medium text-brand line-clamp-2 hover:text-brand-accent transition-colors">
+                            {story.title}
+                          </p>
+                          <p className="mt-0.5 flex items-center gap-2 text-[11px] text-gray-500">
+                            {story.category && (
+                              <>
+                                <span>{getCategoryEmoji(story.category)}</span>
+                                <span className="capitalize">
+                                  {story.category.replace('_', ' ')}
+                                </span>
+                                <span className="opacity-40">•</span>
+                              </>
+                            )}
+                            <span>{getRelativeTime(story.publish_date || story.created_at)}</span>
+                          </p>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </aside>
               </div>
             </div>
           </section>
         )}
 
-        {/* Hero Section */}
-        {stories.length > 0 && <BriefHero stories={stories} />}
-
         {/* Sponsor Block */}
         {sponsor && (
           <section className="border-b border-gray-100 bg-white">
-            <div className="mx-auto max-w-5xl px-4 sm:px-6 py-6">
+            <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
               <Card className="p-5 bg-gradient-to-br from-blue-50/50 to-indigo-50/30 border-blue-100">
                 <div className="flex items-center gap-4">
                   {sponsor.logo_url && (
@@ -326,7 +363,7 @@ const LakeGeneva = () => {
           <>
             {/* Category Filter Pills */}
             <section className="border-b border-gray-200 bg-white sticky top-[73px] z-20">
-              <div className="mx-auto max-w-5xl px-4 sm:px-6 py-3">
+              <div className="mx-auto max-w-5xl px-4 sm:px-6 py-4">
                 <div className="flex flex-wrap gap-2">
                   {['all', ...categoryOrder].map((cat) => (
                     <button
@@ -346,7 +383,7 @@ const LakeGeneva = () => {
             </section>
 
             <section className="bg-gray-50 border-t border-gray-100">
-              <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8 sm:py-10 space-y-10">
+              <div className="mx-auto max-w-5xl px-4 sm:px-6 py-10 space-y-10">
               {visibleCategories.map((category) => (
                 <div key={category} id={category} className="scroll-mt-24">
                   <div className="flex items-baseline justify-between gap-2 mb-4">
