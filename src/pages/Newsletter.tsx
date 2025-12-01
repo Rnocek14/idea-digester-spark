@@ -36,7 +36,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarIcon, Copy, CheckCircle2, Sparkles, Loader2, Zap, AlertCircle, CheckCircle, Eye, Trash2 } from "lucide-react";
+import { CalendarIcon, Copy, CheckCircle2, Sparkles, Loader2, Zap, AlertCircle, CheckCircle, Eye, Trash2, Send } from "lucide-react";
 import { format, subDays } from "date-fns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -80,6 +80,7 @@ const Newsletter = () => {
   const [sendNow, setSendNow] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [newsletterToDelete, setNewsletterToDelete] = useState<string | null>(null);
+  const [sendingNewsletterId, setSendingNewsletterId] = useState<string | null>(null);
 
   // Query recent newsletters
   const { data: recentNewsletters } = useQuery({
@@ -93,6 +94,39 @@ const Newsletter = () => {
       if (error) throw error;
       return data;
     },
+  });
+
+  // Send newsletter mutation
+  const sendNewsletterMutation = useMutation({
+    mutationFn: async (newsletterId: string) => {
+      setSendingNewsletterId(newsletterId);
+      const { data, error } = await supabase.functions.invoke('send-newsletter', {
+        body: { newsletter_id: newsletterId }
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: async (data) => {
+      await queryClient.invalidateQueries({ queryKey: ["recent-newsletters"] });
+      toast.success(`Newsletter sent! ${data.sent_count} emails delivered`, {
+        description: data.message
+      });
+      await logActivity({
+        entityType: "system",
+        entityId: data.newsletter_id,
+        action: "newsletter_sent",
+        message: `Newsletter sent to ${data.sent_count} subscribers`,
+        details: { sent_count: data.sent_count, failed_count: data.failed_count }
+      });
+    },
+    onError: (error: any) => {
+      toast.error("Failed to send newsletter", {
+        description: error.message
+      });
+    },
+    onSettled: () => {
+      setSendingNewsletterId(null);
+    }
   });
 
   // Delete newsletter mutation
@@ -579,6 +613,21 @@ const Newsletter = () => {
                               onClick={() => setPreviewNewsletter(newsletter)}
                             >
                               <Eye className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {newsletter.status === 'ready' && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => sendNewsletterMutation.mutate(newsletter.id)}
+                              disabled={sendingNewsletterId === newsletter.id}
+                              className="text-primary hover:text-primary hover:bg-primary/10"
+                            >
+                              {sendingNewsletterId === newsletter.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Send className="h-4 w-4" />
+                              )}
                             </Button>
                           )}
                           <Button
