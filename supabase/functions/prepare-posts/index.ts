@@ -49,6 +49,7 @@ serve(async (req) => {
           success: true,
           message: "No eligible stories found",
           prepared: 0,
+          total: 0,
         }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
