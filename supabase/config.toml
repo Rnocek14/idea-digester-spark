@@ -35,3 +35,6 @@ verify_jwt = false
 
 [functions.process-post-queue]
 verify_jwt = false
+
+[functions.backfill-voice-variants]
+verify_jwt = false
