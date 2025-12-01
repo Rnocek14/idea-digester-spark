@@ -4,6 +4,7 @@ import { FileText, Radio, Megaphone, Clock } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ActivityFeed } from "@/components/ActivityFeed";
+import { PipelineHealthCard } from "@/components/PipelineHealthCard";
 
 const Dashboard = () => {
   const { data: pendingCount = 0, isLoading: pendingLoading, refetch: refetchPending } = useQuery({
@@ -131,31 +132,7 @@ const Dashboard = () => {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Getting Started</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <h3 className="font-semibold mb-2">1. Set Up Content Sources</h3>
-            <p className="text-sm text-muted-foreground">
-              Add RSS feeds, APIs, or web scraping sources to begin ingesting content
-            </p>
-          </div>
-          <div>
-            <h3 className="font-semibold mb-2">2. Configure External Automation</h3>
-            <p className="text-sm text-muted-foreground">
-              Connect your n8n or Make workflows to populate the content queue
-            </p>
-          </div>
-          <div>
-            <h3 className="font-semibold mb-2">3. Add Sponsors</h3>
-            <p className="text-sm text-muted-foreground">
-              Manage local business sponsors and their advertising campaigns
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <PipelineHealthCard />
 
       <ActivityFeed />
     </div>
