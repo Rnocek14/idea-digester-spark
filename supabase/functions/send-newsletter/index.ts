@@ -137,8 +137,8 @@ async function sendNewsletterEmail(supabase: any, newsletter: any, supabaseUrl: 
         );
 
         const { error: sendError } = await resend.emails.send({
-          from: "Lake Geneva Local <onboarding@resend.dev>",
-          to: [subscriber.email],
+          from: "onboarding@resend.dev",
+          to: subscriber.email,
           subject: newsletter.subject,
           html: htmlBody,
           text: textBody,
@@ -150,6 +150,9 @@ async function sendNewsletterEmail(supabase: any, newsletter: any, supabaseUrl: 
         } else {
           sent++;
         }
+        
+        // Small delay to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 100));
       } catch (error) {
         console.error(`Error sending to ${subscriber.email}:`, error);
         failed++;
