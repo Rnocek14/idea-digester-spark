@@ -294,6 +294,10 @@ const LakeGeneva = () => {
             <a href="/directory" className="hover:text-primary transition-colors">
               Business Directory
             </a>
+            <span>•</span>
+            <a href="/advertise" className="hover:text-primary transition-colors">
+              Advertise
+            </a>
           </div>
           <p>© {new Date().getFullYear()} Lake Geneva Brief. All rights reserved.</p>
         </div>

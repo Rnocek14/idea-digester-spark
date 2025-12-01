@@ -251,7 +251,7 @@ const PublicDirectory = () => {
               Join Lake Geneva Brief as a sponsor and reach thousands of local readers through our
               newsletter, website, and social channels.
             </p>
-            <Button size="lg" onClick={() => navigate("/lake-geneva")}>
+            <Button size="lg" onClick={() => navigate("/advertise")}>
               Learn More About Advertising
             </Button>
           </div>
@@ -274,6 +274,13 @@ const PublicDirectory = () => {
               className="hover:text-primary transition-colors"
             >
               Business Directory
+            </button>
+            <span>•</span>
+            <button
+              onClick={() => navigate("/advertise")}
+              className="hover:text-primary transition-colors"
+            >
+              Advertise
             </button>
           </div>
           <p>© {new Date().getFullYear()} Lake Geneva Brief. All rights reserved.</p>
