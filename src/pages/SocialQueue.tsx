@@ -7,13 +7,22 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { Calendar, Clock, Instagram, Facebook, Twitter, RefreshCw, Play, Sparkles, ImagePlus } from "lucide-react";
+import { Calendar, Clock, Instagram, Facebook, Twitter, RefreshCw, Play, Sparkles, ImagePlus, X, ExternalLink } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { OperationProgress } from "@/components/ui/OperationProgress";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const SocialQueue = () => {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("upcoming");
+  const [selectedPost, setSelectedPost] = useState<any>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   // Count stories needing voice generation
   const { data: needsVoiceCount } = useQuery({
@@ -209,6 +218,16 @@ const SocialQueue = () => {
     return !!post.generated_image_url;
   };
 
+  const openImagePreview = (post: any) => {
+    setSelectedPost(post);
+    setIsPreviewOpen(true);
+  };
+
+  const closeImagePreview = () => {
+    setIsPreviewOpen(false);
+    setSelectedPost(null);
+  };
+
   const getStatusBadge = (status: string) => {
     const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
       pending: "default",
@@ -336,7 +355,10 @@ const SocialQueue = () => {
                         >
                           <div className="flex gap-4">
                             {(post.generated_image_url || post.image_url) && (
-                              <div className="flex-shrink-0 relative">
+                              <div 
+                                className="flex-shrink-0 relative cursor-pointer hover:opacity-80 transition-opacity"
+                                onClick={() => openImagePreview(post)}
+                              >
                                 <img
                                   src={post.generated_image_url || post.image_url}
                                   alt=""
@@ -436,7 +458,10 @@ const SocialQueue = () => {
                   >
                     <div className="flex gap-4">
                       {(post.generated_image_url || post.image_url) && (
-                        <div className="flex-shrink-0 relative">
+                        <div 
+                          className="flex-shrink-0 relative cursor-pointer hover:opacity-80 transition-opacity"
+                          onClick={() => openImagePreview(post)}
+                        >
                           <img
                             src={post.generated_image_url || post.image_url}
                             alt=""
@@ -479,6 +504,123 @@ const SocialQueue = () => {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Image Preview Modal */}
+      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {selectedPost && getPlatformIcon(selectedPost.platform)}
+              Image Preview
+            </DialogTitle>
+            <DialogDescription>
+              {selectedPost?.content_queue?.title}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedPost && (
+            <div className="space-y-4">
+              {/* Full-size image */}
+              <div className="relative rounded-lg overflow-hidden bg-muted">
+                <img
+                  src={selectedPost.generated_image_url || selectedPost.image_url}
+                  alt={selectedPost.content_queue?.title}
+                  className="w-full h-auto max-h-[500px] object-contain mx-auto"
+                />
+                <div className="absolute top-2 right-2">
+                  {getImageSourceBadge(selectedPost)}
+                </div>
+              </div>
+
+              {/* Story Details */}
+              <div className="space-y-3">
+                <div>
+                  <h4 className="font-semibold text-sm mb-1">Post Content</h4>
+                  <p className="text-sm text-muted-foreground">{selectedPost.post_text}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-semibold">Platform:</span>{" "}
+                    <span className="capitalize">{selectedPost.platform}</span>
+                  </div>
+                  <div>
+                    <span className="font-semibold">Status:</span>{" "}
+                    {getStatusBadge(selectedPost.status)}
+                  </div>
+                  <div>
+                    <span className="font-semibold">Category:</span>{" "}
+                    <Badge variant="outline" className="text-xs">
+                      {selectedPost.content_queue?.category}
+                    </Badge>
+                  </div>
+                  {selectedPost.scheduled_for && (
+                    <div>
+                      <span className="font-semibold">Scheduled:</span>{" "}
+                      {format(new Date(selectedPost.scheduled_for), "MMM d, yyyy h:mm a")}
+                    </div>
+                  )}
+                </div>
+
+                {selectedPost.is_sponsored && (
+                  <div className="flex items-center gap-2 p-3 bg-primary/10 rounded-md">
+                    <Badge variant="default">Sponsored Content</Badge>
+                    {selectedPost.image_url && !selectedPost.generated_image_url && (
+                      <Badge variant="destructive" className="text-xs">
+                        ⚠ Should use AI-generated image
+                      </Badge>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-2 pt-4 border-t">
+                {shouldShowRegenerateButton(selectedPost) && (
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      generateImageMutation.mutate(selectedPost.id);
+                      closeImagePreview();
+                    }}
+                    disabled={generateImageMutation.isPending}
+                    className="flex-1"
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Regenerate Image
+                  </Button>
+                )}
+                {shouldShowGenerateButton(selectedPost) && (
+                  <Button
+                    variant="default"
+                    onClick={() => {
+                      generateImageMutation.mutate(selectedPost.id);
+                      closeImagePreview();
+                    }}
+                    disabled={generateImageMutation.isPending}
+                    className="flex-1"
+                  >
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Generate AI Image
+                  </Button>
+                )}
+                {selectedPost.image_url && (
+                  <Button
+                    variant="outline"
+                    onClick={() => window.open(selectedPost.generated_image_url || selectedPost.image_url, '_blank')}
+                  >
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Open Full Size
+                  </Button>
+                )}
+                <Button variant="ghost" onClick={closeImagePreview}>
+                  Close
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
