@@ -120,8 +120,8 @@ const SocialQueue = () => {
     },
     onSuccess: () => {
       toast.success('Image generated successfully');
-      queryClient.invalidateQueries({ queryKey: ['upcoming-posts'] });
-      queryClient.invalidateQueries({ queryKey: ['sent-posts'] });
+      queryClient.invalidateQueries({ queryKey: ['post-queue', 'upcoming'] });
+      queryClient.invalidateQueries({ queryKey: ['post-queue', 'sent'] });
     },
     onError: (error: any) => {
       toast.error(`Failed to generate image: ${error.message}`);
