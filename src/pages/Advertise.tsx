@@ -13,9 +13,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Newspaper, Building2, Star, TrendingUp, Users, Mail, MessageSquare, CheckCircle2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Building2, Star, TrendingUp, Users, Mail, MessageSquare, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import { PublicHeader } from "@/components/PublicHeader";
+import { PublicFooter } from "@/components/PublicFooter";
 
 type AdSlot = {
   id: string;
@@ -27,7 +28,6 @@ type AdSlot = {
 };
 
 const Advertise = () => {
-  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     business_name: "",
     contact_name: "",
@@ -116,29 +116,7 @@ const Advertise = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container max-w-6xl mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Star className="h-8 w-8 text-primary" />
-              <div>
-                <h1 className="text-2xl font-bold">Advertise with Lake Geneva Brief</h1>
-                <p className="text-sm text-muted-foreground">Reach local audiences where they live</p>
-              </div>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate("/lake-geneva")}
-              className="flex items-center gap-2"
-            >
-              <Newspaper className="h-4 w-4" />
-              Lake Geneva Brief
-            </Button>
-          </div>
-        </div>
-      </header>
+      <PublicHeader />
 
       <main className="container max-w-6xl mx-auto px-4 py-12 space-y-16">
         {/* Hero Section */}
@@ -146,7 +124,7 @@ const Advertise = () => {
           <Badge className="bg-primary/10 text-primary border-primary/20">
             New Local Media Platform
           </Badge>
-          <h2 className="text-4xl font-bold">
+          <h2 className="text-4xl font-serif font-bold">
             Connect with Lake Geneva residents through trusted local news
           </h2>
           <p className="text-xl text-muted-foreground">
@@ -178,7 +156,7 @@ const Advertise = () => {
         {newsletterSlots.length > 0 && (
           <section className="space-y-6">
             <div className="text-center space-y-2">
-              <h3 className="text-3xl font-bold">Newsletter Sponsorships</h3>
+              <h3 className="text-3xl font-serif font-bold">Newsletter Sponsorships</h3>
               <p className="text-muted-foreground">
                 Appear directly in our weekly email newsletter
               </p>
@@ -228,7 +206,7 @@ const Advertise = () => {
         {/* Directory Listing */}
         <section className="space-y-6">
           <div className="text-center space-y-2">
-            <h3 className="text-3xl font-bold">Featured Directory Listing</h3>
+            <h3 className="text-3xl font-serif font-bold">Featured Directory Listing</h3>
             <p className="text-muted-foreground">
               Stand out in our local business directory
             </p>
@@ -275,7 +253,7 @@ const Advertise = () => {
           <section className="space-y-6">
             <div className="text-center space-y-2">
               <Badge variant="secondary">Coming Soon</Badge>
-              <h3 className="text-3xl font-bold">Social Media Amplification</h3>
+              <h3 className="text-3xl font-serif font-bold">Social Media Amplification</h3>
               <p className="text-muted-foreground">
                 Extend your reach to Instagram, Facebook, and X
               </p>
@@ -295,7 +273,7 @@ const Advertise = () => {
         {/* Lead Capture Form */}
         <section className="space-y-6 max-w-2xl mx-auto">
           <div className="text-center space-y-2">
-            <h3 className="text-3xl font-bold">Get Started</h3>
+            <h3 className="text-3xl font-serif font-bold">Get Started</h3>
             <p className="text-muted-foreground">
               Tell us about your business and we'll create a custom sponsorship proposal
             </p>
@@ -405,27 +383,7 @@ const Advertise = () => {
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t mt-12 py-8 bg-muted/20">
-        <div className="container max-w-6xl mx-auto px-4 text-center text-sm text-muted-foreground space-y-2">
-          <div className="flex items-center justify-center gap-4">
-            <button
-              onClick={() => navigate("/lake-geneva")}
-              className="hover:text-primary transition-colors"
-            >
-              Lake Geneva Brief
-            </button>
-            <span>•</span>
-            <button
-              onClick={() => navigate("/directory")}
-              className="hover:text-primary transition-colors"
-            >
-              Business Directory
-            </button>
-          </div>
-          <p>© {new Date().getFullYear()} Lake Geneva Brief. All rights reserved.</p>
-        </div>
-      </footer>
+      <PublicFooter />
     </div>
   );
 };
