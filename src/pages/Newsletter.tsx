@@ -618,20 +618,7 @@ const Newsletter = () => {
                               <Eye className="h-4 w-4" />
                             </Button>
                           )}
-                          {newsletter.status === 'sent' && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setAnalyticsNewsletter(newsletter);
-                                setAnalyticsOpen(true);
-                              }}
-                              className="text-primary hover:text-primary hover:bg-primary/10"
-                            >
-                              <BarChart3 className="h-4 w-4" />
-                            </Button>
-                          )}
-                          {newsletter.status === 'ready' && (
+                          {(newsletter.status === 'ready' || newsletter.status === 'sent') && (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -644,6 +631,19 @@ const Newsletter = () => {
                               ) : (
                                 <Send className="h-4 w-4" />
                               )}
+                            </Button>
+                          )}
+                          {newsletter.status === 'sent' && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setAnalyticsNewsletter(newsletter);
+                                setAnalyticsOpen(true);
+                              }}
+                              className="text-blue-600 hover:text-blue-600 hover:bg-blue-600/10"
+                            >
+                              <BarChart3 className="h-4 w-4" />
                             </Button>
                           )}
                           <Button
