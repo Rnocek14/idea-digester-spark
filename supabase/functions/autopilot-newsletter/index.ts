@@ -31,8 +31,8 @@ serve(async (req) => {
   }
 
   try {
-    const { force = false } = await req.json().catch(() => ({}));
-    console.log(`🚀 Autopilot Newsletter Engine starting... (force=${force})`);
+    const { force = false, sendNow = false } = await req.json().catch(() => ({}));
+    console.log(`🚀 Autopilot Newsletter Engine starting... (force=${force}, sendNow=${sendNow})`);
 
     // Initialize Supabase client with service role
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
@@ -212,6 +212,7 @@ serve(async (req) => {
         text_body: newsletter.textBody,
         story_ids: storyIds,
         story_count: selectedStories.length,
+        auto_send_enabled: sendNow,
         metadata: { 
           categories: getCategoryCounts(selectedStories),
           generated_at: new Date().toISOString()
