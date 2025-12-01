@@ -11,8 +11,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Building2, ExternalLink, Mail, Phone, MapPin, Star, Newspaper } from "lucide-react";
+import { Building2, ExternalLink, Mail, Phone, MapPin, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { PublicHeader } from "@/components/PublicHeader";
+import { PublicFooter } from "@/components/PublicFooter";
 
 type Business = {
   id: string;
@@ -98,31 +100,14 @@ const PublicDirectory = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container max-w-6xl mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Building2 className="h-8 w-8 text-primary" />
-              <div>
-                <h1 className="text-2xl font-bold">Lake Geneva Business Directory</h1>
-                <p className="text-sm text-muted-foreground">Discover local businesses</p>
-              </div>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate("/lake-geneva")}
-              className="flex items-center gap-2"
-            >
-              <Newspaper className="h-4 w-4" />
-              Lake Geneva Brief
-            </Button>
-          </div>
-        </div>
-      </header>
+      <PublicHeader />
 
       <main className="container max-w-6xl mx-auto px-4 py-8">
+        {/* Page Title */}
+        <div className="mb-8 space-y-2">
+          <h1 className="text-4xl font-serif font-bold">Business Directory</h1>
+          <p className="text-lg text-muted-foreground">Discover local businesses in Lake Geneva</p>
+        </div>
         {/* Filters */}
         <div className="flex items-center gap-4 mb-8">
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
@@ -264,34 +249,7 @@ const PublicDirectory = () => {
         </Card>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t mt-12 py-8 bg-muted/20">
-        <div className="container max-w-6xl mx-auto px-4 text-center text-sm text-muted-foreground space-y-2">
-          <div className="flex items-center justify-center gap-4">
-            <button
-              onClick={() => navigate("/lake-geneva")}
-              className="hover:text-primary transition-colors"
-            >
-              Lake Geneva Brief
-            </button>
-            <span>•</span>
-            <button
-              onClick={() => navigate("/directory")}
-              className="hover:text-primary transition-colors"
-            >
-              Business Directory
-            </button>
-            <span>•</span>
-            <button
-              onClick={() => navigate("/advertise")}
-              className="hover:text-primary transition-colors"
-            >
-              Advertise
-            </button>
-          </div>
-          <p>© {new Date().getFullYear()} Lake Geneva Brief. All rights reserved.</p>
-        </div>
-      </footer>
+      <PublicFooter />
     </div>
   );
 };
