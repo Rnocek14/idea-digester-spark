@@ -591,32 +591,39 @@ async function sendNewsletterEmail(
   for (let i = 0; i < subscribers.length; i += BATCH_SIZE) {
     const batch = subscribers.slice(i, i + BATCH_SIZE);
     
-    const emails = batch.map((sub: Subscriber) => ({
-      from: "Lake Geneva Local <onboarding@resend.dev>", // Test mode
-      to: sub.email,
-      subject: newsletter.subject,
-      html: newsletter.html_body.replace(
-        'href="#"', // Replace placeholder unsubscribe link
-        `href="${baseUrl}/functions/v1/unsubscribe?token=${sub.unsubscribe_token}"`
-      ),
-      text: newsletter.text_body.replace(
-        "Unsubscribe: [link]",
-        `Unsubscribe: ${baseUrl}/functions/v1/unsubscribe?token=${sub.unsubscribe_token}`
-      )
-    }));
+    for (const subscriber of batch) {
+      try {
+        const unsubscribeUrl = `${baseUrl}/functions/v1/unsubscribe?token=${subscriber.unsubscribe_token}`;
+        const htmlBody = newsletter.html_body.replace(
+          /\[UNSUBSCRIBE_URL\]/g,
+          unsubscribeUrl
+        );
+        const textBody = newsletter.text_body.replace(
+          /\[UNSUBSCRIBE_URL\]/g,
+          unsubscribeUrl
+        );
 
-    try {
-      const { data, error } = await resend.batch.send(emails);
-      if (error) {
-        console.error(`Batch ${i / BATCH_SIZE + 1} failed:`, error);
-        totalFailed += batch.length;
-      } else {
-        totalSent += batch.length;
-        console.log(`✅ Batch ${i / BATCH_SIZE + 1}: ${batch.length} sent`);
+        const { error: sendError } = await resend.emails.send({
+          from: "onboarding@resend.dev",
+          to: subscriber.email,
+          subject: newsletter.subject,
+          html: htmlBody,
+          text: textBody,
+        });
+
+        if (sendError) {
+          console.error(`Failed to send to ${subscriber.email}:`, sendError);
+          totalFailed++;
+        } else {
+          totalSent++;
+        }
+        
+        // Small delay to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 100));
+      } catch (error) {
+        console.error(`Exception sending to ${subscriber.email}:`, error);
+        totalFailed++;
       }
-    } catch (e) {
-      console.error(`Batch ${i / BATCH_SIZE + 1} exception:`, e);
-      totalFailed += batch.length;
     }
   }
 
