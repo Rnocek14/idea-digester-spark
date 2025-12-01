@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import ContentQueue from "./pages/ContentQueue";
 import Sources from "./pages/Sources";
 import Sponsors from "./pages/Sponsors";
+import Directory from "./pages/Directory";
 import Newsletter from "./pages/Newsletter";
 import SocialQueue from "./pages/SocialQueue";
 import NotFound from "./pages/NotFound";
@@ -40,6 +41,7 @@ const App = () => (
             <Route path="content" element={<ContentQueue />} />
             <Route path="sources" element={<Sources />} />
             <Route path="sponsors" element={<Sponsors />} />
+            <Route path="directory" element={<Directory />} />
             <Route path="newsletter" element={<Newsletter />} />
             <Route path="social-queue" element={<SocialQueue />} />
           </Route>

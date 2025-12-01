@@ -196,9 +196,20 @@ serve(async (req) => {
     const optimizedStories = optimizeData?.optimizedStories ?? [];
     console.log(`✅ Optimized ${optimizedStories.length} stories`);
 
+    // Check for active sponsor placements
+    console.log("💰 Checking for active sponsor placements...");
+    const { data: activePlacements } = await supabase
+      .from("ad_placements")
+      .select("*, business_profiles(*), ad_slots(*)")
+      .eq("status", "active")
+      .lte("start_date", editionDate)
+      .gte("end_date", editionDate);
+
+    const headerSponsor = activePlacements?.find(p => p.slot_id === "newsletter_header");
+
     // Build newsletter
     console.log("📝 Building newsletter content...");
-    const newsletter = buildNewsletter(selectedStories, optimizedStories, editionDate);
+    const newsletter = buildNewsletter(selectedStories, optimizedStories, editionDate, headerSponsor);
 
     // Save newsletter to database
     console.log("💾 Saving newsletter to database...");
@@ -367,7 +378,8 @@ async function ensureVoiceForStories(supabase: any, stories: Story[]) {
 function buildNewsletter(
   stories: Story[],
   optimized: { id: string; newsletter_voice: string }[],
-  editionDate: string
+  editionDate: string,
+  sponsor?: any
 ) {
   const optimizedMap = new Map(optimized.map(o => [o.id, o.newsletter_voice]));
 
@@ -466,6 +478,31 @@ function buildNewsletter(
     `;
   }).join("\n");
 
+  // Build sponsor block if present
+  const sponsorBlock = sponsor ? `
+    <div style="background-color: #f8f9fa; border-left: 4px solid #667eea; padding: 20px; margin: 20px 0; border-radius: 4px;">
+      <div style="display: flex; align-items: center; gap: 15px;">
+        ${sponsor.business_profiles.logo_url ? `
+          <img src="${sponsor.business_profiles.logo_url}" 
+               alt="${sponsor.business_profiles.name}" 
+               style="width: 60px; height: 60px; object-fit: contain; border-radius: 4px;" />
+        ` : ''}
+        <div>
+          <p style="margin: 0; font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">Presented By</p>
+          <p style="margin: 5px 0 0 0; font-size: 18px; font-weight: 600; color: #1a1a1a;">
+            ${sponsor.label || sponsor.business_profiles.name}
+          </p>
+          ${sponsor.business_profiles.website ? `
+            <a href="${sponsor.business_profiles.website}" 
+               style="color: #667eea; text-decoration: none; font-size: 14px;">
+              Visit Website →
+            </a>
+          ` : ''}
+        </div>
+      </div>
+    </div>
+  ` : '';
+
   const htmlBody = `
 <!DOCTYPE html>
 <html>
@@ -486,6 +523,8 @@ function buildNewsletter(
         Good morning, Lake Geneva! 👋<br>
         Here's what's happening around town this week.
       </p>
+      
+      ${sponsorBlock}
       
       ${atAGlanceHtml}
       
