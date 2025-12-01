@@ -77,6 +77,7 @@ const Newsletter = () => {
   const [previewOptimized, setPreviewOptimized] = useState<Record<string, string> | null>(null);
   const [previewNewsletter, setPreviewNewsletter] = useState<any | null>(null);
   const [forceRegenerate, setForceRegenerate] = useState(false);
+  const [sendNow, setSendNow] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [newsletterToDelete, setNewsletterToDelete] = useState<string | null>(null);
 
@@ -132,7 +133,7 @@ const Newsletter = () => {
   const autopilotMutation = useMutation({
     mutationFn: async () => {
       const { data, error } = await supabase.functions.invoke('autopilot-newsletter', {
-        body: { force: forceRegenerate }
+        body: { force: forceRegenerate, sendNow }
       });
       if (error) throw error;
       return data;
@@ -148,6 +149,10 @@ const Newsletter = () => {
         toast.info("Newsletter already exists for today", {
           description: `${data.subject} (${data.existing_story_count} stories)`
         });
+      } else if (data.status === 'sent') {
+        toast.success(`Newsletter sent! ${data.sent_count} emails delivered`, {
+          description: data.subject
+        });
       } else {
         toast.success(`Newsletter generated! ${data.story_count} stories`, {
           description: data.subject
@@ -155,6 +160,7 @@ const Newsletter = () => {
       }
       
       setForceRegenerate(false);
+      setSendNow(false);
       
       await logActivity({
         entityType: "system",
@@ -494,15 +500,26 @@ const Newsletter = () => {
             <p className="text-sm text-muted-foreground mt-1">
               Generate today's newsletter automatically using the best available stories
             </p>
-            <label className="flex items-center gap-2 mt-3 cursor-pointer">
-              <Checkbox 
-                checked={forceRegenerate} 
-                onCheckedChange={(checked) => setForceRegenerate(checked as boolean)}
-              />
-              <span className="text-sm text-muted-foreground">
-                Force regenerate (delete existing newsletter for today)
-              </span>
-            </label>
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Checkbox 
+                  checked={forceRegenerate} 
+                  onCheckedChange={(checked) => setForceRegenerate(checked as boolean)}
+                />
+                <span className="text-sm text-muted-foreground">
+                  Force regenerate (delete existing newsletter for today)
+                </span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Checkbox 
+                  checked={sendNow} 
+                  onCheckedChange={(checked) => setSendNow(checked as boolean)}
+                />
+                <span className="text-sm font-medium text-primary">
+                  Send Now via email (Resend)
+                </span>
+              </label>
+            </div>
           </div>
           <Button
             onClick={() => autopilotMutation.mutate()}

@@ -290,6 +290,7 @@ export type Database = {
           story_ids: string[]
           subject: string
           text_body: string
+          updated_at: string
         }
         Insert: {
           auto_send_enabled?: boolean | null
@@ -306,6 +307,7 @@ export type Database = {
           story_ids?: string[]
           subject: string
           text_body: string
+          updated_at?: string
         }
         Update: {
           auto_send_enabled?: boolean | null
@@ -322,6 +324,7 @@ export type Database = {
           story_ids?: string[]
           subject?: string
           text_body?: string
+          updated_at?: string
         }
         Relationships: []
       }
