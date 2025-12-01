@@ -141,8 +141,12 @@ const LakeGeneva = () => {
     subscribeMutation.mutate(email);
   };
 
-  // Group stories by category
-  const storiesByCategory = stories.reduce((acc, story) => {
+  // Featured story and rest
+  const featured = stories[0];
+  const restStories = stories.slice(1);
+
+  // Group remaining stories by category (excluding featured)
+  const storiesByCategory = restStories.reduce((acc, story) => {
     const cat = story.category?.toLowerCase() || "other";
     if (!acc[cat]) acc[cat] = [];
     acc[cat].push(story);
@@ -159,6 +163,98 @@ const LakeGeneva = () => {
       <PublicHeader />
 
       <main>
+        {/* Featured Story Spotlight */}
+        {featured && (
+          <section className="border-b border-gray-200 bg-white">
+            <div className="mx-auto max-w-5xl px-4 sm:px-6 py-6 sm:py-8">
+              <div className="grid gap-6 sm:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] items-stretch">
+                {/* Featured Story with Image Overlay */}
+                <article className="relative overflow-hidden rounded-2xl bg-gray-100 shadow-sm">
+                  {featured.image_url && (
+                    <div className="relative h-64 sm:h-80">
+                      <img
+                        src={featured.image_url}
+                        alt={featured.title}
+                        className="h-full w-full object-cover transition-transform duration-500 hover:scale-[1.03]"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                    </div>
+                  )}
+
+                  <div className="absolute inset-x-0 bottom-0 p-4 sm:p-6 text-white">
+                    <p className="mb-2 text-xs font-semibold tracking-[0.22em] uppercase text-blue-200">
+                      Top story
+                    </p>
+                    <h1 className="font-display text-2xl sm:text-3xl leading-tight">
+                      {featured.title}
+                    </h1>
+                    {(featured.content_website || featured.content_lg_base || featured.summary) && (
+                      <p className="mt-2 text-sm text-gray-100 line-clamp-3">
+                        {featured.content_website || featured.content_lg_base || featured.summary}
+                      </p>
+                    )}
+
+                    <div className="mt-3 flex items-center gap-3 text-xs text-gray-200">
+                      {featured.category && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-black/40 px-2 py-0.5">
+                          {getCategoryEmoji(featured.category)}
+                          <span className="capitalize">
+                            {featured.category.replace('_', ' ')}
+                          </span>
+                        </span>
+                      )}
+                      {featured.original_url && (
+                        <a
+                          href={featured.original_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="ml-auto inline-flex items-center gap-1 text-blue-200 hover:text-white transition-colors"
+                        >
+                          Read more
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </article>
+
+                {/* Also Today Mini List */}
+                <div className="flex flex-col gap-4">
+                  <div className="rounded-2xl border border-gray-200 bg-gray-50/80 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500 mb-3">
+                      Also today
+                    </p>
+                    <ul className="space-y-3">
+                      {restStories.slice(0, 4).map((story) => (
+                        <li key={story.id}>
+                          <button
+                            onClick={() =>
+                              document.getElementById(
+                                (story.category || 'other').toLowerCase(),
+                              )?.scrollIntoView({ behavior: 'smooth' })
+                            }
+                            className="text-left group"
+                          >
+                            <p className="text-sm text-brand group-hover:text-brand-accent transition-colors line-clamp-2">
+                              {story.title}
+                            </p>
+                            {story.category && (
+                              <span className="mt-1 inline-flex items-center gap-1 text-xs text-gray-500">
+                                {getCategoryEmoji(story.category)}
+                                <span className="capitalize">{story.category.replace('_', ' ')}</span>
+                              </span>
+                            )}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* Hero Section */}
         {stories.length > 0 && <BriefHero stories={stories} />}
 
