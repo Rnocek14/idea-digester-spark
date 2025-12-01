@@ -76,6 +76,7 @@ Deno.serve(async (req) => {
           voice: voiceData?.processed || 0,
           posts: postData?.prepared || 0,
           timestamp: new Date().toISOString(),
+          mode: 'auto',
         },
       });
 
@@ -95,6 +96,29 @@ Deno.serve(async (req) => {
     );
   } catch (error) {
     console.error('[full-queue-prep] Fatal error:', error);
+
+    // Log failure to activity_log
+    try {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+      const supabaseForLog = createClient(supabaseUrl, supabaseServiceKey);
+      
+      await supabaseForLog
+        .from('activity_log')
+        .insert({
+          entity_type: 'system',
+          action: 'full_queue_prep_failed',
+          actor_type: 'system',
+          message: `Automated full queue prep failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          details: {
+            error: error instanceof Error ? error.message : String(error),
+            timestamp: new Date().toISOString(),
+            mode: 'auto',
+          },
+        });
+    } catch (logError) {
+      console.error('[full-queue-prep] Failed to log error:', logError);
+    }
     
     return new Response(
       JSON.stringify({
