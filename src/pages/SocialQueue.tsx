@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { Calendar, Clock, Instagram, Facebook, Twitter, RefreshCw, Play, Sparkles, ImagePlus, X, ExternalLink } from "lucide-react";
+import { Calendar, Clock, Instagram, Facebook, Twitter, RefreshCw, Play, Sparkles, ImagePlus, X, ExternalLink, Check, Circle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { OperationProgress } from "@/components/ui/OperationProgress";
 import {
@@ -26,6 +26,7 @@ const SocialQueue = () => {
   const [activeTab, setActiveTab] = useState("upcoming");
   const [selectedPost, setSelectedPost] = useState<any>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [fullPrepStep, setFullPrepStep] = useState<'idle' | 'images' | 'voice' | 'posts' | 'complete'>('idle');
 
   // Pipeline health metrics
   const { data: pipelineHealth } = useQuery({
@@ -281,6 +282,70 @@ const SocialQueue = () => {
     },
   });
 
+  // Full Queue Prep - chains all operations
+  const fullPrepMutation = useMutation({
+    mutationFn: async () => {
+      const operationId = operations.startOperation(
+        'bulk-approval',
+        'Running full queue preparation...',
+        10 // 8-12 minutes estimate
+      );
+
+      try {
+        // Step 1: Generate Images
+        setFullPrepStep('images');
+        let totalImages = 0;
+        let hasMore = true;
+        const batchSize = 10;
+        
+        while (hasMore) {
+          const { data, error } = await supabase.functions.invoke("bulk-generate-images", {
+            body: { limit: batchSize }
+          });
+          if (error) throw error;
+          totalImages += data.generated;
+          hasMore = data.generated === batchSize;
+          if (hasMore) await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+
+        // Step 2: Generate Voice
+        setFullPrepStep('voice');
+        const { data: voiceData, error: voiceError } = await supabase.functions.invoke("backfill-voice-variants");
+        if (voiceError) throw voiceError;
+
+        // Step 3: Prepare Posts
+        setFullPrepStep('posts');
+        const { data: postData, error: postError } = await supabase.functions.invoke("prepare-posts");
+        if (postError) throw postError;
+
+        setFullPrepStep('complete');
+        return { 
+          operationId,
+          images: totalImages, 
+          voice: voiceData.processed, 
+          posts: postData.prepared 
+        };
+      } catch (error) {
+        setFullPrepStep('idle');
+        operations.failOperation(operationId, `Full prep failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        throw error;
+      }
+    },
+    onSuccess: ({ operationId, images, voice, posts }: any) => {
+      queryClient.invalidateQueries({ queryKey: ["pipeline-health"] });
+      queryClient.invalidateQueries({ queryKey: ["post-queue"] });
+      queryClient.invalidateQueries({ queryKey: ["content-queue"] });
+      operations.completeOperation(
+        operationId, 
+        `Full prep complete: ${images} images, ${voice} voice variants, ${posts} posts queued`
+      );
+      setFullPrepStep('idle');
+    },
+    onError: () => {
+      setFullPrepStep('idle');
+    },
+  });
+
   const getPlatformIcon = (platform: string) => {
     switch (platform) {
       case "instagram":
@@ -357,8 +422,22 @@ const SocialQueue = () => {
         </div>
         <div className="flex gap-2">
           <Button
+            onClick={() => fullPrepMutation.mutate()}
+            disabled={fullPrepMutation.isPending || backfillMutation.isPending || bulkGenerateImagesMutation.isPending || prepareMutation.isPending}
+            variant="default"
+            className="bg-gradient-to-r from-primary to-primary/80"
+          >
+            <Sparkles className="mr-2 h-4 w-4" />
+            {fullPrepMutation.isPending ? (
+              fullPrepStep === 'images' ? 'Step 1/3: Images...' :
+              fullPrepStep === 'voice' ? 'Step 2/3: Voice...' :
+              fullPrepStep === 'posts' ? 'Step 3/3: Posts...' :
+              'Preparing...'
+            ) : 'Full Queue Prep'}
+          </Button>
+          <Button
             onClick={() => backfillMutation.mutate()}
-            disabled={backfillMutation.isPending}
+            disabled={backfillMutation.isPending || fullPrepMutation.isPending}
             variant="secondary"
           >
             <Sparkles className="mr-2 h-4 w-4" />
@@ -366,7 +445,7 @@ const SocialQueue = () => {
           </Button>
           <Button
             onClick={() => bulkGenerateImagesMutation.mutate()}
-            disabled={bulkGenerateImagesMutation.isPending}
+            disabled={bulkGenerateImagesMutation.isPending || fullPrepMutation.isPending}
             variant="secondary"
           >
             <ImagePlus className="mr-2 h-4 w-4" />
@@ -374,14 +453,14 @@ const SocialQueue = () => {
           </Button>
           <Button
             onClick={() => prepareMutation.mutate()}
-            disabled={prepareMutation.isPending}
+            disabled={prepareMutation.isPending || fullPrepMutation.isPending}
           >
             <RefreshCw className={`mr-2 h-4 w-4 ${prepareMutation.isPending ? "animate-spin" : ""}`} />
             {prepareMutation.isPending ? "Processing..." : "Prepare Posts"}
           </Button>
           <Button
             onClick={() => processMutation.mutate()}
-            disabled={processMutation.isPending}
+            disabled={processMutation.isPending || fullPrepMutation.isPending}
             variant="default"
           >
             <Play className="mr-2 h-4 w-4" />
@@ -389,6 +468,59 @@ const SocialQueue = () => {
           </Button>
         </div>
       </div>
+
+      {/* Full Prep Progress */}
+      {fullPrepMutation.isPending && (
+        <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
+          <CardContent className="pt-6">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold">Full Queue Prep Running</h3>
+                <Badge variant="outline">~8-12 minutes</Badge>
+              </div>
+              
+              <div className="space-y-2">
+                <div className={`flex items-center gap-2 ${fullPrepStep === 'images' ? 'text-primary' : fullPrepStep !== 'idle' ? 'text-muted-foreground' : ''}`}>
+                  {fullPrepStep === 'images' ? (
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                  ) : ['voice', 'posts', 'complete'].includes(fullPrepStep) ? (
+                    <Check className="h-4 w-4 text-green-500" />
+                  ) : (
+                    <Circle className="h-4 w-4" />
+                  )}
+                  <span>Step 1/3: Generate AI Images</span>
+                </div>
+                
+                <div className={`flex items-center gap-2 ${fullPrepStep === 'voice' ? 'text-primary' : ['posts', 'complete'].includes(fullPrepStep) ? 'text-muted-foreground' : ''}`}>
+                  {fullPrepStep === 'voice' ? (
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                  ) : ['posts', 'complete'].includes(fullPrepStep) ? (
+                    <Check className="h-4 w-4 text-green-500" />
+                  ) : (
+                    <Circle className="h-4 w-4" />
+                  )}
+                  <span>Step 2/3: Generate Voice Variants</span>
+                </div>
+                
+                <div className={`flex items-center gap-2 ${fullPrepStep === 'posts' ? 'text-primary' : fullPrepStep === 'complete' ? 'text-muted-foreground' : ''}`}>
+                  {fullPrepStep === 'posts' ? (
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                  ) : fullPrepStep === 'complete' ? (
+                    <Check className="h-4 w-4 text-green-500" />
+                  ) : (
+                    <Circle className="h-4 w-4" />
+                  )}
+                  <span>Step 3/3: Prepare & Queue Posts</span>
+                </div>
+              </div>
+              
+              <p className="text-xs text-muted-foreground">
+                The operation runs in the background. You can navigate away and check back later.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Pipeline Health Card */}
       <Card className="bg-gradient-to-br from-primary/5 to-primary/10">
@@ -435,7 +567,7 @@ const SocialQueue = () => {
                   variant="secondary" 
                   className="w-full"
                   onClick={() => backfillMutation.mutate()}
-                  disabled={backfillMutation.isPending}
+                  disabled={backfillMutation.isPending || fullPrepMutation.isPending}
                 >
                   <Sparkles className="h-3 w-3 mr-1" />
                   Generate
@@ -458,7 +590,7 @@ const SocialQueue = () => {
                   variant="secondary" 
                   className="w-full"
                   onClick={() => bulkGenerateImagesMutation.mutate()}
-                  disabled={bulkGenerateImagesMutation.isPending}
+                  disabled={bulkGenerateImagesMutation.isPending || fullPrepMutation.isPending}
                 >
                   <ImagePlus className="h-3 w-3 mr-1" />
                   Generate
@@ -481,7 +613,7 @@ const SocialQueue = () => {
                   variant="default" 
                   className="w-full"
                   onClick={() => prepareMutation.mutate()}
-                  disabled={prepareMutation.isPending}
+                  disabled={prepareMutation.isPending || fullPrepMutation.isPending}
                 >
                   <RefreshCw className="h-3 w-3 mr-1" />
                   Queue Posts
