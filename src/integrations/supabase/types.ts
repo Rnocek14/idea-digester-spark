@@ -274,6 +274,105 @@ export type Database = {
         }
         Relationships: []
       }
+      newsletter_clicks: {
+        Row: {
+          clicked_at: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          link_url: string
+          newsletter_id: string
+          subscriber_email: string | null
+          subscriber_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          clicked_at?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          link_url: string
+          newsletter_id: string
+          subscriber_email?: string | null
+          subscriber_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          clicked_at?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          link_url?: string
+          newsletter_id?: string
+          subscriber_email?: string | null
+          subscriber_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "newsletter_clicks_newsletter_id_fkey"
+            columns: ["newsletter_id"]
+            isOneToOne: false
+            referencedRelation: "newsletters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "newsletter_clicks_subscriber_id_fkey"
+            columns: ["subscriber_id"]
+            isOneToOne: false
+            referencedRelation: "subscribers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      newsletter_opens: {
+        Row: {
+          created_at: string
+          id: string
+          ip_address: string | null
+          newsletter_id: string
+          opened_at: string
+          subscriber_email: string | null
+          subscriber_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          newsletter_id: string
+          opened_at?: string
+          subscriber_email?: string | null
+          subscriber_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          newsletter_id?: string
+          opened_at?: string
+          subscriber_email?: string | null
+          subscriber_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "newsletter_opens_newsletter_id_fkey"
+            columns: ["newsletter_id"]
+            isOneToOne: false
+            referencedRelation: "newsletters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "newsletter_opens_subscriber_id_fkey"
+            columns: ["subscriber_id"]
+            isOneToOne: false
+            referencedRelation: "subscribers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       newsletters: {
         Row: {
           auto_send_enabled: boolean | null
