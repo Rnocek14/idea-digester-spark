@@ -210,13 +210,21 @@ serve(async (req) => {
           const elements = doc.querySelectorAll(selector);
           console.log(`Found ${elements.length} elements with selector "${selector}" in ${source.name}`);
 
+          // Get configurable selectors from metadata with fallbacks
+          const titleSelector = source.metadata?.title_selector || "h2, h3, .title, .event-title";
+          const linkSelector = source.metadata?.link_selector || "a";
+          const dateSelector = source.metadata?.date_selector || "time, .date, .event-date";
+          const descSelector = source.metadata?.desc_selector || "p, .description, .event-description";
+
+          console.log(`🎯 Using extraction selectors - title: "${titleSelector}", link: "${linkSelector}"`);
+
           // Convert DOM elements to RSS-like items
           items = Array.from(elements).map((el) => {
             const element = el as any; // Type assertion for deno-dom Element
-            const titleEl = element.querySelector("h2, h3, .title, .event-title");
-            const linkEl = element.querySelector("a");
-            const dateEl = element.querySelector("time, .date, .event-date");
-            const descEl = element.querySelector("p, .description, .event-description");
+            const titleEl = element.querySelector(titleSelector);
+            const linkEl = element.querySelector(linkSelector);
+            const dateEl = element.querySelector(dateSelector);
+            const descEl = element.querySelector(descSelector);
 
             return {
               title: titleEl?.textContent?.trim() || "",
