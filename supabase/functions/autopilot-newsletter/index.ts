@@ -17,6 +17,7 @@ interface Story {
   voice_generated_at: string | null;
   status: string;
   created_at: string;
+  original_url: string | null;
 }
 
 interface Subscriber {
@@ -97,7 +98,7 @@ serve(async (req) => {
     // STRICT: Try approved/auto_published/published first
     const { data: strictCandidates, error: fetchError } = await supabase
       .from("content_queue")
-      .select("id, title, content, summary, category, content_newsletter, voice_generated_at, status, created_at")
+      .select("id, title, content, summary, category, content_newsletter, voice_generated_at, status, created_at, original_url")
       .in("status", ["approved", "auto_published", "published"])
       .eq("safety_level", "safe")
       .is("last_newsletter_id", null) // GUARDRAIL: Dedupe
@@ -115,7 +116,7 @@ serve(async (req) => {
       
       const { data: relaxedCandidates, error: relaxedError } = await supabase
         .from("content_queue")
-        .select("id, title, content, summary, category, content_newsletter, voice_generated_at, status, created_at")
+        .select("id, title, content, summary, category, content_newsletter, voice_generated_at, status, created_at, original_url")
         .in("status", ["approved", "auto_published", "published", "pending"])
         .eq("safety_level", "safe")
         .is("last_newsletter_id", null)
@@ -419,7 +420,11 @@ function buildNewsletter(
       </h2>
       ${Object.entries(grouped).map(([category, categoryStories]) => {
         const categoryItems = categoryStories.map(s => {
-          return `<li style="margin-bottom: 6px; font-size: 14px; line-height: 1.5; color: #4a5568;"><strong>${escapeHtml(s.title)}</strong></li>`;
+          const title = escapeHtml(s.title);
+          const linkHtml = s.original_url 
+            ? ` <a href="${escapeHtml(s.original_url)}" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none; font-weight: 500;">→ Details</a>`
+            : '';
+          return `<li style="margin-bottom: 6px; font-size: 14px; line-height: 1.5; color: #4a5568;"><strong>${title}</strong>${linkHtml}</li>`;
         }).join("\n");
         return `
           <div style="margin-bottom: 12px;">
@@ -439,10 +444,13 @@ function buildNewsletter(
     const items = categoryStories.map(s => {
       const rawContent = s.content ?? "";
       const body = optimizedMap.get(s.id) || s.content_newsletter || s.summary || rawContent.substring(0, 200);
+      const linkHtml = s.original_url 
+        ? `<br><a href="${escapeHtml(s.original_url)}" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none; font-weight: 500;">More info →</a>`
+        : '';
       return `
         <div style="margin-bottom: 24px;">
           <h3 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: #1a202c;">${escapeHtml(s.title)}</h3>
-          <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #4a5568;">${escapeHtml(body)}</p>
+          <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #4a5568;">${escapeHtml(body)}${linkHtml}</p>
         </div>
       `;
     }).join("\n");
@@ -496,7 +504,10 @@ function buildNewsletter(
 
   // Build plain text At-a-Glance
   const atAGlanceText = Object.entries(grouped).map(([category, categoryStories]) => {
-    const items = categoryStories.map(s => `• ${s.title}`).join("\n");
+    const items = categoryStories.map(s => {
+      const urlSuffix = s.original_url ? ` — ${s.original_url}` : '';
+      return `• ${s.title}${urlSuffix}`;
+    }).join("\n");
     return `${category.toUpperCase()}\n${items}`;
   }).join("\n\n");
 
@@ -505,7 +516,8 @@ function buildNewsletter(
     const items = categoryStories.map(s => {
       const rawContent = s.content ?? "";
       const body = optimizedMap.get(s.id) || s.content_newsletter || s.summary || rawContent.substring(0, 200);
-      return `${s.title}\n${body}\n`;
+      const urlSuffix = s.original_url ? `\nMore info: ${s.original_url}` : '';
+      return `${s.title}\n${body}${urlSuffix}\n`;
     }).join("\n");
 
     return `== ${category.toUpperCase()} ==\n\n${items}`;
