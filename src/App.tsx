@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import LakeGeneva from "./pages/LakeGeneva";
 import PublicDirectory from "./pages/PublicDirectory";
+import Advertise from "./pages/Advertise";
 import DashboardLayout from "./components/DashboardLayout";
 import Dashboard from "./pages/Dashboard";
 import ContentQueue from "./pages/ContentQueue";
@@ -40,6 +41,7 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/lake-geneva" element={<LakeGeneva />} />
           <Route path="/directory" element={<PublicDirectory />} />
+          <Route path="/advertise" element={<Advertise />} />
           <Route path="/dashboard" element={<DashboardLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="content" element={<ContentQueue />} />
