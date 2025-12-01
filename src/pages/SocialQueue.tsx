@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,6 +36,7 @@ const SocialQueue = () => {
     voice: { current: 0, total: 0 },
     posts: { current: 0, total: 0 },
   });
+  const cancelRequestedRef = useRef(false);
 
   // Pipeline health metrics
   const { data: pipelineHealth } = useQuery({
@@ -294,6 +295,9 @@ const SocialQueue = () => {
   // Full Queue Prep - chains all operations
   const fullPrepMutation = useMutation({
     mutationFn: async () => {
+      // Reset cancel flag at start
+      cancelRequestedRef.current = false;
+      
       const operationId = operations.startOperation(
         'bulk-approval',
         'Running full queue preparation...',
@@ -314,7 +318,7 @@ const SocialQueue = () => {
         let hasMore = true;
         const batchSize = 10;
         
-        while (hasMore) {
+        while (hasMore && !cancelRequestedRef.current) {
           const { data, error } = await supabase.functions.invoke("bulk-generate-images", {
             body: { limit: batchSize }
           });
@@ -322,7 +326,14 @@ const SocialQueue = () => {
           totalImages += data.generated;
           setPrepProgress(prev => ({ ...prev, images: { current: totalImages, total: initialNeedsImages } }));
           hasMore = data.generated === batchSize;
-          if (hasMore) await new Promise(resolve => setTimeout(resolve, 2000));
+          if (hasMore && !cancelRequestedRef.current) {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+          }
+        }
+
+        // Check for cancellation before moving to next step
+        if (cancelRequestedRef.current) {
+          throw new Error('Operation cancelled by user');
         }
 
         // Step 2: Generate Voice
@@ -331,6 +342,11 @@ const SocialQueue = () => {
         const { data: voiceData, error: voiceError } = await supabase.functions.invoke("backfill-voice-variants");
         if (voiceError) throw voiceError;
         setPrepProgress(prev => ({ ...prev, voice: { current: voiceData.processed, total: initialNeedsVoice } }));
+
+        // Check for cancellation before moving to next step
+        if (cancelRequestedRef.current) {
+          throw new Error('Operation cancelled by user');
+        }
 
         // Step 3: Prepare Posts
         setFullPrepStep('posts');
@@ -349,7 +365,8 @@ const SocialQueue = () => {
       } catch (error) {
         setFullPrepStep('idle');
         setPrepProgress({ images: { current: 0, total: 0 }, voice: { current: 0, total: 0 }, posts: { current: 0, total: 0 } });
-        operations.failOperation(operationId, `Full prep failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        operations.failOperation(operationId, `Full prep ${errorMessage.includes('cancelled') ? 'cancelled' : 'failed'}: ${errorMessage}`);
         throw error;
       }
     },
@@ -367,8 +384,14 @@ const SocialQueue = () => {
     onError: () => {
       setFullPrepStep('idle');
       setPrepProgress({ images: { current: 0, total: 0 }, voice: { current: 0, total: 0 }, posts: { current: 0, total: 0 } });
+      cancelRequestedRef.current = false;
     },
   });
+
+  const handleCancelFullPrep = () => {
+    cancelRequestedRef.current = true;
+    toast.info('Cancelling Full Queue Prep after current step...');
+  };
 
   const getPlatformIcon = (platform: string) => {
     switch (platform) {
@@ -500,7 +523,18 @@ const SocialQueue = () => {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold">Full Queue Prep Running</h3>
-                <Badge variant="outline">~8-12 minutes</Badge>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline">~8-12 minutes</Badge>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleCancelFullPrep}
+                    className="h-7 text-destructive hover:text-destructive"
+                  >
+                    <X className="h-3 w-3 mr-1" />
+                    Cancel
+                  </Button>
+                </div>
               </div>
               
               <div className="space-y-2">
