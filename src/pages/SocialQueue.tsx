@@ -111,15 +111,15 @@ const SocialQueue = () => {
     refetchInterval: 10000, // Refresh every 10 seconds
   });
 
-  // Fetch prep history from activity log
+  // Fetch prep history from activity log (both completed and failed)
   const { data: prepHistory } = useQuery({
     queryKey: ["full-prep-history"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("activity_log")
-        .select("id, created_at, message, details")
+        .select("id, created_at, message, details, action, actor_type")
         .eq("entity_type", "system")
-        .eq("action", "full_queue_prep_completed")
+        .in("action", ["full_queue_prep_completed", "full_queue_prep_failed"])
         .order("created_at", { ascending: false })
         .limit(10);
 
@@ -397,14 +397,54 @@ const SocialQueue = () => {
         setFullPrepStep('idle');
         setPrepProgress({ images: { current: 0, total: 0 }, voice: { current: 0, total: 0 }, posts: { current: 0, total: 0 } });
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        operations.failOperation(operationId, `Full prep ${errorMessage.includes('cancelled') ? 'cancelled' : 'failed'}: ${errorMessage}`);
+        const wasCancelled = errorMessage.includes('cancelled');
+
+        // Log manual failure (best-effort)
+        try {
+          await supabase.from('activity_log').insert({
+            entity_type: 'system',
+            action: 'full_queue_prep_failed',
+            actor_type: 'user',
+            message: `Manual full queue prep failed: ${errorMessage}`,
+            details: {
+              error: errorMessage,
+              timestamp: new Date().toISOString(),
+              mode: 'manual',
+            },
+          });
+        } catch (logError) {
+          console.error('Failed to log error:', logError);
+        }
+
+        operations.failOperation(operationId, `Full prep ${wasCancelled ? 'cancelled' : 'failed'}: ${errorMessage}`);
         throw error;
       }
     },
-    onSuccess: ({ operationId, images, voice, posts }: any) => {
+    onSuccess: async ({ operationId, images, voice, posts }: any) => {
       queryClient.invalidateQueries({ queryKey: ["pipeline-health"] });
       queryClient.invalidateQueries({ queryKey: ["post-queue"] });
       queryClient.invalidateQueries({ queryKey: ["content-queue"] });
+      queryClient.invalidateQueries({ queryKey: ["full-prep-history"] });
+
+      // Log manual success (best-effort)
+      try {
+        await supabase.from('activity_log').insert({
+          entity_type: 'system',
+          action: 'full_queue_prep_completed',
+          actor_type: 'user',
+          message: `Manual full queue prep completed: ${images} images, ${voice} voice variants, ${posts} posts queued`,
+          details: {
+            images,
+            voice,
+            posts,
+            timestamp: new Date().toISOString(),
+            mode: 'manual',
+          },
+        });
+      } catch (logError) {
+        console.error('Failed to log success:', logError);
+      }
+
       operations.completeOperation(
         operationId, 
         `Full prep complete: ${images} images, ${voice} voice variants, ${posts} posts queued`
@@ -413,6 +453,7 @@ const SocialQueue = () => {
       setPrepProgress({ images: { current: 0, total: 0 }, voice: { current: 0, total: 0 }, posts: { current: 0, total: 0 } });
     },
     onError: () => {
+      queryClient.invalidateQueries({ queryKey: ["full-prep-history"] });
       setFullPrepStep('idle');
       setPrepProgress({ images: { current: 0, total: 0 }, voice: { current: 0, total: 0 }, posts: { current: 0, total: 0 } });
       cancelRequestedRef.current = false;
@@ -803,28 +844,46 @@ const SocialQueue = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {prepHistory.map((entry: any) => (
-                <div 
-                  key={entry.id}
-                  className="flex items-center justify-between p-3 rounded-lg border bg-muted/30"
-                >
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">
-                      {format(new Date(entry.created_at), "MMM d, yyyy 'at' h:mm a")} UTC
-                    </p>
-                    <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
-                      <span>{entry.details?.images || 0} images</span>
-                      <span>•</span>
-                      <span>{entry.details?.voice || 0} voice</span>
-                      <span>•</span>
-                      <span>{entry.details?.posts || 0} posts</span>
+              {prepHistory.map((entry: any) => {
+                const isFailed = entry.action === 'full_queue_prep_failed';
+                const mode = entry.details?.mode || (entry.actor_type === 'user' ? 'manual' : 'auto');
+                
+                return (
+                  <div 
+                    key={entry.id}
+                    className={`flex items-center justify-between p-3 rounded-lg border ${
+                      isFailed ? 'bg-destructive/5 border-destructive/20' : 'bg-muted/30'
+                    }`}
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className={`text-sm font-medium ${isFailed ? 'text-destructive' : ''}`}>
+                          {format(new Date(entry.created_at), "MMM d, yyyy 'at' h:mm a")} UTC
+                        </p>
+                        <Badge variant="outline" className="text-xs capitalize">
+                          {mode}
+                        </Badge>
+                      </div>
+                      {!isFailed ? (
+                        <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
+                          <span>{entry.details?.images || 0} images</span>
+                          <span>•</span>
+                          <span>{entry.details?.voice || 0} voice</span>
+                          <span>•</span>
+                          <span>{entry.details?.posts || 0} posts</span>
+                        </div>
+                      ) : (
+                        <p className="mt-1 text-xs text-destructive">
+                          {entry.details?.error || 'Unknown error'}
+                        </p>
+                      )}
                     </div>
+                    <Badge variant={isFailed ? "destructive" : "outline"} className={!isFailed ? "text-green-600" : ""}>
+                      {isFailed ? "Failed" : "Completed"}
+                    </Badge>
                   </div>
-                  <Badge variant="outline" className="text-green-600">
-                    Completed
-                  </Badge>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </CardContent>
         </Card>
