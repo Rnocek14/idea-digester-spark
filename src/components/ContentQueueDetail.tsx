@@ -42,6 +42,7 @@ export function ContentQueueDetail({
   const [editedTitle, setEditedTitle] = useState("");
   const [editedSummary, setEditedSummary] = useState("");
   const [editedCategory, setEditedCategory] = useState("");
+  const [isSponsored, setIsSponsored] = useState(false);
   const [selectedTargets, setSelectedTargets] = useState<Set<string>>(new Set());
   const [activeVoiceTab, setActiveVoiceTab] = useState("base");
 
@@ -152,6 +153,7 @@ export function ContentQueueDetail({
       setEditedTitle(story.title);
       setEditedSummary(story.summary || "");
       setEditedCategory(story.category || "");
+      setIsSponsored(story.is_sponsored || false);
     }
   }, [story]);
 
@@ -162,7 +164,7 @@ export function ContentQueueDetail({
   }, [existingTargets]);
 
   const updateStoryMutation = useMutation({
-    mutationFn: async (updates: { title?: string; summary?: string; category?: string }) => {
+    mutationFn: async (updates: { title?: string; summary?: string; category?: string; is_sponsored?: boolean }) => {
       console.log("📝 Updating story:", storyId, updates);
       
       const { data: updated, error } = await supabase
@@ -328,6 +330,7 @@ export function ContentQueueDetail({
       title: editedTitle,
       summary: editedSummary,
       category: editedCategory,
+      is_sponsored: isSponsored,
     });
   };
 
@@ -512,6 +515,29 @@ export function ContentQueueDetail({
                     <SelectItem value="community">Community</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="sponsored"
+                    checked={isSponsored}
+                    onCheckedChange={(checked) => setIsSponsored(checked as boolean)}
+                  />
+                  <label
+                    htmlFor="sponsored"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                  >
+                    Sponsored Content
+                  </label>
+                </div>
+                {isSponsored && story.image_url && story.image_source === 'source_og' && (
+                  <div className="p-3 border border-yellow-500/30 bg-yellow-500/10 rounded-md">
+                    <p className="text-sm text-yellow-600 dark:text-yellow-400">
+                      ⚠️ This sponsored post currently uses a scraped image. Generate an AI image before posting to ensure licensing compliance.
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div>
