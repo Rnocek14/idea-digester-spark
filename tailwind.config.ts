@@ -15,8 +15,15 @@ export default {
     extend: {
       fontFamily: {
         serif: ['Playfair Display', 'Georgia', 'serif'],
+        display: ['Playfair Display', 'Georgia', 'serif'],
+        sans: ['Inter', 'system-ui', 'sans-serif'],
       },
       colors: {
+        brand: {
+          DEFAULT: 'hsl(222.2 47.4% 11.2%)',
+          light: 'hsl(217.2 32.6% 17.5%)',
+          accent: 'hsl(221 83% 53%)',
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

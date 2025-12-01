@@ -1,5 +1,4 @@
 import { format } from "date-fns";
-import { Card } from "@/components/ui/card";
 
 type Story = {
   id: string;
@@ -35,41 +34,47 @@ export const BriefHero = ({ stories }: BriefHeroProps) => {
     })
     .slice(0, 4);
 
-  return (
-    <Card className="p-8 md:p-12 bg-gradient-to-br from-primary/5 via-background to-muted/20 border-primary/10">
-      <div className="max-w-3xl mx-auto text-center space-y-6">
-        <div className="space-y-2">
-          <h2 className="text-4xl md:text-5xl font-serif font-bold tracking-tight">
-            Good morning, Lake Geneva 👋
-          </h2>
-          <p className="text-lg text-muted-foreground">
-            {format(new Date(), "EEEE, MMMM d, yyyy")}
-          </p>
-        </div>
+  const scrollToCategory = (category: string | null) => {
+    if (!category) return;
+    const el = document.getElementById(category.toLowerCase());
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
-        {highlights.length > 0 && (
-          <div className="space-y-3 pt-4">
-            <p className="text-sm font-semibold text-primary uppercase tracking-wide">
-              Here's what's happening today
-            </p>
-            <div className="grid gap-2 text-left">
+  return (
+    <section className="border-b border-gray-200 bg-white">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 py-6 sm:py-8">
+        <div className="max-w-3xl">
+          <p className="text-xs font-semibold tracking-[0.2em] text-brand-accent uppercase">
+            Good morning, Lake Geneva
+          </p>
+          <h1 className="mt-2 font-display text-3xl sm:text-4xl tracking-tight text-brand">
+            Here's what's happening this week
+          </h1>
+          <p className="mt-3 max-w-xl text-sm text-gray-600 leading-relaxed">
+            Short, trustworthy updates on city hall, schools, events, and real estate — in under 5 minutes.
+          </p>
+
+          {/* Category quick-links / chips */}
+          {highlights.length > 0 && (
+            <div className="mt-5 flex flex-wrap gap-2">
               {highlights.map((story) => (
-                <div
+                <button
                   key={story.id}
-                  className="flex items-start gap-3 text-sm md:text-base"
+                  onClick={() => scrollToCategory(story.category)}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs text-gray-700 hover:border-brand-accent hover:bg-blue-50 hover:text-brand-accent transition-colors"
                 >
-                  <span className="text-xl flex-shrink-0">
-                    {getCategoryEmoji(story.category)}
+                  <span>{getCategoryEmoji(story.category)}</span>
+                  <span className="capitalize font-medium">
+                    {story.category?.replace('_', ' ')}
                   </span>
-                  <span className="text-foreground/90 leading-relaxed">
-                    {story.title}
-                  </span>
-                </div>
+                </button>
               ))}
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
-    </Card>
+    </section>
   );
 };

@@ -2,6 +2,7 @@ import { Waves, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import { NavLink } from "@/components/NavLink";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 const navItems = [
   { label: "Today", to: "/lake-geneva" },
@@ -10,59 +11,65 @@ const navItems = [
 ];
 
 export const PublicHeader = () => {
-  return (
-    <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-      {/* Top Bar */}
-      <div className="border-b border-border/40">
-        <div className="container max-w-6xl mx-auto px-4 py-2">
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-3 w-3" />
-              {format(new Date(), "EEEE, MMMM d, yyyy")}
-            </div>
-            <div>Your local news, simplified</div>
-          </div>
-        </div>
-      </div>
+  const scrollToSubscribe = () => {
+    const subscribeEl = document.getElementById('subscribe');
+    if (subscribeEl) {
+      subscribeEl.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
-      {/* Main Header */}
-      <div className="container max-w-6xl mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
-          {/* Logo */}
-          <NavLink to="/lake-geneva" className="flex items-center gap-3 group">
-            <Waves className="h-7 w-7 text-primary group-hover:scale-110 transition-transform" />
-            <div>
-              <h1 className="text-2xl font-serif font-bold tracking-tight">
-                Lake Geneva Brief
-              </h1>
-            </div>
+  return (
+    <header className="border-b border-gray-200 bg-white/80 backdrop-blur-sm sticky top-0 z-30">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6">
+        {/* Top line: date + tagline */}
+        <div className="flex items-center justify-between py-2 text-xs text-gray-500">
+          <div className="flex items-center gap-1.5">
+            <Calendar className="h-3 w-3" />
+            <span>{format(new Date(), "EEEE, MMMM d, yyyy")}</span>
+          </div>
+          <span className="hidden sm:inline">Your local news, simplified</span>
+        </div>
+
+        {/* Main nav */}
+        <div className="flex items-center justify-between py-3 gap-4">
+          <NavLink to="/lake-geneva" className="flex items-baseline gap-2 group">
+            <span className="font-display text-xl tracking-tight text-brand group-hover:text-brand-accent transition-colors">
+              Lake Geneva Brief
+            </span>
+            <span className="hidden text-[10px] uppercase tracking-[0.15em] text-gray-400 sm:inline">
+              LOCAL EDITION
+            </span>
           </NavLink>
 
-          {/* Navigation */}
-          <nav className="hidden md:flex items-center gap-1">
+          {/* Desktop Nav */}
+          <div className="hidden items-center gap-6 text-sm text-gray-600 sm:flex">
             {navItems.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
-                className={cn(
-                  "px-4 py-2 text-sm font-medium transition-colors rounded-md",
-                  "hover:bg-muted/50"
-                )}
-                activeClassName="bg-primary/10 text-primary"
+                className="hover:text-brand-accent transition-colors"
+                activeClassName="text-brand-accent font-medium"
               >
                 {item.label}
               </NavLink>
             ))}
-          </nav>
+            <Button
+              size="sm"
+              onClick={scrollToSubscribe}
+              className="rounded-full bg-brand-accent px-4 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700 transition-colors"
+            >
+              Get the Brief
+            </Button>
+          </div>
 
           {/* Mobile Nav */}
-          <div className="flex md:hidden gap-2">
+          <div className="flex sm:hidden gap-2">
             {navItems.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
-                className="text-xs px-3 py-1.5 rounded-full border border-border/40 hover:bg-muted/50 transition-colors"
-                activeClassName="bg-primary/10 text-primary border-primary/30"
+                className="text-xs px-3 py-1.5 rounded-full border border-gray-200 hover:border-brand-accent hover:text-brand-accent transition-colors"
+                activeClassName="border-brand-accent text-brand-accent"
               >
                 {item.label}
               </NavLink>

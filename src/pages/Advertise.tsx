@@ -115,40 +115,40 @@ const Advertise = () => {
   const socialSlots = adSlots.filter((s) => s.channel === "social");
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gray-50">
       <PublicHeader />
 
       <main className="container max-w-6xl mx-auto px-4 py-12 space-y-16">
         {/* Hero Section */}
         <section className="text-center space-y-6 max-w-3xl mx-auto">
-          <Badge className="bg-primary/10 text-primary border-primary/20">
+          <span className="inline-block rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.15em] text-brand-accent border border-blue-100">
             New Local Media Platform
-          </Badge>
-          <h2 className="text-4xl font-serif font-bold">
+          </span>
+          <h2 className="text-3xl sm:text-4xl font-display font-bold text-brand tracking-tight">
             Connect with Lake Geneva residents through trusted local news
           </h2>
-          <p className="text-xl text-muted-foreground">
+          <p className="text-lg text-gray-600 leading-relaxed">
             Thousands of local readers turn to Lake Geneva Brief every week for community news,
             events, and dining. Your brand can be part of their daily routine.
           </p>
         </section>
 
         {/* Stats */}
-        <section className="grid md:grid-cols-3 gap-6">
-          <Card className="p-6 text-center">
-            <Users className="h-10 w-10 text-primary mx-auto mb-3" />
-            <div className="text-3xl font-bold">2,000+</div>
-            <p className="text-sm text-muted-foreground">Weekly Readers</p>
+        <section className="grid md:grid-cols-3 gap-5">
+          <Card className="p-6 text-center rounded-2xl border-gray-200">
+            <Users className="h-10 w-10 text-brand-accent mx-auto mb-3" />
+            <div className="text-3xl font-bold text-brand">2,000+</div>
+            <p className="text-sm text-gray-500">Weekly Readers</p>
           </Card>
-          <Card className="p-6 text-center">
-            <Mail className="h-10 w-10 text-primary mx-auto mb-3" />
-            <div className="text-3xl font-bold">40%+</div>
-            <p className="text-sm text-muted-foreground">Open Rate</p>
+          <Card className="p-6 text-center rounded-2xl border-gray-200">
+            <Mail className="h-10 w-10 text-brand-accent mx-auto mb-3" />
+            <div className="text-3xl font-bold text-brand">40%+</div>
+            <p className="text-sm text-gray-500">Open Rate</p>
           </Card>
-          <Card className="p-6 text-center">
-            <TrendingUp className="h-10 w-10 text-primary mx-auto mb-3" />
-            <div className="text-3xl font-bold">100%</div>
-            <p className="text-sm text-muted-foreground">Local Audience</p>
+          <Card className="p-6 text-center rounded-2xl border-gray-200">
+            <TrendingUp className="h-10 w-10 text-brand-accent mx-auto mb-3" />
+            <div className="text-3xl font-bold text-brand">100%</div>
+            <p className="text-sm text-gray-500">Local Audience</p>
           </Card>
         </section>
 
@@ -156,27 +156,27 @@ const Advertise = () => {
         {newsletterSlots.length > 0 && (
           <section className="space-y-6">
             <div className="text-center space-y-2">
-              <h3 className="text-3xl font-serif font-bold">Newsletter Sponsorships</h3>
-              <p className="text-muted-foreground">
+              <h3 className="text-2xl sm:text-3xl font-display font-bold text-brand">Newsletter Sponsorships</h3>
+              <p className="text-gray-600">
                 Appear directly in our weekly email newsletter
               </p>
             </div>
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid md:grid-cols-2 gap-5">
               {newsletterSlots.map((slot) => (
                 <Card
                   key={slot.id}
-                  className="p-8 hover:shadow-lg transition-shadow border-2 hover:border-primary/50"
+                  className="p-8 hover:shadow-md transition-shadow border-2 hover:border-brand-accent/50 rounded-2xl"
                 >
                   <div className="space-y-4">
                     <div>
-                      <h4 className="text-xl font-bold">{slot.name}</h4>
+                      <h4 className="text-xl font-semibold text-brand">{slot.name}</h4>
                       {slot.description && (
-                        <p className="text-sm text-muted-foreground mt-1">{slot.description}</p>
+                        <p className="text-sm text-gray-600 mt-1">{slot.description}</p>
                       )}
                     </div>
-                    <div className="text-3xl font-bold text-primary">
+                    <div className="text-3xl font-bold text-brand-accent">
                       ${slot.price_monthly}
-                      <span className="text-sm text-muted-foreground">/month</span>
+                      <span className="text-sm text-gray-500">/month</span>
                     </div>
                     <ul className="space-y-2 text-sm">
                       <li className="flex items-start gap-2">

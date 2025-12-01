@@ -8,18 +8,21 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 249 250 251; /* gray-50 */
+    --foreground: 15 23 42; /* slate-900 */
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 15 23 42;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 15 23 42;
 
-    /* Lake Geneva blue accent */
-    --primary: 210 90% 35%;
-    --primary-foreground: 210 40% 98%;
+    /* Deep lake navy + lake blue accent */
+    --primary: 15 23 42; /* slate-900 */
+    --primary-foreground: 248 250 252; /* slate-50 */
+    
+    --brand-accent: 37 99 235; /* blue-600 */
+    --brand-accent-foreground: 255 255 255;
 
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
