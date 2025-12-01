@@ -32,7 +32,7 @@ CREATE EXTENSION IF NOT EXISTS pg_cron;
 
 1. Go to Supabase Dashboard → SQL Editor
 2. Paste the copied SQL code
-3. Replace `${process.env.SUPABASE_ANON_KEY}` with your actual anon key from:
+3. Replace `YOUR_ANON_KEY_HERE` with your actual anon key from:
    - Supabase Dashboard → Settings → API → Project API keys → anon public
 4. Run the SQL
 

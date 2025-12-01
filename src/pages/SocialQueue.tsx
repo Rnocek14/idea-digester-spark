@@ -1177,8 +1177,9 @@ const SocialQueue = () => {
                     Setup Required
                   </h4>
                   <p className="text-xs text-muted-foreground">
-                    To enable automated runs, you need to set up a pg_cron job in Supabase. 
-                    Click below to view the SQL setup instructions.
+                    To enable automated runs, set up a pg_cron job in Supabase. Click below to copy SQL, 
+                    then paste into Supabase SQL Editor and replace YOUR_ANON_KEY_HERE with your actual 
+                    anon key from Settings → API → Project API keys.
                   </p>
                   <Button
                     variant="outline"
@@ -1200,7 +1201,7 @@ SELECT cron.schedule(
   SELECT
     net.http_post(
       url:='https://mzumvkrpnxhkvhdyzgqa.supabase.co/functions/v1/full-queue-prep',
-      headers:='{"Content-Type": "application/json", "Authorization": "Bearer ${process.env.SUPABASE_ANON_KEY}"}'::jsonb
+      headers:='{"Content-Type": "application/json", "Authorization": "Bearer YOUR_ANON_KEY_HERE"}'::jsonb
     ) as request_id;
   $$
 );
