@@ -44,7 +44,7 @@ serve(async (req) => {
     // Fetch all stories
     const { data: stories, error: fetchError } = await supabase
       .from('content_queue')
-      .select('id, title, category, summary, content_newsletter, content')
+      .select('id, title, category, summary, content_newsletter, content, original_url')
       .in('id', storyIds);
 
     if (fetchError) {
@@ -103,6 +103,7 @@ Story ${index + 1}:
 ID: ${story.id}
 Title: ${story.title}
 Category: ${story.category || 'uncategorized'}
+Source URL: ${story.original_url || 'No URL available'}
 Current Newsletter Copy: ${fallbackContent}
 `;
     }).join('\n---\n');
@@ -137,7 +138,7 @@ ALLOWED CONTEXTUAL ADDITIONS (only if present in source content):
 - Audience indicators: family-friendly, all ages, adults, all skill levels
 - Schedule details: weekly, one-time, specific date range, runs through [date]
 - Setting: indoors, outdoors
-- Only include details that appear in the original source content. Do not invent or assume information.
+- When useful, add a second short sentence with purely practical context (venue, price, reservation/RSVP requirement, format details) - only if that information appears in the original source. Do not invent or assume information.
 
 VARIATION TECHNIQUES (prioritize date/time/location when available):
 - Date-first: "This Saturday, the Geneva Theater hosts..."
