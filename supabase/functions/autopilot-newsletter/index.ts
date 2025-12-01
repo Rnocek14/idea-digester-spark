@@ -445,12 +445,13 @@ function buildNewsletter(
       const rawContent = s.content ?? "";
       const body = optimizedMap.get(s.id) || s.content_newsletter || s.summary || rawContent.substring(0, 200);
       const linkHtml = s.original_url 
-        ? `<br><a href="${escapeHtml(s.original_url)}" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none; font-weight: 500;">More info →</a>`
+        ? `<div style="margin-top: 8px;"><a href="${escapeHtml(s.original_url)}" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none; font-weight: 500;">More info →</a></div>`
         : '';
       return `
         <div style="margin-bottom: 24px;">
           <h3 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: #1a202c;">${escapeHtml(s.title)}</h3>
-          <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #4a5568;">${escapeHtml(body)}${linkHtml}</p>
+          <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #4a5568;">${escapeHtml(body)}</p>
+          ${linkHtml}
         </div>
       `;
     }).join("\n");
