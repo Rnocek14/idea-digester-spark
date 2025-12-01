@@ -39,5 +39,8 @@ verify_jwt = false
 [functions.backfill-voice-variants]
 verify_jwt = false
 
+[functions.bulk-approve-content]
+verify_jwt = false
+
 [functions.generate-post-image]
 verify_jwt = false

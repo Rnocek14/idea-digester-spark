@@ -13,11 +13,11 @@ Deno.serve(async (req) => {
 
     console.log('[backfill-voice-variants] Starting backfill...');
 
-    // Find stories with images but no voice variants
+    // Find stories that need voice variants (approved/auto_published/published only)
     const { data: stories, error: fetchError } = await supabase
       .from('content_queue')
-      .select('id, title, image_url, content_instagram, content_facebook, content_x')
-      .not('image_url', 'is', null)
+      .select('id, title, image_url, content_instagram, content_facebook, content_x, status')
+      .in('status', ['approved', 'auto_published', 'published'])
       .or('content_instagram.is.null,content_facebook.is.null,content_x.is.null')
       .limit(50);
 
