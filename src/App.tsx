@@ -14,7 +14,17 @@ import Newsletter from "./pages/Newsletter";
 import SocialQueue from "./pages/SocialQueue";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30000, // 30 seconds - data stays fresh longer
+      gcTime: 300000, // 5 minutes - keep in cache
+      retry: 2, // Retry failed requests twice
+      refetchOnWindowFocus: false, // Prevent refetch storms when switching tabs
+      refetchOnReconnect: true, // Refetch when reconnecting to network
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
