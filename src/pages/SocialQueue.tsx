@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -367,10 +368,10 @@ const SocialQueue = () => {
               <p className="text-xs text-muted-foreground">Safe stories awaiting review</p>
               {pipelineHealth && pipelineHealth.pendingSafe > 0 && (
                 <Button size="sm" variant="outline" className="w-full" asChild>
-                  <a href="/dashboard/content?status=pending">
+                  <Link to="/dashboard/content?status=pending">
                     <Clock className="h-3 w-3 mr-1" />
                     Review Now
-                  </a>
+                  </Link>
                 </Button>
               )}
             </div>
