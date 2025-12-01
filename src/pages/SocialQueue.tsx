@@ -92,6 +92,42 @@ const SocialQueue = () => {
     },
   });
 
+  // Generate image mutation
+  const generateImageMutation = useMutation({
+    mutationFn: async (postId: string) => {
+      // Get the post to find story_id
+      const { data: post } = await supabase
+        .from('post_queue')
+        .select('story_id, platform')
+        .eq('id', postId)
+        .single();
+      
+      if (!post) throw new Error('Post not found');
+
+      const { data, error } = await supabase.functions.invoke("generate-post-image", {
+        body: { story_id: post.story_id, platform: post.platform }
+      });
+      if (error) throw error;
+      
+      // Update post_queue with generated image
+      const { error: updateError } = await supabase
+        .from('post_queue')
+        .update({ generated_image_url: data.image_url })
+        .eq('id', postId);
+      
+      if (updateError) throw updateError;
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('Image generated successfully');
+      queryClient.invalidateQueries({ queryKey: ['upcoming-posts'] });
+      queryClient.invalidateQueries({ queryKey: ['sent-posts'] });
+    },
+    onError: (error: any) => {
+      toast.error(`Failed to generate image: ${error.message}`);
+    },
+  });
+
   const getPlatformIcon = (platform: string) => {
     switch (platform) {
       case "instagram":
@@ -103,6 +139,21 @@ const SocialQueue = () => {
       default:
         return null;
     }
+  };
+
+  const getImageSourceBadge = (post: any) => {
+    if (post.generated_image_url) {
+      return <Badge variant="secondary" className="text-xs">AI</Badge>;
+    }
+    if (post.image_url) {
+      return <Badge variant="outline" className="text-xs">OG</Badge>;
+    }
+    return null;
+  };
+
+  const shouldShowGenerateButton = (post: any) => {
+    // Show if no image at all, or if sponsored with scraped image
+    return !post.generated_image_url && (!post.image_url || post.is_sponsored);
   };
 
   const getStatusBadge = (status: string) => {
@@ -203,18 +254,27 @@ const SocialQueue = () => {
                           className="border rounded-lg p-4 space-y-2"
                         >
                           <div className="flex gap-4">
-                            {post.image_url && (
-                              <div className="flex-shrink-0">
+                            {(post.generated_image_url || post.image_url) && (
+                              <div className="flex-shrink-0 relative">
                                 <img
-                                  src={post.image_url}
+                                  src={post.generated_image_url || post.image_url}
                                   alt=""
                                   className="w-24 h-24 object-cover rounded-md"
                                 />
+                                <div className="absolute -top-1 -right-1">
+                                  {getImageSourceBadge(post)}
+                                </div>
                               </div>
                             )}
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-2">
+                              <div className="flex items-center gap-2 mb-2 flex-wrap">
                                 {getStatusBadge(post.status)}
+                                {post.is_sponsored && (
+                                  <Badge variant="default" className="text-xs">Sponsored</Badge>
+                                )}
+                                {post.is_sponsored && post.image_url && !post.generated_image_url && (
+                                  <Badge variant="destructive" className="text-xs">⚠ Use AI Image</Badge>
+                                )}
                                 <span className="text-sm text-muted-foreground truncate">
                                   {post.content_queue?.title}
                                 </span>
@@ -232,6 +292,17 @@ const SocialQueue = () => {
                               </div>
                             </div>
                           </div>
+                          {shouldShowGenerateButton(post) && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => generateImageMutation.mutate(post.id)}
+                              disabled={generateImageMutation.isPending}
+                              className="w-full"
+                            >
+                              {generateImageMutation.isPending ? "Generating..." : "Generate AI Image"}
+                            </Button>
+                          )}
                         </div>
                       ))}
                     </CardContent>
@@ -269,19 +340,25 @@ const SocialQueue = () => {
                     className="border rounded-lg p-4 space-y-2"
                   >
                     <div className="flex gap-4">
-                      {post.image_url && (
-                        <div className="flex-shrink-0">
+                      {(post.generated_image_url || post.image_url) && (
+                        <div className="flex-shrink-0 relative">
                           <img
-                            src={post.image_url}
+                            src={post.generated_image_url || post.image_url}
                             alt=""
                             className="w-24 h-24 object-cover rounded-md"
                           />
+                          <div className="absolute -top-1 -right-1">
+                            {getImageSourceBadge(post)}
+                          </div>
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2">
+                        <div className="flex items-center gap-2 mb-2 flex-wrap">
                           {getPlatformIcon(post.platform)}
                           {getStatusBadge(post.status)}
+                          {post.is_sponsored && (
+                            <Badge variant="default" className="text-xs">Sponsored</Badge>
+                          )}
                           <span className="text-sm text-muted-foreground truncate">
                             {post.content_queue?.title}
                           </span>

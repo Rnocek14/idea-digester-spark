@@ -435,13 +435,16 @@ export type Database = {
           created_at: string
           error_message: string | null
           external_post_id: string | null
+          generated_image_url: string | null
           id: string
           image_url: string | null
+          is_sponsored: boolean | null
           metadata: Json | null
           platform: string
           post_text: string
           scheduled_for: string
           sent_at: string | null
+          sponsor_id: string | null
           status: string
           story_id: string
         }
@@ -449,13 +452,16 @@ export type Database = {
           created_at?: string
           error_message?: string | null
           external_post_id?: string | null
+          generated_image_url?: string | null
           id?: string
           image_url?: string | null
+          is_sponsored?: boolean | null
           metadata?: Json | null
           platform: string
           post_text: string
           scheduled_for: string
           sent_at?: string | null
+          sponsor_id?: string | null
           status?: string
           story_id: string
         }
@@ -463,17 +469,27 @@ export type Database = {
           created_at?: string
           error_message?: string | null
           external_post_id?: string | null
+          generated_image_url?: string | null
           id?: string
           image_url?: string | null
+          is_sponsored?: boolean | null
           metadata?: Json | null
           platform?: string
           post_text?: string
           scheduled_for?: string
           sent_at?: string | null
+          sponsor_id?: string | null
           status?: string
           story_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "post_queue_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "sponsors"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "post_queue_story_id_fkey"
             columns: ["story_id"]
