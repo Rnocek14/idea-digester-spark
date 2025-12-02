@@ -232,7 +232,7 @@ const LakeGeneva = () => {
       {/* Unified Hero Section */}
       {featured && (
         <section className="-mx-4 sm:-mx-6 lg:-mx-8 border-b border-slate-200 bg-white px-4 sm:px-6 lg:px-8 py-10">
-          <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1.2fr)]">
+          <div className="grid gap-10 lg:grid-cols-[1fr_340px]">
                 {/* Left: greeting, headline, category links, featured card */}
                 <div className="space-y-5">
                   {/* Greeting + headline */}
