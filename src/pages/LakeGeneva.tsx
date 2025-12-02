@@ -29,9 +29,46 @@ type Sponsor = {
   website: string | null;
   placementId?: string;
   businessId?: string;
+  category?: string | null;
+  market_fact_override?: string | null;
 };
 
 const categoryOrder = ["news", "schools", "events", "dining", "real_estate", "community"];
+
+// Real estate market insights for rotating display
+const REAL_ESTATE_MARKET_FACTS = [
+  "Median Lake Geneva home prices are up year-over-year, with limited inventory keeping it a seller's market.",
+  "Well-kept homes near the lakefront are seeing strong demand and faster-than-average closings.",
+  "Move-in-ready homes in the $400k–$700k range are some of the most competitive in the Lake Geneva area.",
+  "Inventory remains low compared to pre-2020 levels, which is supporting higher sale prices.",
+  "Homes that are priced correctly and well-presented often go under contract in a few weeks.",
+];
+
+const isRealEstateSponsor = (sponsor: Sponsor | null) => {
+  if (!sponsor) return false;
+  const label = (sponsor.category || sponsor.name || "").toLowerCase();
+  
+  return (
+    label.includes("real estate") ||
+    label.includes("realtor") ||
+    label.includes("realty") ||
+    label.includes("broker") ||
+    label.includes("properties")
+  );
+};
+
+const getRealEstateMarketFact = (sponsor: Sponsor | null) => {
+  // If sponsor has a custom line, always prefer it
+  if (sponsor?.market_fact_override) return sponsor.market_fact_override;
+
+  // Simple, stable rotation: one fact per day
+  if (REAL_ESTATE_MARKET_FACTS.length === 0) return null;
+
+  const dayIndex = Math.floor(Date.now() / (1000 * 60 * 60 * 24));
+  const idx = dayIndex % REAL_ESTATE_MARKET_FACTS.length;
+
+  return REAL_ESTATE_MARKET_FACTS[idx];
+};
 
 const getRelativeTime = (dateString?: string | null) => {
   if (!dateString) return null;
@@ -99,7 +136,7 @@ const LakeGeneva = () => {
         .select(`
           id,
           business_id,
-          business:business_profiles(name, logo_url, website)
+          business:business_profiles(name, logo_url, website, category)
         `)
         .eq("slot_id", "newsletter_header")
         .eq("status", "active")
@@ -108,7 +145,11 @@ const LakeGeneva = () => {
         .maybeSingle();
 
       if (error) throw error;
-      return data ? { ...data.business, placementId: data.id, businessId: data.business_id } as Sponsor & { placementId: string; businessId: string } : null;
+      return data ? { 
+        ...data.business, 
+        placementId: data.id, 
+        businessId: data.business_id 
+      } as Sponsor & { placementId: string; businessId: string } : null;
     },
     staleTime: 300000,
   });
@@ -350,6 +391,14 @@ const LakeGeneva = () => {
                     )}
                   </div>
                 </div>
+                
+                {/* Market Insight for Real Estate Sponsors */}
+                {isRealEstateSponsor(sponsor) && (
+                  <div className="mt-4 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2.5 text-xs text-amber-900">
+                    <span className="font-semibold mr-1">🏡 Lake Geneva Market Insight:</span>
+                    <span>{getRealEstateMarketFact(sponsor)}</span>
+                  </div>
+                )}
               </Card>
             </section>
           )}
