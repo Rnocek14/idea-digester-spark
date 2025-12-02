@@ -75,6 +75,50 @@ function parseFlexibleDate(dateStr: string): string {
   return new Date().toISOString();
 }
 
+// Classify breaking news based on keywords
+function classifyBreaking(story: {
+  title?: string | null;
+  summary?: string | null;
+  category?: string | null;
+  source_name?: string | null;
+}): { isBreaking: boolean; priorityScore: number } {
+  const text = `${story.title || ''} ${story.summary || ''}`.toLowerCase();
+  let score = 0;
+
+  // Strong signals (+5)
+  const strongKeywords = [
+    'breaking', 'urgent', 'emergency', 'evacuate', 'shelter in place', 'amber alert'
+  ];
+  if (strongKeywords.some(k => text.includes(k))) {
+    score += 5;
+  }
+
+  // Severe weather signals (+4)
+  if (story.category === 'weather' || (story.source_name || '').toLowerCase().includes('nws')) {
+    if (text.includes('severe thunderstorm') || text.includes('tornado') || text.includes('blizzard') || text.includes('warning')) {
+      score += 4;
+    }
+  }
+
+  // Public safety signals (+3)
+  const publicSafetyKeywords = [
+    'road closed', 'closure', 'crash', 'accident', 'fire', 'shooting',
+    'police activity', 'missing person', 'water main break', 'power outage'
+  ];
+  if (publicSafetyKeywords.some(k => text.includes(k))) {
+    score += 3;
+  }
+
+  // Time-sensitive signals (+2)
+  const timeSensitiveKeywords = ['today', 'tonight', 'now', 'immediately', 'just happened'];
+  if (timeSensitiveKeywords.some(k => text.includes(k))) {
+    score += 2;
+  }
+
+  const isBreaking = score >= 4;
+  return { isBreaking, priorityScore: score };
+}
+
 function decideStatusForStory(
   rules: AutoPublishRule[] | null,
   sourceId: string,
@@ -492,7 +536,18 @@ When in doubt between safe and sensitive, choose sensitive. Only use blocked for
           const safetyLevel = aiResult.safety_level || "safe";
           const status = decideStatusForStory(rules as AutoPublishRule[], source.id, aiCategory, safetyLevel);
 
-          console.log(`📋 Story "${title.substring(0, 40)}..." → category: ${aiCategory}, safety: ${safetyLevel}, status: ${status}`);
+          // Classify breaking news priority
+          const { isBreaking, priorityScore } = classifyBreaking({
+            title,
+            summary: aiResult.summary,
+            category: aiCategory,
+            source_name: source.name,
+          });
+
+          if (isBreaking) {
+            console.log(`🔴 BREAKING: "${title.substring(0, 40)}..." (score: ${priorityScore})`);
+          }
+          console.log(`📋 Story "${title.substring(0, 40)}..." → category: ${aiCategory}, safety: ${safetyLevel}, status: ${status}, priority: ${priorityScore}`);
 
           // Insert into content_queue
           const { error: insertError } = await supabase
@@ -511,10 +566,12 @@ When in doubt between safe and sensitive, choose sensitive. Only use blocked for
               safety_level: aiResult.safety_level || "safe",
               safety_tags: aiResult.safety_tags || [],
               safety_reason: aiResult.safety_reason || "",
+              is_breaking: isBreaking,
+              priority_score: priorityScore,
               metadata: {
                 source_name: source.name,
-                original_published_at: pubDate,  // Keep raw date for reference
-                raw_event_date: pubDate,  // Preserve original format
+                original_published_at: pubDate,
+                raw_event_date: pubDate,
                 location_tags: source.metadata?.location_tags || ["Lake Geneva"],
                 ai_model: "gpt-4o-mini",
                 content_tags: aiResult.content_tags || [],
