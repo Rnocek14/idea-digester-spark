@@ -8,6 +8,8 @@ import Auth from "./pages/Auth";
 import LakeGeneva from "./pages/LakeGeneva";
 import PublicDirectory from "./pages/PublicDirectory";
 import Advertise from "./pages/Advertise";
+import Incidents from "./pages/Incidents";
+import IncidentDetail from "./pages/IncidentDetail";
 import DashboardLayout from "./components/DashboardLayout";
 import Dashboard from "./pages/Dashboard";
 import ContentQueue from "./pages/ContentQueue";
@@ -44,6 +46,8 @@ const App = () => (
           <Route path="/lake-geneva" element={<Navigate to="/" replace />} />
           <Route path="/directory" element={<PublicDirectory />} />
           <Route path="/advertise" element={<Advertise />} />
+          <Route path="/incidents" element={<Incidents />} />
+          <Route path="/incidents/:slug" element={<IncidentDetail />} />
           <Route path="/dashboard" element={<DashboardLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="content" element={<ContentQueue />} />

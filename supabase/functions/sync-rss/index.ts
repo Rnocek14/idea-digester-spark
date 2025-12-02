@@ -119,6 +119,133 @@ function classifyBreaking(story: {
   return { isBreaking, priorityScore: score };
 }
 
+// Infer incident type from story content
+type IncidentType = 'accident' | 'fire' | 'weather' | 'police' | 'utility' | 'other';
+
+function inferIncidentType(story: {
+  category?: string | null;
+  title?: string | null;
+  summary?: string | null;
+}): IncidentType {
+  const category = (story.category || '').toLowerCase();
+  const text = `${story.title || ''} ${story.summary || ''}`.toLowerCase();
+
+  if (category.includes('weather')) return 'weather';
+  if (category.includes('traffic') || text.includes('crash') || text.includes('accident') || text.includes('collision')) {
+    return 'accident';
+  }
+  if (text.includes('fire') || text.includes('structure fire') || text.includes('house fire')) {
+    return 'fire';
+  }
+  if (text.includes('police') || text.includes('arrest') || text.includes('shooting')) {
+    return 'police';
+  }
+  if (text.includes('power outage') || text.includes('utility') || text.includes('water main')) {
+    return 'utility';
+  }
+  return 'other';
+}
+
+// Generate URL-friendly slug from title
+function slugifyIncidentTitle(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .substring(0, 80);
+}
+
+// Link breaking story to an incident (find or create)
+async function linkStoryToIncident(opts: {
+  supabase: any;
+  storyId: string;
+  title: string;
+  summary: string | null;
+  category: string | null;
+  priorityScore: number;
+  source: string;
+  sourceLabel: string;
+}) {
+  const { supabase, storyId, title, summary, category, priorityScore, source, sourceLabel } = opts;
+  const type = inferIncidentType({ category, title, summary });
+
+  // Try to find an existing active incident of the same type with similar title
+  const titleWords = title.split(' ').slice(0, 4).join(' ');
+
+  const { data: existingIncidents, error: findError } = await supabase
+    .from('incidents')
+    .select('*')
+    .eq('incident_type', type)
+    .in('status', ['active', 'monitoring'])
+    .ilike('title', `%${titleWords}%`)
+    .order('updated_at', { ascending: false })
+    .limit(1);
+
+  if (findError) {
+    console.error('[incidents] Error finding existing incident', findError);
+    return;
+  }
+
+  let incident = existingIncidents?.[0];
+
+  if (!incident) {
+    // Create new incident
+    const baseSlug = slugifyIncidentTitle(title);
+    const slug = baseSlug || `incident-${storyId}`;
+
+    const { data: inserted, error: insertError } = await supabase
+      .from('incidents')
+      .insert({
+        slug,
+        title,
+        incident_type: type,
+        status: 'active',
+        location: null,
+        source_story_id: storyId,
+        priority_score: priorityScore,
+      })
+      .select('*')
+      .single();
+
+    if (insertError) {
+      console.error('[incidents] Error creating new incident', insertError);
+      return;
+    }
+    incident = inserted;
+    console.log(`[incidents] Created new incident: ${title}`);
+  } else {
+    // Update existing incident's priority and timestamp
+    const newPriority = Math.max(incident.priority_score || 0, priorityScore);
+    await supabase
+      .from('incidents')
+      .update({
+        priority_score: newPriority,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', incident.id);
+    console.log(`[incidents] Linked to existing incident: ${incident.title}`);
+  }
+
+  // Add timeline update
+  const updateText = summary || title;
+  const { error: updateError } = await supabase
+    .from('incident_updates')
+    .insert({
+      incident_id: incident.id,
+      source,
+      source_label: sourceLabel,
+      text: updateText,
+      is_verified: true,
+      story_id: storyId,
+    });
+
+  if (updateError) {
+    console.error('[incidents] Error inserting incident update', updateError);
+  }
+
+  return incident;
+}
+
 function decideStatusForStory(
   rules: AutoPublishRule[] | null,
   sourceId: string,
@@ -584,6 +711,29 @@ When in doubt between safe and sensitive, choose sensitive. Only use blocked for
             result.errors.push(`Insert failed: ${title.substring(0, 50)}`);
           } else {
             result.articlesInserted++;
+            
+            // Link breaking stories to incidents
+            if (isBreaking) {
+              // Get the inserted story ID
+              const { data: insertedStory } = await supabase
+                .from("content_queue")
+                .select("id")
+                .eq("original_url", originalUrl)
+                .single();
+              
+              if (insertedStory) {
+                await linkStoryToIncident({
+                  supabase,
+                  storyId: insertedStory.id,
+                  title,
+                  summary: aiResult.summary || null,
+                  category: aiCategory,
+                  priorityScore,
+                  source: 'rss',
+                  sourceLabel: source.name,
+                });
+              }
+            }
           }
         }
 

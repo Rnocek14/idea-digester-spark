@@ -490,6 +490,101 @@ export type Database = {
         }
         Relationships: []
       }
+      incident_updates: {
+        Row: {
+          created_at: string
+          id: string
+          incident_id: string
+          is_verified: boolean
+          source: string
+          source_label: string | null
+          story_id: string | null
+          text: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          incident_id: string
+          is_verified?: boolean
+          source: string
+          source_label?: string | null
+          story_id?: string | null
+          text: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          incident_id?: string
+          is_verified?: boolean
+          source?: string
+          source_label?: string | null
+          story_id?: string | null
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incident_updates_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "incidents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incident_updates_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "content_queue"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      incidents: {
+        Row: {
+          id: string
+          incident_type: string
+          location: string | null
+          priority_score: number | null
+          slug: string
+          source_story_id: string | null
+          started_at: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          incident_type: string
+          location?: string | null
+          priority_score?: number | null
+          slug: string
+          source_story_id?: string | null
+          started_at?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          incident_type?: string
+          location?: string | null
+          priority_score?: number | null
+          slug?: string
+          source_story_id?: string | null
+          started_at?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incidents_source_story_id_fkey"
+            columns: ["source_story_id"]
+            isOneToOne: false
+            referencedRelation: "content_queue"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       newsletter_clicks: {
         Row: {
           ad_placement_id: string | null
