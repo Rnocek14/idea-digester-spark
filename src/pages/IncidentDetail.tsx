@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Clock, MapPin, CheckCircle, AlertCircle, Info } from "lucide-react";
 import { PublicHeader } from "@/components/PublicHeader";
 import { PublicFooter } from "@/components/PublicFooter";
+import IncidentStatusControls from "@/components/IncidentStatusControls";
+import TipSubmissionForm from "@/components/TipSubmissionForm";
 
 type Incident = {
   id: string;
@@ -210,6 +212,15 @@ export default function IncidentDetail() {
                 </div>
               )}
             </section>
+
+            {/* Admin Status Controls - only show for admins */}
+            <IncidentStatusControls 
+              incidentId={incident.id} 
+              currentStatus={incident.status} 
+            />
+
+            {/* Community Tips */}
+            <TipSubmissionForm incidentId={incident.id} />
 
             {/* Disclaimer */}
             <Card className="bg-muted/50">
