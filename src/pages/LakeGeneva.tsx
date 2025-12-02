@@ -46,7 +46,11 @@ const REAL_ESTATE_MARKET_FACTS = [
 
 const isRealEstateSponsor = (sponsor: Sponsor | null) => {
   if (!sponsor) return false;
-  const label = (sponsor.category || sponsor.name || "").toLowerCase();
+  
+  // Normalize: lowercase and convert underscores to spaces
+  const label = (sponsor.category || sponsor.name || "")
+    .toLowerCase()
+    .replace(/[_\s]+/g, " ");
   
   return (
     label.includes("real estate") ||
