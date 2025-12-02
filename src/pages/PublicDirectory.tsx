@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -26,6 +26,10 @@ type BusinessWithSponsor = Business & {
 const PublicDirectory = () => {
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState<string>("all");
+
+  useEffect(() => {
+    document.title = "Lake Geneva Business Directory – Lake Geneva Brief";
+  }, []);
 
   // Fetch all active businesses
   const { data: businesses = [], isLoading } = useQuery({

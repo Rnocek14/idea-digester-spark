@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -60,6 +60,10 @@ const LakeGeneva = () => {
   const [email, setEmail] = useState("");
   const [isSubscribing, setIsSubscribing] = useState(false);
   const [activeCategory, setActiveCategory] = useState<'all' | string>('all');
+
+  useEffect(() => {
+    document.title = "Lake Geneva Brief – Today's Local News";
+  }, []);
 
   // Fetch today's published stories
   const { data: stories = [], isLoading: storiesLoading } = useQuery({
@@ -426,7 +430,7 @@ const LakeGeneva = () => {
           )}
 
           {/* Subscribe CTA */}
-          <section id="subscribe" className="-mx-4 sm:-mx-6 lg:-mx-8 border-t border-slate-200 bg-white px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+          <section id="subscribe" className="scroll-mt-24 -mx-4 sm:-mx-6 lg:-mx-8 border-t border-slate-200 bg-white px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
             <div className="mx-auto max-w-3xl text-center">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-600">
                 Newsletter

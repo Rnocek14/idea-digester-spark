@@ -21,7 +21,10 @@ export default {
       colors: {
         brand: {
           DEFAULT: 'hsl(222.2 47.4% 11.2%)',
-          light: 'hsl(217.2 32.6% 17.5%)',
+          navy: 'hsl(221 47% 9%)',
+          lake: 'hsl(221 83% 35%)',
+          sky: 'hsl(214 100% 95%)',
+          sand: 'hsl(36 29% 95%)',
           accent: 'hsl(221 83% 53%)',
         },
         border: "hsl(var(--border))",

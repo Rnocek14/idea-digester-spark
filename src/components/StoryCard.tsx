@@ -77,7 +77,7 @@ export const StoryCard = ({
                 {meta.source}
               </span>
             )}
-            {meta.source && meta.time && <span>•</span>}
+            {meta.source && meta.time && <span className="mx-1">•</span>}
             {meta.time && <span>{meta.time}</span>}
           </div>
         )}
