@@ -1,39 +1,52 @@
 /**
- * Wraps a promise with a timeout to prevent indefinite loading states.
- * If the promise doesn't resolve within the specified timeout, it rejects with a timeout error.
+ * Wraps a Supabase query with a timeout using AbortController.
+ * If the query doesn't complete within the specified timeout, it will be aborted.
  */
-export async function withTimeout<T>(
-  promiseOrThenable: Promise<T> | PromiseLike<T>,
-  timeoutMs: number = 15000
-): Promise<T> {
-  let timeoutId: ReturnType<typeof setTimeout>;
+export function createTimeoutSignal(timeoutMs: number = 15000): { 
+  signal: AbortSignal; 
+  clear: () => void;
+} {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
   
-  const timeoutPromise = new Promise<never>((_, reject) => {
-    timeoutId = setTimeout(() => {
-      reject(new Error('Request timed out - please retry'));
-    }, timeoutMs);
-  });
-
-  // Convert thenable to promise if needed
-  const promise = Promise.resolve(promiseOrThenable);
-
-  try {
-    const result = await Promise.race([promise, timeoutPromise]);
-    clearTimeout(timeoutId!);
-    return result;
-  } catch (error) {
-    clearTimeout(timeoutId!);
-    throw error;
-  }
+  return {
+    signal: controller.signal,
+    clear: () => clearTimeout(timeoutId),
+  };
 }
 
 /**
- * Execute a Supabase query with timeout protection.
- * Usage: const result = await executeWithTimeout(() => supabase.from('table').select('*'), 15000);
+ * Simple timeout wrapper that works with any promise.
+ * Returns a rejected promise if the timeout is reached.
  */
-export async function executeWithTimeout<T>(
-  queryFn: () => PromiseLike<T>,
+export function withTimeout<T>(
+  promise: Promise<T> | PromiseLike<T>,
   timeoutMs: number = 15000
 ): Promise<T> {
-  return withTimeout(queryFn(), timeoutMs);
+  return new Promise<T>((resolve, reject) => {
+    let settled = false;
+    
+    const timeoutId = setTimeout(() => {
+      if (!settled) {
+        settled = true;
+        reject(new Error('Request timed out - please retry'));
+      }
+    }, timeoutMs);
+
+    Promise.resolve(promise)
+      .then(result => {
+        if (!settled) {
+          settled = true;
+          clearTimeout(timeoutId);
+          resolve(result);
+        }
+      })
+      .catch(error => {
+        if (!settled) {
+          settled = true;
+          clearTimeout(timeoutId);
+          reject(error);
+        }
+      });
+  });
 }

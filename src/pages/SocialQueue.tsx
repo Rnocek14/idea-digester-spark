@@ -2,7 +2,6 @@ import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { withTimeout } from "@/lib/queryWithTimeout";
 import { useOperations } from "@/contexts/OperationsContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -57,76 +56,60 @@ const SocialQueue = () => {
     queryKey: ["pipeline-health"],
     queryFn: async () => {
       // Pending safe stories (needs approval)
-      const pendingSafeResult = await withTimeout(
-        supabase
-          .from("content_queue")
-          .select("*", { count: 'exact', head: true })
-          .eq("status", "pending")
-          .eq("safety_level", "safe")
-          .then(res => res),
-        15000
-      );
+      const { count: pendingSafe, error: e1 } = await supabase
+        .from("content_queue")
+        .select("*", { count: 'exact', head: true })
+        .eq("status", "pending")
+        .eq("safety_level", "safe");
+      if (e1) throw e1;
 
       // Needs voice generation
-      const needsVoiceResult = await withTimeout(
-        supabase
-          .from("content_queue")
-          .select("*", { count: 'exact', head: true })
-          .in("status", ["approved", "auto_published", "published"])
-          .eq("safety_level", "safe")
-          .or("content_instagram.is.null,content_facebook.is.null,content_x.is.null")
-          .then(res => res),
-        15000
-      );
+      const { count: needsVoice, error: e2 } = await supabase
+        .from("content_queue")
+        .select("*", { count: 'exact', head: true })
+        .in("status", ["approved", "auto_published", "published"])
+        .eq("safety_level", "safe")
+        .or("content_instagram.is.null,content_facebook.is.null,content_x.is.null");
+      if (e2) throw e2;
 
       // Needs images (has voice but no image)
-      const needsImagesResult = await withTimeout(
-        supabase
-          .from("content_queue")
-          .select("*", { count: 'exact', head: true })
-          .in("status", ["approved", "auto_published", "published"])
-          .eq("safety_level", "safe")
-          .not("content_instagram", "is", null)
-          .is("image_url", null)
-          .then(res => res),
-        15000
-      );
+      const { count: needsImages, error: e3 } = await supabase
+        .from("content_queue")
+        .select("*", { count: 'exact', head: true })
+        .in("status", ["approved", "auto_published", "published"])
+        .eq("safety_level", "safe")
+        .not("content_instagram", "is", null)
+        .is("image_url", null);
+      if (e3) throw e3;
 
       // Ready to post (has voice and image, not yet queued)
-      const readyStoriesResult = await withTimeout(
-        supabase
-          .from("content_queue")
-          .select("id")
-          .in("status", ["approved", "auto_published", "published"])
-          .eq("safety_level", "safe")
-          .not("content_instagram", "is", null)
-          .not("image_url", "is", null)
-          .then(res => res),
-        15000
-      );
+      const { data: readyStories, error: e4 } = await supabase
+        .from("content_queue")
+        .select("id")
+        .in("status", ["approved", "auto_published", "published"])
+        .eq("safety_level", "safe")
+        .not("content_instagram", "is", null)
+        .not("image_url", "is", null);
+      if (e4) throw e4;
 
       // Check which ready stories haven't been queued yet
       let readyToPost = 0;
-      const readyStories = readyStoriesResult.data;
       if (readyStories && readyStories.length > 0) {
         const storyIds = readyStories.map(s => s.id);
-        const queuedResult = await withTimeout(
-          supabase
-            .from("post_queue")
-            .select("story_id")
-            .in("story_id", storyIds)
-            .then(res => res),
-          15000
-        );
+        const { data: queuedData, error: e5 } = await supabase
+          .from("post_queue")
+          .select("story_id")
+          .in("story_id", storyIds);
+        if (e5) throw e5;
         
-        const queuedIds = new Set(queuedResult.data?.map(q => q.story_id) || []);
+        const queuedIds = new Set(queuedData?.map(q => q.story_id) || []);
         readyToPost = storyIds.filter(id => !queuedIds.has(id)).length;
       }
 
       return {
-        pendingSafe: pendingSafeResult.count || 0,
-        needsVoice: needsVoiceResult.count || 0,
-        needsImages: needsImagesResult.count || 0,
+        pendingSafe: pendingSafe || 0,
+        needsVoice: needsVoice || 0,
+        needsImages: needsImages || 0,
         readyToPost: readyToPost || 0,
       };
     },
