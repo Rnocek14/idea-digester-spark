@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { withTimeout } from "@/lib/queryWithTimeout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -91,14 +92,20 @@ const Newsletter = () => {
   const { data: recentNewsletters } = useQuery({
     queryKey: ["recent-newsletters"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("newsletters")
-        .select("*")
-        .order("edition_date", { ascending: false })
-        .limit(10);
-      if (error) throw error;
-      return data;
+      const result = await withTimeout(
+        supabase
+          .from("newsletters")
+          .select("*")
+          .order("edition_date", { ascending: false })
+          .limit(10)
+          .then(res => res),
+        15000
+      );
+      if (result.error) throw result.error;
+      return result.data;
     },
+    retry: 2,
+    staleTime: 30000,
   });
 
   // Send newsletter mutation
@@ -237,9 +244,9 @@ const Newsletter = () => {
         query = query.eq("category", categoryFilter);
       }
 
-      const { data, error } = await query;
-      if (error) throw error;
-      return data as Story[];
+      const result = await withTimeout(query.then(res => res), 15000);
+      if (result.error) throw result.error;
+      return result.data as Story[];
     },
     retry: 2,
     staleTime: 30000,
