@@ -479,6 +479,26 @@ const SocialQueue = () => {
     setIsScheduleSettingsOpen(false);
   };
 
+  // Weekend Roundup mutation
+  const weekendRoundupMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("generate-weekend-roundup");
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["post-queue"] });
+      if (data.success) {
+        toast.success(`Weekend roundup created with ${data.eventsFound} events for ${data.platforms.join(', ')}`);
+      } else {
+        toast.warning(data.message || 'No events found for weekend roundup');
+      }
+    },
+    onError: (error: any) => {
+      toast.error(`Failed to generate weekend roundup: ${error.message}`);
+    },
+  });
+
   const getPlatformIcon = (platform: string) => {
     switch (platform) {
       case "instagram":
@@ -598,6 +618,14 @@ const SocialQueue = () => {
           >
             <Play className="mr-2 h-4 w-4" />
             {processMutation.isPending ? "Processing..." : "Process Queue Now"}
+          </Button>
+          <Button
+            onClick={() => weekendRoundupMutation.mutate()}
+            disabled={weekendRoundupMutation.isPending}
+            variant="outline"
+          >
+            <Calendar className="mr-2 h-4 w-4" />
+            {weekendRoundupMutation.isPending ? "Generating..." : "Weekend Roundup"}
           </Button>
           <Button
             onClick={() => setIsScheduleSettingsOpen(true)}
