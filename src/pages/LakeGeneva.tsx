@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import PageShell from "@/components/PageShell";
 import { StoryCard } from "@/components/StoryCard";
 import WeatherWidget from "@/components/WeatherWidget";
+import LiveIncidentsSidebar from "@/components/LiveIncidentsSidebar";
 
 type Story = {
   id: string;
@@ -320,43 +321,49 @@ const LakeGeneva = () => {
                   </article>
                 </div>
 
-                {/* Right: Also today */}
-                <aside className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                    Also today
-                  </p>
-                  <ul className="mt-3 space-y-3">
-                    {restStories.slice(0, 5).map((story) => (
-                      <li key={story.id}>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const el = document.getElementById(
-                              (story.category || 'other').toLowerCase(),
-                            );
-                            if (el) el.scrollIntoView({ behavior: 'smooth' });
-                          }}
-                          className="w-full text-left"
-                        >
-                          <p className="text-sm font-medium text-slate-900 line-clamp-2 hover:text-blue-700 transition-colors">
-                            {story.title}
-                          </p>
-                          <p className="mt-0.5 flex items-center gap-2 text-[11px] text-slate-500">
-                            {story.category && (
-                              <>
-                                <span>{getCategoryEmoji(story.category)}</span>
-                                <span className="capitalize">
-                                  {story.category.replace('_', ' ')}
-                                </span>
-                                <span className="opacity-40">•</span>
-                              </>
-                            )}
-                            <span>{getRelativeTime(story.publish_date || story.created_at)}</span>
-                          </p>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
+                {/* Right: Live Incidents + Also today */}
+                <aside className="space-y-4">
+                  {/* Live Incidents Widget */}
+                  <LiveIncidentsSidebar />
+                  
+                  {/* Also Today */}
+                  <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                      Also today
+                    </p>
+                    <ul className="mt-3 space-y-3">
+                      {restStories.slice(0, 5).map((story) => (
+                        <li key={story.id}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const el = document.getElementById(
+                                (story.category || 'other').toLowerCase(),
+                              );
+                              if (el) el.scrollIntoView({ behavior: 'smooth' });
+                            }}
+                            className="w-full text-left"
+                          >
+                            <p className="text-sm font-medium text-slate-900 line-clamp-2 hover:text-blue-700 transition-colors">
+                              {story.title}
+                            </p>
+                            <p className="mt-0.5 flex items-center gap-2 text-[11px] text-slate-500">
+                              {story.category && (
+                                <>
+                                  <span>{getCategoryEmoji(story.category)}</span>
+                                  <span className="capitalize">
+                                    {story.category.replace('_', ' ')}
+                                  </span>
+                                  <span className="opacity-40">•</span>
+                                </>
+                              )}
+                              <span>{getRelativeTime(story.publish_date || story.created_at)}</span>
+                            </p>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </aside>
             </div>
           </section>
