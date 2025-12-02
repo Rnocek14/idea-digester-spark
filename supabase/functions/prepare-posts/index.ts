@@ -27,6 +27,7 @@ serve(async (req) => {
     console.log("[prepare-posts] Starting post preparation...");
 
     // Fetch eligible content: approved/auto_published/published, safe, with voice variants
+    // Order by breaking news first, then priority score, then creation date
     const { data: eligibleStories, error: fetchError } = await supabaseClient
       .from("content_queue")
       .select("*")
@@ -34,14 +35,18 @@ serve(async (req) => {
       .eq("safety_level", "safe")
       .not("content_facebook", "is", null)
       .not("content_instagram", "is", null)
-      .not("content_x", "is", null);
+      .not("content_x", "is", null)
+      .order("is_breaking", { ascending: false })
+      .order("priority_score", { ascending: false })
+      .order("created_at", { ascending: false });
 
     if (fetchError) {
       console.error("[prepare-posts] Error fetching stories:", fetchError);
       throw fetchError;
     }
 
-    console.log(`[prepare-posts] Found ${eligibleStories?.length || 0} eligible stories`);
+    const breakingCount = eligibleStories?.filter(s => s.is_breaking).length || 0;
+    console.log(`[prepare-posts] Found ${eligibleStories?.length || 0} eligible stories (${breakingCount} breaking)`);
 
     if (!eligibleStories || eligibleStories.length === 0) {
       return new Response(
@@ -65,6 +70,7 @@ serve(async (req) => {
     };
 
     let preparedCount = 0;
+    let breakingPrepared = 0;
     const now = new Date();
 
     for (const story of eligibleStories) {
@@ -155,6 +161,14 @@ serve(async (req) => {
           continue;
         }
 
+        // BREAKING NEWS OVERRIDE: Schedule immediately for X platform
+        const isBreaking = story.is_breaking || false;
+        if (isBreaking && platform === 'x') {
+          // X gets breaking news immediately (within 2 minutes)
+          scheduledFor = new Date(now.getTime() + 2 * 60 * 1000);
+          console.log(`[prepare-posts] 🔴 BREAKING: Scheduling ${platform} post immediately`);
+        }
+
         // Create post_queue entry
         const { error: insertError } = await supabaseClient
           .from("post_queue")
@@ -173,6 +187,8 @@ serve(async (req) => {
               story_category: story.category,
               image_generated: generatedImageUrl ? true : false,
               sponsored_safe: isSponsored ? (generatedImageUrl ? true : false) : true,
+              type: isBreaking ? 'breaking' : 'normal',
+              priority_score: story.priority_score || 0,
             },
           });
 
@@ -182,18 +198,21 @@ serve(async (req) => {
         }
 
         const imageSource = isSponsored ? 'AI (sponsored)' : (generatedImageUrl ? 'AI' : 'OG');
-        console.log(`[prepare-posts] Scheduled ${platform} post for ${scheduledFor.toISOString()} [${imageSource}]`);
+        const breakingLabel = isBreaking ? ' 🔴 BREAKING' : '';
+        console.log(`[prepare-posts] Scheduled ${platform} post for ${scheduledFor.toISOString()} [${imageSource}]${breakingLabel}`);
         preparedCount++;
+        if (isBreaking) breakingPrepared++;
       }
     }
 
-    console.log(`[prepare-posts] Prepared ${preparedCount} posts across all platforms`);
+    console.log(`[prepare-posts] Prepared ${preparedCount} posts across all platforms (${breakingPrepared} breaking)`);
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: `Prepared ${preparedCount} posts for social media`,
+        message: `Prepared ${preparedCount} posts for social media${breakingPrepared > 0 ? ` (${breakingPrepared} breaking)` : ''}`,
         prepared: preparedCount,
+        breakingPrepared,
         storiesProcessed: eligibleStories.length,
       }),
       {

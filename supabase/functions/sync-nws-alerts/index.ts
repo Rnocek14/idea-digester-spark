@@ -146,10 +146,27 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      // Determine severity-based safety level
+      // Determine severity-based safety level and breaking news priority
       let safetyLevel = 'safe';
-      if (props.severity === 'Extreme' || props.severity === 'Severe') {
-        safetyLevel = 'sensitive'; // High severity alerts should be reviewed
+      let isBreaking = false;
+      let priorityScore = 3; // Base score for all weather alerts
+      
+      if (props.severity === 'Extreme') {
+        safetyLevel = 'sensitive';
+        isBreaking = true;
+        priorityScore = 5;
+        console.log(`[sync-nws] 🔴 BREAKING: Extreme severity alert - ${props.event}`);
+      } else if (props.severity === 'Severe') {
+        isBreaking = true;
+        priorityScore = 4;
+        console.log(`[sync-nws] 🔴 BREAKING: Severe alert - ${props.event}`);
+      }
+      
+      // Extra priority for tornado/blizzard keywords
+      const eventLower = (props.event || '').toLowerCase();
+      if (eventLower.includes('tornado') || eventLower.includes('blizzard')) {
+        isBreaking = true;
+        priorityScore = Math.max(priorityScore, 5);
       }
 
       // Build content
@@ -171,12 +188,14 @@ Deno.serve(async (req) => {
           summary,
           content,
           category: 'weather',
-          original_url: alertId, // Use NWS ID as URL for deduplication
+          original_url: alertId,
           publish_date: publishDate,
-          status: 'auto_published', // Weather alerts should be immediately available
+          status: 'auto_published',
           safety_level: safetyLevel,
           safety_tags: ['weather'],
           safety_reason: safetyLevel === 'sensitive' ? `High severity: ${props.severity}` : null,
+          is_breaking: isBreaking,
+          priority_score: priorityScore,
           metadata: {
             source_name: 'NWS Weather Alerts',
             nws_id: alertId,

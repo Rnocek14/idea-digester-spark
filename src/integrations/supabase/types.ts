@@ -297,10 +297,12 @@ export type Database = {
           id: string
           image_source: string | null
           image_url: string | null
+          is_breaking: boolean | null
           is_sponsored: boolean | null
           last_newsletter_id: string | null
           metadata: Json | null
           original_url: string | null
+          priority_score: number | null
           publish_date: string | null
           reviewed_at: string | null
           reviewed_by: string | null
@@ -330,10 +332,12 @@ export type Database = {
           id?: string
           image_source?: string | null
           image_url?: string | null
+          is_breaking?: boolean | null
           is_sponsored?: boolean | null
           last_newsletter_id?: string | null
           metadata?: Json | null
           original_url?: string | null
+          priority_score?: number | null
           publish_date?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -363,10 +367,12 @@ export type Database = {
           id?: string
           image_source?: string | null
           image_url?: string | null
+          is_breaking?: boolean | null
           is_sponsored?: boolean | null
           last_newsletter_id?: string | null
           metadata?: Json | null
           original_url?: string | null
+          priority_score?: number | null
           publish_date?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
