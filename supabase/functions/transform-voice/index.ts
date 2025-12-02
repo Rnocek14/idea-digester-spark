@@ -1,7 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.84.0'
 import { corsHeaders } from '../_shared/cors.ts'
 
-const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY')
+const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY')
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
@@ -116,14 +116,16 @@ Task:
 
 Return the content for all channels following the guidelines provided.`
 
-  const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+  console.log('[transform-voice] Calling OpenAI API...')
+
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+      'Authorization': `Bearer ${OPENAI_API_KEY}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'google/gemini-2.5-flash',
+      model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: userPrompt }
@@ -161,15 +163,18 @@ Return the content for all channels following the guidelines provided.`
 
   if (!response.ok) {
     const errorText = await response.text()
-    console.error('Lovable AI error:', response.status, errorText)
-    throw new Error(`AI generation failed: ${response.status}`)
+    console.error('[transform-voice] OpenAI API error:', response.status, errorText)
+    throw new Error(`OpenAI API error: ${response.status} - ${errorText}`)
   }
 
   const data = await response.json()
+  console.log('[transform-voice] OpenAI response received')
+  
   const toolCall = data.choices?.[0]?.message?.tool_calls?.[0]
   
   if (!toolCall || toolCall.function.name !== 'generate_lake_geneva_voice') {
-    throw new Error('AI did not return expected tool call')
+    console.error('[transform-voice] No valid tool call in response:', JSON.stringify(data))
+    throw new Error('OpenAI did not return expected tool call')
   }
 
   return JSON.parse(toolCall.function.arguments)
@@ -190,6 +195,14 @@ Deno.serve(async (req) => {
       )
     }
 
+    if (!OPENAI_API_KEY) {
+      console.error('[transform-voice] OPENAI_API_KEY not configured')
+      return new Response(
+        JSON.stringify({ error: 'OPENAI_API_KEY not configured' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
     // Fetch the story
@@ -200,7 +213,7 @@ Deno.serve(async (req) => {
       .single()
 
     if (fetchError || !story) {
-      console.error('Story fetch error:', fetchError)
+      console.error('[transform-voice] Story fetch error:', fetchError)
       return new Response(
         JSON.stringify({ error: 'Story not found' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -218,7 +231,7 @@ Deno.serve(async (req) => {
       )
     }
 
-    console.log(`Generating voice for story: ${story.title}`)
+    console.log(`[transform-voice] Generating voice for story: ${story.title}`)
 
     // Generate voice variants
     const variants = await generateVoiceVariants(
@@ -240,16 +253,16 @@ Deno.serve(async (req) => {
         content_instagram: variants.content_instagram,
         content_x: variants.content_x,
         voice_generated_at: new Date().toISOString(),
-        voice_version: 'lg_voice_v1'
+        voice_version: 'openai_v1'
       })
       .eq('id', id)
 
     if (updateError) {
-      console.error('Update error:', updateError)
+      console.error('[transform-voice] Update error:', updateError)
       throw updateError
     }
 
-    console.log(`Successfully generated voice for: ${story.title}`)
+    console.log(`[transform-voice] Successfully generated voice for: ${story.title}`)
 
     return new Response(
       JSON.stringify({
@@ -262,7 +275,7 @@ Deno.serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Error in transform-voice:', error)
+    console.error('[transform-voice] Error:', error)
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
