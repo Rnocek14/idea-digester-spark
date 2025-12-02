@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { withTimeout } from "@/lib/queryWithTimeout";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -45,13 +46,19 @@ const ContentQueue = () => {
   const { data: pendingSafeCount } = useQuery({
     queryKey: ["pending-safe-count"],
     queryFn: async () => {
-      const { count } = await supabase
-        .from("content_queue")
-        .select("*", { count: 'exact', head: true })
-        .eq("status", "pending")
-        .eq("safety_level", "safe");
-      return count || 0;
+      const result = await withTimeout(
+        supabase
+          .from("content_queue")
+          .select("*", { count: 'exact', head: true })
+          .eq("status", "pending")
+          .eq("safety_level", "safe")
+          .then(res => res),
+        15000
+      );
+      return result.count || 0;
     },
+    retry: 2,
+    staleTime: 30000,
   });
 
   // Track drawer state changes for debugging
@@ -78,8 +85,9 @@ const ContentQueue = () => {
         query = query.eq("category", categoryFilter);
       }
 
-      const { data, error } = await query;
-      if (error) throw error;
+      const result = await withTimeout(query.then(res => res), 15000);
+      if (result.error) throw result.error;
+      const data = result.data;
       
       // Client-side filter for verticals since it's in metadata JSONB
       if (verticalFilter !== "all" && data) {

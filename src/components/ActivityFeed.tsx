@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { withTimeout } from "@/lib/queryWithTimeout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
@@ -19,25 +20,31 @@ export function ActivityFeed() {
   const { data: activity = [], isLoading } = useQuery({
     queryKey: ["activity-log", "recent"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("activity_log")
-        .select(
+      const result = await withTimeout(
+        supabase
+          .from("activity_log")
+          .select(
+            `
+            id,
+            actor_type,
+            entity_type,
+            action,
+            message,
+            created_at,
+            user_id
           `
-          id,
-          actor_type,
-          entity_type,
-          action,
-          message,
-          created_at,
-          user_id
-        `
-        )
-        .order("created_at", { ascending: false })
-        .limit(10);
+          )
+          .order("created_at", { ascending: false })
+          .limit(10)
+          .then(res => res),
+        15000
+      );
 
-      if (error) throw error;
-      return data as ActivityLog[];
+      if (result.error) throw result.error;
+      return result.data as ActivityLog[];
     },
+    retry: 2,
+    staleTime: 30000,
   });
 
   const getEntityIcon = (entityType: string) => {

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { withTimeout } from "@/lib/queryWithTimeout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -66,17 +67,22 @@ const Leads = () => {
   const queryClient = useQueryClient();
 
   // Fetch all leads
-  const { data: leads = [], isLoading } = useQuery({
+  const { data: leads = [], isLoading, refetch } = useQuery({
     queryKey: ["leads"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("advertiser_leads")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const result = await withTimeout(
+        supabase
+          .from("advertiser_leads")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .then(res => res),
+        15000
+      );
 
-      if (error) throw error;
-      return data as Lead[];
+      if (result.error) throw result.error;
+      return result.data as Lead[];
     },
+    retry: 2,
     staleTime: 30000,
   });
 
@@ -265,7 +271,16 @@ const Leads = () => {
       {/* Leads Table */}
       <Card>
         {isLoading ? (
-          <div className="p-8 text-center text-gray-500">Loading leads...</div>
+          <div className="p-8 flex flex-col items-center gap-3 text-gray-500">
+            <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
+            <span>Loading leads...</span>
+            <button 
+              onClick={() => refetch()}
+              className="text-sm text-primary hover:underline"
+            >
+              Taking too long? Click to retry
+            </button>
+          </div>
         ) : filteredLeads.length === 0 ? (
           <div className="p-8 text-center text-gray-500">
             No leads found. Adjust your filters or wait for new inquiries.

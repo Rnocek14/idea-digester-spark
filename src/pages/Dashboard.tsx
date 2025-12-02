@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { FileText, Radio, Megaphone, Clock } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { withTimeout } from "@/lib/queryWithTimeout";
 import { ActivityFeed } from "@/components/ActivityFeed";
 import { PipelineHealthCard } from "@/components/PipelineHealthCard";
 
@@ -10,48 +11,72 @@ const Dashboard = () => {
   const { data: pendingCount = 0, isLoading: pendingLoading, refetch: refetchPending } = useQuery({
     queryKey: ["dashboard-pending-count"],
     queryFn: async () => {
-      const { count } = await supabase
-        .from("content_queue")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "pending");
-      return count || 0;
+      const result = await withTimeout(
+        supabase
+          .from("content_queue")
+          .select("*", { count: "exact", head: true })
+          .eq("status", "pending")
+          .then(res => res),
+        15000
+      );
+      return result.count || 0;
     },
+    retry: 2,
+    staleTime: 30000,
   });
 
   const { data: activeSourcesCount = 0, isLoading: sourcesLoading, refetch: refetchSources } = useQuery({
     queryKey: ["dashboard-sources-count"],
     queryFn: async () => {
-      const { count } = await supabase
-        .from("sources")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "active");
-      return count || 0;
+      const result = await withTimeout(
+        supabase
+          .from("sources")
+          .select("*", { count: "exact", head: true })
+          .eq("status", "active")
+          .then(res => res),
+        15000
+      );
+      return result.count || 0;
     },
+    retry: 2,
+    staleTime: 30000,
   });
 
   const { data: activeSponsorsCount = 0, isLoading: sponsorsLoading, refetch: refetchSponsors } = useQuery({
     queryKey: ["dashboard-sponsors-count"],
     queryFn: async () => {
-      const { count } = await supabase
-        .from("sponsors")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "active");
-      return count || 0;
+      const result = await withTimeout(
+        supabase
+          .from("sponsors")
+          .select("*", { count: "exact", head: true })
+          .eq("status", "active")
+          .then(res => res),
+        15000
+      );
+      return result.count || 0;
     },
+    retry: 2,
+    staleTime: 30000,
   });
 
   const { data: publishedTodayCount = 0, isLoading: publishedLoading, refetch: refetchPublished } = useQuery({
     queryKey: ["dashboard-published-today-count"],
     queryFn: async () => {
       const today = new Date().toISOString().split("T")[0];
-      const { count } = await supabase
-        .from("content_queue")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "published")
-        .gte("publish_date", today)
-        .lt("publish_date", `${today}T23:59:59.999Z`);
-      return count || 0;
+      const result = await withTimeout(
+        supabase
+          .from("content_queue")
+          .select("*", { count: "exact", head: true })
+          .eq("status", "published")
+          .gte("publish_date", today)
+          .lt("publish_date", `${today}T23:59:59.999Z`)
+          .then(res => res),
+        15000
+      );
+      return result.count || 0;
     },
+    retry: 2,
+    staleTime: 30000,
   });
 
   const isLoading = pendingLoading || sourcesLoading || sponsorsLoading || publishedLoading;

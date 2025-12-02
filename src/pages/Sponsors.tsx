@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { withTimeout } from "@/lib/queryWithTimeout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -51,13 +52,17 @@ const Sponsors = () => {
   const { data: sponsors, isLoading, error, refetch } = useQuery({
     queryKey: ["sponsors"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("sponsors")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const result = await withTimeout(
+        supabase
+          .from("sponsors")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .then(res => res),
+        15000
+      );
 
-      if (error) throw error;
-      return data;
+      if (result.error) throw result.error;
+      return result.data;
     },
     retry: 2,
     staleTime: 30000,
