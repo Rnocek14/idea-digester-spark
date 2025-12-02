@@ -1,13 +1,9 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { PublicHeader } from "@/components/PublicHeader";
-import { PublicFooter } from "@/components/PublicFooter";
-import { Check, TrendingUp, Users, Zap, Building2, Star, Mail, MessageSquare, CheckCircle2 } from "lucide-react";
+import PageShell from "@/components/PageShell";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -19,15 +15,6 @@ const leadSchema = z.object({
   website: z.string().trim().max(255).optional(),
   notes: z.string().trim().max(1000).optional(),
 });
-
-type AdSlot = {
-  id: string;
-  name: string;
-  channel: string;
-  description: string | null;
-  price_monthly: number | null;
-  is_active: boolean | null;
-};
 
 const Advertise = () => {
   const [formData, setFormData] = useState({
@@ -119,238 +106,261 @@ const Advertise = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <PublicHeader />
+    <PageShell
+      title="Advertise with Lake Geneva Brief"
+      description="Sponsor the Lake Geneva Brief newsletter and reach local readers with targeted, trackable campaigns."
+    >
+      {/* Hero */}
+      <header className="mb-10 space-y-4">
+        <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+          Lake Geneva Brief · Advertise
+        </p>
 
-      <main className="container max-w-6xl mx-auto px-4 py-12 space-y-16">
-        {/* Hero Section */}
-        <section className="text-center space-y-6 max-w-3xl mx-auto">
-          <span className="inline-block rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.15em] text-brand-accent border border-blue-100">
-            New Local Media Platform
-          </span>
-          <h2 className="text-3xl sm:text-4xl font-display font-bold text-brand tracking-tight">
-            Connect with Lake Geneva residents through trusted local news
+        <div className="flex flex-wrap items-start justify-between gap-6">
+          <div className="max-w-xl space-y-3">
+            <h1 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
+              Reach Lake Geneva locals where they already pay attention.
+            </h1>
+            <p className="text-sm text-slate-600">
+              Lake Geneva Brief is the five-minute newsletter locals read to stay on
+              top of city hall, schools, events, and real estate. Your business can
+              be part of that daily habit.
+            </p>
+            <div className="flex flex-wrap gap-3 text-xs text-slate-600">
+              <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1">
+                📬 Weekly newsletter
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1">
+                🧭 Local directory placement
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1">
+                📊 Performance reporting
+              </span>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm text-xs text-slate-600">
+            <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+              Snapshot (pilot targets)
+            </p>
+            <dl className="grid grid-cols-2 gap-3">
+              <div>
+                <dt className="text-slate-500">Subscribers</dt>
+                <dd className="text-lg font-semibold text-slate-900">2,000+</dd>
+              </div>
+              <div>
+                <dt className="text-slate-500">Avg. open rate</dt>
+                <dd className="text-lg font-semibold text-slate-900">40%+</dd>
+              </div>
+              <div>
+                <dt className="text-slate-500">Audience</dt>
+                <dd className="text-sm font-semibold text-slate-900">
+                  100% local
+                </dd>
+              </div>
+              <div>
+                <dt className="text-slate-500">Primary focus</dt>
+                <dd className="text-sm font-semibold text-slate-900">
+                  Residents & small biz
+                </dd>
+              </div>
+            </dl>
+            <p className="mt-3 text-[11px] text-slate-500">
+              Pilot metrics will update as we grow. You're getting in at the
+              beginning.
+            </p>
+          </div>
+        </div>
+      </header>
+
+      {/* Packages */}
+      <section className="mb-10 space-y-4">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+          Sponsorship options
+        </h2>
+        <div className="grid gap-4 md:grid-cols-2">
+          {/* Primary package */}
+          <article className="relative flex flex-col rounded-2xl border border-amber-200 bg-white p-5 shadow-sm ring-1 ring-amber-100">
+            <div className="absolute right-4 top-4 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-800">
+              Most popular
+            </div>
+            <h3 className="text-base font-semibold text-slate-900">
+              Featured Newsletter Sponsor
+            </h3>
+            <p className="mt-1 text-sm text-slate-600">
+              Your logo, message, and link at the top of every weekly newsletter.
+            </p>
+
+            <div className="mt-4 flex items-baseline gap-1">
+              <span className="text-2xl font-semibold text-slate-900">$400</span>
+              <span className="text-xs text-slate-500">/month</span>
+            </div>
+
+            <ul className="mt-4 space-y-2 text-sm text-slate-600">
+              <li>• Prime placement in weekly email</li>
+              <li>• Click-through tracking and report</li>
+              <li>• Sponsor badge in business directory</li>
+              <li>• Optional social shout-out</li>
+            </ul>
+          </article>
+
+          {/* Secondary package */}
+          <article className="flex flex-col rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+            <h3 className="text-base font-semibold text-slate-900">
+              Directory Sponsor
+            </h3>
+            <p className="mt-1 text-sm text-slate-600">
+              Stand out inside the Lake Geneva Business Directory.
+            </p>
+
+            <div className="mt-4 flex items-baseline gap-1">
+              <span className="text-lg font-semibold text-slate-900">$100</span>
+              <span className="text-xs text-slate-500">/month</span>
+            </div>
+
+            <ul className="mt-4 space-y-2 text-sm text-slate-600">
+              <li>• Sponsor badge and highlight</li>
+              <li>• Top-of-category placement</li>
+              <li>• Logo, description, contact info</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      {/* Lead form */}
+      <section className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+        <div className="mb-4">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+            Get a custom proposal
           </h2>
-          <p className="text-lg text-gray-600 leading-relaxed">
-            Thousands of local readers turn to Lake Geneva Brief every week for community news,
-            events, and dining. Your brand can be part of their daily routine.
+          <p className="mt-1 text-sm text-slate-600">
+            Tell us a bit about your business and goals. We'll respond within
+            one business day.
           </p>
-        </section>
+        </div>
 
-        {/* Stats */}
-        <section className="grid md:grid-cols-3 gap-5 max-w-4xl mx-auto">
-          <Card className="p-6 text-center rounded-2xl border-gray-200">
-            <Users className="h-10 w-10 text-brand-accent mx-auto mb-3" />
-            <div className="text-3xl font-bold text-brand">2,000+</div>
-            <p className="text-sm text-gray-500">Weekly Readers</p>
-          </Card>
-          <Card className="p-6 text-center rounded-2xl border-gray-200">
-            <Mail className="h-10 w-10 text-brand-accent mx-auto mb-3" />
-            <div className="text-3xl font-bold text-brand">40%+</div>
-            <p className="text-sm text-gray-500">Open Rate</p>
-          </Card>
-          <Card className="p-6 text-center rounded-2xl border-gray-200">
-            <TrendingUp className="h-10 w-10 text-brand-accent mx-auto mb-3" />
-            <div className="text-3xl font-bold text-brand">100%</div>
-            <p className="text-sm text-gray-500">Local Audience</p>
-          </Card>
-        </section>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <label htmlFor="businessName" className="block text-xs font-medium text-slate-700 mb-1">
+                Business Name *
+              </label>
+              <Input
+                id="businessName"
+                value={formData.businessName}
+                onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
+                className={`w-full rounded-xl border bg-slate-50 px-3 py-2 text-sm
+                           focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 ${
+                  errors.businessName ? "border-red-500" : "border-slate-200"
+                }`}
+              />
+              {errors.businessName && (
+                <p className="mt-1 text-xs text-red-600">{errors.businessName}</p>
+              )}
+            </div>
 
-        {/* Pricing Section */}
-        <section className="space-y-6 max-w-4xl mx-auto">
-          <div className="text-center space-y-2">
-            <h3 className="text-2xl sm:text-3xl font-display font-bold text-brand">Newsletter Sponsorships</h3>
-            <p className="text-gray-600">
-              Appear directly in our weekly email newsletter
-            </p>
+            <div>
+              <label htmlFor="contactName" className="block text-xs font-medium text-slate-700 mb-1">
+                Contact Name *
+              </label>
+              <Input
+                id="contactName"
+                value={formData.contactName}
+                onChange={(e) => setFormData({ ...formData, contactName: e.target.value })}
+                className={`w-full rounded-xl border bg-slate-50 px-3 py-2 text-sm
+                           focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 ${
+                  errors.contactName ? "border-red-500" : "border-slate-200"
+                }`}
+              />
+              {errors.contactName && (
+                <p className="mt-1 text-xs text-red-600">{errors.contactName}</p>
+              )}
+            </div>
           </div>
-          <div className="grid md:grid-cols-2 gap-5">
-            <Card className="p-8 hover:shadow-md transition-shadow border-2 hover:border-brand-accent/50 rounded-2xl">
-              <div className="space-y-4">
-                <div>
-                  <h4 className="text-xl font-semibold text-brand">Featured Sponsor</h4>
-                  <p className="text-sm text-gray-600 mt-1">Premium visibility in every newsletter</p>
-                </div>
-                <div className="text-3xl font-bold text-brand-accent">
-                  $400
-                  <span className="text-sm text-gray-500">/month</span>
-                </div>
-                <ul className="space-y-2 text-sm">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-brand-accent mt-0.5 flex-shrink-0" />
-                    <span>Prime visibility in weekly newsletter</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-brand-accent mt-0.5 flex-shrink-0" />
-                    <span>Logo + link to your website</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-brand-accent mt-0.5 flex-shrink-0" />
-                    <span>Reach 2,000+ local subscribers</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-brand-accent mt-0.5 flex-shrink-0" />
-                    <span>Click tracking & performance reports</span>
-                  </li>
-                </ul>
-              </div>
-            </Card>
 
-            <Card className="p-8 hover:shadow-md transition-shadow border-2 hover:border-brand-accent/50 rounded-2xl">
-              <div className="space-y-4">
-                <div>
-                  <h4 className="text-xl font-semibold text-brand">Directory Listing</h4>
-                  <p className="text-sm text-gray-600 mt-1">Stand out in our business directory</p>
-                </div>
-                <div className="text-3xl font-bold text-brand-accent">
-                  Included
-                  <span className="text-sm text-gray-500"> free</span>
-                </div>
-                <ul className="space-y-2 text-sm">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-brand-accent mt-0.5 flex-shrink-0" />
-                    <span>Sponsor badge highlighting</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-brand-accent mt-0.5 flex-shrink-0" />
-                    <span>Top-of-page placement</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-brand-accent mt-0.5 flex-shrink-0" />
-                    <span>Logo, description, and contact details</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-brand-accent mt-0.5 flex-shrink-0" />
-                    <span>Direct link to your website</span>
-                  </li>
-                </ul>
-              </div>
-            </Card>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <label htmlFor="email" className="block text-xs font-medium text-slate-700 mb-1">
+                Email *
+              </label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className={`w-full rounded-xl border bg-slate-50 px-3 py-2 text-sm
+                           focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 ${
+                  errors.email ? "border-red-500" : "border-slate-200"
+                }`}
+              />
+              {errors.email && (
+                <p className="mt-1 text-xs text-red-600">{errors.email}</p>
+              )}
+            </div>
+
+            <div>
+              <label htmlFor="phone" className="block text-xs font-medium text-slate-700 mb-1">
+                Phone
+              </label>
+              <Input
+                id="phone"
+                type="tel"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm
+                           focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100"
+              />
+            </div>
           </div>
-        </section>
 
-        {/* Lead Capture Form */}
-        <section className="space-y-6 max-w-2xl mx-auto">
-          <div className="text-center space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-accent">
-              Get Started
-            </p>
-            <h3 className="text-2xl sm:text-3xl font-display font-bold text-brand">Let's grow your business together</h3>
-            <p className="text-gray-600">
-              Fill out the form below and we'll get back to you within 1 business day.
-            </p>
+          <div>
+            <label htmlFor="website" className="block text-xs font-medium text-slate-700 mb-1">
+              Website
+            </label>
+            <Input
+              id="website"
+              type="url"
+              value={formData.website}
+              onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm
+                         focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100"
+            />
           </div>
-          <Card className="p-8 rounded-2xl">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="businessName" className="block text-sm font-medium text-gray-700 mb-1">
-                    Business Name *
-                  </label>
-                  <Input
-                    id="businessName"
-                    value={formData.businessName}
-                    onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
-                    className={errors.businessName ? "border-red-500" : ""}
-                  />
-                  {errors.businessName && (
-                    <p className="mt-1 text-xs text-red-600">{errors.businessName}</p>
-                  )}
-                </div>
 
-                <div>
-                  <label htmlFor="contactName" className="block text-sm font-medium text-gray-700 mb-1">
-                    Contact Name *
-                  </label>
-                  <Input
-                    id="contactName"
-                    value={formData.contactName}
-                    onChange={(e) => setFormData({ ...formData, contactName: e.target.value })}
-                    className={errors.contactName ? "border-red-500" : ""}
-                  />
-                  {errors.contactName && (
-                    <p className="mt-1 text-xs text-red-600">{errors.contactName}</p>
-                  )}
-                </div>
-              </div>
+          <div>
+            <label htmlFor="notes" className="block text-xs font-medium text-slate-700 mb-1">
+              What are you interested in?
+            </label>
+            <Textarea
+              id="notes"
+              value={formData.notes}
+              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              rows={4}
+              placeholder="Tell us about your advertising goals..."
+              className={`w-full rounded-xl border bg-slate-50 px-3 py-2 text-sm
+                         focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 ${
+                errors.notes ? "border-red-500" : "border-slate-200"
+              }`}
+            />
+            {errors.notes && (
+              <p className="mt-1 text-xs text-red-600">{errors.notes}</p>
+            )}
+          </div>
 
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                    Email *
-                  </label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className={errors.email ? "border-red-500" : ""}
-                  />
-                  {errors.email && (
-                    <p className="mt-1 text-xs text-red-600">{errors.email}</p>
-                  )}
-                </div>
+          <button
+            type="submit"
+            disabled={submitLeadMutation.isPending}
+            className="w-full rounded-full bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow transition hover:bg-blue-700 disabled:opacity-50"
+          >
+            {submitLeadMutation.isPending ? "Submitting..." : "Submit Inquiry"}
+          </button>
 
-                <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                    Phone
-                  </label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="website" className="block text-sm font-medium text-gray-700 mb-1">
-                  Website
-                </label>
-                <Input
-                  id="website"
-                  type="url"
-                  value={formData.website}
-                  onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                />
-              </div>
-
-              <div>
-                <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">
-                  What are you interested in?
-                </label>
-                <Textarea
-                  id="notes"
-                  value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  rows={4}
-                  placeholder="Tell us about your advertising goals..."
-                  className={errors.notes ? "border-red-500" : ""}
-                />
-                {errors.notes && (
-                  <p className="mt-1 text-xs text-red-600">{errors.notes}</p>
-                )}
-              </div>
-
-              <Button
-                type="submit"
-                disabled={submitLeadMutation.isPending}
-                className="w-full rounded-full bg-brand-accent px-6 py-3 text-sm font-semibold text-white shadow hover:bg-blue-700 transition-colors"
-              >
-                {submitLeadMutation.isPending ? "Submitting..." : "Submit Inquiry"}
-              </Button>
-
-              <p className="text-xs text-center text-gray-500">
-                We'll respond within 24 hours with a custom proposal
-              </p>
-            </form>
-          </Card>
-        </section>
-      </main>
-
-      <PublicFooter />
-    </div>
+          <p className="mt-2 text-[11px] text-center text-slate-500">
+            No spam. We'll only use this info to follow up on your inquiry.
+          </p>
+        </form>
+      </section>
+    </PageShell>
   );
 };
 

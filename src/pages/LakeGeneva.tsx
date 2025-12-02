@@ -6,8 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ExternalLink } from "lucide-react";
 import { toast } from "sonner";
-import { PublicHeader } from "@/components/PublicHeader";
-import { PublicFooter } from "@/components/PublicFooter";
+import PageShell from "@/components/PageShell";
 import { StoryCard } from "@/components/StoryCard";
 
 type Story = {
@@ -177,15 +176,15 @@ const LakeGeneva = () => {
       : sortedCategories.filter((c) => c === activeCategory);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <PublicHeader />
-
-      <main>
-        {/* Unified Hero Section */}
-        {featured && (
-          <section className="border-b border-gray-200 bg-white">
-            <div className="mx-auto max-w-5xl px-4 sm:px-6 py-10">
-              <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1.2fr)]">
+    <PageShell
+      title="Lake Geneva Brief – Local News, Simplified"
+      description="Fast, trustworthy updates on Lake Geneva city hall, schools, events, and real estate."
+    >
+      {/* Unified Hero Section */}
+      {featured && (
+        <section className="border-b border-slate-200 bg-white -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-10">
+          <div className="mx-auto max-w-5xl">
+            <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1.2fr)]">
                 {/* Left: greeting, headline, category links, featured card */}
                 <div className="space-y-5">
                   {/* Greeting + headline */}
@@ -315,10 +314,10 @@ const LakeGeneva = () => {
           </section>
         )}
 
-        {/* Sponsor Block */}
-        {sponsor && (
-          <section className="border-b border-gray-100 bg-white">
-            <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
+      {/* Sponsor Block */}
+      {sponsor && (
+        <section className="py-8 border-b border-slate-200 bg-white -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-5xl">
               <Card className="p-5 bg-gradient-to-br from-blue-50/50 to-indigo-50/30 border-blue-100">
                 <div className="flex items-center gap-4">
                   {sponsor.logo_url && (
@@ -346,9 +345,9 @@ const LakeGeneva = () => {
                   </div>
                 </div>
               </Card>
-            </div>
-          </section>
-        )}
+          </div>
+        </section>
+      )}
 
         {/* Stories by Category */}
         {storiesLoading ? (
@@ -472,11 +471,8 @@ const LakeGeneva = () => {
             </p>
           </div>
         </section>
-      </main>
-
-      <PublicFooter />
-    </div>
-  );
-};
+      </PageShell>
+    );
+  };
 
 export default LakeGeneva;
