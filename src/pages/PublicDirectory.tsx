@@ -1,17 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Building2, ExternalLink, Mail, Phone, MapPin, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { PublicHeader } from "@/components/PublicHeader";
 import { PublicFooter } from "@/components/PublicFooter";
@@ -35,20 +24,9 @@ type BusinessWithSponsor = Business & {
   placementId?: string;
 };
 
-const getCategoryColor = (category: string | null) => {
-  switch (category?.toLowerCase()) {
-    case "real estate": return "bg-green-500/10 text-green-700 dark:text-green-300";
-    case "dining": return "bg-orange-500/10 text-orange-700 dark:text-orange-300";
-    case "retail": return "bg-purple-500/10 text-purple-700 dark:text-purple-300";
-    case "services": return "bg-blue-500/10 text-blue-700 dark:text-blue-300";
-    case "hospitality": return "bg-pink-500/10 text-pink-700 dark:text-pink-300";
-    default: return "bg-muted text-muted-foreground";
-  }
-};
-
 const PublicDirectory = () => {
   const navigate = useNavigate();
-  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [activeCategory, setActiveCategory] = useState<string>("all");
 
   // Fetch all active businesses
   const { data: businesses = [], isLoading } = useQuery({
@@ -87,9 +65,9 @@ const PublicDirectory = () => {
 
   // Filter businesses
   const filteredBusinesses =
-    categoryFilter === "all"
+    activeCategory === "all"
       ? businesses
-      : businesses.filter((b) => b.category === categoryFilter);
+      : businesses.filter((b) => b.category === activeCategory);
 
   // Sort: sponsors first, then featured, then alphabetical
   const sortedBusinesses = [...filteredBusinesses].sort((a, b) => {
@@ -98,155 +76,222 @@ const PublicDirectory = () => {
     return a.name.localeCompare(b.name);
   });
 
+  // Derived stats
+  const totalBusinesses = sortedBusinesses.length;
+  const sponsorCount = sortedBusinesses.filter((b) => b.is_sponsor).length;
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-50">
       <PublicHeader />
 
-      <main className="container max-w-6xl mx-auto px-4 py-8 sm:py-10">
-        {/* Page Title */}
-        <div className="mb-8 space-y-2 text-center">
-          <h1 className="text-3xl sm:text-4xl font-display font-bold text-brand tracking-tight">Business Directory</h1>
-          <p className="text-base text-gray-600">Discover local businesses in Lake Geneva</p>
-        </div>
-        {/* Filters */}
-        <div className="flex items-center gap-4 mb-6">
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-64 rounded-full border-gray-300">
-              <SelectValue placeholder="Filter by category" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              {categories.map((cat) => (
-                <SelectItem key={cat} value={cat!}>
-                  {cat}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="text-sm text-gray-500">
-            {sortedBusinesses.length} {sortedBusinesses.length === 1 ? "business" : "businesses"}
+      <main className="mx-auto max-w-5xl px-4 pb-16 pt-10 sm:px-6 lg:px-8">
+        {/* Header */}
+        <header className="mb-8 space-y-3">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            Lake Geneva · Local Guide
           </p>
-        </div>
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
+                Lake Geneva Business Directory
+              </h1>
+              <p className="mt-1 text-sm text-slate-600">
+                Independent shops, services, and places locals actually use.
+              </p>
+            </div>
+            <div className="flex gap-4 text-xs text-slate-500">
+              <div className="flex flex-col items-end">
+                <span className="font-semibold text-slate-900">
+                  {totalBusinesses || 0}
+                </span>
+                <span>business{totalBusinesses === 1 ? '' : 'es'}</span>
+              </div>
+              <div className="h-8 w-px bg-slate-200" />
+              <div className="flex flex-col items-end">
+                <span className="font-semibold text-slate-900">
+                  {sponsorCount || 0}
+                </span>
+                <span>sponsor{sponsorCount === 1 ? '' : 's'}</span>
+              </div>
+            </div>
+          </div>
+        </header>
 
-        {/* Loading State */}
+        {/* Filters */}
+        <section className="mb-6 rounded-2xl border border-slate-100 bg-white/80 px-4 py-3 shadow-sm backdrop-blur-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            {/* Category pills */}
+            <div className="flex flex-wrap gap-2">
+              {['all', ...categories].map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setActiveCategory(cat)}
+                  className={`rounded-full px-3 py-1.5 text-xs font-medium border transition-colors ${
+                    activeCategory === cat
+                      ? 'bg-blue-600 text-white border-blue-600'
+                      : 'bg-slate-50 text-slate-700 border-slate-200 hover:border-blue-500 hover:text-blue-700'
+                  }`}
+                >
+                  {cat === 'all' ? 'All businesses' : cat}
+                </button>
+              ))}
+            </div>
+
+            {/* Count */}
+            <p className="text-[11px] text-slate-500">
+              Showing {sortedBusinesses.length}{' '}
+              {sortedBusinesses.length === 1 ? 'business' : 'businesses'}
+            </p>
+          </div>
+        </section>
+
+        {/* Loading / Empty */}
         {isLoading && (
-          <div className="text-center py-16 text-gray-500">
+          <div className="rounded-2xl border border-slate-100 bg-white p-6 text-sm text-slate-500 shadow-sm">
             Loading directory...
           </div>
         )}
 
-        {/* Empty State */}
         {!isLoading && sortedBusinesses.length === 0 && (
-          <div className="text-center py-16">
-            <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500">No businesses found in this category.</p>
+          <div className="rounded-2xl border border-dashed border-slate-200 bg-white/60 p-6 text-sm text-slate-500 shadow-sm">
+            No businesses found in this category yet. Check back soon or{' '}
+            <button
+              type="button"
+              className="font-medium text-blue-600 hover:underline"
+              onClick={() => navigate('/advertise')}
+            >
+              add your business
+            </button>
+            .
           </div>
         )}
 
-        {/* Business Grid */}
+        {/* Business grid */}
         {!isLoading && sortedBusinesses.length > 0 && (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {sortedBusinesses.map((business) => (
-              <Card
-                key={business.id}
-                className="p-5 hover:shadow-md transition-shadow relative rounded-2xl border-gray-200"
-              >
-                {/* Sponsor Badge */}
-                {business.is_sponsor && (
-                  <span className="absolute top-4 right-4 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-700 inline-flex items-center gap-1">
-                    <Star className="h-3 w-3 fill-amber-700" />
-                    Sponsor
-                  </span>
-                )}
+          <section className="grid gap-4 md:grid-cols-2">
+            {sortedBusinesses.map((business) => {
+              const isSponsor = !!business.is_sponsor;
+              return (
+                <article
+                  key={business.id}
+                  className={`group relative flex flex-col rounded-2xl border bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+                    isSponsor
+                      ? 'border-amber-200 ring-1 ring-amber-100/60'
+                      : 'border-slate-100'
+                  }`}
+                >
+                  {/* Sponsor badge */}
+                  {isSponsor && (
+                    <div className="absolute right-4 top-4 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-800">
+                      Sponsor
+                    </div>
+                  )}
 
-                {/* Business Card Content */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
+                  <div className="flex gap-4">
+                    {/* Logo */}
                     {business.logo_url && (
-                      <img
-                        src={business.logo_url}
-                        alt={business.name}
-                        className="h-12 w-12 object-contain rounded-full bg-gray-50 p-1.5"
-                      />
+                      <div className="mt-1 h-12 w-12 flex-shrink-0 overflow-hidden rounded-xl bg-slate-100">
+                        <img
+                          src={business.logo_url}
+                          alt={business.name}
+                          className="h-full w-full object-cover"
+                          loading="lazy"
+                        />
+                      </div>
                     )}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-base font-semibold text-brand truncate">{business.name}</h3>
+
+                    {/* Main info */}
+                    <div className="flex-1 space-y-1">
+                      <h2 className="text-sm font-semibold text-slate-900">
+                        {business.name}
+                      </h2>
                       {business.category && (
-                        <span className="text-xs text-gray-500">{business.category}</span>
+                        <p className="text-[11px] uppercase tracking-wide text-slate-500">
+                          {business.category}
+                        </p>
+                      )}
+                      {business.description && (
+                        <p className="line-clamp-3 text-xs leading-relaxed text-slate-600">
+                          {business.description}
+                        </p>
                       )}
                     </div>
                   </div>
 
-                  {business.description && (
-                    <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
-                      {business.description}
-                    </p>
-                  )}
-
-                  {/* Contact Info */}
-                  <div className="space-y-1.5 text-xs">
-                    {business.address && (
-                      <div className="flex items-start gap-2 text-gray-500">
-                        <MapPin className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
-                        <span className="line-clamp-1">{business.address}</span>
-                      </div>
-                    )}
-                    {business.phone && (
-                      <div className="flex items-center gap-2 text-gray-500">
-                        <Phone className="h-3.5 w-3.5 flex-shrink-0" />
-                        <a href={`tel:${business.phone}`} className="hover:text-brand-accent transition-colors">
+                  {/* Contact / actions */}
+                  <div className="mt-4 space-y-2 border-t border-slate-100 pt-3 text-xs text-slate-600">
+                    <div className="flex flex-wrap gap-x-4 gap-y-1">
+                      {business.address && (
+                        <span className="flex items-center gap-1">
+                          <span className="text-slate-400">📍</span>
+                          {business.address}
+                        </span>
+                      )}
+                      {business.phone && (
+                        <a
+                          href={`tel:${business.phone}`}
+                          className="flex items-center gap-1 hover:text-blue-700"
+                        >
+                          <span className="text-slate-400">📞</span>
                           {business.phone}
                         </a>
-                      </div>
-                    )}
-                    {business.email && (
-                      <div className="flex items-center gap-2 text-gray-500">
-                        <Mail className="h-3.5 w-3.5 flex-shrink-0" />
-                        <a href={`mailto:${business.email}`} className="hover:text-brand-accent transition-colors line-clamp-1">
+                      )}
+                      {business.email && (
+                        <a
+                          href={`mailto:${business.email}`}
+                          className="flex items-center gap-1 hover:text-blue-700"
+                        >
+                          <span className="text-slate-400">✉️</span>
                           {business.email}
+                        </a>
+                      )}
+                    </div>
+
+                    {business.website && (
+                      <div>
+                        <a
+                          href={
+                            business.is_sponsor
+                              ? `https://mzumvkrpnxhkvhdyzgqa.supabase.co/functions/v1/track-click?url=${encodeURIComponent(business.website)}&source=directory&bid=${business.id}&pid=${business.placementId}`
+                              : business.website
+                          }
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex w-full items-center justify-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-blue-500 hover:text-blue-700"
+                        >
+                          Visit website
                         </a>
                       </div>
                     )}
                   </div>
-
-                  {/* Website Link */}
-                  {business.website && (
-                    <a
-                      href={
-                        business.is_sponsor
-                          ? `https://mzumvkrpnxhkvhdyzgqa.supabase.co/functions/v1/track-click?url=${encodeURIComponent(business.website)}&source=directory&bid=${business.id}&pid=${business.placementId}`
-                          : business.website
-                      }
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-xs font-medium text-brand-accent hover:underline"
-                    >
-                      Visit website <ExternalLink className="h-3 w-3" />
-                    </a>
-                  )}
-                </div>
-              </Card>
-            ))}
-          </div>
+                </article>
+              );
+            })}
+          </section>
         )}
 
-        {/* CTA Section */}
-        <Card className="mt-12 p-8 bg-gradient-to-br from-blue-50/50 to-indigo-50/30 border-blue-100 rounded-2xl">
-          <div className="max-w-2xl mx-auto text-center space-y-4">
-            <h2 className="text-2xl font-display font-bold text-brand">Want to be featured here?</h2>
-            <p className="text-sm text-gray-600 leading-relaxed">
-              Join Lake Geneva Brief as a sponsor and reach thousands of local readers through our
-              newsletter, website, and social channels.
-            </p>
-            <Button
-              size="lg"
-              onClick={() => navigate("/advertise")}
-              className="rounded-full bg-brand-accent hover:bg-blue-700 transition-colors"
+        {/* CTA */}
+        <section className="mt-10 rounded-2xl border border-slate-100 bg-white/80 px-5 py-4 text-sm text-slate-700 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="font-medium text-slate-900">
+                Want your business listed here?
+              </p>
+              <p className="text-xs text-slate-500">
+                Join Lake Geneva Brief as a sponsor and reach local readers
+                through our newsletter and directory.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate('/advertise')}
+              className="inline-flex items-center rounded-full bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700"
             >
-              Learn More About Advertising
-            </Button>
+              Learn about advertising
+            </button>
           </div>
-        </Card>
+        </section>
       </main>
 
       <PublicFooter />
