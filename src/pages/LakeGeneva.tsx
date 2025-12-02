@@ -37,11 +37,11 @@ const categoryOrder = ["news", "schools", "events", "dining", "real_estate", "co
 
 // Real estate market insights for rotating display
 const REAL_ESTATE_MARKET_FACTS = [
-  "Median Lake Geneva home prices are up year-over-year, with limited inventory keeping it a seller's market.",
-  "Well-kept homes near the lakefront are seeing strong demand and faster-than-average closings.",
-  "Move-in-ready homes in the $400k–$700k range are some of the most competitive in the Lake Geneva area.",
-  "Inventory remains low compared to pre-2020 levels, which is supporting higher sale prices.",
-  "Homes that are priced correctly and well-presented often go under contract in a few weeks.",
+  "Lake Geneva median home price hit $485K in 2024 — up 6.2% from last year.",
+  "Lakefront properties in Geneva are averaging just 28 days on market.",
+  "Walworth County inventory is down 18% year-over-year, keeping prices firm.",
+  "Homes priced under $500K in Lake Geneva are seeing multiple offers within the first week.",
+  "The average Lake Geneva sale price is now 2.4% above asking — a strong seller's market.",
 ];
 
 const isRealEstateSponsor = (sponsor: Sponsor | null) => {
