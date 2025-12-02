@@ -35,6 +35,46 @@ type AutoPublishRule = {
   enabled: boolean;
 };
 
+// Parse flexible date formats (handles "December 17, 2025, 3:00 PM - 8:30 PM", "All Day", etc.)
+function parseFlexibleDate(dateStr: string): string {
+  if (!dateStr) return new Date().toISOString();
+  
+  // If already ISO format, return as-is
+  if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
+    return dateStr;
+  }
+  
+  try {
+    // Strip time range (take only start time before the dash)
+    let cleanDate = dateStr.split(' - ')[0].trim();
+    
+    // Handle "All Day" - replace with noon
+    if (cleanDate.toLowerCase().includes('all day')) {
+      cleanDate = cleanDate.replace(/,?\s*All Day/i, ', 12:00 PM');
+    }
+    
+    // Try to parse the cleaned date string
+    const parsed = new Date(cleanDate);
+    if (!isNaN(parsed.getTime())) {
+      return parsed.toISOString();
+    }
+    
+    // Try parsing with just the date portion (no time)
+    const dateOnlyMatch = dateStr.match(/([A-Za-z]+\s+\d{1,2},?\s+\d{4})/);
+    if (dateOnlyMatch) {
+      const dateOnly = new Date(dateOnlyMatch[1]);
+      if (!isNaN(dateOnly.getTime())) {
+        return dateOnly.toISOString();
+      }
+    }
+  } catch (e) {
+    console.warn(`Could not parse date: ${dateStr}`);
+  }
+  
+  // Fallback to current time
+  return new Date().toISOString();
+}
+
 function decideStatusForStory(
   rules: AutoPublishRule[] | null,
   sourceId: string,
@@ -466,14 +506,15 @@ When in doubt between safe and sensitive, choose sensitive. Only use blocked for
               original_url: originalUrl,
               image_url: imageUrl,
               image_source: imageSource,
-              publish_date: pubDate,
+              publish_date: parseFlexibleDate(pubDate),
               status,
               safety_level: aiResult.safety_level || "safe",
               safety_tags: aiResult.safety_tags || [],
               safety_reason: aiResult.safety_reason || "",
               metadata: {
                 source_name: source.name,
-                original_published_at: pubDate,
+                original_published_at: pubDate,  // Keep raw date for reference
+                raw_event_date: pubDate,  // Preserve original format
                 location_tags: source.metadata?.location_tags || ["Lake Geneva"],
                 ai_model: "gpt-4o-mini",
                 content_tags: aiResult.content_tags || [],
