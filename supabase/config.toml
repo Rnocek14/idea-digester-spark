@@ -1,5 +1,8 @@
 project_id = "mzumvkrpnxhkvhdyzgqa"
 
+[functions.sync-nws-alerts]
+verify_jwt = false
+
 [functions.sync-rss]
 verify_jwt = false
 

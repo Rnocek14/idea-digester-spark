@@ -257,6 +257,30 @@ const Sources = () => {
     },
   });
 
+  const syncNwsMutation = useMutation({
+    mutationFn: async () => {
+      console.log("🌦️ Starting NWS alerts sync...");
+      const { data, error } = await supabase.functions.invoke("sync-nws-alerts");
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: async (data) => {
+      queryClient.invalidateQueries({ queryKey: ["sources"] });
+      queryClient.invalidateQueries({ queryKey: ["content-queue"] });
+      
+      const result = data.result;
+      if (result.new_items > 0) {
+        toast.success(`NWS sync: ${result.new_items} new alerts, ${result.skipped_duplicates} skipped`);
+      } else {
+        toast.success(data.message || "NWS sync complete: No active alerts");
+      }
+    },
+    onError: (error: any) => {
+      console.error("❌ NWS sync error:", error);
+      toast.error(error.message || "Failed to sync NWS alerts");
+    },
+  });
+
   const { data: lastSync } = useQuery({
     queryKey: ["last-sync"],
     queryFn: async () => {
@@ -528,6 +552,14 @@ const Sources = () => {
           >
             <Sparkles className={`h-4 w-4 mr-2 ${backfillVerticalsMutation.isPending ? "animate-pulse" : ""}`} />
             {backfillVerticalsMutation.isPending ? "Classifying..." : "Backfill Verticals"}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => syncNwsMutation.mutate()}
+            disabled={syncNwsMutation.isPending}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${syncNwsMutation.isPending ? "animate-spin" : ""}`} />
+            {syncNwsMutation.isPending ? "Syncing..." : "Sync NWS Alerts"}
           </Button>
           <Button onClick={handleNew}>
             <Plus className="h-4 w-4 mr-2" />
