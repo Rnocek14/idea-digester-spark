@@ -9,6 +9,100 @@ const corsHeaders = {
 const NWS_ZONE = 'WIZ063'; // Walworth County
 const NWS_ALERTS_URL = `https://api.weather.gov/alerts/active?zone=${NWS_ZONE}`;
 
+// Generate URL-friendly slug from title
+function slugifyIncidentTitle(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .substring(0, 80);
+}
+
+// Link weather alert to an incident (find or create)
+async function linkAlertToIncident(opts: {
+  supabase: any;
+  storyId: string;
+  title: string;
+  summary: string | null;
+  priorityScore: number;
+  event: string;
+}) {
+  const { supabase, storyId, title, summary, priorityScore, event } = opts;
+
+  // Try to find an existing active weather incident with similar event type
+  const { data: existingIncidents, error: findError } = await supabase
+    .from('incidents')
+    .select('*')
+    .eq('incident_type', 'weather')
+    .in('status', ['active', 'monitoring'])
+    .ilike('title', `%${event}%`)
+    .order('updated_at', { ascending: false })
+    .limit(1);
+
+  if (findError) {
+    console.error('[incidents] Error finding existing incident', findError);
+    return;
+  }
+
+  let incident = existingIncidents?.[0];
+
+  if (!incident) {
+    // Create new incident
+    const baseSlug = slugifyIncidentTitle(title);
+    const slug = baseSlug || `weather-${storyId}`;
+
+    const { data: inserted, error: insertError } = await supabase
+      .from('incidents')
+      .insert({
+        slug,
+        title,
+        incident_type: 'weather',
+        status: 'active',
+        location: 'Walworth County / Lake Geneva area',
+        source_story_id: storyId,
+        priority_score: priorityScore,
+      })
+      .select('*')
+      .single();
+
+    if (insertError) {
+      console.error('[incidents] Error creating new weather incident', insertError);
+      return;
+    }
+    incident = inserted;
+    console.log(`[incidents] Created new weather incident: ${title}`);
+  } else {
+    // Update existing incident
+    const newPriority = Math.max(incident.priority_score || 0, priorityScore);
+    await supabase
+      .from('incidents')
+      .update({
+        priority_score: newPriority,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', incident.id);
+    console.log(`[incidents] Linked to existing weather incident: ${incident.title}`);
+  }
+
+  // Add timeline update
+  const { error: updateError } = await supabase
+    .from('incident_updates')
+    .insert({
+      incident_id: incident.id,
+      source: 'nws',
+      source_label: 'National Weather Service',
+      text: summary || title,
+      is_verified: true,
+      story_id: storyId,
+    });
+
+  if (updateError) {
+    console.error('[incidents] Error inserting incident update', updateError);
+  }
+
+  return incident;
+}
+
 interface NWSAlert {
   id: string;
   properties: {
@@ -180,7 +274,7 @@ Deno.serve(async (req) => {
       const publishDate = props.effective || props.sent || new Date().toISOString();
 
       // Insert into content_queue
-      const { error: insertError } = await supabase
+      const { data: insertedAlert, error: insertError } = await supabase
         .from('content_queue')
         .insert({
           source_id: nwsSource?.id,
@@ -215,7 +309,9 @@ Deno.serve(async (req) => {
             verticals: ['local', 'civic'],
             content_tags: ['weather', 'alerts', props.event?.toLowerCase()].filter(Boolean),
           }
-        });
+        })
+        .select('id')
+        .single();
 
       if (insertError) {
         console.error(`[sync-nws] Error inserting alert:`, insertError);
@@ -225,6 +321,18 @@ Deno.serve(async (req) => {
 
       result.new_items++;
       console.log(`[sync-nws] Inserted alert: ${props.event} (${props.severity})`);
+
+      // Link breaking weather alerts to incidents
+      if (isBreaking && insertedAlert) {
+        await linkAlertToIncident({
+          supabase,
+          storyId: insertedAlert.id,
+          title,
+          summary,
+          priorityScore,
+          event: props.event,
+        });
+      }
     }
 
     // Update source last_fetched_at
