@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle, Flame, Car, CloudLightning, Shield, Zap, ChevronRight } from "lucide-react";
+import QuickReportIncident from "./QuickReportIncident";
 
 type Incident = {
   id: string;
@@ -43,11 +44,11 @@ export default function LiveIncidentsSidebar() {
       if (error) throw error;
       return data as Incident[];
     },
-    refetchInterval: 30000, // Poll every 30 seconds
+    refetchInterval: 30000,
   });
 
-  // Don't render if no active incidents
-  if (!incidents?.length) return null;
+  const hasIncidents = incidents && incidents.length > 0;
+  const hasActive = incidents?.some(i => i.status === "active");
 
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
@@ -61,8 +62,6 @@ export default function LiveIncidentsSidebar() {
     return `${diffHours}h ago`;
   };
 
-  const hasActive = incidents.some(i => i.status === "active");
-
   return (
     <Card className={hasActive ? "border-red-200 bg-red-50/50 dark:border-red-900 dark:bg-red-950/20" : ""}>
       <CardHeader className="pb-3">
@@ -71,36 +70,46 @@ export default function LiveIncidentsSidebar() {
           Live Incidents
         </CardTitle>
       </CardHeader>
-      <CardContent className="pt-0 space-y-2">
-        {incidents.map((incident) => (
-          <Link
-            key={incident.id}
-            to={`/incidents/${incident.slug}`}
-            className="block rounded-md hover:bg-accent/50 px-2 py-1.5 -mx-2 transition-colors"
-          >
-            <div className="flex items-start gap-2">
-              <span className="text-muted-foreground mt-0.5">
-                {typeIcons[incident.incident_type] || typeIcons.other}
-              </span>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium leading-tight line-clamp-2">
-                  {statusDots[incident.status]} {incident.title}
+      <CardContent className="pt-0">
+        {!hasIncidents ? (
+          <div className="text-xs text-muted-foreground mb-2">
+            🎉 All clear right now in Lake Geneva.
+          </div>
+        ) : (
+          <div className="space-y-2 mb-2">
+            {incidents.map((incident) => (
+              <Link
+                key={incident.id}
+                to={`/incidents/${incident.slug}`}
+                className="block rounded-md hover:bg-accent/50 px-2 py-1.5 -mx-2 transition-colors"
+              >
+                <div className="flex items-start gap-2">
+                  <span className="text-muted-foreground mt-0.5">
+                    {typeIcons[incident.incident_type] || typeIcons.other}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium leading-tight line-clamp-2">
+                      {statusDots[incident.status]} {incident.title}
+                    </div>
+                    <div className="text-[11px] text-muted-foreground mt-0.5">
+                      Updated {formatTimeAgo(incident.updated_at)}
+                    </div>
+                  </div>
                 </div>
-                <div className="text-[11px] text-muted-foreground mt-0.5">
-                  Updated {formatTimeAgo(incident.updated_at)}
-                </div>
-              </div>
-            </div>
-          </Link>
-        ))}
-        
-        <Link
-          to="/incidents"
-          className="flex items-center justify-center gap-1 text-xs text-primary hover:underline pt-2"
-        >
-          View all incidents
-          <ChevronRight className="h-3 w-3" />
-        </Link>
+              </Link>
+            ))}
+            
+            <Link
+              to="/incidents"
+              className="flex items-center justify-center gap-1 text-xs text-primary hover:underline pt-2"
+            >
+              View all incidents
+              <ChevronRight className="h-3 w-3" />
+            </Link>
+          </div>
+        )}
+
+        <QuickReportIncident />
       </CardContent>
     </Card>
   );
