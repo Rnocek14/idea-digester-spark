@@ -182,20 +182,19 @@ const LakeGeneva = () => {
     >
       {/* Unified Hero Section */}
       {featured && (
-        <section className="border-b border-slate-200 bg-white -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-10">
-          <div className="mx-auto max-w-5xl">
-            <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1.2fr)]">
+        <section className="-mx-4 sm:-mx-6 lg:-mx-8 border-b border-slate-200 bg-white px-4 sm:px-6 lg:px-8 py-10">
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1.2fr)]">
                 {/* Left: greeting, headline, category links, featured card */}
                 <div className="space-y-5">
                   {/* Greeting + headline */}
                   <div className="space-y-1">
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
                       Good morning, Lake Geneva
                     </p>
-                    <h1 className="font-display text-2xl sm:text-3xl md:text-[32px] leading-tight text-brand">
+                    <h1 className="font-semibold text-2xl sm:text-3xl md:text-[32px] leading-tight text-slate-900">
                       Here's what's happening this week
                     </h1>
-                    <p className="max-w-xl text-sm text-gray-600 leading-relaxed">
+                    <p className="max-w-xl text-sm text-slate-600 leading-relaxed">
                       Short, trustworthy updates on city hall, schools, events, and real estate — in under 5 minutes.
                     </p>
                   </div>
@@ -210,7 +209,7 @@ const LakeGeneva = () => {
                           const el = document.getElementById(cat);
                           if (el) el.scrollIntoView({ behavior: 'smooth' });
                         }}
-                        className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs text-gray-700 hover:border-brand-accent hover:bg-blue-50 hover:text-brand-accent transition-colors"
+                        className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-700 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-700 transition-colors"
                       >
                         <span>{getCategoryEmoji(cat)}</span>
                         <span className="capitalize font-medium">
@@ -221,7 +220,7 @@ const LakeGeneva = () => {
                   </div>
 
                   {/* Featured story card */}
-                  <article className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-gray-100">
+                  <article className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100">
                     <div className="relative h-56 sm:h-60">
                       {featured.image_url && (
                         <img
@@ -232,18 +231,18 @@ const LakeGeneva = () => {
                       )}
                       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-black/30 to-transparent" />
                       <div className="pointer-events-none absolute inset-x-0 bottom-0 p-4 sm:p-5">
-                        <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-200">
+                        <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-200">
                           Top story
                         </p>
                         <h2 className="text-lg sm:text-xl font-semibold text-white">
                           {featured.title}
                         </h2>
                         {(featured.content_website || featured.content_lg_base || featured.summary) && (
-                          <p className="mt-1 line-clamp-2 text-xs sm:text-sm text-gray-100/90">
+                          <p className="mt-1 line-clamp-2 text-xs sm:text-sm text-slate-100/90">
                             {featured.content_website || featured.content_lg_base || featured.summary}
                           </p>
                         )}
-                        <div className="mt-3 flex items-center gap-3 text-[11px] text-gray-200/90">
+                        <div className="mt-3 flex items-center gap-3 text-[11px] text-slate-200/90">
                           {featured.category && (
                             <span className="inline-flex items-center gap-1 rounded-full bg-black/30 px-2 py-0.5">
                               {getCategoryEmoji(featured.category)}
@@ -272,8 +271,8 @@ const LakeGeneva = () => {
                 </div>
 
                 {/* Right: Also today */}
-                <aside className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-gray-100">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">
+                <aside className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
                     Also today
                   </p>
                   <ul className="mt-3 space-y-3">
@@ -289,10 +288,10 @@ const LakeGeneva = () => {
                           }}
                           className="w-full text-left"
                         >
-                          <p className="text-sm font-medium text-brand line-clamp-2 hover:text-brand-accent transition-colors">
+                          <p className="text-sm font-medium text-slate-900 line-clamp-2 hover:text-blue-700 transition-colors">
                             {story.title}
                           </p>
-                          <p className="mt-0.5 flex items-center gap-2 text-[11px] text-gray-500">
+                          <p className="mt-0.5 flex items-center gap-2 text-[11px] text-slate-500">
                             {story.category && (
                               <>
                                 <span>{getCategoryEmoji(story.category)}</span>
@@ -309,15 +308,13 @@ const LakeGeneva = () => {
                     ))}
                   </ul>
                 </aside>
-              </div>
             </div>
           </section>
         )}
 
-      {/* Sponsor Block */}
-      {sponsor && (
-        <section className="py-8 border-b border-slate-200 bg-white -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-5xl">
+        {/* Sponsor Block */}
+        {sponsor && (
+          <section className="-mx-4 sm:-mx-6 lg:-mx-8 border-b border-slate-200 bg-white px-4 sm:px-6 lg:px-8 py-8">
               <Card className="p-5 bg-gradient-to-br from-blue-50/50 to-indigo-50/30 border-blue-100">
                 <div className="flex items-center gap-4">
                   {sponsor.logo_url && (
@@ -325,19 +322,20 @@ const LakeGeneva = () => {
                       src={sponsor.logo_url}
                       alt={sponsor.name}
                       className="h-14 w-14 object-contain rounded-lg bg-white p-2"
+                      loading="lazy"
                     />
                   )}
                   <div className="flex-1">
-                    <p className="text-[10px] font-semibold text-brand-accent uppercase tracking-[0.15em] mb-1">
+                    <p className="text-[10px] font-semibold text-blue-600 uppercase tracking-[0.15em] mb-1">
                       Presented By
                     </p>
-                    <p className="text-base font-semibold text-brand">{sponsor.name}</p>
+                    <p className="text-base font-semibold text-slate-900">{sponsor.name}</p>
                     {sponsor.website && (
                       <a
                         href={`https://mzumvkrpnxhkvhdyzgqa.supabase.co/functions/v1/track-click?url=${encodeURIComponent(sponsor.website)}&source=web_brief&bid=${sponsor.businessId}&pid=${sponsor.placementId}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs text-brand-accent hover:underline inline-flex items-center gap-1 mt-1 font-medium"
+                        className="text-xs text-blue-600 hover:underline inline-flex items-center gap-1 mt-1 font-medium"
                       >
                         Visit Website <ExternalLink className="h-3 w-3" />
                       </a>
@@ -345,24 +343,22 @@ const LakeGeneva = () => {
                   </div>
                 </div>
               </Card>
-          </div>
-        </section>
-      )}
+            </section>
+          )}
 
-        {/* Stories by Category */}
-        {storiesLoading ? (
-          <div className="text-center py-16 text-gray-500">
-            Loading today's stories...
-          </div>
-        ) : stories.length === 0 ? (
-          <div className="text-center py-16 text-gray-500">
-            No stories published yet. Check back soon!
-          </div>
-        ) : (
-          <>
-            {/* Category Filter Pills */}
-            <section className="border-b border-gray-200 bg-white sticky top-[73px] z-20">
-              <div className="mx-auto max-w-5xl px-4 sm:px-6 py-4">
+          {/* Stories by Category */}
+          {storiesLoading ? (
+            <div className="text-center py-16 text-slate-500">
+              Loading today's stories...
+            </div>
+          ) : stories.length === 0 ? (
+            <div className="text-center py-16 text-slate-500">
+              No stories published yet. Check back soon!
+            </div>
+          ) : (
+            <>
+              {/* Category Filter Pills */}
+              <section className="-mx-4 sm:-mx-6 lg:-mx-8 border-b border-slate-200 bg-white px-4 sm:px-6 lg:px-8 py-4 sticky top-[73px] z-20">
                 <div className="flex flex-wrap gap-2">
                   {['all', ...categoryOrder].map((cat) => (
                     <button
@@ -370,28 +366,26 @@ const LakeGeneva = () => {
                       onClick={() => setActiveCategory(cat)}
                       className={`rounded-full px-3 py-1.5 text-xs border transition-colors ${
                         activeCategory === cat
-                          ? "bg-brand-accent text-white border-brand-accent"
-                          : "bg-gray-50 text-gray-600 border-gray-200 hover:border-brand-accent hover:text-brand-accent"
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "bg-slate-50 text-slate-600 border-slate-200 hover:border-blue-500 hover:text-blue-700"
                       }`}
                     >
                       {cat === 'all' ? 'All stories' : `${getCategoryEmoji(cat)} ${cat.replace('_', ' ')}`}
                     </button>
                   ))}
                 </div>
-              </div>
-            </section>
+              </section>
 
-            <section className="bg-gray-50 border-t border-gray-100">
-              <div className="mx-auto max-w-5xl px-4 sm:px-6 py-10 space-y-10">
-              {visibleCategories.map((category) => (
+              <section className="py-10">
+                {visibleCategories.map((category) => (
                 <div key={category} id={category} className="scroll-mt-24">
                   <div className="flex items-baseline justify-between gap-2 mb-4">
                     <div className="flex items-center gap-2">
                       <span className="text-lg">{getCategoryEmoji(category)}</span>
-                      <h2 className="font-display text-lg sm:text-xl capitalize text-brand">
+                      <h2 className="font-semibold text-lg sm:text-xl capitalize text-slate-900">
                         {category.replace('_', ' ')}
                       </h2>
-                      <span className="rounded-full bg-white px-2.5 py-0.5 text-xs text-gray-500 border border-gray-200">
+                      <span className="rounded-full bg-white px-2.5 py-0.5 text-xs text-slate-500 border border-slate-200">
                         {storiesByCategory[category].length} {storiesByCategory[category].length === 1 ? 'story' : 'stories'}
                       </span>
                     </div>
@@ -425,25 +419,24 @@ const LakeGeneva = () => {
                       );
                     })}
                   </div>
-                </div>
-              ))}
-            </div>
-          </section>
-          </>
-        )}
+                  </div>
+                ))}
+              </section>
+            </>
+          )}
 
-        {/* Subscribe CTA */}
-        <section id="subscribe" className="border-t border-gray-200 bg-white">
-          <div className="mx-auto max-w-3xl px-4 sm:px-6 py-10 sm:py-12 text-center">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-accent">
-              Newsletter
-            </p>
-            <h2 className="mt-2 font-display text-2xl sm:text-3xl tracking-tight text-brand">
-              Get the Lake Geneva Brief in your inbox
-            </h2>
-            <p className="mt-3 text-sm text-gray-600 leading-relaxed">
-              A fast, friendly rundown of what matters in Lake Geneva. No spam, no noise.
-            </p>
+          {/* Subscribe CTA */}
+          <section id="subscribe" className="-mx-4 sm:-mx-6 lg:-mx-8 border-t border-slate-200 bg-white px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+            <div className="mx-auto max-w-3xl text-center">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-600">
+                Newsletter
+              </p>
+              <h2 className="mt-2 text-2xl sm:text-3xl font-semibold tracking-tight text-slate-900">
+                Get the Lake Geneva Brief in your inbox
+              </h2>
+              <p className="mt-3 text-sm text-slate-600 leading-relaxed">
+                A fast, friendly rundown of what matters in Lake Geneva. No spam, no noise.
+              </p>
 
             <form
               onSubmit={handleSubscribe}
@@ -454,21 +447,21 @@ const LakeGeneva = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="flex-1 max-w-sm rounded-full border-gray-300 bg-gray-50 px-4 py-2.5 text-sm focus:border-brand-accent focus:bg-white focus:ring-2 focus:ring-blue-100"
+                className="flex-1 max-w-sm rounded-full border-slate-300 bg-slate-50 px-4 py-2.5 text-sm focus:border-blue-600 focus:bg-white focus:ring-2 focus:ring-blue-100"
                 disabled={isSubscribing}
               />
               <Button
                 type="submit"
                 disabled={isSubscribing}
-                className="rounded-full bg-brand-accent px-6 py-2.5 text-sm font-semibold text-white shadow hover:bg-blue-700 transition-colors"
+                className="rounded-full bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow hover:bg-blue-700 transition-colors"
               >
                 {isSubscribing ? 'Subscribing…' : 'Subscribe'}
               </Button>
             </form>
 
-            <p className="mt-3 text-[11px] text-gray-400">
-              2–4 emails per week. Unsubscribe anytime.
-            </p>
+              <p className="mt-3 text-[11px] text-slate-400">
+                2–4 emails per week. Unsubscribe anytime.
+              </p>
           </div>
         </section>
       </PageShell>

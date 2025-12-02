@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { PublicHeader } from "@/components/PublicHeader";
-import { PublicFooter } from "@/components/PublicFooter";
+import PageShell from "@/components/PageShell";
 
 type Business = {
   id: string;
@@ -81,12 +80,12 @@ const PublicDirectory = () => {
   const sponsorCount = sortedBusinesses.filter((b) => b.is_sponsor).length;
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <PublicHeader />
-
-      <main className="mx-auto max-w-5xl px-4 pb-16 pt-10 sm:px-6 lg:px-8">
-        {/* Header */}
-        <header className="mb-8 space-y-3">
+    <PageShell
+      title="Lake Geneva Business Directory – Lake Geneva Brief"
+      description="Independent shops, services, and local businesses in Lake Geneva."
+    >
+      {/* Header */}
+      <header className="mb-8 space-y-3">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
             Lake Geneva · Local Guide
           </p>
@@ -292,11 +291,8 @@ const PublicDirectory = () => {
             </button>
           </div>
         </section>
-      </main>
-
-      <PublicFooter />
-    </div>
-  );
+      </PageShell>
+    );
 };
 
 export default PublicDirectory;

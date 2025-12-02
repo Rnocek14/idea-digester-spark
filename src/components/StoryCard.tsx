@@ -35,9 +35,9 @@ export const StoryCard = ({
   meta,
 }: StoryCardProps) => {
   return (
-    <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow">
+    <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow">
       {imageUrl && (
-        <div className="relative aspect-[16/9] overflow-hidden bg-gray-100">
+        <div className="relative aspect-[16/9] overflow-hidden bg-slate-100">
           <img
             src={imageUrl}
             alt={title}
@@ -60,18 +60,18 @@ export const StoryCard = ({
           </span>
         )}
 
-        <h3 className="font-display text-base sm:text-lg text-brand group-hover:text-brand-accent transition-colors line-clamp-2 leading-tight">
+        <h3 className="text-base sm:text-lg text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-2 leading-tight font-semibold">
           {title}
         </h3>
 
         {summary && (
-          <p className="mt-1 text-sm text-gray-600 line-clamp-3 leading-relaxed">
+          <p className="mt-1 text-sm text-slate-600 line-clamp-3 leading-relaxed">
             {summary}
           </p>
         )}
 
         {meta && (meta.time || meta.source) && (
-          <div className="mt-2 flex items-center gap-2 text-[11px] text-gray-500">
+          <div className="mt-2 flex items-center gap-2 text-[11px] text-slate-500">
             {meta.source && (
               <span className="truncate max-w-[50%]">
                 {meta.source}
@@ -88,7 +88,7 @@ export const StoryCard = ({
               href={url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-xs font-medium text-brand-accent hover:underline"
+              className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:underline"
             >
               Read more
               <ExternalLink className="h-3 w-3" />
