@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { withTimeout } from "@/lib/queryWithTimeout";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -27,25 +26,21 @@ const Sources = () => {
     queryKey: ["sources"],
     queryFn: async () => {
       console.log("🔍 Fetching sources...");
-      const result = await withTimeout(
-        supabase
-          .from("sources")
-          .select("*")
-          .order("created_at", { ascending: false })
-          .then(res => res),
-        15000
-      );
+      const { data, error } = await supabase
+        .from("sources")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-      console.log("📊 Sources query result:", { data: result.data, error: result.error });
-      if (result.error) {
-        console.error("❌ Sources query error:", result.error);
-        throw result.error;
+      if (error) {
+        console.error("❌ Sources query error:", error);
+        throw error;
       }
-      console.log("✅ Sources loaded:", result.data?.length || 0);
-      return result.data;
+      console.log("✅ Sources loaded:", data?.length || 0);
+      return data;
     },
     retry: 2,
     staleTime: 30000,
+    refetchOnWindowFocus: false,
   });
   
   // Log error if query failed

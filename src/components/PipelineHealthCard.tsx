@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { withTimeout } from "@/lib/queryWithTimeout";
 import { AlertCircle, Image, MessageSquare, CheckCircle, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -16,76 +15,67 @@ export const PipelineHealthCard = () => {
   const { data: pendingApproval = 0 } = useQuery({
     queryKey: ["pipeline-pending-approval"],
     queryFn: async () => {
-      const result = await withTimeout(
-        supabase
-          .from("content_queue")
-          .select("*", { count: "exact", head: true })
-          .eq("status", "pending")
-          .eq("safety_level", "safe")
-          .then(res => res),
-        15000
-      );
-      return result.count || 0;
+      const { count, error } = await supabase
+        .from("content_queue")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "pending")
+        .eq("safety_level", "safe");
+      if (error) throw error;
+      return count || 0;
     },
     retry: 2,
     staleTime: 30000,
     refetchInterval: 30000,
+    refetchOnWindowFocus: false,
   });
 
   // Needs Voice: stories missing platform content
   const { data: needsVoice = 0 } = useQuery({
     queryKey: ["pipeline-needs-voice"],
     queryFn: async () => {
-      const result = await withTimeout(
-        supabase
-          .from("content_queue")
-          .select("*", { count: "exact", head: true })
-          .eq("safety_level", "safe")
-          .is("content_lg_base", null)
-          .then(res => res),
-        15000
-      );
-      return result.count || 0;
+      const { count, error } = await supabase
+        .from("content_queue")
+        .select("*", { count: "exact", head: true })
+        .eq("safety_level", "safe")
+        .is("content_lg_base", null);
+      if (error) throw error;
+      return count || 0;
     },
     retry: 2,
     staleTime: 30000,
     refetchInterval: 30000,
+    refetchOnWindowFocus: false,
   });
 
   // Needs Images: stories missing visual assets
   const { data: needsImages = 0 } = useQuery({
     queryKey: ["pipeline-needs-images"],
     queryFn: async () => {
-      const result = await withTimeout(
-        supabase
-          .from("content_queue")
-          .select("*", { count: "exact", head: true })
-          .eq("safety_level", "safe")
-          .is("image_url", null)
-          .then(res => res),
-        15000
-      );
-      return result.count || 0;
+      const { count, error } = await supabase
+        .from("content_queue")
+        .select("*", { count: "exact", head: true })
+        .eq("safety_level", "safe")
+        .is("image_url", null);
+      if (error) throw error;
+      return count || 0;
     },
     retry: 2,
     staleTime: 30000,
     refetchInterval: 30000,
+    refetchOnWindowFocus: false,
   });
 
   // Needs Verticals: stories missing classification
   const { data: needsVerticals = 0 } = useQuery({
     queryKey: ["pipeline-needs-verticals"],
     queryFn: async () => {
-      const result = await withTimeout(
-        supabase
-          .from("content_queue")
-          .select("metadata")
-          .eq("safety_level", "safe")
-          .then(res => res),
-        15000
-      );
+      const { data, error } = await supabase
+        .from("content_queue")
+        .select("metadata")
+        .eq("safety_level", "safe");
+      if (error) throw error;
       
-      const withoutVerticals = result.data?.filter(
+      const withoutVerticals = data?.filter(
         (row) => !row.metadata || !(row.metadata as any).verticals
       ).length || 0;
       
@@ -94,6 +84,7 @@ export const PipelineHealthCard = () => {
     retry: 2,
     staleTime: 30000,
     refetchInterval: 30000,
+    refetchOnWindowFocus: false,
   });
 
   // Backfill Verticals mutation

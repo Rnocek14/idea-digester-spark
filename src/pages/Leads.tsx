@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { withTimeout } from "@/lib/queryWithTimeout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -70,20 +69,17 @@ const Leads = () => {
   const { data: leads = [], isLoading, refetch } = useQuery({
     queryKey: ["leads"],
     queryFn: async () => {
-      const result = await withTimeout(
-        supabase
-          .from("advertiser_leads")
-          .select("*")
-          .order("created_at", { ascending: false })
-          .then(res => res),
-        15000
-      );
+      const { data, error } = await supabase
+        .from("advertiser_leads")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-      if (result.error) throw result.error;
-      return result.data as Lead[];
+      if (error) throw error;
+      return data as Lead[];
     },
     retry: 2,
     staleTime: 30000,
+    refetchOnWindowFocus: false,
   });
 
   // Update lead status
