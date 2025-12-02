@@ -7,6 +7,13 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Keywords that indicate civic/government content to EXCLUDE
+const CIVIC_KEYWORDS = [
+  'municipal', 'committee', 'commission', 'council', 'board', 'court',
+  'hearing', 'canceled', 'meeting', 'agenda', 'resolution', 'ordinance',
+  'zoning', 'planning', 'budget', 'tax', 'election', 'caucus'
+];
+
 interface WeekendEvent {
   id: string;
   title: string;
@@ -42,10 +49,9 @@ serve(async (req) => {
     // Calculate days until Friday (5)
     let daysUntilFriday = (5 - dayOfWeek + 7) % 7;
     if (daysUntilFriday === 0 && now.getHours() >= 12) {
-      // If it's Friday afternoon, look at this weekend
       daysUntilFriday = 0;
     } else if (daysUntilFriday === 0) {
-      daysUntilFriday = 0; // Friday morning, use this weekend
+      daysUntilFriday = 0;
     }
     
     const friday = new Date(now);
@@ -58,54 +64,75 @@ serve(async (req) => {
 
     console.log(`Looking for events between ${friday.toISOString()} and ${sunday.toISOString()}`);
 
-    // Query events for the weekend
-    // Look for events with publish_date in weekend range OR events category items
+    // Query FUN events only - exclude community (catches civic meetings)
     const { data: events, error: eventsError } = await supabase
       .from('content_queue')
       .select('id, title, summary, category, publish_date, original_url, metadata')
       .in('status', ['approved', 'auto_published', 'published'])
       .eq('safety_level', 'safe')
-      .or(`category.eq.events,category.eq.community,category.eq.entertainment`)
-      .order('publish_date', { ascending: true })
-      .limit(50);
+      .in('category', ['events', 'entertainment', 'dining', 'nightlife'])
+      .order('created_at', { ascending: false })
+      .limit(100);
 
     if (eventsError) {
       console.error('Error fetching events:', eventsError);
       throw eventsError;
     }
 
-    // Filter to weekend events if they have dates, otherwise include recent events
-    const weekendEvents = (events || []).filter((event: WeekendEvent) => {
-      if (event.publish_date) {
-        const eventDate = new Date(event.publish_date);
-        return eventDate >= friday && eventDate <= sunday;
-      }
-      // Include events without specific dates (category = events)
-      return event.category === 'events';
-    }).slice(0, 10); // Top 10 events
+    console.log(`Found ${events?.length || 0} total events before filtering`);
 
-    console.log(`Found ${weekendEvents.length} weekend events`);
+    // Filter events:
+    // 1. Exclude civic/government content by keyword
+    // 2. Check if event date falls within weekend
+    const weekendEvents = (events || [])
+      .filter((event: WeekendEvent) => {
+        // Exclude civic meetings by title keywords
+        const titleLower = event.title.toLowerCase();
+        const hasCivicKeyword = CIVIC_KEYWORDS.some(keyword => titleLower.includes(keyword));
+        if (hasCivicKeyword) {
+          console.log(`Excluding civic content: ${event.title}`);
+          return false;
+        }
+        return true;
+      })
+      .filter((event: WeekendEvent) => {
+        // Check if event has actual event date in metadata
+        if (event.metadata?.raw_event_date) {
+          const eventDate = parseEventDate(event.metadata.raw_event_date);
+          if (eventDate) {
+            const isWeekend = eventDate >= friday && eventDate <= sunday;
+            if (isWeekend) {
+              console.log(`Weekend event found: ${event.title} - ${event.metadata.raw_event_date}`);
+            }
+            return isWeekend;
+          }
+        }
+        
+        // Fallback: if category is events/entertainment/dining, include without date check
+        // This catches recurring events like "Trivia Night" or "Live Music"
+        if (['events', 'entertainment', 'dining', 'nightlife'].includes(event.category || '')) {
+          return true;
+        }
+        
+        return false;
+      })
+      .slice(0, 10);
 
-    if (weekendEvents.length === 0) {
-      // If no weekend-specific events, use recent events/community items
-      const { data: recentEvents } = await supabase
-        .from('content_queue')
-        .select('id, title, summary, category, publish_date, original_url, metadata')
-        .in('status', ['approved', 'auto_published', 'published'])
-        .eq('safety_level', 'safe')
-        .in('category', ['events', 'community', 'entertainment', 'dining'])
-        .order('created_at', { ascending: false })
-        .limit(10);
+    console.log(`Found ${weekendEvents.length} weekend events after filtering`);
 
-      if (recentEvents && recentEvents.length > 0) {
-        weekendEvents.push(...recentEvents);
-      }
-    }
+    // Score and sort events by engagement potential
+    const scoredEvents = weekendEvents
+      .map((event: WeekendEvent) => ({
+        ...event,
+        score: scoreEvent(event, friday, sunday)
+      }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 8);
 
-    if (weekendEvents.length === 0) {
+    if (scoredEvents.length === 0) {
       return new Response(JSON.stringify({
         success: false,
-        message: 'No events found for the weekend roundup',
+        message: 'No fun events found for the weekend roundup (civic meetings excluded)',
         eventsFound: 0,
         postsCreated: 0,
       }), {
@@ -114,24 +141,20 @@ serve(async (req) => {
     }
 
     // Format the weekend roundup post
-    const formatEventLine = (event: WeekendEvent, index: number): string => {
+    const formatEventLine = (event: WeekendEvent): string => {
       const emoji = getCategoryEmoji(event.category);
-      const title = event.title.length > 60 ? event.title.substring(0, 57) + '...' : event.title;
+      const title = event.title.length > 55 ? event.title.substring(0, 52) + '...' : event.title;
       
-      // Try to extract time/date info from metadata or title
+      // Try to extract time/date info from metadata
       let dateInfo = '';
       if (event.metadata?.raw_event_date) {
         dateInfo = ` - ${formatEventDate(event.metadata.raw_event_date)}`;
-      } else if (event.publish_date) {
-        const d = new Date(event.publish_date);
-        const dayName = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getDay()];
-        dateInfo = ` - ${dayName}`;
       }
       
       return `${emoji} ${title}${dateInfo}`;
     };
 
-    const eventLines = weekendEvents.slice(0, 8).map((e, i) => formatEventLine(e, i));
+    const eventLines = scoredEvents.map((e) => formatEventLine(e));
     
     // Generate post text for different platforms
     const weekendDateRange = `${formatShortDate(friday)} - ${formatShortDate(sunday)}`;
@@ -158,17 +181,17 @@ ${eventLines.slice(0, 5).join('\n')}
 
 What's on your agenda? 👇 #LakeGeneva`;
 
-    // Schedule posts (next Thursday 9 AM or now if testing)
+    // Schedule posts for Thursday 9 AM
     const scheduledFor = getNextThursday9AM();
     
-    const platforms = ['facebook', 'x']; // Instagram needs images, skip for text-only
+    const platforms = ['facebook', 'x'];
     const postsCreated: string[] = [];
 
     for (const platform of platforms) {
       const postText = platform === 'facebook' ? postTextFacebook : 
                        platform === 'instagram' ? postTextInstagram : postTextX;
 
-      // Check for existing weekend roundup post
+      // Check for existing weekend roundup post for this weekend
       const { data: existing } = await supabase
         .from('post_queue')
         .select('id')
@@ -182,8 +205,8 @@ What's on your agenda? 👇 #LakeGeneva`;
         continue;
       }
 
-      // Create a "virtual" story_id for the roundup (use first event's id)
-      const storyId = weekendEvents[0].id;
+      // Use first event's id as story_id
+      const storyId = scoredEvents[0].id;
 
       const { error: insertError } = await supabase
         .from('post_queue')
@@ -195,7 +218,7 @@ What's on your agenda? 👇 #LakeGeneva`;
           status: 'pending',
           metadata: {
             type: 'weekend_roundup',
-            event_ids: weekendEvents.map(e => e.id),
+            event_ids: scoredEvents.map(e => e.id),
             date_range: weekendDateRange,
           }
         });
@@ -213,9 +236,10 @@ What's on your agenda? 👇 #LakeGeneva`;
       actor_type: 'system',
       entity_type: 'content',
       action: 'weekend_roundup_generated',
-      message: `Generated weekend roundup with ${weekendEvents.length} events for ${postsCreated.join(', ')}`,
+      message: `Generated weekend roundup with ${scoredEvents.length} fun events for ${postsCreated.join(', ')}`,
       details: {
-        events_count: weekendEvents.length,
+        events_count: scoredEvents.length,
+        event_titles: scoredEvents.map(e => e.title),
         platforms: postsCreated,
         date_range: weekendDateRange,
       }
@@ -223,7 +247,7 @@ What's on your agenda? 👇 #LakeGeneva`;
 
     const result: RoundupResult = {
       success: true,
-      eventsFound: weekendEvents.length,
+      eventsFound: scoredEvents.length,
       postsCreated: postsCreated.length,
       postText: postTextFacebook,
       platforms: postsCreated,
@@ -245,20 +269,118 @@ What's on your agenda? 👇 #LakeGeneva`;
   }
 });
 
+// Score events by engagement potential (higher = better)
+function scoreEvent(event: WeekendEvent, friday: Date, sunday: Date): number {
+  let score = 0;
+  const titleLower = event.title.toLowerCase();
+  
+  // Holiday/seasonal events (December priority)
+  if (titleLower.includes('christmas') || titleLower.includes('holiday') || 
+      titleLower.includes('santa') || titleLower.includes('winter')) {
+    score += 30;
+  }
+  
+  // Live music/entertainment
+  if (titleLower.includes('live music') || titleLower.includes('concert') || 
+      titleLower.includes('music @') || titleLower.includes('band')) {
+    score += 25;
+  }
+  
+  // Food & dining experiences
+  if (titleLower.includes('dining') || titleLower.includes('brunch') || 
+      titleLower.includes('tasting') || titleLower.includes('restaurant')) {
+    score += 20;
+  }
+  
+  // Unique experiences
+  if (titleLower.includes('igloo') || titleLower.includes('candlelight') || 
+      titleLower.includes('tour') || titleLower.includes('cruise')) {
+    score += 20;
+  }
+  
+  // Family activities
+  if (titleLower.includes('family') || titleLower.includes('kids') || 
+      titleLower.includes('children')) {
+    score += 15;
+  }
+  
+  // Trivia/games
+  if (titleLower.includes('trivia') || titleLower.includes('game')) {
+    score += 10;
+  }
+  
+  // Events with actual weekend dates get bonus
+  if (event.metadata?.raw_event_date) {
+    const eventDate = parseEventDate(event.metadata.raw_event_date);
+    if (eventDate && eventDate >= friday && eventDate <= sunday) {
+      score += 15;
+    }
+  }
+  
+  // Category bonuses
+  if (event.category === 'entertainment') score += 10;
+  if (event.category === 'events') score += 5;
+  if (event.category === 'dining') score += 8;
+  if (event.category === 'nightlife') score += 8;
+  
+  return score;
+}
+
+// Parse various date formats to Date object
+function parseEventDate(rawDate: string): Date | null {
+  try {
+    // Handle "All Day" events
+    if (rawDate.toLowerCase().includes('all day')) {
+      const monthMatch = rawDate.match(/(\w+)\s+(\d{1,2}),?\s*(\d{4})?/i);
+      if (monthMatch) {
+        const monthNames = ['january', 'february', 'march', 'april', 'may', 'june',
+                          'july', 'august', 'september', 'october', 'november', 'december'];
+        const monthIndex = monthNames.findIndex(m => m.startsWith(monthMatch[1].toLowerCase()));
+        const day = parseInt(monthMatch[2]);
+        const year = monthMatch[3] ? parseInt(monthMatch[3]) : new Date().getFullYear();
+        if (monthIndex >= 0) {
+          return new Date(year, monthIndex, day);
+        }
+      }
+    }
+    
+    // Handle formats like "December 17, 2025, 3:00 PM - 8:30 PM"
+    const fullMatch = rawDate.match(/(\w+)\s+(\d{1,2}),?\s*(\d{4})?/i);
+    if (fullMatch) {
+      const monthNames = ['january', 'february', 'march', 'april', 'may', 'june',
+                        'july', 'august', 'september', 'october', 'november', 'december'];
+      const monthIndex = monthNames.findIndex(m => m.startsWith(fullMatch[1].toLowerCase()));
+      const day = parseInt(fullMatch[2]);
+      const year = fullMatch[3] ? parseInt(fullMatch[3]) : new Date().getFullYear();
+      if (monthIndex >= 0) {
+        return new Date(year, monthIndex, day);
+      }
+    }
+    
+    // Try direct parsing
+    const parsed = new Date(rawDate);
+    if (!isNaN(parsed.getTime())) {
+      return parsed;
+    }
+  } catch (e) {
+    console.error(`Failed to parse date: ${rawDate}`, e);
+  }
+  return null;
+}
+
 function getCategoryEmoji(category: string | null): string {
   const emojis: Record<string, string> = {
     'events': '🎭',
-    'community': '🏘️',
     'entertainment': '🎵',
     'dining': '🍽️',
+    'nightlife': '🌙',
     'sports': '⚽',
     'arts': '🎨',
     'family': '👨‍👩‍👧‍👦',
-    'nightlife': '🌙',
     'outdoor': '🌲',
     'shopping': '🛍️',
   };
-  return emojis[category || ''] || '▪️';
+  return emojis[category || ''] || '✨';
 }
 
 function formatEventDate(rawDate: string): string {
@@ -270,7 +392,16 @@ function formatEventDate(rawDate: string): string {
     const time = match[3];
     return `${month} ${day} @ ${time}`;
   }
-  return rawDate.substring(0, 20);
+  
+  // Handle "All Day" events
+  if (rawDate.toLowerCase().includes('all day')) {
+    const dateMatch = rawDate.match(/(\w+)\s+(\d+)/i);
+    if (dateMatch) {
+      return `${dateMatch[1].substring(0, 3)} ${dateMatch[2]}`;
+    }
+  }
+  
+  return rawDate.substring(0, 15);
 }
 
 function formatShortDate(date: Date): string {
@@ -283,7 +414,6 @@ function getNextThursday9AM(): Date {
   const dayOfWeek = now.getDay();
   let daysUntilThursday = (4 - dayOfWeek + 7) % 7;
   
-  // If it's Thursday and past 9 AM, schedule for next Thursday
   if (daysUntilThursday === 0 && now.getHours() >= 9) {
     daysUntilThursday = 7;
   }
