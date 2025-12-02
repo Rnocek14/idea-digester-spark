@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
@@ -26,6 +26,10 @@ const Advertise = () => {
     notes: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    document.title = "Advertise with Lake Geneva Brief";
+  }, []);
 
   const submitLeadMutation = useMutation({
     mutationFn: async (data: z.infer<typeof leadSchema>) => {
