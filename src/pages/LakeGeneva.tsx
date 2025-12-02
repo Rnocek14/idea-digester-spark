@@ -397,7 +397,7 @@ const LakeGeneva = () => {
                 {isRealEstateSponsor(sponsor) && (() => {
                   const metrics = getRealEstateMarketMetrics(sponsor);
                   return (
-                    <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 overflow-hidden">
+                    <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 overflow-hidden border-l-4 border-l-blue-500">
                       {/* Header */}
                       <div className="px-4 py-2.5 border-b border-slate-200 flex items-center gap-2">
                         <span className="text-slate-600">🏡</span>
@@ -411,7 +411,10 @@ const LakeGeneva = () => {
                           <div className="text-[10px] text-slate-500 uppercase tracking-wide mt-0.5">Median Price</div>
                         </div>
                         <div className="bg-white px-3 py-3 text-center">
-                          <div className="text-lg font-bold text-emerald-600">{metrics.yoyChange}</div>
+                          <div className="text-lg font-bold text-emerald-600 flex items-center justify-center gap-1">
+                            <span>↑</span>
+                            <span>{metrics.yoyChange}</span>
+                          </div>
                           <div className="text-[10px] text-slate-500 uppercase tracking-wide mt-0.5">YoY Change</div>
                         </div>
                         <div className="bg-white px-3 py-3 text-center">
