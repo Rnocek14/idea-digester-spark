@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams, Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -41,6 +42,28 @@ const statusConfig: Record<string, { color: string; icon: React.ReactNode; label
 
 export default function IncidentDetail() {
   const { slug } = useParams<{ slug: string }>();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Check if current user is admin
+  useEffect(() => {
+    const checkAdmin = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        setIsAdmin(false);
+        return;
+      }
+      
+      const { data: roles } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", session.user.id);
+      
+      const hasAdmin = roles?.some(r => r.role === "admin");
+      setIsAdmin(!!hasAdmin);
+    };
+    
+    checkAdmin();
+  }, []);
 
   const { data: incident, isLoading: incidentLoading } = useQuery({
     queryKey: ["incident", slug],
@@ -214,10 +237,12 @@ export default function IncidentDetail() {
             </section>
 
             {/* Admin Status Controls - only show for admins */}
-            <IncidentStatusControls 
-              incidentId={incident.id} 
-              currentStatus={incident.status} 
-            />
+            {isAdmin && (
+              <IncidentStatusControls 
+                incidentId={incident.id} 
+                currentStatus={incident.status} 
+              />
+            )}
 
             {/* Community Tips */}
             <TipSubmissionForm incidentId={incident.id} />
