@@ -71,15 +71,11 @@ export const StoryCard = ({
         )}
 
         {meta && (meta.time || meta.source) && (
-          <div className="mt-2 flex items-center gap-2 text-[11px] text-slate-500">
-            {meta.source && (
-              <span className="truncate max-w-[50%]">
-                {meta.source}
-              </span>
-            )}
-            {meta.source && meta.time && <span className="mx-1">•</span>}
+          <p className="mt-1 text-xs text-slate-500 flex flex-wrap items-center gap-x-1">
+            {meta.source && <span>{meta.source}</span>}
+            {meta.source && meta.time && <span>•</span>}
             {meta.time && <span>{meta.time}</span>}
-          </div>
+          </p>
         )}
 
         {url && (

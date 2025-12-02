@@ -8,6 +8,7 @@ import { ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import PageShell from "@/components/PageShell";
 import { StoryCard } from "@/components/StoryCard";
+import WeatherWidget from "@/components/WeatherWidget";
 
 type Story = {
   id: string;
@@ -201,6 +202,9 @@ const LakeGeneva = () => {
                     <p className="max-w-xl text-sm text-slate-600 leading-relaxed">
                       Short, trustworthy updates on city hall, schools, events, and real estate — in under 5 minutes.
                     </p>
+                    <div className="mt-3">
+                      <WeatherWidget />
+                    </div>
                   </div>
 
                   {/* Category quick links */}
