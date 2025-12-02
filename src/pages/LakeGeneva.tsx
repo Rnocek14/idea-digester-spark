@@ -10,6 +10,7 @@ import PageShell from "@/components/PageShell";
 import { StoryCard } from "@/components/StoryCard";
 import WeatherWidget from "@/components/WeatherWidget";
 import LiveIncidentsSidebar from "@/components/LiveIncidentsSidebar";
+import WeekendSidebarWidget from "@/components/WeekendSidebarWidget";
 
 type Story = {
   id: string;
@@ -321,10 +322,13 @@ const LakeGeneva = () => {
                   </article>
                 </div>
 
-                {/* Right: Live Incidents + Also today */}
+                {/* Right: Live Incidents + Weekend + Also today */}
                 <aside className="space-y-4">
                   {/* Live Incidents Widget */}
                   <LiveIncidentsSidebar />
+                  
+                  {/* Weekend Events Widget */}
+                  <WeekendSidebarWidget />
                   
                   {/* Also Today */}
                   <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
