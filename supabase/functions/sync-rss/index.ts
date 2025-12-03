@@ -92,20 +92,36 @@ const DEFAULT_COVERAGE_KEYWORDS = [
   'lakewood', 'lyons', 'sugar creek', 'east troy', 'whitewater'
 ];
 
-// Classify breaking news based on keywords
+// Check if story is fresh enough to be breaking (within 24 hours)
+function isFreshEnoughForBreaking(publishedAt: string | null): boolean {
+  if (!publishedAt) return true; // Be lenient when missing
+  try {
+    const published = new Date(publishedAt);
+    const now = new Date();
+    const diffHours = (now.getTime() - published.getTime()) / (1000 * 60 * 60);
+    return diffHours <= 24;
+  } catch {
+    return true; // Be lenient on parse errors
+  }
+}
+
+// Classify breaking news based on keywords with smart severity detection
 function classifyBreaking(story: {
   title?: string | null;
   summary?: string | null;
   category?: string | null;
   source_name?: string | null;
+  published_at?: string | null;
 }): { isBreaking: boolean; priorityScore: number } {
   const text = `${story.title || ''} ${story.summary || ''}`.toLowerCase();
   let score = 0;
 
-  // Strong signals (+5)
+  // Strong signals (+5) - truly severe language
   const strongKeywords = [
     'breaking', 'urgent', 'emergency', 'evacuate', 'shelter in place', 'amber alert',
-    'active shooter', 'major accident', 'fatal', 'multiple injuries', 'fatality'
+    'active shooter', 'major accident', 'fatal', 'fatality', 'multiple injuries',
+    'killed', 'dies', 'dead', 'death', 'child killed', 'children killed',
+    'mass casualty', 'multiple fatalities', 'found dead', 'stabbed', 'shot'
   ];
   if (strongKeywords.some(k => text.includes(k))) {
     score += 5;
@@ -130,13 +146,27 @@ function classifyBreaking(story: {
     score += 3;
   }
 
+  // Combo bumps (+1) - certain combinations indicate severity
+  if (text.includes('fire') && (text.includes('apartment') || text.includes('home') || text.includes('house'))) {
+    score += 1;
+  }
+  if (text.includes('crash') && (text.includes('injur') || text.includes('hospital'))) {
+    score += 1;
+  }
+  if (text.includes('shooting') && (text.includes('injur') || text.includes('victim'))) {
+    score += 1;
+  }
+
   // Time-sensitive signals (+2)
   const timeSensitiveKeywords = ['today', 'tonight', 'now', 'immediately', 'just happened', 'developing'];
   if (timeSensitiveKeywords.some(k => text.includes(k))) {
     score += 2;
   }
 
-  const isBreaking = score >= 4;
+  // Threshold check + freshness guard
+  const rawIsBreaking = score >= 4;
+  const isBreaking = rawIsBreaking && isFreshEnoughForBreaking(story.published_at || null);
+  
   return { isBreaking, priorityScore: score };
 }
 
@@ -717,12 +747,13 @@ When in doubt between safe and sensitive, choose sensitive. Only use blocked for
           const safetyLevel = aiResult.safety_level || "safe";
           const status = decideStatusForStory(rules as AutoPublishRule[], source.id, aiCategory, safetyLevel);
 
-          // Classify breaking news priority
+          // Classify breaking news priority (with freshness check)
           const { isBreaking, priorityScore } = classifyBreaking({
             title,
             summary: aiResult.summary,
             category: aiCategory,
             source_name: source.name,
+            published_at: parsedDate,
           });
 
           if (isBreaking) {
