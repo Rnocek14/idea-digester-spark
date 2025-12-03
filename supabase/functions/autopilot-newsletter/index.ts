@@ -100,7 +100,9 @@ serve(async (req) => {
           throw new Error(`Failed to fetch newsletter for sending: ${fetchFullError?.message}`);
         }
         
-        const { sent, failed } = await sendNewsletterEmail(supabase, fullNewsletter, supabaseUrl);
+        const { sent, failed, errors, subscriberCount } = await sendNewsletterEmail(supabase, fullNewsletter, supabaseUrl);
+        
+        console.log(`📧 Send result: sent=${sent}, failed=${failed}, subscriberCount=${subscriberCount}, errors=${JSON.stringify(errors)}`);
         
         if (sent > 0) {
           // Update status to sent
@@ -111,6 +113,8 @@ serve(async (req) => {
           
           if (updateSentError) {
             console.error("Failed to update newsletter status:", updateSentError);
+          } else {
+            console.log(`✅ Newsletter status updated to 'sent' for ID: ${existingNewsletter.id}`);
           }
           
           console.log(`✅ Newsletter sent to ${sent} subscribers (${failed} failed)`);
@@ -124,21 +128,42 @@ serve(async (req) => {
               subject: existingNewsletter.subject,
               sent_count: sent,
               failed_count: failed,
+              subscriber_count: subscriberCount,
               message: `Newsletter sent to ${sent} subscribers`,
               already_existed: true
             }),
             { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
           );
         } else {
-          console.log("⚠️ No emails were sent (check RESEND_API_KEY and subscribers)");
+          // ALL sends failed - return detailed error info
+          console.log(`⚠️ No emails were sent. Errors: ${JSON.stringify(errors)}`);
+          
+          // Determine the actual error message
+          let errorMessage = "No emails were sent";
+          if (errors.length > 0) {
+            // Check for common Resend errors
+            if (errors.some(e => e.includes("domain is not verified"))) {
+              errorMessage = "Email domain not verified in Resend. Please verify citybrief.info at https://resend.com/domains";
+            } else if (errors.some(e => e.includes("RESEND_API_KEY"))) {
+              errorMessage = "RESEND_API_KEY not configured";
+            } else if (subscriberCount === 0) {
+              errorMessage = "No active subscribers found";
+            } else {
+              errorMessage = `Send failed: ${errors[0]}`;
+            }
+          }
+          
           return new Response(
             JSON.stringify({
               success: false,
               newsletter_id: existingNewsletter.id,
               status: existingNewsletter.status,
-              message: "No emails were sent - check RESEND_API_KEY and active subscribers",
+              message: errorMessage,
               sent_count: 0,
-              failed_count: failed
+              failed_count: failed,
+              subscriber_count: subscriberCount,
+              errors: errors,
+              hint: "Check the errors array for details. Domain verification is the most common issue."
             }),
             { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
           );
@@ -352,7 +377,9 @@ serve(async (req) => {
 
     if (shouldSend) {
       console.log("📧 Auto-send enabled, sending newsletter...");
-      const { sent, failed } = await sendNewsletterEmail(supabase, savedNewsletter, supabaseUrl);
+      const { sent, failed, errors, subscriberCount } = await sendNewsletterEmail(supabase, savedNewsletter, supabaseUrl);
+      
+      console.log(`📧 Send result: sent=${sent}, failed=${failed}, subscriberCount=${subscriberCount}`);
       
       if (sent > 0) {
         await supabase
@@ -371,7 +398,25 @@ serve(async (req) => {
             subject: newsletter.subject,
             sent_count: sent,
             failed_count: failed,
+            subscriber_count: subscriberCount,
             message: `Newsletter sent to ${sent} subscribers`
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+        );
+      } else {
+        // Send failed - log errors but still return the newsletter info
+        console.log(`⚠️ Send failed. Errors: ${JSON.stringify(errors)}`);
+        return new Response(
+          JSON.stringify({
+            success: false,
+            newsletter_id: savedNewsletter.id,
+            status: "ready",
+            story_count: selectedStories.length,
+            subject: newsletter.subject,
+            message: errors.length > 0 ? errors[0] : "No emails were sent",
+            errors: errors,
+            subscriber_count: subscriberCount,
+            hint: "Check the errors array for details"
           }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
         );
@@ -746,12 +791,14 @@ async function sendNewsletterEmail(
   supabase: any,
   newsletter: any,
   baseUrl: string
-): Promise<{ sent: number; failed: number }> {
+): Promise<{ sent: number; failed: number; errors: string[]; subscriberCount: number }> {
   const resendApiKey = Deno.env.get("RESEND_API_KEY");
+  const errors: string[] = [];
   
   if (!resendApiKey) {
     console.log("⚠️ RESEND_API_KEY not configured, skipping send");
-    return { sent: 0, failed: 0 };
+    errors.push("RESEND_API_KEY not configured");
+    return { sent: 0, failed: 0, errors, subscriberCount: 0 };
   }
 
   const resend = new Resend(resendApiKey);
@@ -763,9 +810,16 @@ async function sendNewsletterEmail(
     .eq("status", "active");
     // Future: .eq("city_id", newsletter.city_id) for multi-city
 
-  if (error || !subscribers?.length) {
+  if (error) {
+    console.log("⚠️ Failed to fetch subscribers:", error);
+    errors.push(`Failed to fetch subscribers: ${error.message}`);
+    return { sent: 0, failed: 0, errors, subscriberCount: 0 };
+  }
+  
+  if (!subscribers?.length) {
     console.log("⚠️ No active subscribers found");
-    return { sent: 0, failed: 0 };
+    errors.push("No active subscribers found");
+    return { sent: 0, failed: 0, errors, subscriberCount: 0 };
   }
 
   console.log(`📧 Sending to ${subscribers.length} subscribers...`);
@@ -805,20 +859,31 @@ async function sendNewsletterEmail(
         });
 
         if (sendError) {
-          console.error(`Failed to send to ${subscriber.email}:`, sendError);
+          const errorMsg = `Failed to send to ${subscriber.email}: ${sendError.message || JSON.stringify(sendError)}`;
+          console.error(errorMsg);
+          // Capture unique errors (avoid duplicating same error for each subscriber)
+          if (!errors.some(e => e.includes(sendError.message || ''))) {
+            errors.push(sendError.message || JSON.stringify(sendError));
+          }
           totalFailed++;
         } else {
+          console.log(`✅ Sent to ${subscriber.email}`);
           totalSent++;
         }
         
         // Small delay to avoid rate limiting
         await new Promise(resolve => setTimeout(resolve, 100));
-      } catch (error) {
-        console.error(`Exception sending to ${subscriber.email}:`, error);
+      } catch (error: any) {
+        const errorMsg = `Exception sending to ${subscriber.email}: ${error.message}`;
+        console.error(errorMsg);
+        if (!errors.some(e => e.includes(error.message || ''))) {
+          errors.push(error.message || String(error));
+        }
         totalFailed++;
       }
     }
   }
 
-  return { sent: totalSent, failed: totalFailed };
+  console.log(`📧 Send complete: ${totalSent} sent, ${totalFailed} failed`);
+  return { sent: totalSent, failed: totalFailed, errors, subscriberCount: subscribers.length };
 }
