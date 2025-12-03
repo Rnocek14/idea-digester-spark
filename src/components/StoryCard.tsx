@@ -38,14 +38,25 @@ export const StoryCard = ({
     <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow">
       {imageUrl && (
         <div className="relative aspect-[16/9] overflow-hidden bg-slate-100">
-          <img
-            src={imageUrl}
-            alt={title}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-            loading="lazy"
-          />
+          {url ? (
+            <a href={url} target="_blank" rel="noopener noreferrer" className="block h-full w-full">
+              <img
+                src={imageUrl}
+                alt={title}
+                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                loading="lazy"
+              />
+            </a>
+          ) : (
+            <img
+              src={imageUrl}
+              alt={title}
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+              loading="lazy"
+            />
+          )}
           {category && (
-            <span className="absolute bottom-3 left-3 rounded-full bg-black/60 px-2.5 py-1 text-xs text-white backdrop-blur">
+            <span className="absolute bottom-3 left-3 rounded-full bg-black/60 px-2.5 py-1 text-xs text-white backdrop-blur pointer-events-none">
               {getCategoryEmoji(category)}{" "}
               <span className="capitalize">{category.replace('_', ' ')}</span>
             </span>
