@@ -5,6 +5,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle, Flame, Car, CloudLightning, Shield, Zap, ChevronRight } from "lucide-react";
 import QuickReportIncident from "./QuickReportIncident";
 
+type IncidentUpdate = {
+  is_verified: boolean;
+};
+
+type IncidentRaw = {
+  id: string;
+  slug: string;
+  title: string;
+  status: string;
+  updated_at: string;
+  incident_type: string;
+  incident_updates: IncidentUpdate[];
+};
+
 type Incident = {
   id: string;
   slug: string;
@@ -12,6 +26,7 @@ type Incident = {
   status: string;
   updated_at: string;
   incident_type: string;
+  hasUnverified: boolean;
 };
 
 const typeIcons: Record<string, React.ReactNode> = {
@@ -40,14 +55,38 @@ export default function LiveIncidentsSidebar({ onHide, showCloseButton = false }
     queryFn: async () => {
       const { data, error } = await supabase
         .from("incidents")
-        .select("id, slug, title, status, updated_at, incident_type")
+        .select(`
+          id,
+          slug,
+          title,
+          status,
+          updated_at,
+          incident_type,
+          incident_updates (
+            is_verified
+          )
+        `)
         .in("status", ["active", "monitoring"])
         .order("status", { ascending: true })
         .order("updated_at", { ascending: false })
         .limit(5);
 
       if (error) throw error;
-      return data as Incident[];
+      
+      // Map to include hasUnverified flag
+      return ((data as IncidentRaw[]) || []).map((incident) => {
+        const updates = incident.incident_updates || [];
+        const hasUnverified = updates.some((u) => u.is_verified === false);
+        return {
+          id: incident.id,
+          slug: incident.slug,
+          title: incident.title,
+          status: incident.status,
+          updated_at: incident.updated_at,
+          incident_type: incident.incident_type,
+          hasUnverified,
+        };
+      });
     },
     refetchInterval: 30000,
   });
@@ -107,8 +146,15 @@ export default function LiveIncidentsSidebar({ onHide, showCloseButton = false }
                     <div className="text-sm font-medium leading-tight line-clamp-2">
                       {statusDots[incident.status]} {incident.title}
                     </div>
-                    <div className="text-[11px] text-muted-foreground mt-0.5">
-                      Updated {formatTimeAgo(incident.updated_at)}
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-[11px] text-muted-foreground">
+                        Updated {formatTimeAgo(incident.updated_at)}
+                      </span>
+                      {incident.hasUnverified && (
+                        <span className="inline-flex items-center rounded-full bg-amber-50 px-1.5 py-0.5 text-[9px] font-medium text-amber-700 border border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800">
+                          Unconfirmed
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
