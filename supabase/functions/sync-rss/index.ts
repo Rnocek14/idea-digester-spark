@@ -75,6 +75,23 @@ function parseFlexibleDate(dateStr: string): string {
   return new Date().toISOString();
 }
 
+// Check if story is local to Lake Geneva coverage area (for regional sources)
+function isLocalToCoverageArea(
+  story: { title?: string; summary?: string; content?: string },
+  coverageKeywords: string[]
+): boolean {
+  const text = `${story.title || ''} ${story.summary || ''} ${story.content || ''}`.toLowerCase();
+  return coverageKeywords.some(keyword => text.includes(keyword.toLowerCase()));
+}
+
+// Default coverage keywords for Lake Geneva area
+const DEFAULT_COVERAGE_KEYWORDS = [
+  'lake geneva', 'walworth county', 'walworth', 'fontana', 'williams bay',
+  'elkhorn', 'delavan', 'town of linn', 'highway 50', 'hwy 50', 'us-12',
+  'big foot', 'badger high school', 'geneva lake', 'como', 'geneva',
+  'lakewood', 'lyons', 'sugar creek', 'east troy', 'whitewater'
+];
+
 // Classify breaking news based on keywords
 function classifyBreaking(story: {
   title?: string | null;
@@ -87,7 +104,8 @@ function classifyBreaking(story: {
 
   // Strong signals (+5)
   const strongKeywords = [
-    'breaking', 'urgent', 'emergency', 'evacuate', 'shelter in place', 'amber alert'
+    'breaking', 'urgent', 'emergency', 'evacuate', 'shelter in place', 'amber alert',
+    'active shooter', 'major accident', 'fatal', 'multiple injuries', 'fatality'
   ];
   if (strongKeywords.some(k => text.includes(k))) {
     score += 5;
@@ -95,7 +113,8 @@ function classifyBreaking(story: {
 
   // Severe weather signals (+4)
   if (story.category === 'weather' || (story.source_name || '').toLowerCase().includes('nws')) {
-    if (text.includes('severe thunderstorm') || text.includes('tornado') || text.includes('blizzard') || text.includes('warning')) {
+    if (text.includes('severe thunderstorm') || text.includes('tornado') || 
+        text.includes('blizzard') || text.includes('warning') || text.includes('flash flood')) {
       score += 4;
     }
   }
@@ -103,14 +122,16 @@ function classifyBreaking(story: {
   // Public safety signals (+3)
   const publicSafetyKeywords = [
     'road closed', 'closure', 'crash', 'accident', 'fire', 'shooting',
-    'police activity', 'missing person', 'water main break', 'power outage'
+    'police activity', 'missing person', 'water main break', 'power outage',
+    'multi-vehicle', 'rollover', 'structure fire', 'house fire', 'barn fire',
+    'road blocked', 'highway closed', 'detour', 'rescue', 'serious injury'
   ];
   if (publicSafetyKeywords.some(k => text.includes(k))) {
     score += 3;
   }
 
   // Time-sensitive signals (+2)
-  const timeSensitiveKeywords = ['today', 'tonight', 'now', 'immediately', 'just happened'];
+  const timeSensitiveKeywords = ['today', 'tonight', 'now', 'immediately', 'just happened', 'developing'];
   if (timeSensitiveKeywords.some(k => text.includes(k))) {
     score += 2;
   }
@@ -468,6 +489,10 @@ serve(async (req) => {
           console.log(`Extracted ${items.length} valid items from scraped content`);
         }
 
+        // Check if this is a regional source that needs geo-filtering
+        const isRegionalSource = source.metadata?.regional === true;
+        const coverageKeywords = source.metadata?.coverage_keywords || DEFAULT_COVERAGE_KEYWORDS;
+
         // Process each item
         for (const item of items) {
           const originalUrl = item.link || item["@_href"] || "";
@@ -478,6 +503,16 @@ serve(async (req) => {
           if (!originalUrl || !title) {
             result.skipped++;
             continue;
+          }
+
+          // For regional sources, filter to only local stories
+          if (isRegionalSource) {
+            if (!isLocalToCoverageArea({ title, summary: rawContent, content: rawContent }, coverageKeywords)) {
+              console.log(`⏭️ Skipping non-local story from regional source: "${title.substring(0, 50)}..."`);
+              result.skipped++;
+              continue;
+            }
+            console.log(`✅ Local match from regional source: "${title.substring(0, 50)}..."`);
           }
 
           // Check for duplicates by URL
