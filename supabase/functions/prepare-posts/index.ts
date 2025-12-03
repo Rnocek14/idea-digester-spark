@@ -131,6 +131,30 @@ serve(async (req) => {
 
     console.log("[prepare-posts] Starting post preparation...");
 
+    // KILL SWITCH CHECK
+    const { data: settings } = await supabaseClient
+      .from("system_settings")
+      .select("value")
+      .eq("key", "automation")
+      .single();
+    
+    const automationEnabled = (settings?.value as any)?.enabled !== false;
+    const socialEnabled = (settings?.value as any)?.social_enabled !== false;
+    
+    if (!automationEnabled || !socialEnabled) {
+      console.log("[prepare-posts] ⛔ Social automation is disabled via kill switch");
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          message: "Social automation is disabled",
+          automation_enabled: automationEnabled,
+          social_enabled: socialEnabled
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    console.log("[prepare-posts] ✅ Kill switch check passed");
+
     // OPTIMIZATION: Only fetch recent stories (last 2 days) with hard limit
     const since = new Date();
     since.setDate(since.getDate() - 2);
