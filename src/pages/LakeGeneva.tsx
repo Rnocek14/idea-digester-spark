@@ -547,10 +547,16 @@ const LakeGeneva = () => {
     return item.category?.replace('_', ' ') || 'Update';
   };
 
-  // Check if item is fresh (<1 hour)
+  // Check if item is fresh (<1 hour) - for red timestamp styling
   const isFreshItem = (timestamp: string) => {
     const diffMs = Date.now() - new Date(timestamp).getTime();
     return diffMs < 60 * 60 * 1000;
+  };
+
+  // Check if item is truly "live" (<10 minutes) - for LIVE badge
+  const isLiveItem = (timestamp: string) => {
+    const diffMs = Date.now() - new Date(timestamp).getTime();
+    return diffMs < 10 * 60 * 1000;
   };
 
   return (
@@ -881,7 +887,7 @@ const LakeGeneva = () => {
                                   }`}>
                                     {getPreciseRelativeTime(item.timestamp)}
                                   </span>
-                                  {hasRecentActivity && isFreshItem(item.timestamp) && (
+                                  {hasRecentActivity && isLiveItem(item.timestamp) && (
                                     <div className="flex items-center justify-end gap-1 mt-0.5">
                                       <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
                                       <span className="text-[10px] font-semibold text-red-600 uppercase">Live</span>
