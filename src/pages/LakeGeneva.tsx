@@ -11,6 +11,7 @@ import { StoryCard } from "@/components/StoryCard";
 import WeatherWidget from "@/components/WeatherWidget";
 import LiveIncidentsSidebar from "@/components/LiveIncidentsSidebar";
 import WeekendSidebarWidget from "@/components/WeekendSidebarWidget";
+import AlsoTodayCard from "@/components/AlsoTodayCard";
 
 type Story = {
   id: string;
@@ -229,149 +230,109 @@ const LakeGeneva = () => {
       title="Lake Geneva Brief – Local News, Simplified"
       description="Fast, trustworthy updates on Lake Geneva city hall, schools, events, and real estate."
     >
-      {/* Unified Hero Section */}
-      {featured && (
-        <section className="-mx-4 sm:-mx-6 lg:-mx-8 border-b border-slate-200 bg-white px-4 sm:px-6 lg:px-8 py-10">
-          <div className="grid gap-10 lg:grid-cols-[1fr_340px]">
-                {/* Left: greeting, headline, category links, featured card */}
-                <div className="space-y-5">
-                  {/* Greeting + headline */}
-                  <div className="space-y-1">
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                      Good morning, Lake Geneva
-                    </p>
-                    <h1 className="font-semibold text-2xl sm:text-3xl md:text-[32px] leading-tight text-slate-900">
-                      Here's what's happening this week
-                    </h1>
-                    <p className="max-w-xl text-sm text-slate-600 leading-relaxed">
-                      Short, trustworthy updates on city hall, schools, events, and real estate — in under 5 minutes.
-                    </p>
-                    <div className="mt-3">
-                      <WeatherWidget />
-                    </div>
+      {/* Page wrapper with side panel layout */}
+      <div className="relative">
+        {/* Main content lane - with right padding on xl for the floating rail */}
+        <div className="xl:pr-[360px]">
+          {/* Hero Section */}
+          {featured && (
+            <section className="-mx-4 sm:-mx-6 lg:-mx-8 border-b border-slate-200 bg-white px-4 sm:px-6 lg:px-8 py-10">
+              <div className="space-y-5">
+                {/* Greeting + headline */}
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                    Good morning, Lake Geneva
+                  </p>
+                  <h1 className="font-semibold text-2xl sm:text-3xl md:text-[32px] leading-tight text-slate-900">
+                    Here's what's happening this week
+                  </h1>
+                  <p className="max-w-xl text-sm text-slate-600 leading-relaxed">
+                    Short, trustworthy updates on city hall, schools, events, and real estate — in under 5 minutes.
+                  </p>
+                  <div className="mt-3">
+                    <WeatherWidget />
                   </div>
-
-                  {/* Category quick links */}
-                  <div className="flex flex-wrap gap-2">
-                    {sortedCategories.slice(0, 4).map((cat) => (
-                      <button
-                        key={cat}
-                        type="button"
-                        onClick={() => {
-                          const el = document.getElementById(cat);
-                          if (el) el.scrollIntoView({ behavior: 'smooth' });
-                        }}
-                        className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-700 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-700 transition-colors"
-                      >
-                        <span>{getCategoryEmoji(cat)}</span>
-                        <span className="capitalize font-medium">
-                          {cat.replace('_', ' ')}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Featured story card */}
-                  <article className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100">
-                    <div className="relative h-56 sm:h-60">
-                      {featured.image_url && (
-                        <img
-                          src={featured.image_url}
-                          alt={featured.title}
-                          className="h-full w-full object-cover transition-transform duration-500 hover:scale-[1.03]"
-                        />
-                      )}
-                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-black/30 to-transparent" />
-                      <div className="pointer-events-none absolute inset-x-0 bottom-0 p-4 sm:p-5">
-                        <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-200">
-                          Top story
-                        </p>
-                        <h2 className="text-lg sm:text-xl font-semibold text-white">
-                          {featured.title}
-                        </h2>
-                        {(featured.content_website || featured.content_lg_base || featured.summary) && (
-                          <p className="mt-1 line-clamp-2 text-xs sm:text-sm text-slate-100/90">
-                            {featured.content_website || featured.content_lg_base || featured.summary}
-                          </p>
-                        )}
-                        <div className="mt-3 flex items-center gap-3 text-[11px] text-slate-200/90">
-                          {featured.category && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-black/30 px-2 py-0.5">
-                              {getCategoryEmoji(featured.category)}
-                              <span className="capitalize">
-                                {featured.category.replace('_', ' ')}
-                              </span>
-                            </span>
-                          )}
-                          <span className="opacity-80">
-                            {getRelativeTime(featured.publish_date || featured.created_at) || 'Today'} · 3 min read
-                          </span>
-                        </div>
-                      </div>
-                      {featured.original_url && (
-                        <a
-                          href={featured.original_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="absolute inset-0"
-                        >
-                          <span className="sr-only">Read more</span>
-                        </a>
-                      )}
-                    </div>
-                  </article>
                 </div>
 
-                {/* Right: Live Incidents + Weekend + Also today */}
-                <aside className="space-y-4">
-                  {/* Live Incidents Widget */}
-                  <LiveIncidentsSidebar />
-                  
-                  {/* Weekend Events Widget */}
-                  <WeekendSidebarWidget />
-                  
-                  {/* Also Today */}
-                  <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                      Also today
-                    </p>
-                    <ul className="mt-3 space-y-3">
-                      {restStories.slice(0, 5).map((story) => (
-                        <li key={story.id}>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const el = document.getElementById(
-                                (story.category || 'other').toLowerCase(),
-                              );
-                              if (el) el.scrollIntoView({ behavior: 'smooth' });
-                            }}
-                            className="w-full text-left"
-                          >
-                            <p className="text-sm font-medium text-slate-900 line-clamp-2 hover:text-blue-700 transition-colors">
-                              {story.title}
-                            </p>
-                            <p className="mt-0.5 flex items-center gap-2 text-[11px] text-slate-500">
-                              {story.category && (
-                                <>
-                                  <span>{getCategoryEmoji(story.category)}</span>
-                                  <span className="capitalize">
-                                    {story.category.replace('_', ' ')}
-                                  </span>
-                                  <span className="opacity-40">•</span>
-                                </>
-                              )}
-                              <span>{getRelativeTime(story.publish_date || story.created_at)}</span>
-                            </p>
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
+                {/* Category quick links */}
+                <div className="flex flex-wrap gap-2">
+                  {sortedCategories.slice(0, 4).map((cat) => (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => {
+                        const el = document.getElementById(cat);
+                        if (el) el.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-700 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                    >
+                      <span>{getCategoryEmoji(cat)}</span>
+                      <span className="capitalize font-medium">
+                        {cat.replace('_', ' ')}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Featured story card */}
+                <article className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100">
+                  <div className="relative h-56 sm:h-60">
+                    {featured.image_url && (
+                      <img
+                        src={featured.image_url}
+                        alt={featured.title}
+                        className="h-full w-full object-cover transition-transform duration-500 hover:scale-[1.03]"
+                      />
+                    )}
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-black/30 to-transparent" />
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 p-4 sm:p-5">
+                      <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-200">
+                        Top story
+                      </p>
+                      <h2 className="text-lg sm:text-xl font-semibold text-white">
+                        {featured.title}
+                      </h2>
+                      {(featured.content_website || featured.content_lg_base || featured.summary) && (
+                        <p className="mt-1 line-clamp-2 text-xs sm:text-sm text-slate-100/90">
+                          {featured.content_website || featured.content_lg_base || featured.summary}
+                        </p>
+                      )}
+                      <div className="mt-3 flex items-center gap-3 text-[11px] text-slate-200/90">
+                        {featured.category && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-black/30 px-2 py-0.5">
+                            {getCategoryEmoji(featured.category)}
+                            <span className="capitalize">
+                              {featured.category.replace('_', ' ')}
+                            </span>
+                          </span>
+                        )}
+                        <span className="opacity-80">
+                          {getRelativeTime(featured.publish_date || featured.created_at) || 'Today'} · 3 min read
+                        </span>
+                      </div>
+                    </div>
+                    {featured.original_url && (
+                      <a
+                        href={featured.original_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="absolute inset-0"
+                      >
+                        <span className="sr-only">Read more</span>
+                      </a>
+                    )}
                   </div>
+                </article>
+
+                {/* Mobile/tablet sidebar - stacked below hero */}
+                <aside className="space-y-4 xl:hidden">
+                  <LiveIncidentsSidebar />
+                  <WeekendSidebarWidget />
+                  <AlsoTodayCard stories={restStories} />
                 </aside>
-            </div>
-          </section>
-        )}
+              </div>
+            </section>
+          )}
 
         {/* Sponsor Block */}
         {sponsor && (
@@ -537,34 +498,43 @@ const LakeGeneva = () => {
                 A fast, friendly rundown of what matters in Lake Geneva. No spam, no noise.
               </p>
 
-            <form
-              onSubmit={handleSubscribe}
-              className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-center"
-            >
-              <Input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                className="flex-1 max-w-sm rounded-full border-slate-300 bg-slate-50 px-4 py-2.5 text-sm focus:border-blue-600 focus:bg-white focus:ring-2 focus:ring-blue-100"
-                disabled={isSubscribing}
-              />
-              <Button
-                type="submit"
-                disabled={isSubscribing}
-                className="rounded-full bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow hover:bg-blue-700 transition-colors"
+              <form
+                onSubmit={handleSubscribe}
+                className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-center"
               >
-                {isSubscribing ? 'Subscribing…' : 'Subscribe'}
-              </Button>
-            </form>
+                <Input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  className="flex-1 max-w-sm rounded-full border-slate-300 bg-slate-50 px-4 py-2.5 text-sm focus:border-blue-600 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                  disabled={isSubscribing}
+                />
+                <Button
+                  type="submit"
+                  disabled={isSubscribing}
+                  className="rounded-full bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow hover:bg-blue-700 transition-colors"
+                >
+                  {isSubscribing ? 'Subscribing…' : 'Subscribe'}
+                </Button>
+              </form>
 
               <p className="mt-3 text-[11px] text-slate-400">
                 2–4 emails per week. Unsubscribe anytime.
               </p>
-          </div>
-        </section>
-      </PageShell>
-    );
-  };
+            </div>
+          </section>
+        </div>
+
+        {/* Floating right rail - desktop only */}
+        <aside className="hidden xl:flex flex-col gap-4 absolute top-10 right-0 w-[340px]">
+          <LiveIncidentsSidebar />
+          <WeekendSidebarWidget />
+          <AlsoTodayCard stories={restStories} />
+        </aside>
+      </div>
+    </PageShell>
+  );
+};
 
 export default LakeGeneva;
