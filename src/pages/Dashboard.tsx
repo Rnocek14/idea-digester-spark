@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ActivityFeed } from "@/components/ActivityFeed";
 import { PipelineHealthCard } from "@/components/PipelineHealthCard";
 import { IncidentHealthCard } from "@/components/IncidentHealthCard";
+import { SourceQualityCard } from "@/components/SourceQualityCard";
 const Dashboard = () => {
   const { data: pendingCount = 0, isLoading: pendingLoading, refetch: refetchPending } = useQuery({
     queryKey: ["dashboard-pending-count"],
@@ -152,6 +153,8 @@ const Dashboard = () => {
         <PipelineHealthCard />
         <IncidentHealthCard />
       </div>
+
+      <SourceQualityCard />
 
       <ActivityFeed />
     </div>
