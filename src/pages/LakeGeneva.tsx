@@ -108,6 +108,22 @@ const LakeGeneva = () => {
     document.title = "Lake Geneva Brief – Today's Local News";
   }, []);
 
+  // Fetch active incidents for sidebar toggle
+  const { data: activeIncidents = [] } = useQuery({
+    queryKey: ["active-incidents-count"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("incidents")
+        .select("id, status")
+        .in("status", ["active", "monitoring"]);
+      if (error) throw error;
+      return data || [];
+    },
+    refetchInterval: 30000,
+  });
+  const activeIncidentCount = activeIncidents.length;
+  const hasActiveIncidents = activeIncidentCount > 0;
+
   // Fetch today's published stories
   const { data: stories = [], isLoading: storiesLoading } = useQuery({
     queryKey: ["public-stories"],
@@ -550,7 +566,7 @@ const LakeGeneva = () => {
               <WeekendSidebarWidget />
             </div>
           </aside>
-        ) : (
+        ) : hasActiveIncidents ? (
           <button
             onClick={() => setIsSidebarVisible(true)}
             className="hidden xl:flex fixed top-28 right-4 items-center gap-2 rounded-full px-3 py-1.5 text-xs border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 transition-colors shadow-sm"
@@ -558,8 +574,13 @@ const LakeGeneva = () => {
           >
             <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
             Live
+            {activeIncidentCount > 0 && (
+              <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-medium">
+                {activeIncidentCount}
+              </span>
+            )}
           </button>
-        )}
+        ) : null}
 
         {/* Mobile/Tablet: Incidents + Weekend stacked below hero */}
         <div className="xl:hidden mt-6 space-y-4">
