@@ -60,9 +60,22 @@ export const StoryCard = ({
           </span>
         )}
 
-        <h3 className="text-base sm:text-lg text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-2 leading-tight font-semibold">
-          {title}
-        </h3>
+        {url ? (
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block"
+          >
+            <h3 className="text-base sm:text-lg text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-2 leading-tight font-semibold">
+              {title}
+            </h3>
+          </a>
+        ) : (
+          <h3 className="text-base sm:text-lg text-slate-900 line-clamp-2 leading-tight font-semibold">
+            {title}
+          </h3>
+        )}
 
         {summary && (
           <p className="mt-1 text-sm text-slate-600 line-clamp-3 leading-relaxed">
