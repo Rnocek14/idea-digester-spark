@@ -235,8 +235,10 @@ const LakeGeneva = () => {
         {/* Hero Section */}
         {featured && (
           <section className="-mx-4 sm:-mx-6 lg:-mx-8 border-b border-slate-200 bg-white px-4 sm:px-6 lg:px-8 py-10">
-            {/* Two column grid: main content + Also Today */}
-            <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+            {/* Constrained hero content */}
+            <div className="mx-auto max-w-4xl">
+              {/* Two column grid: main content + Also Today */}
+              <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
               {/* LEFT COLUMN: greeting, headline, weather, pills, featured story */}
               <div className="space-y-5">
                 {/* Greeting + headline */}
@@ -337,6 +339,7 @@ const LakeGeneva = () => {
               <AlsoTodayCard stories={restStories} />
               <LiveIncidentsSidebar />
               <WeekendSidebarWidget />
+            </div>
             </div>
           </section>
         )}
