@@ -7,6 +7,35 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+// Curated civic images - Lake Geneva City Hall and downtown civic scenes
+// These are used when OG image is a generic calendar icon
+const CURATED_CIVIC_IMAGES = [
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Lake_Geneva_Wisconsin_City_Hall.jpg/1280px-Lake_Geneva_Wisconsin_City_Hall.jpg",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Walworth_County_Courthouse.jpg/1280px-Walworth_County_Courthouse.jpg",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Lake_Geneva%2C_Wisconsin_-_Main_Street.jpg/1280px-Lake_Geneva%2C_Wisconsin_-_Main_Street.jpg",
+];
+
+// Generic OG image patterns to detect and replace
+const GENERIC_OG_PATTERNS = [
+  "IconModuleCalendar",
+  "calendar-icon",
+  "default-event",
+  "placeholder",
+];
+
+function isGenericCivicImage(imageUrl: string | null): boolean {
+  if (!imageUrl) return false;
+  return GENERIC_OG_PATTERNS.some(pattern => 
+    imageUrl.toLowerCase().includes(pattern.toLowerCase())
+  );
+}
+
+function getCuratedCivicImage(storyId: string): string {
+  // Use story ID hash to get consistent image per story
+  const hash = storyId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return CURATED_CIVIC_IMAGES[hash % CURATED_CIVIC_IMAGES.length];
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -71,17 +100,31 @@ serve(async (req) => {
 
     let preparedCount = 0;
     let breakingPrepared = 0;
+    let civicSkippedIG = 0;
+    let curatedCivicUsed = 0;
     const now = new Date();
 
     for (const story of eligibleStories) {
+      const category = (story.category || '').toLowerCase();
+      const isCivic = category === 'civic';
+      
       // STEP 1: Determine image ONCE per story (before platform loop)
       let finalImageUrl = story.image_url;
       let generatedImageUrl = null;
+      let imageSource = 'og';
       const isSponsored = story.is_sponsored || false;
       
-      // ONLY generate AI image for sponsored posts (mandatory)
-      // For non-sponsored: use OG image if available, skip if missing
-      if (isSponsored && !story.image_url) {
+      // Check if this is a generic civic OG image that needs replacement
+      const hasGenericCivicImage = isCivic && isGenericCivicImage(story.image_url);
+      
+      if (hasGenericCivicImage) {
+        // Replace generic civic OG with curated image
+        finalImageUrl = getCuratedCivicImage(story.id);
+        imageSource = 'curated_civic';
+        curatedCivicUsed++;
+        console.log(`[prepare-posts] Using curated civic image for story ${story.id}`);
+      } else if (isSponsored && !story.image_url) {
+        // ONLY generate AI image for sponsored posts (mandatory)
         console.log(`[prepare-posts] Sponsored story ${story.id} needs AI image`);
         
         try {
@@ -99,6 +142,7 @@ serve(async (req) => {
           
           generatedImageUrl = aiImageData.image_url;
           finalImageUrl = generatedImageUrl;
+          imageSource = 'ai_sponsored';
           console.log(`[prepare-posts] Generated AI image for sponsored story ${story.id}`);
         } catch (err) {
           console.error(`[prepare-posts] Exception generating AI image:`, err);
@@ -108,15 +152,22 @@ serve(async (req) => {
       } else if (isSponsored && story.image_url) {
         // Sponsored with existing image - use it
         finalImageUrl = story.image_url;
+        imageSource = 'existing_sponsored';
         console.log(`[prepare-posts] Sponsored story ${story.id} using existing image`);
-      } else {
-        // Non-sponsored: use whatever image exists (OG or pre-generated AI)
-        finalImageUrl = story.image_url;
+      } else if (story.image_source === 'AI') {
+        imageSource = 'ai';
       }
       
       // STEP 2: Now loop through platforms using the SAME image
       for (const [platform, config] of Object.entries(platformConfig)) {
-        // Skip Instagram if no image available
+        // CIVIC FILTER: Skip ALL civic content on Instagram
+        if (platform === 'instagram' && isCivic) {
+          console.log(`[prepare-posts] Skipping civic content on Instagram: "${story.title}"`);
+          civicSkippedIG++;
+          continue;
+        }
+        
+        // Skip Instagram if no image available (non-civic)
         if (platform === 'instagram' && !finalImageUrl) {
           console.log(`[prepare-posts] Skipping Instagram for story ${story.id} - no image`);
           continue;
@@ -185,6 +236,7 @@ serve(async (req) => {
             metadata: {
               story_title: story.title,
               story_category: story.category,
+              image_source: imageSource,
               image_generated: generatedImageUrl ? true : false,
               sponsored_safe: isSponsored ? (generatedImageUrl ? true : false) : true,
               type: isBreaking ? 'breaking' : 'normal',
@@ -197,7 +249,6 @@ serve(async (req) => {
           continue;
         }
 
-        const imageSource = isSponsored ? 'AI (sponsored)' : (generatedImageUrl ? 'AI' : 'OG');
         const breakingLabel = isBreaking ? ' 🔴 BREAKING' : '';
         console.log(`[prepare-posts] Scheduled ${platform} post for ${scheduledFor.toISOString()} [${imageSource}]${breakingLabel}`);
         preparedCount++;
@@ -205,7 +256,8 @@ serve(async (req) => {
       }
     }
 
-    console.log(`[prepare-posts] Prepared ${preparedCount} posts across all platforms (${breakingPrepared} breaking)`);
+    console.log(`[prepare-posts] Prepared ${preparedCount} posts across all platforms`);
+    console.log(`[prepare-posts] Stats: ${breakingPrepared} breaking, ${civicSkippedIG} civic skipped on IG, ${curatedCivicUsed} curated civic images used`);
 
     return new Response(
       JSON.stringify({
@@ -213,6 +265,8 @@ serve(async (req) => {
         message: `Prepared ${preparedCount} posts for social media${breakingPrepared > 0 ? ` (${breakingPrepared} breaking)` : ''}`,
         prepared: preparedCount,
         breakingPrepared,
+        civicSkippedIG,
+        curatedCivicUsed,
         storiesProcessed: eligibleStories.length,
       }),
       {
