@@ -2,6 +2,9 @@
 
 > **Goal:** Keep the autonomous news system running safely, and know exactly what to do when something looks off.
 
+> **Primary owner:** Riley Nocek
+> **Backup:** (TBD)
+
 This playbook covers:
 
 - How the automation pipeline works
@@ -164,11 +167,13 @@ You want:
 2. **Fix or remove the bad content**
    - In Supabase:
      ```sql
+     -- Replace <ID_OF_BAD_STORY> with the UUID from content_queue
      UPDATE content_queue
      SET status = 'removed'
-     WHERE id = <ID_OF_BAD_STORY>;
+     WHERE id = '<ID_OF_BAD_STORY>';
      ```
    - Or use whatever admin tooling exists to unpublish/remove.
+   - **If the story has already gone to socials, delete or hide the post natively on each platform as well.**
 
 3. **Check safety filter**
    - Look at the offending story's `safety_level` and `category`.
@@ -248,10 +253,10 @@ You want:
 3. **Test newsletter manually**
    ```sql
    SELECT net.http_post(
-     url := 'https://mzumvkrpnxhkvhdyzgqa.supabase.co/functions/v1/autopilot-newsletter',
+     url := 'https://<YOUR_PROJECT>.supabase.co/functions/v1/autopilot-newsletter',
      headers := jsonb_build_object(
        'Content-Type', 'application/json',
-       'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16dW12a3Jwbnhoa3ZoZHl6Z3FhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQxMDkzNjEsImV4cCI6MjA3OTY4NTM2MX0.HgDLweJ15vv-OtiQ-dQkuiDL9AzXdUQ6mSKxOkO0GdA'
+       'Authorization', 'Bearer <YOUR_ANON_KEY>'
      ),
      body := '{"sendNow": true, "force": true}'::jsonb
    ) AS request_id;
@@ -285,10 +290,10 @@ You want:
 3. **Manually trigger `process-post-queue` once**
    ```sql
    SELECT net.http_post(
-     url := 'https://mzumvkrpnxhkvhdyzgqa.supabase.co/functions/v1/process-post-queue',
+     url := 'https://<YOUR_PROJECT>.supabase.co/functions/v1/process-post-queue',
      headers := jsonb_build_object(
        'Content-Type', 'application/json',
-       'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16dW12a3Jwbnhoa3ZoZHl6Z3FhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQxMDkzNjEsImV4cCI6MjA3OTY4NTM2MX0.HgDLweJ15vv-OtiQ-dQkuiDL9AzXdUQ6mSKxOkO0GdA'
+       'Authorization', 'Bearer <YOUR_ANON_KEY>'
      ),
      body := '{}'::jsonb
    ) AS request_id;
@@ -360,10 +365,10 @@ To verify the kill switch works:
 
 ```sql
 SELECT net.http_post(
-  url := 'https://mzumvkrpnxhkvhdyzgqa.supabase.co/functions/v1/autopilot-newsletter',
+  url := 'https://<YOUR_PROJECT>.supabase.co/functions/v1/autopilot-newsletter',
   headers := jsonb_build_object(
     'Content-Type', 'application/json',
-    'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16dW12a3Jwbnhoa3ZoZHl6Z3FhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQxMDkzNjEsImV4cCI6MjA3OTY4NTM2MX0.HgDLweJ15vv-OtiQ-dQkuiDL9AzXdUQ6mSKxOkO0GdA'
+    'Authorization', 'Bearer <YOUR_ANON_KEY>'
   ),
   body := '{"sendNow": true, "force": true}'::jsonb
 ) AS request_id;
