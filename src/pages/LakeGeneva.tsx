@@ -174,14 +174,17 @@ const LakeGeneva = () => {
   const detectCivicTopic = (title: string): CivicTopic => {
     const t = title.toLowerCase();
     
+    // Order matters: more specific matches first to avoid false positives
     if (t.includes('hillmoor') || t.includes('historic') || t.includes('preservation')) return 'historic';
     if (t.includes('park') || t.includes('cemetery') || t.includes('tree') || t.includes('avian')) return 'parks';
-    if (t.includes('pier') || t.includes('harbor') || t.includes('harbour') || t.includes('lakefront') || t.includes('lake')) return 'lakefront';
     if (t.includes('library')) return 'library';
     if (t.includes('police') || t.includes('fire') || t.includes('court') || t.includes('safety')) return 'safety';
     if (t.includes('tourism') || t.includes('visitor')) return 'tourism';
+    // Utilities before lakefront so "Lake Geneva Utility Commission" → utilities, not lakefront
     if (t.includes('utility') || t.includes('utilities') || t.includes('water') || t.includes('sewer')) return 'utilities';
     if (t.includes('finance') || t.includes('licensing') || t.includes('regulation') || t.includes('budget')) return 'finance';
+    // Lakefront last among specifics (catches piers, harbors, lake-related)
+    if (t.includes('pier') || t.includes('harbor') || t.includes('harbour') || t.includes('lakefront')) return 'lakefront';
     
     return 'default';
   };
@@ -194,13 +197,14 @@ const LakeGeneva = () => {
 
   const getCuratedCivicImage = (storyId: string, title: string) => {
     const topic = detectCivicTopic(title);
-    const images = CIVIC_IMAGE_LIBRARIES[topic];
+    const images = CIVIC_IMAGE_LIBRARIES[topic] ?? CIVIC_IMAGE_LIBRARIES.default;
+    const pool = images.length > 0 ? images : CIVIC_IMAGE_LIBRARIES.default;
     
     // Deterministic hash using storyId + topic for consistency
     const key = `${storyId}:${topic}`;
     const hash = key.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
     
-    return images[hash % images.length];
+    return pool[hash % pool.length];
   };
 
   // Fetch today's published stories
