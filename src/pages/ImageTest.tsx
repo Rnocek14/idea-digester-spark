@@ -47,6 +47,8 @@ export default function ImageTest() {
       if (error) throw error;
       return data;
     },
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
   });
 
   // Group stories by category
