@@ -560,7 +560,7 @@ const LakeGeneva = () => {
                 {/* Category Filter Pills */}
                 <section className="py-4 border-b border-slate-200 sticky top-[73px] z-20 bg-white">
                   <div className="flex flex-wrap gap-2">
-                    {['all', ...categoryOrder].map((cat) => (
+                    {['all', ...sortedCategories].map((cat) => (
                       <button
                         key={cat}
                         onClick={() => setActiveCategory(cat)}
