@@ -538,16 +538,16 @@ const LakeGeneva = () => {
 
         </div>
 
-        {/* Floating sidebar in right margin - xl screens only */}
-        <aside className="hidden xl:block fixed top-28 w-[280px]" style={{ right: 'max(1rem, calc((100vw - 896px) / 2 - 300px))' }}>
+        {/* Floating sidebar in right margin - 2xl screens only (needs 1536px+ for no overlap) */}
+        <aside className="hidden 2xl:block fixed top-28 right-6 w-[240px]">
           <div className="space-y-4">
             <LiveIncidentsSidebar />
             <WeekendSidebarWidget />
           </div>
         </aside>
 
-        {/* Mobile/Tablet: Incidents + Weekend stacked below hero */}
-        <div className="xl:hidden mt-6 space-y-4">
+        {/* Mobile/Tablet/Laptop: Incidents + Weekend stacked below hero */}
+        <div className="2xl:hidden mt-6 space-y-4">
           <LiveIncidentsSidebar />
           <WeekendSidebarWidget />
         </div>
