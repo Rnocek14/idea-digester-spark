@@ -36,7 +36,7 @@ type Sponsor = {
   market_fact_override?: string | null;
 };
 
-const categoryOrder = ["news", "schools", "events", "dining", "real_estate", "community"];
+const categoryOrder = ["news", "civic", "schools", "events", "dining", "real_estate", "community"];
 
 // Real estate market metrics for rotating display
 const REAL_ESTATE_MARKET_METRICS = [
@@ -94,6 +94,7 @@ const getCategoryEmoji = (category: string | null) => {
     case "real_estate": return "🏡";
     case "community": return "🤝";
     case "schools": return "🏫";
+    case "civic": return "🏛️";
     default: return "📍";
   }
 };
