@@ -379,7 +379,7 @@ const LakeGeneva = () => {
       ? sortedCategories
       : sortedCategories.filter((c) => c === activeCategory);
 
-  // Build unified feed for "Most Recent" view
+  // Build unified feed for "Most Recent" view with adaptive time window
   const buildUnifiedFeed = (): FeedItem[] => {
     const feedItems: FeedItem[] = [];
     
@@ -403,7 +403,7 @@ const LakeGeneva = () => {
         id: incident.id,
         type: 'incident',
         title: incident.title,
-        summary: incident.location || null,
+        summary: incident.location ? `Near ${incident.location}` : null,
         category: 'incident',
         timestamp: incident.updated_at || incident.started_at,
         url: `/incidents/${incident.slug}`,
@@ -420,6 +420,41 @@ const LakeGeneva = () => {
   };
 
   const unifiedFeed = viewMode === 'recent' ? buildUnifiedFeed() : [];
+  
+  // Adaptive time window: filter to show appropriate range
+  const getAdaptiveFeed = () => {
+    const now = Date.now();
+    const h24 = 24 * 60 * 60 * 1000;
+    const d3 = 3 * h24;
+    const d7 = 7 * h24;
+    
+    const filterByAge = (maxAge: number) => 
+      unifiedFeed.filter(item => now - new Date(item.timestamp).getTime() <= maxAge);
+    
+    // Try 24h first
+    let filtered = filterByAge(h24);
+    if (filtered.length >= 5) return { items: filtered, range: '24h' };
+    
+    // Extend to 3 days
+    filtered = filterByAge(d3);
+    if (filtered.length >= 5) return { items: filtered, range: '3d' };
+    
+    // Fall back to 7 days
+    return { items: filterByAge(d7), range: '7d' };
+  };
+  
+  const { items: displayFeed, range: feedRange } = viewMode === 'recent' 
+    ? getAdaptiveFeed() 
+    : { items: [], range: '24h' };
+  
+  // Check if there's any recent activity (last 3 hours) to show "live" feel
+  const hasRecentActivity = displayFeed.some(
+    item => Date.now() - new Date(item.timestamp).getTime() < 3 * 60 * 60 * 1000
+  );
+  
+  // Check if feed is truly quiet (no items at all in 24h)
+  const isQuietDay = viewMode === 'recent' && 
+    unifiedFeed.filter(item => Date.now() - new Date(item.timestamp).getTime() < 24 * 60 * 60 * 1000).length === 0;
 
   // Detect new content in the feed and show toast
   useEffect(() => {
@@ -781,95 +816,129 @@ const LakeGeneva = () => {
                 {/* Most Recent Feed */}
                 {viewMode === 'recent' ? (
                   <section className="py-6">
-                    {/* Auto-refresh indicator */}
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-2 text-xs text-slate-500">
-                        <RefreshCw className="h-3 w-3 animate-spin-slow" />
-                        <span>Auto-refreshing every 30s</span>
-                      </div>
-                      {storiesUpdatedAt && (
-                        <span className="text-xs text-slate-400">
-                          Updated {getPreciseRelativeTime(new Date(storiesUpdatedAt).toISOString())}
-                        </span>
-                      )}
-                    </div>
-                    <div className="space-y-3">
-                      {unifiedFeed.map((item) => (
-                        <a
-                          key={`${item.type}-${item.id}`}
-                          href={item.url || '#'}
-                          target={item.type === 'story' ? '_blank' : undefined}
-                          rel={item.type === 'story' ? 'noopener noreferrer' : undefined}
-                          className="block group"
+                    {/* Quiet day message */}
+                    {isQuietDay ? (
+                      <div className="text-center py-12 px-4">
+                        <p className="text-slate-500 mb-3">
+                          No major updates in the last day. That's usually good news.
+                        </p>
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setViewMode('topic')}
+                          className="text-sm"
                         >
-                          <div className={`flex items-start gap-3 p-3 rounded-xl border transition-all hover:shadow-sm ${
-                            item.type === 'incident' && item.status === 'active'
-                              ? 'bg-red-50/50 border-red-200 hover:border-red-300'
-                              : 'bg-white border-slate-200 hover:border-slate-300'
-                          }`}>
-                            {/* Timestamp Column */}
-                            <div className="flex-shrink-0 w-16 text-right">
-                              <span className={`text-xs font-medium ${
-                                isFreshItem(item.timestamp) ? 'text-red-600' : 'text-slate-400'
-                              }`}>
-                                {getPreciseRelativeTime(item.timestamp)}
-                              </span>
-                              {isFreshItem(item.timestamp) && (
-                                <div className="flex items-center justify-end gap-1 mt-0.5">
-                                  <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
-                                  <span className="text-[10px] font-semibold text-red-600 uppercase">Live</span>
-                                </div>
-                              )}
-                            </div>
-
-                            {/* Content */}
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
-                                  item.type === 'incident'
-                                    ? item.status === 'active' 
-                                      ? 'bg-red-100 text-red-700' 
-                                      : 'bg-amber-100 text-amber-700'
-                                    : 'bg-slate-100 text-slate-600'
-                                }`}>
-                                  <span>{getFeedItemIcon(item)}</span>
-                                  <span>{getFeedItemLabel(item)}</span>
+                          Browse by topic instead →
+                        </Button>
+                      </div>
+                    ) : (
+                      <>
+                        {/* Live status indicator */}
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-2 text-xs text-slate-500">
+                            {hasRecentActivity ? (
+                              <>
+                                <span className="flex items-center gap-1.5">
+                                  <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                                  <span className="text-green-600 font-medium">● Live</span>
                                 </span>
-                                {item.type === 'incident' && item.status === 'active' && (
-                                  <span className="text-[10px] font-medium text-red-600 uppercase">Active</span>
-                                )}
-                              </div>
-                              <h3 className="text-sm font-semibold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-2">
-                                {item.title}
-                              </h3>
-                              {item.summary && (
-                                <p className="mt-0.5 text-xs text-slate-500 line-clamp-1">
-                                  {item.summary}
-                                </p>
-                              )}
-                            </div>
-
-                            {/* Optional Image */}
-                            {item.image_url && (
-                              <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden bg-slate-100">
-                                <img
-                                  src={item.image_url}
-                                  alt=""
-                                  className="w-full h-full object-cover"
-                                  loading="lazy"
-                                />
-                              </div>
+                                <span className="text-slate-400">·</span>
+                                <span>Updates every 30 seconds</span>
+                              </>
+                            ) : (
+                              <>
+                                <RefreshCw className="h-3 w-3 animate-spin-slow" />
+                                <span>
+                                  {feedRange === '24h' ? 'Last 24 hours' : feedRange === '3d' ? 'Last 3 days' : 'Last 7 days'}
+                                </span>
+                              </>
                             )}
                           </div>
-                        </a>
-                      ))}
-                      
-                      {unifiedFeed.length === 0 && (
-                        <div className="text-center py-8 text-slate-500">
-                          No recent updates. Check back soon!
+                          {storiesUpdatedAt && (
+                            <span className="text-xs text-slate-400">
+                              Updated {getPreciseRelativeTime(new Date(storiesUpdatedAt).toISOString())}
+                            </span>
+                          )}
                         </div>
-                      )}
-                    </div>
+                        
+                        <div className="space-y-3">
+                          {displayFeed.map((item) => (
+                            <a
+                              key={`${item.type}-${item.id}`}
+                              href={item.url || '#'}
+                              target={item.type === 'story' ? '_blank' : undefined}
+                              rel={item.type === 'story' ? 'noopener noreferrer' : undefined}
+                              className="block group"
+                            >
+                              <div className={`flex items-start gap-3 p-3 rounded-xl border transition-all hover:shadow-sm ${
+                                item.type === 'incident' && item.status === 'active'
+                                  ? 'bg-red-50/50 border-red-200 hover:border-red-300'
+                                  : 'bg-white border-slate-200 hover:border-slate-300'
+                              }`}>
+                                {/* Timestamp Column */}
+                                <div className="flex-shrink-0 w-16 text-right">
+                                  <span className={`text-xs font-medium ${
+                                    isFreshItem(item.timestamp) ? 'text-red-600' : 'text-slate-400'
+                                  }`}>
+                                    {getPreciseRelativeTime(item.timestamp)}
+                                  </span>
+                                  {hasRecentActivity && isFreshItem(item.timestamp) && (
+                                    <div className="flex items-center justify-end gap-1 mt-0.5">
+                                      <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
+                                      <span className="text-[10px] font-semibold text-red-600 uppercase">Live</span>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Content */}
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                                      item.type === 'incident'
+                                        ? item.status === 'active' 
+                                          ? 'bg-red-100 text-red-700' 
+                                          : 'bg-amber-100 text-amber-700'
+                                        : 'bg-slate-100 text-slate-600'
+                                    }`}>
+                                      <span>{getFeedItemIcon(item)}</span>
+                                      <span>{getFeedItemLabel(item)}</span>
+                                    </span>
+                                    {item.type === 'incident' && item.status === 'active' && (
+                                      <span className="text-[10px] font-medium text-red-600 uppercase">Active</span>
+                                    )}
+                                  </div>
+                                  <h3 className="text-sm font-semibold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-2">
+                                    {item.title}
+                                  </h3>
+                                  {item.summary && (
+                                    <p className="mt-0.5 text-xs text-slate-500 line-clamp-1">
+                                      {item.summary}
+                                    </p>
+                                  )}
+                                </div>
+
+                                {/* Optional Image */}
+                                {item.image_url && (
+                                  <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden bg-slate-100">
+                                    <img
+                                      src={item.image_url}
+                                      alt=""
+                                      className="w-full h-full object-cover"
+                                      loading="lazy"
+                                    />
+                                  </div>
+                                )}
+                              </div>
+                            </a>
+                          ))}
+                          
+                          {displayFeed.length === 0 && (
+                            <div className="text-center py-8 text-slate-500">
+                              No recent updates. Check back soon!
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
                   </section>
                 ) : (
                   /* Topic View (existing behavior) */
