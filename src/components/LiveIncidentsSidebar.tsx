@@ -29,7 +29,12 @@ const statusDots: Record<string, string> = {
   resolved: "🟢",
 };
 
-export default function LiveIncidentsSidebar() {
+type LiveIncidentsSidebarProps = {
+  onHide?: () => void;
+  showCloseButton?: boolean;
+};
+
+export default function LiveIncidentsSidebar({ onHide, showCloseButton = false }: LiveIncidentsSidebarProps) {
   const { data: incidents } = useQuery({
     queryKey: ["incidents-sidebar"],
     queryFn: async () => {
@@ -65,10 +70,21 @@ export default function LiveIncidentsSidebar() {
   return (
     <Card className={hasActive ? "border-red-200 bg-red-50/50 dark:border-red-900 dark:bg-red-950/20" : ""}>
       <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-semibold flex items-center gap-2">
-          {hasActive && <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />}
-          Live Incidents
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-sm font-semibold flex items-center gap-2">
+            {hasActive && <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />}
+            Live Incidents
+          </CardTitle>
+          {showCloseButton && onHide && (
+            <button
+              onClick={onHide}
+              className="text-muted-foreground hover:text-foreground text-xs px-1.5 py-0.5 rounded hover:bg-accent transition-colors"
+              aria-label="Hide incidents sidebar"
+            >
+              ×
+            </button>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="pt-0">
         {!hasIncidents ? (
