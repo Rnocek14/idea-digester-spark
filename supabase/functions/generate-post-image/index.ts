@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
     const prompt = buildImagePrompt(story, platform);
     console.log('[generate-post-image] Prompt:', prompt);
 
-    // Call OpenAI Image Generation API (DALL-E 3)
+    // Call OpenAI Image Generation API (gpt-image-1)
     const aiResponse = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
       headers: {
@@ -55,12 +55,11 @@ Deno.serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'dall-e-3',
+        model: 'gpt-image-1',
         prompt: prompt,
         n: 1,
         size: '1024x1024',
-        quality: 'standard',
-        response_format: 'b64_json',
+        quality: 'medium',
       }),
     });
 
@@ -129,6 +128,14 @@ Deno.serve(async (req) => {
 });
 
 function buildImagePrompt(story: any, platform: string): string {
+  const title = story.title?.toLowerCase() || '';
+  const content = (story.summary || story.content || '').toLowerCase();
+  const combined = `${title} ${content}`;
+
+  // Detect seasonal/contextual themes
+  const seasonalContext = detectSeasonalContext(combined);
+  const eventContext = detectEventContext(combined);
+
   const categoryStyles: Record<string, string> = {
     events: 'community gathering, celebration, people enjoying activities',
     dining: 'food, restaurant ambiance, culinary presentation',
@@ -137,7 +144,16 @@ function buildImagePrompt(story: any, platform: string): string {
     'real-estate': 'homes, architecture, lakeside properties',
   };
 
-  const style = categoryStyles[story.category] || 'warm community atmosphere, local charm';
+  const baseStyle = categoryStyles[story.category] || 'warm community atmosphere, local charm';
+
+  // Build contextual style additions
+  const contextualStyles: string[] = [];
+  if (seasonalContext) contextualStyles.push(seasonalContext);
+  if (eventContext) contextualStyles.push(eventContext);
+
+  const styleAdditions = contextualStyles.length > 0 
+    ? contextualStyles.join(', ') + '. '
+    : '';
 
   return `Create a clean, modern social media image for a local Lake Geneva community post.
 
@@ -145,9 +161,67 @@ Topic: ${story.title}
 Category: ${story.category || 'general'}
 Summary: ${(story.summary || story.content)?.substring(0, 200)}
 
-Style: Warm, family-friendly, community feel with ${style}. 
+Style: ${styleAdditions}Warm, family-friendly, community feel with ${baseStyle}. 
 Lake Geneva aesthetic: lakeside town, cozy, upscale yet accessible.
 Modern and clean design.
 No text overlay. No logos. No people's faces.
 1024x1024 square format optimized for ${platform}.`;
+}
+
+function detectSeasonalContext(text: string): string | null {
+  // Christmas/Holiday
+  if (/santa|christmas|holiday|xmas|december 25|north pole|reindeer|elf|elves|jingle|festive/.test(text)) {
+    return 'Festive winter holiday atmosphere, cozy warm lighting, red and green accents, Christmas decorations, snowflakes, twinkling lights';
+  }
+  
+  // Winter general
+  if (/winter|snow|ice skating|sledding|fireplace|cocoa|hot chocolate|ski|snowman/.test(text)) {
+    return 'Winter wonderland atmosphere, snow-covered scenery, cozy warm tones, frost accents';
+  }
+  
+  // Fall/Autumn
+  if (/fall|autumn|harvest|pumpkin|halloween|thanksgiving|october|november|foliage|apple picking/.test(text)) {
+    return 'Autumn atmosphere, warm orange and golden tones, fall foliage, harvest aesthetic';
+  }
+  
+  // Summer
+  if (/summer|beach|lake|swimming|boat|fireworks|july|august|bbq|picnic/.test(text)) {
+    return 'Bright summer atmosphere, sunny lakeside vibes, blue skies, outdoor warmth';
+  }
+  
+  // Spring
+  if (/spring|easter|flower|bloom|garden|april|may|pastel/.test(text)) {
+    return 'Fresh spring atmosphere, blooming flowers, pastel colors, renewal theme';
+  }
+  
+  return null;
+}
+
+function detectEventContext(text: string): string | null {
+  // Brunch/Breakfast
+  if (/brunch|breakfast|morning|mimosa|eggs|pancake|waffle/.test(text)) {
+    return 'Elegant brunch setting, morning light, sophisticated table arrangement';
+  }
+  
+  // Wine/Cocktails
+  if (/wine|cocktail|happy hour|vineyard|tasting|sommelier|bar/.test(text)) {
+    return 'Sophisticated wine or cocktail atmosphere, elegant glassware, refined ambiance';
+  }
+  
+  // Live Music/Entertainment
+  if (/live music|concert|band|jazz|performance|theater|show/.test(text)) {
+    return 'Live entertainment atmosphere, stage lighting, musical ambiance';
+  }
+  
+  // Markets/Fairs
+  if (/market|fair|festival|vendor|craft|artisan|farmers/.test(text)) {
+    return 'Outdoor market atmosphere, vendor stalls, artisan goods, community gathering';
+  }
+  
+  // Sports/Recreation
+  if (/golf|tennis|run|race|marathon|fitness|yoga|sports/.test(text)) {
+    return 'Active recreation atmosphere, athletic energy, outdoor sports setting';
+  }
+  
+  return null;
 }
