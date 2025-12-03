@@ -534,10 +534,14 @@ const LakeGeneva = () => {
         </div>
 
       {/* Fixed Live Incidents rail - floats in right viewport margin (desktop only) */}
-      <aside className="hidden xl:flex flex-col gap-4 fixed top-28 right-8 w-[280px] z-40">
-        <LiveIncidentsSidebar />
-        <WeekendSidebarWidget />
-      </aside>
+      <div className="hidden xl:block fixed top-28 right-4 w-[280px] z-40">
+        <div className="rounded-2xl border border-slate-200 bg-white/95 shadow-lg shadow-slate-200/60 backdrop-blur-sm overflow-hidden">
+          <div className="space-y-4 p-4">
+            <LiveIncidentsSidebar />
+            <WeekendSidebarWidget />
+          </div>
+        </div>
+      </div>
     </PageShell>
   );
 };
