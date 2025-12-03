@@ -18,48 +18,67 @@ const DashboardLayout = () => {
 
   useEffect(() => {
     const checkAuthAndRole = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        navigate("/auth");
-        return;
-      }
+      try {
+        // Refresh session first to ensure valid token
+        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+        
+        if (refreshError || !refreshData.session) {
+          console.log("[DashboardLayout] No valid session, redirecting to auth");
+          navigate("/auth", { replace: true });
+          return;
+        }
 
-      setUser(session.user);
+        const session = refreshData.session;
+        setUser(session.user);
 
-      // Check if user has admin role
-      const { data: roles } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", session.user.id);
+        // Check if user has admin role
+        const { data: roles, error: rolesError } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", session.user.id);
 
-      const hasAdminRole = roles?.some((r) => r.role === "admin");
-      setIsAdmin(hasAdminRole || false);
-      setLoading(false);
+        if (rolesError) {
+          console.error("[DashboardLayout] Error checking roles:", rolesError);
+          toast.error("Error checking permissions");
+          setIsAdmin(false);
+          setLoading(false);
+          return;
+        }
 
-      if (!hasAdminRole) {
-        toast.error("Access denied. Admin role required.");
+        const hasAdminRole = roles?.some((r) => r.role === "admin");
+        setIsAdmin(hasAdminRole || false);
+        setLoading(false);
+
+        if (!hasAdminRole) {
+          toast.error("Access denied. Admin role required.");
+        }
+      } catch (error) {
+        console.error("[DashboardLayout] Auth check error:", error);
+        navigate("/auth", { replace: true });
       }
     };
 
     checkAuthAndRole();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!session) {
-        navigate("/auth");
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT" || !session) {
+        navigate("/auth", { replace: true });
         return;
       }
 
-      setUser(session.user);
+      if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+        setUser(session.user);
+        // Defer role check to avoid deadlock
+        setTimeout(async () => {
+          const { data: roles } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", session.user.id);
 
-      // Recheck role on auth change
-      const { data: roles } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", session.user.id);
-
-      const hasAdminRole = roles?.some((r) => r.role === "admin");
-      setIsAdmin(hasAdminRole || false);
+          const hasAdminRole = roles?.some((r) => r.role === "admin");
+          setIsAdmin(hasAdminRole || false);
+        }, 0);
+      }
     });
 
     return () => subscription.unsubscribe();
