@@ -859,11 +859,21 @@ const LakeGeneva = () => {
                               </>
                             )}
                           </div>
-                          {storiesUpdatedAt && (
-                            <span className="text-xs text-slate-400">
-                              Updated {getPreciseRelativeTime(new Date(storiesUpdatedAt).toISOString())}
-                            </span>
-                          )}
+                          <div className="flex items-center gap-3">
+                            {newUpdatesCount > 0 && (
+                              <button
+                                onClick={() => setNewUpdatesCount(0)}
+                                className="text-xs text-slate-500 hover:text-slate-700 underline underline-offset-2 transition-colors"
+                              >
+                                Mark all as read
+                              </button>
+                            )}
+                            {storiesUpdatedAt && (
+                              <span className="text-xs text-slate-400">
+                                Updated {getPreciseRelativeTime(new Date(storiesUpdatedAt).toISOString())}
+                              </span>
+                            )}
+                          </div>
                         </div>
                         
                         <div className="space-y-3">
