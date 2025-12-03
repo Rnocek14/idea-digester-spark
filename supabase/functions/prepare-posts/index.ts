@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 // Topic-specific civic image libraries for smart keyword mapping
-type CivicTopic = 'land_use' | 'historic' | 'parks' | 'lakefront' | 'library' | 'safety' | 'tourism' | 'utilities' | 'finance' | 'default';
+type CivicTopic = 'land_use' | 'historic' | 'council' | 'parks' | 'lakefront' | 'library' | 'safety' | 'tourism' | 'utilities' | 'finance' | 'default';
 
 const CIVIC_IMAGE_LIBRARIES: Record<CivicTopic, string[]> = {
   land_use: [
@@ -22,6 +22,12 @@ const CIVIC_IMAGE_LIBRARIES: Record<CivicTopic, string[]> = {
     "https://images.unsplash.com/photo-1565538810643-b5bdb714032a?w=800&q=80", // Old brick commercial building
     "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=800&q=80", // Small town main street
     "https://images.unsplash.com/photo-1594398028856-9b00722cefbc?w=800&q=80", // Tree-lined residential street
+  ],
+  council: [
+    "https://images.unsplash.com/photo-1577962917302-cd874c4e31d2?w=800&q=80", // Council meeting room
+    "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800&q=80", // Business meeting at table
+    "https://images.unsplash.com/photo-1531482615713-2afd69097998?w=800&q=80", // People in discussion
+    "https://images.unsplash.com/photo-1568992687947-868a62a9f521?w=800&q=80", // Government/office interior
   ],
   parks: [
     "https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&q=80",
@@ -73,6 +79,9 @@ function detectCivicTopic(title: string): CivicTopic {
       t.includes('subdivision') || t.includes('neighborhood plan') || t.includes('annexation') || 
       t.includes('redevelopment') || t.includes('plat') || t.includes('land use')) return 'land_use';
   if (t.includes('historic') || t.includes('preservation')) return 'historic';
+  // Council/governance catches general government meetings
+  if (t.includes('common council') || t.includes('city council') || t.includes('council') || 
+      t.includes('committee of the whole') || t.includes('governing body') || t.includes('board of aldermen')) return 'council';
   if (t.includes('park') || t.includes('cemetery') || t.includes('tree') || t.includes('avian')) return 'parks';
   if (t.includes('library')) return 'library';
   if (t.includes('police') || t.includes('fire') || t.includes('court') || t.includes('safety')) return 'safety';
