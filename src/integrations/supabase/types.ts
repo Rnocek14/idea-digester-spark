@@ -544,6 +544,8 @@ export type Database = {
           incident_type: string
           location: string | null
           priority_score: number | null
+          resolution_reason: string | null
+          resolved_at: string | null
           slug: string
           source_story_id: string | null
           started_at: string
@@ -556,6 +558,8 @@ export type Database = {
           incident_type: string
           location?: string | null
           priority_score?: number | null
+          resolution_reason?: string | null
+          resolved_at?: string | null
           slug: string
           source_story_id?: string | null
           started_at?: string
@@ -568,6 +572,8 @@ export type Database = {
           incident_type?: string
           location?: string | null
           priority_score?: number | null
+          resolution_reason?: string | null
+          resolved_at?: string | null
           slug?: string
           source_story_id?: string | null
           started_at?: string
