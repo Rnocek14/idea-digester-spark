@@ -125,13 +125,20 @@ const LakeGeneva = () => {
   const hasActiveIncidents = activeIncidentCount > 0;
 
   // Topic-specific civic image libraries for smart keyword mapping
-  type CivicTopic = 'historic' | 'parks' | 'lakefront' | 'library' | 'safety' | 'tourism' | 'utilities' | 'finance' | 'default';
+  type CivicTopic = 'land_use' | 'historic' | 'parks' | 'lakefront' | 'library' | 'safety' | 'tourism' | 'utilities' | 'finance' | 'default';
 
   const CIVIC_IMAGE_LIBRARIES: Record<CivicTopic, string[]> = {
+    land_use: [
+      "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&q=80", // House/development concept
+      "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&q=80", // Construction site
+      "https://images.unsplash.com/photo-1486325212027-8a9ce835dc2e?w=800&q=80", // Suburban neighborhood aerial
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80", // Residential development
+    ],
     historic: [
-      "https://images.unsplash.com/photo-1518005020951-eccb494ad742?w=800&q=80", // Historic building
-      "https://images.unsplash.com/photo-1506606399367-e0458ae4e514?w=800&q=80", // Victorian architecture
-      "https://images.unsplash.com/photo-1524230572899-a752b3835840?w=800&q=80", // Classical columns
+      "https://images.unsplash.com/photo-1558036117-15d82a90b9b1?w=800&q=80", // Small town downtown
+      "https://images.unsplash.com/photo-1565538810643-b5bdb714032a?w=800&q=80", // Old brick commercial building
+      "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=800&q=80", // Small town main street
+      "https://images.unsplash.com/photo-1594398028856-9b00722cefbc?w=800&q=80", // Tree-lined residential street
     ],
     parks: [
       "https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&q=80", // Green park
@@ -175,7 +182,11 @@ const LakeGeneva = () => {
     const t = title.toLowerCase();
     
     // Order matters: more specific matches first to avoid false positives
-    if (t.includes('hillmoor') || t.includes('historic') || t.includes('preservation')) return 'historic';
+    // Land use/development catches Hillmoor, rezoning, subdivisions before historic
+    if (t.includes('hillmoor') || t.includes('development') || t.includes('rezoning') || t.includes('zoning') || 
+        t.includes('subdivision') || t.includes('neighborhood plan') || t.includes('annexation') || 
+        t.includes('redevelopment') || t.includes('plat') || t.includes('land use')) return 'land_use';
+    if (t.includes('historic') || t.includes('preservation')) return 'historic';
     if (t.includes('park') || t.includes('cemetery') || t.includes('tree') || t.includes('avian')) return 'parks';
     if (t.includes('library')) return 'library';
     if (t.includes('police') || t.includes('fire') || t.includes('court') || t.includes('safety')) return 'safety';
