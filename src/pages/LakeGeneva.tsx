@@ -124,37 +124,83 @@ const LakeGeneva = () => {
   const activeIncidentCount = activeIncidents.length;
   const hasActiveIncidents = activeIncidentCount > 0;
 
-  // Curated civic images to replace generic calendar icons
-  const CURATED_CIVIC_IMAGES = [
-    "https://images.unsplash.com/photo-1569025743873-ea3a9ber84d1?w=800&q=80", // City Hall
-    "https://images.unsplash.com/photo-1582407947304-fd86f028f716?w=800&q=80", // Courthouse
-    "https://images.unsplash.com/photo-1555636222-cae831e670b3?w=800&q=80", // Main Street
-    "https://images.unsplash.com/photo-1517732306149-e8f829eb588a?w=800&q=80", // Town Square
-    "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=800&q=80", // Meeting room
-    "https://images.unsplash.com/photo-1577495508326-19a1b3cf65b7?w=800&q=80", // Flag/Government
-    "https://images.unsplash.com/photo-1434626881859-194d67b2b86f?w=800&q=80", // Winter town
-  ];
+  // Topic-specific civic image libraries for smart keyword mapping
+  type CivicTopic = 'historic' | 'parks' | 'lakefront' | 'library' | 'safety' | 'tourism' | 'utilities' | 'finance' | 'default';
+
+  const CIVIC_IMAGE_LIBRARIES: Record<CivicTopic, string[]> = {
+    historic: [
+      "https://images.unsplash.com/photo-1518005020951-eccb494ad742?w=800&q=80", // Historic building
+      "https://images.unsplash.com/photo-1506606399367-e0458ae4e514?w=800&q=80", // Victorian architecture
+      "https://images.unsplash.com/photo-1524230572899-a752b3835840?w=800&q=80", // Classical columns
+    ],
+    parks: [
+      "https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&q=80", // Green park
+      "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&q=80", // Forest path
+      "https://images.unsplash.com/photo-1472396961693-142e6e269027?w=800&q=80", // Nature scene
+    ],
+    lakefront: [
+      "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?w=800&q=80", // Lake waves
+      "https://images.unsplash.com/photo-1482938289607-e9573fc25ebb?w=800&q=80", // Calm lake
+      "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80", // Lake pier
+    ],
+    library: [
+      "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=800&q=80", // Library interior
+      "https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=800&q=80", // Bookshelves
+      "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&q=80", // Reading room
+    ],
+    safety: [
+      "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=800&q=80", // Public safety
+      "https://images.unsplash.com/photo-1582139329536-e7284fece509?w=800&q=80", // Emergency services
+    ],
+    tourism: [
+      "https://images.unsplash.com/photo-1555636222-cae831e670b3?w=800&q=80", // Downtown street
+      "https://images.unsplash.com/photo-1517732306149-e8f829eb588a?w=800&q=80", // Town square
+    ],
+    utilities: [
+      "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80", // Utility infrastructure
+      "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80", // Office building
+    ],
+    finance: [
+      "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&q=80", // Financial documents
+      "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80", // Business meeting
+    ],
+    default: [
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Lake_Geneva_Wisconsin_City_Hall.jpg/1280px-Lake_Geneva_Wisconsin_City_Hall.jpg",
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Walworth_County_Courthouse.jpg/1280px-Walworth_County_Courthouse.jpg",
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Lake_Geneva_Wisconsin_Riviera.jpg/1280px-Lake_Geneva_Wisconsin_Riviera.jpg",
+    ],
+  };
+
+  const detectCivicTopic = (title: string): CivicTopic => {
+    const t = title.toLowerCase();
+    
+    if (t.includes('hillmoor') || t.includes('historic') || t.includes('preservation')) return 'historic';
+    if (t.includes('park') || t.includes('cemetery') || t.includes('tree') || t.includes('avian')) return 'parks';
+    if (t.includes('pier') || t.includes('harbor') || t.includes('harbour') || t.includes('lakefront') || t.includes('lake')) return 'lakefront';
+    if (t.includes('library')) return 'library';
+    if (t.includes('police') || t.includes('fire') || t.includes('court') || t.includes('safety')) return 'safety';
+    if (t.includes('tourism') || t.includes('visitor')) return 'tourism';
+    if (t.includes('utility') || t.includes('utilities') || t.includes('water') || t.includes('sewer')) return 'utilities';
+    if (t.includes('finance') || t.includes('licensing') || t.includes('regulation') || t.includes('budget')) return 'finance';
+    
+    return 'default';
+  };
 
   const isGenericCivicImage = (imageUrl: string | null) => {
     if (!imageUrl) return false;
-    const genericPatterns = [
-      'IconModuleCalendar',
-      'calendar-icon',
-      'default-event',
-      'placeholder',
-      'no-image',
-    ];
+    const genericPatterns = ['IconModuleCalendar', 'calendar-icon', 'default-event', 'placeholder', 'no-image'];
     return genericPatterns.some(pattern => imageUrl.toLowerCase().includes(pattern.toLowerCase()));
   };
 
-  const getCuratedCivicImage = (storyId: string) => {
-    // Deterministic selection based on story ID
-    let hash = 0;
-    for (let i = 0; i < storyId.length; i++) {
-      hash = ((hash << 5) - hash) + storyId.charCodeAt(i);
-      hash |= 0;
-    }
-    return CURATED_CIVIC_IMAGES[Math.abs(hash) % CURATED_CIVIC_IMAGES.length];
+  const getCuratedCivicImage = (storyId: string, title: string) => {
+    const topic = detectCivicTopic(title);
+    const images = CIVIC_IMAGE_LIBRARIES[topic];
+    
+    // Deterministic hash using storyId + topic for consistency
+    const key = `${storyId}:${topic}`;
+    const hash = key.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    
+    return images[hash % images.length];
   };
 
   // Fetch today's published stories
@@ -178,11 +224,11 @@ const LakeGeneva = () => {
 
       if (error) throw error;
       
-      // Replace generic civic images with curated ones
+      // Replace generic civic images with topic-aware curated ones
       return (data || []).map((story: any) => ({
         ...story,
         image_url: isGenericCivicImage(story.image_url) 
-          ? getCuratedCivicImage(story.id) 
+          ? getCuratedCivicImage(story.id, story.title) 
           : story.image_url
       }));
     },
