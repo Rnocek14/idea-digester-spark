@@ -297,6 +297,30 @@ async function linkStoryToIncident(opts: {
   return incident;
 }
 
+// Detect civic content based on keywords (city council, committees, municipal)
+function isCivicContent(story: { title?: string | null; summary?: string | null; content?: string | null }): boolean {
+  const text = `${story.title || ''} ${story.summary || ''} ${story.content || ''}`.toLowerCase();
+  
+  const civicKeywords = [
+    'city council', 'common council', 'town board', 'village board', 'county board',
+    'committee', 'commission', 'municipal', 'ordinance', 'resolution',
+    'public hearing', 'city hall', 'town hall', 'village hall',
+    'board of trustees', 'board meeting', 'alderman', 'aldermen', 'alderperson',
+    'mayor', 'city administrator', 'city manager', 'village administrator',
+    'zoning', 'planning commission', 'plan commission', 'historic preservation',
+    'parks committee', 'finance committee', 'public works committee',
+    'police commission', 'fire commission', 'library board',
+    'school board', 'board of education', 'referendum',
+    'tax levy', 'budget hearing', 'annual meeting', 'special meeting',
+    'executive session', 'closed session', 'open session',
+    'public comment', 'citizen comment', 'minutes approval',
+    'city of lake geneva', 'town of linn', 'village of fontana', 'village of williams bay',
+    'walworth county', 'walworth county board'
+  ];
+  
+  return civicKeywords.some(keyword => text.includes(keyword));
+}
+
 function decideStatusForStory(
   rules: AutoPublishRule[] | null,
   sourceId: string,
@@ -649,7 +673,7 @@ serve(async (req) => {
 
 For each article, you must:
 1. Write a clear, neutral, 2-3 sentence summary in a friendly local-news tone.
-2. Assign a category: one of events, news, community, dining, or real-estate.
+2. Assign a category: one of events, news, civic, community, dining, or real-estate. Use 'civic' for city council, committee meetings, municipal announcements, ordinances, public hearings, school board, and government-related content.
 3. Assign content_tags (granular attributes): one or more tags like brunch, lunch, dinner, coffee, bar, cocktails, wine, brewery, live-music, dj, late-night, kids, family-friendly, meeting, ordinance, road-closure, school-board, open-house, market-update, etc.
 4. Assign verticals (which accounts should show this): array from ["local", "eats", "nightlife", "civic", "family", "real_estate"]
    - Dining content: ["local", "eats"]
@@ -686,8 +710,8 @@ When in doubt between safe and sensitive, choose sensitive. Only use blocked for
                       summary: { type: "string", description: "2-3 sentence summary in friendly local-news tone" },
                       category: { 
                         type: "string", 
-                        enum: ["news", "events", "dining", "real-estate", "community"],
-                        description: "Article category"
+                        enum: ["news", "events", "dining", "real-estate", "community", "civic"],
+                        description: "Article category - use 'civic' for city council, committee meetings, municipal content"
                       },
                       content_tags: {
                         type: "array",
@@ -743,7 +767,14 @@ When in doubt between safe and sensitive, choose sensitive. Only use blocked for
           };
 
           // Compute category and status based on safety + rules
-          const aiCategory = aiResult.category || source.category || "news";
+          let aiCategory = aiResult.category || source.category || "news";
+          
+          // Override to civic category if civic keywords detected
+          if (isCivicContent({ title, summary: aiResult.summary, content: rawContent })) {
+            console.log(`🏛️ Detected civic content: "${title.substring(0, 40)}..." → overriding category to 'civic'`);
+            aiCategory = "civic";
+          }
+          
           const safetyLevel = aiResult.safety_level || "safe";
           const status = decideStatusForStory(rules as AutoPublishRule[], source.id, aiCategory, safetyLevel);
 
