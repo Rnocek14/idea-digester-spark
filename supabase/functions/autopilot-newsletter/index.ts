@@ -84,6 +84,68 @@ serve(async (req) => {
 
     if (existingNewsletter && !force) {
       console.log(`✅ Newsletter already exists for today (status: ${existingNewsletter.status})`);
+      
+      // BUG FIX: If newsletter exists with status='ready' AND sendNow=true, send it!
+      if (existingNewsletter.status === "ready" && sendNow) {
+        console.log("📧 sendNow=true and newsletter is ready, sending existing newsletter...");
+        
+        // Fetch full newsletter for sending
+        const { data: fullNewsletter, error: fetchFullError } = await supabase
+          .from("newsletters")
+          .select("*")
+          .eq("id", existingNewsletter.id)
+          .single();
+        
+        if (fetchFullError || !fullNewsletter) {
+          throw new Error(`Failed to fetch newsletter for sending: ${fetchFullError?.message}`);
+        }
+        
+        const { sent, failed } = await sendNewsletterEmail(supabase, fullNewsletter, supabaseUrl);
+        
+        if (sent > 0) {
+          // Update status to sent
+          const { error: updateSentError } = await supabase
+            .from("newsletters")
+            .update({ status: "sent", sent_at: new Date().toISOString() })
+            .eq("id", existingNewsletter.id);
+          
+          if (updateSentError) {
+            console.error("Failed to update newsletter status:", updateSentError);
+          }
+          
+          console.log(`✅ Newsletter sent to ${sent} subscribers (${failed} failed)`);
+          
+          return new Response(
+            JSON.stringify({
+              success: true,
+              newsletter_id: existingNewsletter.id,
+              status: "sent",
+              story_count: existingNewsletter.story_count,
+              subject: existingNewsletter.subject,
+              sent_count: sent,
+              failed_count: failed,
+              message: `Newsletter sent to ${sent} subscribers`,
+              already_existed: true
+            }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+          );
+        } else {
+          console.log("⚠️ No emails were sent (check RESEND_API_KEY and subscribers)");
+          return new Response(
+            JSON.stringify({
+              success: false,
+              newsletter_id: existingNewsletter.id,
+              status: existingNewsletter.status,
+              message: "No emails were sent - check RESEND_API_KEY and active subscribers",
+              sent_count: 0,
+              failed_count: failed
+            }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+          );
+        }
+      }
+      
+      // Otherwise, just return existing newsletter info
       return new Response(
         JSON.stringify({ 
           newsletter_id: existingNewsletter.id,
@@ -91,7 +153,8 @@ serve(async (req) => {
           subject: existingNewsletter.subject,
           edition_date: editionDate,
           already_exists: true,
-          existing_story_count: existingNewsletter.story_count
+          existing_story_count: existingNewsletter.story_count,
+          hint: "Pass sendNow=true to send this ready newsletter"
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
       );
