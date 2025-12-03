@@ -62,3 +62,6 @@ verify_jwt = false
 
 [functions.generate-weekend-roundup]
 verify_jwt = false
+
+[functions.auto-resolve-incidents]
+verify_jwt = false
