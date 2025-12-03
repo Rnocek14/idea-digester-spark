@@ -549,7 +549,7 @@ serve(async (req) => {
 
         // Process each item
         for (const item of items) {
-          const originalUrl = item.link || item["@_href"] || "";
+          let originalUrl = item.link || item["@_href"] || "";
           const title = item.title || "";
           const rawContent = item.description || item.content || item.summary || "";
           const pubDate = item.pubDate || item.published || item.updated || new Date().toISOString();
@@ -605,17 +605,17 @@ serve(async (req) => {
           let imageSource: string | null = null;
 
           try {
-            // Convert relative URLs to absolute URLs for fetching
-            let fullUrl = originalUrl;
+            // Convert relative URLs to absolute URLs for fetching AND storage
             if (originalUrl.startsWith('/')) {
               // Extract base URL from source URL
               const sourceUrlObj = new URL(source.url);
-              fullUrl = `${sourceUrlObj.protocol}//${sourceUrlObj.host}${originalUrl}`;
-              console.log(`🔗 Converted relative URL: ${originalUrl} → ${fullUrl}`);
+              const absoluteUrl = `${sourceUrlObj.protocol}//${sourceUrlObj.host}${originalUrl}`;
+              console.log(`🔗 Converted relative URL for storage: ${originalUrl} → ${absoluteUrl}`);
+              originalUrl = absoluteUrl; // Update originalUrl so absolute URL gets stored in DB
             }
 
-            console.log(`🖼️ Attempting to extract image from: ${fullUrl}`);
-            const pageResponse = await fetch(fullUrl, {
+            console.log(`🖼️ Attempting to extract image from: ${originalUrl}`);
+            const pageResponse = await fetch(originalUrl, {
               headers: {
                 "User-Agent": "Mozilla/5.0 (compatible; LakeGenevaBot/1.0)",
               },
