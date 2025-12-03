@@ -7,12 +7,16 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-// Curated civic images - Lake Geneva City Hall and downtown civic scenes
-// These are used when OG image is a generic calendar icon
+// Curated civic images - Lake Geneva City Hall, downtown, and civic landmarks
+// These are used when OG image is a generic calendar icon (7 images for variety)
 const CURATED_CIVIC_IMAGES = [
   "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Lake_Geneva_Wisconsin_City_Hall.jpg/1280px-Lake_Geneva_Wisconsin_City_Hall.jpg",
   "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Walworth_County_Courthouse.jpg/1280px-Walworth_County_Courthouse.jpg",
   "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Lake_Geneva%2C_Wisconsin_-_Main_Street.jpg/1280px-Lake_Geneva%2C_Wisconsin_-_Main_Street.jpg",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Lake_Geneva%2C_Wisconsin_-_downtown.jpg/1280px-Lake_Geneva%2C_Wisconsin_-_downtown.jpg",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Lake_Geneva_Wisconsin_Riviera.jpg/1280px-Lake_Geneva_Wisconsin_Riviera.jpg",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Lake_Geneva_Wisconsin_Library_Park.jpg/1280px-Lake_Geneva_Wisconsin_Library_Park.jpg",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Geneva_Lake%2C_Wisconsin.jpg/1280px-Geneva_Lake%2C_Wisconsin.jpg",
 ];
 
 // Generic OG image patterns to detect and replace
