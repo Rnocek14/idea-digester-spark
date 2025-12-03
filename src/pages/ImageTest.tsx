@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Image as ImageIcon, RefreshCw, CheckCircle2, XCircle } from "lucide-react";
+import { Loader2, Image as ImageIcon, CheckCircle2, XCircle, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 interface TestResult {
@@ -33,7 +33,7 @@ export default function ImageTest() {
   const [testResults, setTestResults] = useState<TestResult[]>([]);
 
   // Fetch stories grouped by category
-  const { data: stories, isLoading: loadingStories } = useQuery({
+  const { data: stories, isLoading: loadingStories, error, refetch } = useQuery({
     queryKey: ['image-test-stories'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -45,10 +45,11 @@ export default function ImageTest() {
         .limit(100);
       
       if (error) throw error;
-      return data;
+      return data || [];
     },
     staleTime: 60000,
     refetchOnWindowFocus: false,
+    retry: 2,
   });
 
   // Group stories by category
@@ -57,7 +58,7 @@ export default function ImageTest() {
     if (!acc[cat]) acc[cat] = [];
     acc[cat].push(story);
     return acc;
-  }, {} as Record<string, typeof stories>);
+  }, {} as Record<string, typeof stories>) || {};
 
   // Generate image mutation
   const generateMutation = useMutation({
@@ -108,10 +109,44 @@ export default function ImageTest() {
       toast.error(`No stories found for category: ${category}`);
       return;
     }
-    // Pick a random story from this category
     const randomStory = categoryStories[Math.floor(Math.random() * categoryStories.length)];
     generateMutation.mutate(randomStory.id);
   };
+
+  // Error state
+  if (error) {
+    return (
+      <PageShell title="Image Generation Test" description="Test AI image generation across different content categories">
+        <Card>
+          <CardContent className="py-12 text-center">
+            <p className="text-destructive mb-4">Failed to load stories: {(error as Error).message}</p>
+            <Button onClick={() => refetch()}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
+      </PageShell>
+    );
+  }
+
+  // Loading state
+  if (loadingStories) {
+    return (
+      <PageShell title="Image Generation Test" description="Test AI image generation across different content categories">
+        <Card>
+          <CardContent className="py-12 flex flex-col items-center gap-4">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <p className="text-muted-foreground">Loading stories...</p>
+            <Button variant="outline" size="sm" onClick={() => refetch()}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Taking too long? Retry
+            </Button>
+          </CardContent>
+        </Card>
+      </PageShell>
+    );
+  }
 
   return (
     <PageShell title="Image Generation Test" description="Test AI image generation across different content categories">
@@ -135,7 +170,7 @@ export default function ImageTest() {
                   <SelectValue placeholder="Choose a story to test..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.entries(storiesByCategory || {}).map(([category, catStories]) => (
+                  {Object.entries(storiesByCategory).map(([category, catStories]) => (
                     <div key={category}>
                       <div className="px-2 py-1 text-xs font-semibold text-muted-foreground uppercase bg-muted/50">
                         {category} ({catStories?.length})
@@ -273,12 +308,6 @@ export default function ImageTest() {
             </div>
           </CardContent>
         </Card>
-      )}
-
-      {loadingStories && (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
       )}
     </PageShell>
   );
