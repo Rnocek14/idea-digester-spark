@@ -20,6 +20,7 @@ import Newsletter from "./pages/Newsletter";
 import SocialQueue from "./pages/SocialQueue";
 import SponsorAnalytics from "./pages/SponsorAnalytics";
 import Leads from "./pages/Leads";
+import ImageTest from "./pages/ImageTest";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -58,6 +59,7 @@ const App = () => (
             <Route path="newsletter" element={<Newsletter />} />
             <Route path="social-queue" element={<SocialQueue />} />
             <Route path="sponsor-analytics" element={<SponsorAnalytics />} />
+            <Route path="image-test" element={<ImageTest />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
