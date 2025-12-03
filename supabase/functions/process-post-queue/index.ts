@@ -26,6 +26,30 @@ serve(async (req) => {
 
     console.log("[process-post-queue] Starting queue processing...");
 
+    // KILL SWITCH CHECK
+    const { data: settings } = await supabaseClient
+      .from("system_settings")
+      .select("value")
+      .eq("key", "automation")
+      .single();
+    
+    const automationEnabled = (settings?.value as any)?.enabled !== false;
+    const socialEnabled = (settings?.value as any)?.social_enabled !== false;
+    
+    if (!automationEnabled || !socialEnabled) {
+      console.log("[process-post-queue] ⛔ Social automation is disabled via kill switch");
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          message: "Social automation is disabled",
+          automation_enabled: automationEnabled,
+          social_enabled: socialEnabled
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    console.log("[process-post-queue] ✅ Kill switch check passed");
+
     // Fetch posts that are ready to be sent
     const now = new Date();
     const { data: pendingPosts, error: fetchError } = await supabaseClient

@@ -45,6 +45,30 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // KILL SWITCH CHECK
+    const { data: settings } = await supabase
+      .from("system_settings")
+      .select("value")
+      .eq("key", "automation")
+      .single();
+    
+    const automationEnabled = settings?.value?.enabled !== false;
+    const newsletterEnabled = settings?.value?.newsletter_enabled !== false;
+    
+    if (!automationEnabled || !newsletterEnabled) {
+      console.log("⛔ Newsletter automation is disabled via kill switch");
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          message: "Newsletter automation is disabled",
+          automation_enabled: automationEnabled,
+          newsletter_enabled: newsletterEnabled
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+      );
+    }
+    console.log("✅ Kill switch check passed");
+
     // Get today's date
     const today = new Date();
     const editionDate = today.toISOString().split("T")[0];
