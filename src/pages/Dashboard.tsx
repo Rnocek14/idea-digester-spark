@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ActivityFeed } from "@/components/ActivityFeed";
 import { PipelineHealthCard } from "@/components/PipelineHealthCard";
-
+import { IncidentHealthCard } from "@/components/IncidentHealthCard";
 const Dashboard = () => {
   const { data: pendingCount = 0, isLoading: pendingLoading, refetch: refetchPending } = useQuery({
     queryKey: ["dashboard-pending-count"],
@@ -148,7 +148,10 @@ const Dashboard = () => {
         </Card>
       </div>
 
-      <PipelineHealthCard />
+      <div className="grid gap-6 md:grid-cols-2">
+        <PipelineHealthCard />
+        <IncidentHealthCard />
+      </div>
 
       <ActivityFeed />
     </div>
