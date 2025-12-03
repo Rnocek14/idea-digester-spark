@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import PageShell from "@/components/PageShell";
 import { StoryCard } from "@/components/StoryCard";
@@ -118,6 +118,9 @@ const LakeGeneva = () => {
   const [activeCategory, setActiveCategory] = useState<'all' | string>('all');
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
   const [viewMode, setViewMode] = useState<'topic' | 'recent'>('topic');
+  const [newUpdatesCount, setNewUpdatesCount] = useState(0);
+  const previousFeedIdsRef = useRef<Set<string>>(new Set());
+  const isInitialLoadRef = useRef(true);
 
   useEffect(() => {
     document.title = "Lake Geneva Brief – Today's Local News";
@@ -248,7 +251,7 @@ const LakeGeneva = () => {
   };
 
   // Fetch today's published stories
-  const { data: stories = [], isLoading: storiesLoading } = useQuery({
+  const { data: stories = [], isLoading: storiesLoading, dataUpdatedAt: storiesUpdatedAt } = useQuery({
     queryKey: ["public-stories"],
     queryFn: async () => {
       const today = new Date();
@@ -277,6 +280,7 @@ const LakeGeneva = () => {
       }));
     },
     staleTime: 60000,
+    refetchInterval: viewMode === 'recent' ? 30000 : false, // Auto-refresh every 30s in recent view
   });
 
   // Query sponsor
@@ -416,6 +420,53 @@ const LakeGeneva = () => {
   };
 
   const unifiedFeed = viewMode === 'recent' ? buildUnifiedFeed() : [];
+
+  // Detect new content in the feed and show toast
+  useEffect(() => {
+    if (viewMode !== 'recent' || unifiedFeed.length === 0) return;
+    
+    const currentIds = new Set(unifiedFeed.map(item => `${item.type}-${item.id}`));
+    
+    // On initial load, just store the IDs without showing toast
+    if (isInitialLoadRef.current) {
+      previousFeedIdsRef.current = currentIds;
+      isInitialLoadRef.current = false;
+      return;
+    }
+    
+    // Find new items that weren't in the previous set
+    const newItems = unifiedFeed.filter(
+      item => !previousFeedIdsRef.current.has(`${item.type}-${item.id}`)
+    );
+    
+    if (newItems.length > 0) {
+      setNewUpdatesCount(prev => prev + newItems.length);
+      
+      // Show toast for new content
+      const latestItem = newItems[0];
+      toast(`New update: ${latestItem.title.slice(0, 50)}${latestItem.title.length > 50 ? '...' : ''}`, {
+        description: `${newItems.length === 1 ? '1 new item' : `${newItems.length} new items`} in your feed`,
+        action: {
+          label: 'View',
+          onClick: () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            setNewUpdatesCount(0);
+          }
+        },
+        duration: 5000,
+      });
+    }
+    
+    // Update previous IDs
+    previousFeedIdsRef.current = currentIds;
+  }, [unifiedFeed, viewMode]);
+
+  // Reset new updates count when switching to recent view
+  useEffect(() => {
+    if (viewMode === 'recent') {
+      setNewUpdatesCount(0);
+    }
+  }, [viewMode]);
 
   // Get precise relative time for recent feed
   const getPreciseRelativeTime = (dateString: string) => {
@@ -685,7 +736,10 @@ const LakeGeneva = () => {
                         By Topic
                       </button>
                       <button
-                        onClick={() => setViewMode('recent')}
+                        onClick={() => {
+                          setViewMode('recent');
+                          setNewUpdatesCount(0);
+                        }}
                         className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors flex items-center gap-1.5 ${
                           viewMode === 'recent'
                             ? "bg-white text-slate-900 shadow-sm"
@@ -693,9 +747,13 @@ const LakeGeneva = () => {
                         }`}
                       >
                         Most Recent
-                        {hasActiveIncidents && (
+                        {viewMode === 'topic' && newUpdatesCount > 0 ? (
+                          <span className="flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold animate-pulse">
+                            {newUpdatesCount > 9 ? '9+' : newUpdatesCount}
+                          </span>
+                        ) : hasActiveIncidents ? (
                           <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-                        )}
+                        ) : null}
                       </button>
                     </div>
 
@@ -723,6 +781,18 @@ const LakeGeneva = () => {
                 {/* Most Recent Feed */}
                 {viewMode === 'recent' ? (
                   <section className="py-6">
+                    {/* Auto-refresh indicator */}
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2 text-xs text-slate-500">
+                        <RefreshCw className="h-3 w-3 animate-spin-slow" />
+                        <span>Auto-refreshing every 30s</span>
+                      </div>
+                      {storiesUpdatedAt && (
+                        <span className="text-xs text-slate-400">
+                          Updated {getPreciseRelativeTime(new Date(storiesUpdatedAt).toISOString())}
+                        </span>
+                      )}
+                    </div>
                     <div className="space-y-3">
                       {unifiedFeed.map((item) => (
                         <a
