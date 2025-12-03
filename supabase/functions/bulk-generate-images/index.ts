@@ -13,7 +13,9 @@ serve(async (req) => {
   }
 
   try {
-    const { limit = 10 } = await req.json().catch(() => ({}));
+    const { limit = 3 } = await req.json().catch(() => ({}));
+    // Cap at 5 max to stay under 150s edge function timeout (~25s per image)
+    const safeBatchSize = Math.min(limit, 5);
     
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -26,7 +28,7 @@ serve(async (req) => {
       }
     );
 
-    console.log(`[bulk-generate-images] Starting bulk image generation (limit: ${limit})...`);
+    console.log(`[bulk-generate-images] Starting bulk image generation (requested: ${limit}, using: ${safeBatchSize})...`);
 
     // Fetch stories missing images (regardless of status - process all safe stories)
     const { data: storiesNeedingImages, error: fetchError } = await supabaseClient
@@ -35,7 +37,7 @@ serve(async (req) => {
       .eq("safety_level", "safe")
       .not("content_instagram", "is", null)
       .is("image_url", null)
-      .limit(limit);
+      .limit(safeBatchSize);
 
     if (fetchError) {
       console.error("[bulk-generate-images] Error fetching stories:", fetchError);

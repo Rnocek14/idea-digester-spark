@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
     console.log('[full-queue-prep] Step 1/3: Generating images...');
     let totalImages = 0;
     let hasMore = true;
-    const batchSize = 10;
+    const batchSize = 3; // Reduced from 10 to prevent 150s timeout
     
     while (hasMore) {
       const { data: imageData, error: imageError } = await supabase.functions.invoke('bulk-generate-images', {
