@@ -24,13 +24,13 @@ const PageShell: React.FC<PageShellProps> = ({
       {/* Top header */}
       <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/80 backdrop-blur-sm">
         {/* Top strip: date + tagline */}
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-2 text-xs text-slate-500">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-2 text-xs text-slate-500">
           <span>{today}</span>
           <span className="hidden sm:inline">Your local news, simplified</span>
         </div>
 
         {/* Main nav */}
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 pb-3 pt-2">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 pb-3 pt-2">
           {/* Logo / brand */}
           <Link to="/lake-geneva" className="flex items-baseline gap-2 group">
             <span className="text-lg font-semibold tracking-tight text-slate-900 group-hover:text-blue-600 transition-colors">
@@ -94,13 +94,13 @@ const PageShell: React.FC<PageShellProps> = ({
       </header>
 
       {/* Main content */}
-      <main className="mx-auto max-w-7xl px-4 pb-10 pt-6 sm:px-6 lg:px-8">
+      <main className="mx-auto max-w-5xl px-4 pb-10 pt-6 sm:px-6 lg:px-8">
         {children}
       </main>
 
       {/* Footer */}
       <footer className="border-t border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-3 px-4 py-4 text-xs text-slate-500 sm:flex-row sm:items-center">
+        <div className="mx-auto flex max-w-5xl flex-col items-start justify-between gap-3 px-4 py-4 text-xs text-slate-500 sm:flex-row sm:items-center">
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-medium text-slate-700">
               Lake Geneva Brief
