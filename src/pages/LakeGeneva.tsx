@@ -102,6 +102,7 @@ const LakeGeneva = () => {
   const [email, setEmail] = useState("");
   const [isSubscribing, setIsSubscribing] = useState(false);
   const [activeCategory, setActiveCategory] = useState<'all' | string>('all');
+  const [isSidebarVisible, setIsSidebarVisible] = useState(true);
 
   useEffect(() => {
     document.title = "Lake Geneva Brief – Today's Local News";
@@ -538,16 +539,27 @@ const LakeGeneva = () => {
 
         </div>
 
-        {/* Floating sidebar in right margin - xl screens only, width fills available margin */}
-        <aside 
-          className="hidden xl:block fixed top-28 right-4"
-          style={{ width: 'calc((100vw - 896px) / 2 - 24px)', minWidth: '180px', maxWidth: '280px' }}
-        >
-          <div className="space-y-4">
-            <LiveIncidentsSidebar />
-            <WeekendSidebarWidget />
-          </div>
-        </aside>
+        {/* Floating sidebar in right margin - xl screens only */}
+        {isSidebarVisible ? (
+          <aside 
+            className="hidden xl:block fixed top-28 right-4"
+            style={{ width: 'calc((100vw - 896px) / 2 - 24px)', minWidth: '180px', maxWidth: '280px' }}
+          >
+            <div className="space-y-4">
+              <LiveIncidentsSidebar onHide={() => setIsSidebarVisible(false)} showCloseButton />
+              <WeekendSidebarWidget />
+            </div>
+          </aside>
+        ) : (
+          <button
+            onClick={() => setIsSidebarVisible(true)}
+            className="hidden xl:flex fixed top-28 right-4 items-center gap-2 rounded-full px-3 py-1.5 text-xs border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 transition-colors shadow-sm"
+            aria-label="Show live incidents"
+          >
+            <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+            Live
+          </button>
+        )}
 
         {/* Mobile/Tablet: Incidents + Weekend stacked below hero */}
         <div className="xl:hidden mt-6 space-y-4">
