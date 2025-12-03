@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { TrendingUp, AlertTriangle, FileText, Activity } from "lucide-react";
-import { subDays, startOfDay } from "date-fns";
+import { subDays, startOfDay, differenceInCalendarDays } from "date-fns";
 
 interface MetricData {
   incidentsThisWeek: number;
@@ -11,14 +11,62 @@ interface MetricData {
   publishedThisWeek: number;
   activeSourcesHealthy: number;
   totalActiveSources: number;
+  incidentsByDay: number[];
+  breakingByDay: number[];
+  publishedByDay: number[];
 }
 
-const getHealthColor = (value: number, min: number, max: number, inverse = false) => {
-  if (inverse) {
-    if (value >= max) return "text-destructive";
-    if (value >= min) return "text-yellow-500";
-    return "text-green-500";
-  }
+// Tiny sparkline component
+const Sparkline: React.FC<{ values: number[] }> = ({ values }) => {
+  if (!values || values.length === 0) return null;
+  const max = Math.max(...values, 1);
+
+  const width = 64;
+  const height = 20;
+  const step = width / (values.length - 1 || 1);
+
+  const points = values
+    .map((v, i) => {
+      const x = i * step;
+      const y = height - (v / max) * (height - 4) - 2;
+      return `${x},${y}`;
+    })
+    .join(" ");
+
+  return (
+    <svg width={width} height={height} className="overflow-visible">
+      <polyline
+        points={points}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        className="opacity-60"
+      />
+    </svg>
+  );
+};
+
+// Trend arrow component
+const TrendArrow: React.FC<{ trend: "up" | "down" | "flat" }> = ({ trend }) => {
+  if (trend === "up") return <span className="text-green-500 text-xs">↑</span>;
+  if (trend === "down") return <span className="text-destructive text-xs">↓</span>;
+  return <span className="text-muted-foreground text-xs">→</span>;
+};
+
+const sum = (arr: number[]) => arr.reduce((a, b) => a + b, 0);
+const last7 = (arr: number[]) => arr.slice(-7);
+const prev7 = (arr: number[]) => arr.slice(0, 7);
+
+const getTrend = (arr: number[]): "up" | "down" | "flat" => {
+  const current = sum(last7(arr));
+  const previous = sum(prev7(arr));
+  if (!previous && !current) return "flat";
+  if (current > previous) return "up";
+  if (current < previous) return "down";
+  return "flat";
+};
+
+const getHealthColor = (value: number, min: number, max: number) => {
   if (value >= min && value <= max) return "text-green-500";
   if (value < min) return "text-yellow-500";
   return "text-yellow-500";
@@ -28,29 +76,49 @@ export const WeeklyMetricsCard = () => {
   const { data, isLoading } = useQuery({
     queryKey: ["weekly-metrics"],
     queryFn: async (): Promise<MetricData> => {
-      const weekAgo = startOfDay(subDays(new Date(), 7)).toISOString();
-      
-      // Fetch incidents this week
-      const { count: incidentsCount } = await supabase
+      const today = startOfDay(new Date());
+      const fourteenDaysAgo = subDays(today, 13).toISOString();
+      const weekAgo = subDays(today, 6).toISOString();
+
+      // Fetch incidents (14 days)
+      const { data: incidents } = await supabase
         .from("incidents")
-        .select("*", { count: "exact", head: true })
-        .gte("started_at", weekAgo);
+        .select("started_at")
+        .gte("started_at", fourteenDaysAgo);
 
-      // Fetch breaking stories this week
-      const { count: breakingCount } = await supabase
+      // Fetch breaking stories (14 days)
+      const { data: breaking } = await supabase
         .from("content_queue")
-        .select("*", { count: "exact", head: true })
+        .select("created_at")
         .eq("is_breaking", true)
-        .gte("created_at", weekAgo);
+        .gte("created_at", fourteenDaysAgo);
 
-      // Fetch published stories this week
-      const { count: publishedCount } = await supabase
+      // Fetch published stories (14 days)
+      const { data: published } = await supabase
         .from("content_queue")
-        .select("*", { count: "exact", head: true })
+        .select("created_at")
         .in("status", ["published", "auto_published"])
-        .gte("created_at", weekAgo);
+        .gte("created_at", fourteenDaysAgo);
 
-      // Fetch source health (sources that fetched in last 24h)
+      // Bucket into 14-day arrays
+      function bucketDailyCounts(dates: { created_at?: string; started_at?: string }[]) {
+        const buckets = new Array(14).fill(0);
+        for (const row of dates) {
+          const dt = new Date(row.created_at || row.started_at!);
+          const dayIndex = differenceInCalendarDays(today, startOfDay(dt));
+          const idxFromLeft = 13 - dayIndex;
+          if (idxFromLeft >= 0 && idxFromLeft < 14) {
+            buckets[idxFromLeft] += 1;
+          }
+        }
+        return buckets;
+      }
+
+      const incidentsByDay = bucketDailyCounts(incidents || []);
+      const breakingByDay = bucketDailyCounts(breaking || []);
+      const publishedByDay = bucketDailyCounts(published || []);
+
+      // Fetch source health
       const dayAgo = subDays(new Date(), 1).toISOString();
       const { data: sources } = await supabase
         .from("sources")
@@ -58,16 +126,19 @@ export const WeeklyMetricsCard = () => {
         .eq("status", "active");
 
       const totalSources = sources?.length || 0;
-      const healthySources = sources?.filter(s => 
+      const healthySources = sources?.filter(s =>
         s.last_fetched_at && new Date(s.last_fetched_at) > new Date(dayAgo)
       ).length || 0;
 
       return {
-        incidentsThisWeek: incidentsCount || 0,
-        breakingStoriesThisWeek: breakingCount || 0,
-        publishedThisWeek: publishedCount || 0,
+        incidentsThisWeek: sum(last7(incidentsByDay)),
+        breakingStoriesThisWeek: sum(last7(breakingByDay)),
+        publishedThisWeek: sum(last7(publishedByDay)),
         activeSourcesHealthy: healthySources,
         totalActiveSources: totalSources,
+        incidentsByDay,
+        breakingByDay,
+        publishedByDay,
       };
     },
     staleTime: 30000,
@@ -90,9 +161,13 @@ export const WeeklyMetricsCard = () => {
     );
   }
 
-  const sourceHealthPercent = data?.totalActiveSources 
-    ? Math.round((data.activeSourcesHealthy / data.totalActiveSources) * 100) 
+  const sourceHealthPercent = data?.totalActiveSources
+    ? Math.round((data.activeSourcesHealthy / data.totalActiveSources) * 100)
     : 0;
+
+  const incidentsTrend = getTrend(data?.incidentsByDay || []);
+  const breakingTrend = getTrend(data?.breakingByDay || []);
+  const publishedTrend = getTrend(data?.publishedByDay || []);
 
   return (
     <Card>
@@ -101,65 +176,79 @@ export const WeeklyMetricsCard = () => {
           <TrendingUp className="h-5 w-5" />
           Weekly Metrics
         </CardTitle>
-        <p className="text-sm text-muted-foreground">Last 7 days performance</p>
+        <p className="text-sm text-muted-foreground">Last 7 days vs previous 7</p>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-4">
           {/* Incidents */}
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Incidents</span>
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Incidents</span>
+              </div>
+              <div className="flex items-baseline gap-1">
+                <span className={`text-xl font-bold ${getHealthColor(data?.incidentsThisWeek || 0, 1, 5)}`}>
+                  {data?.incidentsThisWeek || 0}
+                </span>
+                <TrendArrow trend={incidentsTrend} />
+                <span className="text-xs text-muted-foreground ml-1">target: 1-3</span>
+              </div>
             </div>
-            <div className="flex items-baseline gap-2">
-              <span className={`text-2xl font-bold ${getHealthColor(data?.incidentsThisWeek || 0, 1, 5)}`}>
-                {data?.incidentsThisWeek || 0}
-              </span>
-              <span className="text-xs text-muted-foreground">target: 1-3</span>
-            </div>
+            <Sparkline values={data?.incidentsByDay || []} />
           </div>
 
           {/* Breaking Stories */}
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <Activity className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Breaking</span>
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2">
+                <Activity className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Breaking</span>
+              </div>
+              <div className="flex items-baseline gap-1">
+                <span className={`text-xl font-bold ${getHealthColor(data?.breakingStoriesThisWeek || 0, 2, 8)}`}>
+                  {data?.breakingStoriesThisWeek || 0}
+                </span>
+                <TrendArrow trend={breakingTrend} />
+                <span className="text-xs text-muted-foreground ml-1">target: 2-5</span>
+              </div>
             </div>
-            <div className="flex items-baseline gap-2">
-              <span className={`text-2xl font-bold ${getHealthColor(data?.breakingStoriesThisWeek || 0, 2, 8)}`}>
-                {data?.breakingStoriesThisWeek || 0}
-              </span>
-              <span className="text-xs text-muted-foreground">target: 2-5</span>
-            </div>
+            <Sparkline values={data?.breakingByDay || []} />
           </div>
 
           {/* Published */}
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <FileText className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Published</span>
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2">
+                <FileText className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Published</span>
+              </div>
+              <div className="flex items-baseline gap-1">
+                <span className={`text-xl font-bold ${getHealthColor(data?.publishedThisWeek || 0, 25, 100)}`}>
+                  {data?.publishedThisWeek || 0}
+                </span>
+                <TrendArrow trend={publishedTrend} />
+                <span className="text-xs text-muted-foreground ml-1">target: 25-75</span>
+              </div>
             </div>
-            <div className="flex items-baseline gap-2">
-              <span className={`text-2xl font-bold ${getHealthColor(data?.publishedThisWeek || 0, 25, 100)}`}>
-                {data?.publishedThisWeek || 0}
-              </span>
-              <span className="text-xs text-muted-foreground">target: 25-75</span>
-            </div>
+            <Sparkline values={data?.publishedByDay || []} />
           </div>
 
-          {/* Source Health */}
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Source Health</span>
-            </div>
-            <div className="flex items-baseline gap-2">
-              <span className={`text-2xl font-bold ${sourceHealthPercent >= 90 ? "text-green-500" : sourceHealthPercent >= 70 ? "text-yellow-500" : "text-destructive"}`}>
-                {sourceHealthPercent}%
-              </span>
-              <span className="text-xs text-muted-foreground">
-                {data?.activeSourcesHealthy}/{data?.totalActiveSources} healthy
-              </span>
+          {/* Source Health - no sparkline, just status */}
+          <div className="pt-2 border-t">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Source Health</span>
+              </div>
+              <div className="flex items-baseline gap-1">
+                <span className={`text-xl font-bold ${sourceHealthPercent >= 90 ? "text-green-500" : sourceHealthPercent >= 70 ? "text-yellow-500" : "text-destructive"}`}>
+                  {sourceHealthPercent}%
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  ({data?.activeSourcesHealthy}/{data?.totalActiveSources})
+                </span>
+              </div>
             </div>
           </div>
         </div>
