@@ -230,13 +230,14 @@ const LakeGeneva = () => {
       title="Lake Geneva Brief – Local News, Simplified"
       description="Fast, trustworthy updates on Lake Geneva city hall, schools, events, and real estate."
     >
-      {/* Page wrapper with side panel layout */}
-      <div className="relative">
-        {/* Main content lane - with right padding on xl for the floating rail */}
-        <div className="xl:pr-[360px]">
-          {/* Hero Section */}
-          {featured && (
-            <section className="-mx-4 sm:-mx-6 lg:-mx-8 border-b border-slate-200 bg-white px-4 sm:px-6 lg:px-8 py-10">
+      {/* Page wrapper */}
+      <div>
+        {/* Hero Section */}
+        {featured && (
+          <section className="-mx-4 sm:-mx-6 lg:-mx-8 border-b border-slate-200 bg-white px-4 sm:px-6 lg:px-8 py-10">
+            {/* Two column grid: main content + Also Today */}
+            <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+              {/* LEFT COLUMN: greeting, headline, weather, pills, featured story */}
               <div className="space-y-5">
                 {/* Greeting + headline */}
                 <div className="space-y-1">
@@ -323,16 +324,22 @@ const LakeGeneva = () => {
                     )}
                   </div>
                 </article>
-
-                {/* Mobile/tablet sidebar - stacked below hero */}
-                <aside className="space-y-4 xl:hidden">
-                  <LiveIncidentsSidebar />
-                  <WeekendSidebarWidget />
-                  <AlsoTodayCard stories={restStories} />
-                </aside>
               </div>
-            </section>
-          )}
+
+              {/* RIGHT COLUMN: Also Today (inside hero, desktop only) */}
+              <div className="hidden lg:block">
+                <AlsoTodayCard stories={restStories} />
+              </div>
+            </div>
+
+            {/* Mobile: AlsoTodayCard + incidents stacked */}
+            <div className="mt-6 space-y-4 lg:hidden">
+              <AlsoTodayCard stories={restStories} />
+              <LiveIncidentsSidebar />
+              <WeekendSidebarWidget />
+            </div>
+          </section>
+        )}
 
         {/* Sponsor Block */}
         {sponsor && (
@@ -526,13 +533,11 @@ const LakeGeneva = () => {
           </section>
         </div>
 
-        {/* Floating right rail - desktop only */}
-        <aside className="hidden xl:flex flex-col gap-4 absolute top-10 right-0 w-[340px]">
-          <LiveIncidentsSidebar />
-          <WeekendSidebarWidget />
-          <AlsoTodayCard stories={restStories} />
-        </aside>
-      </div>
+      {/* Fixed Live Incidents rail - floats in right viewport margin (desktop only) */}
+      <aside className="hidden xl:flex flex-col gap-4 fixed top-28 right-8 w-[280px] z-40">
+        <LiveIncidentsSidebar />
+        <WeekendSidebarWidget />
+      </aside>
     </PageShell>
   );
 };
