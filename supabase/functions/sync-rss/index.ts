@@ -480,14 +480,33 @@ serve(async (req) => {
             continue;
           }
 
-          // Check for duplicates
-          const { data: existing } = await supabase
+          // Check for duplicates by URL
+          const { data: existingByUrl } = await supabase
             .from("content_queue")
-            .select("original_url")
+            .select("id")
             .eq("original_url", originalUrl)
             .maybeSingle();
 
-          if (existing) {
+          if (existingByUrl) {
+            result.skipped++;
+            continue;
+          }
+
+          // Check for duplicates by title + publish_date (same event different scrape)
+          const parsedDate = parseFlexibleDate(pubDate);
+          const publishDateOnly = parsedDate.split('T')[0]; // Just the date part
+          
+          const { data: existingByTitle } = await supabase
+            .from("content_queue")
+            .select("id")
+            .eq("title", title)
+            .eq("source_id", source.id)
+            .gte("publish_date", `${publishDateOnly}T00:00:00Z`)
+            .lte("publish_date", `${publishDateOnly}T23:59:59Z`)
+            .maybeSingle();
+
+          if (existingByTitle) {
+            console.log(`Skipping duplicate: "${title}" on ${publishDateOnly}`);
             result.skipped++;
             continue;
           }
