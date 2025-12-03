@@ -59,6 +59,10 @@ serve(async (req) => {
 
     console.log("[prepare-posts] Starting post preparation...");
 
+    // OPTIMIZATION: Only fetch recent stories (last 2 days) with hard limit
+    const since = new Date();
+    since.setDate(since.getDate() - 2);
+
     // Fetch eligible content: approved/auto_published/published, safe, with voice variants
     // Order by breaking news first, then priority score, then creation date
     const { data: eligibleStories, error: fetchError } = await supabaseClient
@@ -66,12 +70,14 @@ serve(async (req) => {
       .select("*")
       .in("status", ["approved", "auto_published", "published"])
       .eq("safety_level", "safe")
+      .gte("created_at", since.toISOString())
       .not("content_facebook", "is", null)
       .not("content_instagram", "is", null)
       .not("content_x", "is", null)
       .order("is_breaking", { ascending: false })
       .order("priority_score", { ascending: false })
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(100);
 
     if (fetchError) {
       console.error("[prepare-posts] Error fetching stories:", fetchError);
@@ -96,7 +102,7 @@ serve(async (req) => {
     }
 
     // Define platform scheduling intervals (in hours)
-    const platformConfig = {
+    const platformConfig: Record<string, { interval: number; maxPerDay: number }> = {
       instagram: { interval: 4, maxPerDay: 3 },
       facebook: { interval: 6, maxPerDay: 2 },
       x: { interval: 3, maxPerDay: 5 },
@@ -107,6 +113,25 @@ serve(async (req) => {
     let civicSkippedIG = 0;
     let curatedCivicUsed = 0;
     const now = new Date();
+
+    // OPTIMIZATION: Pre-fetch last scheduled time for each platform (3 queries instead of N*3)
+    const lastScheduledByPlatform: Record<string, Date> = {};
+    for (const platform of Object.keys(platformConfig)) {
+      const { data: recentPosts } = await supabaseClient
+        .from("post_queue")
+        .select("scheduled_for")
+        .eq("platform", platform)
+        .order("scheduled_for", { ascending: false })
+        .limit(1);
+
+      if (recentPosts && recentPosts.length > 0) {
+        lastScheduledByPlatform[platform] = new Date(recentPosts[0].scheduled_for);
+      } else {
+        // Start 1 hour from now if no posts
+        lastScheduledByPlatform[platform] = new Date(now.getTime() + 60 * 60 * 1000);
+      }
+    }
+    console.log("[prepare-posts] Pre-fetched last scheduled times for all platforms");
 
     for (const story of eligibleStories) {
       const category = (story.category || '').toLowerCase();
@@ -190,23 +215,23 @@ serve(async (req) => {
           continue;
         }
 
-        // Find the next available slot for this platform
-        const { data: recentPosts } = await supabaseClient
-          .from("post_queue")
-          .select("scheduled_for")
-          .eq("platform", platform)
-          .order("scheduled_for", { ascending: false })
-          .limit(1);
-
+        // OPTIMIZATION: Use pre-fetched last scheduled time and advance pointer
+        const isBreaking = story.is_breaking || false;
         let scheduledFor: Date;
-        if (recentPosts && recentPosts.length > 0) {
-          // Schedule after the last post + interval
-          const lastPost = new Date(recentPosts[0].scheduled_for);
-          scheduledFor = new Date(lastPost.getTime() + config.interval * 60 * 60 * 1000);
+        
+        if (isBreaking && platform === 'x') {
+          // BREAKING NEWS OVERRIDE: X gets breaking news immediately (within 2 minutes)
+          scheduledFor = new Date(now.getTime() + 2 * 60 * 1000);
+          console.log(`[prepare-posts] 🔴 BREAKING: Scheduling ${platform} post immediately`);
         } else {
-          // No existing posts, schedule in 1 hour from now
-          scheduledFor = new Date(now.getTime() + 60 * 60 * 1000);
+          // Schedule after the last scheduled time + interval
+          scheduledFor = new Date(
+            lastScheduledByPlatform[platform].getTime() + config.interval * 60 * 60 * 1000
+          );
         }
+        
+        // Update the pointer for next post on this platform
+        lastScheduledByPlatform[platform] = scheduledFor;
 
         // Get the appropriate voice variant for this platform
         const postText = story[`content_${platform}`];
@@ -214,14 +239,6 @@ serve(async (req) => {
         if (!postText) {
           console.log(`[prepare-posts] No content for ${platform} on story ${story.id}, skipping`);
           continue;
-        }
-
-        // BREAKING NEWS OVERRIDE: Schedule immediately for X platform
-        const isBreaking = story.is_breaking || false;
-        if (isBreaking && platform === 'x') {
-          // X gets breaking news immediately (within 2 minutes)
-          scheduledFor = new Date(now.getTime() + 2 * 60 * 1000);
-          console.log(`[prepare-posts] 🔴 BREAKING: Scheduling ${platform} post immediately`);
         }
 
         // Create post_queue entry
