@@ -231,114 +231,116 @@ const LakeGeneva = () => {
       description="Fast, trustworthy updates on Lake Geneva city hall, schools, events, and real estate."
     >
       {/* Two-column page grid: Main content + Sticky Sidebar */}
-      <div className="mx-auto max-w-6xl px-4">
-        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_300px] gap-8">
+      <div className="mx-auto max-w-6xl px-4 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,2.6fr)_minmax(280px,1fr)] gap-10">
           
           {/* MAIN COLUMN */}
           <main className="min-w-0">
-            {/* Hero Section */}
+            {/* Hero Section - wrapped in card */}
             {featured && (
-              <section className="py-10 border-b border-slate-200">
-                {/* Two column grid: main content + Also Today */}
-                <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-                  {/* LEFT COLUMN: greeting, headline, weather, pills, featured story */}
-                  <div className="space-y-5">
-                    {/* Greeting + headline */}
-                    <div className="space-y-1">
-                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                        Good morning, Lake Geneva
-                      </p>
-                      <h1 className="font-semibold text-2xl sm:text-3xl md:text-[32px] leading-tight text-slate-900">
-                        Here's what's happening this week
-                      </h1>
-                      <p className="max-w-xl text-sm text-slate-600 leading-relaxed">
-                        Short, trustworthy updates on city hall, schools, events, and real estate — in under 5 minutes.
-                      </p>
-                      <div className="mt-3">
-                        <WeatherWidget />
-                      </div>
-                    </div>
-
-                    {/* Category quick links */}
-                    <div className="flex flex-wrap gap-2">
-                      {sortedCategories.slice(0, 4).map((cat) => (
-                        <button
-                          key={cat}
-                          type="button"
-                          onClick={() => {
-                            const el = document.getElementById(cat);
-                            if (el) el.scrollIntoView({ behavior: 'smooth' });
-                          }}
-                          className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-700 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-700 transition-colors"
-                        >
-                          <span>{getCategoryEmoji(cat)}</span>
-                          <span className="capitalize font-medium">
-                            {cat.replace('_', ' ')}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-
-                    {/* Featured story card */}
-                    <article className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100">
-                      <div className="relative h-56 sm:h-60">
-                        {featured.image_url && (
-                          <img
-                            src={featured.image_url}
-                            alt={featured.title}
-                            className="h-full w-full object-cover transition-transform duration-500 hover:scale-[1.03]"
-                          />
-                        )}
-                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-black/30 to-transparent" />
-                        <div className="pointer-events-none absolute inset-x-0 bottom-0 p-4 sm:p-5">
-                          <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-200">
-                            Top story
-                          </p>
-                          <h2 className="text-lg sm:text-xl font-semibold text-white">
-                            {featured.title}
-                          </h2>
-                          {(featured.content_website || featured.content_lg_base || featured.summary) && (
-                            <p className="mt-1 line-clamp-2 text-xs sm:text-sm text-slate-100/90">
-                              {featured.content_website || featured.content_lg_base || featured.summary}
-                            </p>
-                          )}
-                          <div className="mt-3 flex items-center gap-3 text-[11px] text-slate-200/90">
-                            {featured.category && (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-black/30 px-2 py-0.5">
-                                {getCategoryEmoji(featured.category)}
-                                <span className="capitalize">
-                                  {featured.category.replace('_', ' ')}
-                                </span>
-                              </span>
-                            )}
-                            <span className="opacity-80">
-                              {getRelativeTime(featured.publish_date || featured.created_at) || 'Today'} · 3 min read
-                            </span>
-                          </div>
+              <section className="py-8">
+                <div className="bg-white rounded-3xl border border-slate-100 shadow-sm px-6 py-6 lg:px-8 lg:py-7">
+                  {/* Two column grid: main content + Also Today */}
+                  <div className="grid gap-6 lg:grid-cols-[minmax(0,1.7fr)_minmax(240px,1fr)] items-start">
+                    {/* LEFT COLUMN: greeting, headline, weather, pills, featured story */}
+                    <div className="space-y-5">
+                      {/* Greeting + headline */}
+                      <div className="space-y-1">
+                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                          Good morning, Lake Geneva
+                        </p>
+                        <h1 className="font-semibold text-2xl sm:text-3xl leading-tight text-slate-900">
+                          Here's what's happening this week
+                        </h1>
+                        <p className="max-w-xl text-sm text-slate-600 leading-relaxed">
+                          Short, trustworthy updates on city hall, schools, events, and real estate — in under 5 minutes.
+                        </p>
+                        <div className="mt-3">
+                          <WeatherWidget />
                         </div>
-                        {featured.original_url && (
-                          <a
-                            href={featured.original_url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="absolute inset-0"
-                          >
-                            <span className="sr-only">Read more</span>
-                          </a>
-                        )}
                       </div>
-                    </article>
+
+                      {/* Category quick links */}
+                      <div className="flex flex-wrap gap-2">
+                        {sortedCategories.slice(0, 4).map((cat) => (
+                          <button
+                            key={cat}
+                            type="button"
+                            onClick={() => {
+                              const el = document.getElementById(cat);
+                              if (el) el.scrollIntoView({ behavior: 'smooth' });
+                            }}
+                            className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-700 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                          >
+                            <span>{getCategoryEmoji(cat)}</span>
+                            <span className="capitalize font-medium">
+                              {cat.replace('_', ' ')}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Featured story card */}
+                      <article className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100">
+                        <div className="relative h-52 sm:h-56">
+                          {featured.image_url && (
+                            <img
+                              src={featured.image_url}
+                              alt={featured.title}
+                              className="h-full w-full object-cover transition-transform duration-500 hover:scale-[1.03]"
+                            />
+                          )}
+                          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-black/30 to-transparent" />
+                          <div className="pointer-events-none absolute inset-x-0 bottom-0 p-4 sm:p-5">
+                            <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-200">
+                              Top story
+                            </p>
+                            <h2 className="text-lg sm:text-xl font-semibold text-white">
+                              {featured.title}
+                            </h2>
+                            {(featured.content_website || featured.content_lg_base || featured.summary) && (
+                              <p className="mt-1 line-clamp-2 text-xs sm:text-sm text-slate-100/90">
+                                {featured.content_website || featured.content_lg_base || featured.summary}
+                              </p>
+                            )}
+                            <div className="mt-3 flex items-center gap-3 text-[11px] text-slate-200/90">
+                              {featured.category && (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-black/30 px-2 py-0.5">
+                                  {getCategoryEmoji(featured.category)}
+                                  <span className="capitalize">
+                                    {featured.category.replace('_', ' ')}
+                                  </span>
+                                </span>
+                              )}
+                              <span className="opacity-80">
+                                {getRelativeTime(featured.publish_date || featured.created_at) || 'Today'} · 3 min read
+                              </span>
+                            </div>
+                          </div>
+                          {featured.original_url && (
+                            <a
+                              href={featured.original_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="absolute inset-0"
+                            >
+                              <span className="sr-only">Read more</span>
+                            </a>
+                          )}
+                        </div>
+                      </article>
+                    </div>
+
+                    {/* RIGHT COLUMN: Also Today (inside hero card, desktop only) */}
+                    <div className="hidden lg:block">
+                      <AlsoTodayCard stories={restStories} />
+                    </div>
                   </div>
 
-                  {/* RIGHT COLUMN: Also Today (inside hero, desktop only) */}
-                  <div className="hidden lg:block">
+                  {/* Mobile: AlsoTodayCard stacked */}
+                  <div className="mt-6 lg:hidden">
                     <AlsoTodayCard stories={restStories} />
                   </div>
-                </div>
-
-                {/* Mobile: AlsoTodayCard stacked */}
-                <div className="mt-6 lg:hidden">
-                  <AlsoTodayCard stories={restStories} />
                 </div>
               </section>
             )}
@@ -535,25 +537,17 @@ const LakeGeneva = () => {
             </section>
           </main>
 
-          {/* SIDEBAR COLUMN - Sticky on desktop, stacked on mobile/tablet */}
-          <aside className="hidden xl:block">
-            <div className="sticky top-24 space-y-4">
-              <div className="rounded-2xl border border-slate-200 bg-white shadow-lg shadow-slate-200/60 overflow-hidden">
-                <div className="p-4">
-                  <LiveIncidentsSidebar />
-                </div>
-              </div>
-              <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-                <div className="p-4">
-                  <WeekendSidebarWidget />
-                </div>
-              </div>
+          {/* SIDEBAR COLUMN - Sticky on desktop */}
+          <aside className="hidden lg:block">
+            <div className="sticky top-28 space-y-4 w-[280px]">
+              <LiveIncidentsSidebar />
+              <WeekendSidebarWidget />
             </div>
           </aside>
         </div>
 
         {/* Mobile/Tablet: Incidents + Weekend stacked below hero */}
-        <div className="xl:hidden mt-6 space-y-4 px-4">
+        <div className="lg:hidden mt-6 space-y-4">
           <LiveIncidentsSidebar />
           <WeekendSidebarWidget />
         </div>
