@@ -7,37 +7,85 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-// Curated civic images - Lake Geneva City Hall, downtown, and civic landmarks
-// These are used when OG image is a generic calendar icon (7 images for variety)
-const CURATED_CIVIC_IMAGES = [
-  "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Lake_Geneva_Wisconsin_City_Hall.jpg/1280px-Lake_Geneva_Wisconsin_City_Hall.jpg",
-  "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Walworth_County_Courthouse.jpg/1280px-Walworth_County_Courthouse.jpg",
-  "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Lake_Geneva%2C_Wisconsin_-_Main_Street.jpg/1280px-Lake_Geneva%2C_Wisconsin_-_Main_Street.jpg",
-  "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Lake_Geneva%2C_Wisconsin_-_downtown.jpg/1280px-Lake_Geneva%2C_Wisconsin_-_downtown.jpg",
-  "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Lake_Geneva_Wisconsin_Riviera.jpg/1280px-Lake_Geneva_Wisconsin_Riviera.jpg",
-  "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Lake_Geneva_Wisconsin_Library_Park.jpg/1280px-Lake_Geneva_Wisconsin_Library_Park.jpg",
-  "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Geneva_Lake%2C_Wisconsin.jpg/1280px-Geneva_Lake%2C_Wisconsin.jpg",
-];
+// Topic-specific civic image libraries for smart keyword mapping
+type CivicTopic = 'historic' | 'parks' | 'lakefront' | 'library' | 'safety' | 'tourism' | 'utilities' | 'finance' | 'default';
+
+const CIVIC_IMAGE_LIBRARIES: Record<CivicTopic, string[]> = {
+  historic: [
+    "https://images.unsplash.com/photo-1518005020951-eccb494ad742?w=800&q=80",
+    "https://images.unsplash.com/photo-1506606399367-e0458ae4e514?w=800&q=80",
+    "https://images.unsplash.com/photo-1524230572899-a752b3835840?w=800&q=80",
+  ],
+  parks: [
+    "https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&q=80",
+    "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&q=80",
+    "https://images.unsplash.com/photo-1472396961693-142e6e269027?w=800&q=80",
+  ],
+  lakefront: [
+    "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?w=800&q=80",
+    "https://images.unsplash.com/photo-1482938289607-e9573fc25ebb?w=800&q=80",
+    "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80",
+  ],
+  library: [
+    "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=800&q=80",
+    "https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=800&q=80",
+    "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&q=80",
+  ],
+  safety: [
+    "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=800&q=80",
+    "https://images.unsplash.com/photo-1582139329536-e7284fece509?w=800&q=80",
+  ],
+  tourism: [
+    "https://images.unsplash.com/photo-1555636222-cae831e670b3?w=800&q=80",
+    "https://images.unsplash.com/photo-1517732306149-e8f829eb588a?w=800&q=80",
+  ],
+  utilities: [
+    "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80",
+    "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80",
+  ],
+  finance: [
+    "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&q=80",
+    "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80",
+  ],
+  default: [
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Lake_Geneva_Wisconsin_City_Hall.jpg/1280px-Lake_Geneva_Wisconsin_City_Hall.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Walworth_County_Courthouse.jpg/1280px-Walworth_County_Courthouse.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Lake_Geneva_Wisconsin_Riviera.jpg/1280px-Lake_Geneva_Wisconsin_Riviera.jpg",
+  ],
+};
 
 // Generic OG image patterns to detect and replace
-const GENERIC_OG_PATTERNS = [
-  "IconModuleCalendar",
-  "calendar-icon",
-  "default-event",
-  "placeholder",
-];
+const GENERIC_OG_PATTERNS = ["IconModuleCalendar", "calendar-icon", "default-event", "placeholder"];
+
+function detectCivicTopic(title: string): CivicTopic {
+  const t = title.toLowerCase();
+  
+  if (t.includes('hillmoor') || t.includes('historic') || t.includes('preservation')) return 'historic';
+  if (t.includes('park') || t.includes('cemetery') || t.includes('tree') || t.includes('avian')) return 'parks';
+  if (t.includes('pier') || t.includes('harbor') || t.includes('harbour') || t.includes('lakefront') || t.includes('lake')) return 'lakefront';
+  if (t.includes('library')) return 'library';
+  if (t.includes('police') || t.includes('fire') || t.includes('court') || t.includes('safety')) return 'safety';
+  if (t.includes('tourism') || t.includes('visitor')) return 'tourism';
+  if (t.includes('utility') || t.includes('utilities') || t.includes('water') || t.includes('sewer')) return 'utilities';
+  if (t.includes('finance') || t.includes('licensing') || t.includes('regulation') || t.includes('budget')) return 'finance';
+  
+  return 'default';
+}
 
 function isGenericCivicImage(imageUrl: string | null): boolean {
   if (!imageUrl) return false;
-  return GENERIC_OG_PATTERNS.some(pattern => 
-    imageUrl.toLowerCase().includes(pattern.toLowerCase())
-  );
+  return GENERIC_OG_PATTERNS.some(pattern => imageUrl.toLowerCase().includes(pattern.toLowerCase()));
 }
 
-function getCuratedCivicImage(storyId: string): string {
-  // Use story ID hash to get consistent image per story
-  const hash = storyId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  return CURATED_CIVIC_IMAGES[hash % CURATED_CIVIC_IMAGES.length];
+function getCuratedCivicImage(storyId: string, title: string): string {
+  const topic = detectCivicTopic(title);
+  const images = CIVIC_IMAGE_LIBRARIES[topic];
+  
+  // Deterministic hash using storyId + topic for consistency
+  const key = `${storyId}:${topic}`;
+  const hash = key.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  
+  return images[hash % images.length];
 }
 
 serve(async (req) => {
@@ -147,11 +195,12 @@ serve(async (req) => {
       const hasGenericCivicImage = isCivic && isGenericCivicImage(story.image_url);
       
       if (hasGenericCivicImage) {
-        // Replace generic civic OG with curated image
-        finalImageUrl = getCuratedCivicImage(story.id);
+        // Replace generic civic OG with topic-aware curated image
+        const civicTopic = detectCivicTopic(story.title);
+        finalImageUrl = getCuratedCivicImage(story.id, story.title);
         imageSource = 'curated_civic';
         curatedCivicUsed++;
-        console.log(`[prepare-posts] Using curated civic image for story ${story.id}`);
+        console.log(`[prepare-posts] Using curated civic image (${civicTopic}) for story ${story.id}: "${story.title}"`);
       } else if (isSponsored && !story.image_url) {
         // ONLY generate AI image for sponsored posts (mandatory)
         console.log(`[prepare-posts] Sponsored story ${story.id} needs AI image`);
@@ -258,6 +307,7 @@ serve(async (req) => {
               story_title: story.title,
               story_category: story.category,
               image_source: imageSource,
+              civic_topic: isCivic ? detectCivicTopic(story.title) : null,
               image_generated: generatedImageUrl ? true : false,
               sponsored_safe: isSponsored ? (generatedImageUrl ? true : false) : true,
               type: isBreaking ? 'breaking' : 'normal',
