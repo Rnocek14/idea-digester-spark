@@ -232,7 +232,7 @@ const LakeGeneva = () => {
     >
       {/* Two-column page grid: Main content + Sticky Sidebar */}
       <div className="mx-auto max-w-6xl px-4 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,2.6fr)_minmax(280px,1fr)] gap-10">
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,3fr)_280px] lg:gap-8">
           
           {/* MAIN COLUMN */}
           <main className="min-w-0">
