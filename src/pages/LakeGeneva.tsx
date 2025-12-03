@@ -124,6 +124,39 @@ const LakeGeneva = () => {
   const activeIncidentCount = activeIncidents.length;
   const hasActiveIncidents = activeIncidentCount > 0;
 
+  // Curated civic images to replace generic calendar icons
+  const CURATED_CIVIC_IMAGES = [
+    "https://images.unsplash.com/photo-1569025743873-ea3a9ber84d1?w=800&q=80", // City Hall
+    "https://images.unsplash.com/photo-1582407947304-fd86f028f716?w=800&q=80", // Courthouse
+    "https://images.unsplash.com/photo-1555636222-cae831e670b3?w=800&q=80", // Main Street
+    "https://images.unsplash.com/photo-1517732306149-e8f829eb588a?w=800&q=80", // Town Square
+    "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=800&q=80", // Meeting room
+    "https://images.unsplash.com/photo-1577495508326-19a1b3cf65b7?w=800&q=80", // Flag/Government
+    "https://images.unsplash.com/photo-1434626881859-194d67b2b86f?w=800&q=80", // Winter town
+  ];
+
+  const isGenericCivicImage = (imageUrl: string | null) => {
+    if (!imageUrl) return false;
+    const genericPatterns = [
+      'IconModuleCalendar',
+      'calendar-icon',
+      'default-event',
+      'placeholder',
+      'no-image',
+    ];
+    return genericPatterns.some(pattern => imageUrl.toLowerCase().includes(pattern.toLowerCase()));
+  };
+
+  const getCuratedCivicImage = (storyId: string) => {
+    // Deterministic selection based on story ID
+    let hash = 0;
+    for (let i = 0; i < storyId.length; i++) {
+      hash = ((hash << 5) - hash) + storyId.charCodeAt(i);
+      hash |= 0;
+    }
+    return CURATED_CIVIC_IMAGES[Math.abs(hash) % CURATED_CIVIC_IMAGES.length];
+  };
+
   // Fetch today's published stories
   const { data: stories = [], isLoading: storiesLoading } = useQuery({
     queryKey: ["public-stories"],
@@ -137,11 +170,21 @@ const LakeGeneva = () => {
         .in("status", ["published", "auto_published"])
         .eq("safety_level", "safe")
         .gte("created_at", weekAgo.toISOString())
+        .lte("publish_date", new Date().toISOString()) // Only show today or past
+        .order("is_breaking", { ascending: false })
         .order("publish_date", { ascending: false })
+        .order("created_at", { ascending: false })
         .limit(100);
 
       if (error) throw error;
-      return data as any[];
+      
+      // Replace generic civic images with curated ones
+      return (data || []).map((story: any) => ({
+        ...story,
+        image_url: isGenericCivicImage(story.image_url) 
+          ? getCuratedCivicImage(story.id) 
+          : story.image_url
+      }));
     },
     staleTime: 60000,
   });
