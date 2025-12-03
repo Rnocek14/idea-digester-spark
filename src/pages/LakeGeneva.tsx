@@ -99,29 +99,48 @@ const getCategoryEmoji = (category: string | null) => {
   }
 };
 
+type FeedItem = {
+  id: string;
+  type: 'story' | 'incident';
+  title: string;
+  summary: string | null;
+  category: string | null;
+  timestamp: string;
+  url: string | null;
+  image_url: string | null;
+  incident_type?: string;
+  status?: string;
+};
+
 const LakeGeneva = () => {
   const [email, setEmail] = useState("");
   const [isSubscribing, setIsSubscribing] = useState(false);
   const [activeCategory, setActiveCategory] = useState<'all' | string>('all');
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
+  const [viewMode, setViewMode] = useState<'topic' | 'recent'>('topic');
 
   useEffect(() => {
     document.title = "Lake Geneva Brief – Today's Local News";
   }, []);
 
-  // Fetch active incidents for sidebar toggle
-  const { data: activeIncidents = [] } = useQuery({
-    queryKey: ["active-incidents-count"],
+  // Fetch incidents for both sidebar and recent feed
+  const { data: incidents = [] } = useQuery({
+    queryKey: ["all-incidents-feed"],
     queryFn: async () => {
+      const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
       const { data, error } = await supabase
         .from("incidents")
-        .select("id, status")
-        .in("status", ["active", "monitoring"]);
+        .select("id, title, incident_type, status, location, started_at, updated_at, slug")
+        .in("status", ["active", "monitoring", "resolved"])
+        .gte("updated_at", threeDaysAgo)
+        .order("updated_at", { ascending: false })
+        .limit(20);
       if (error) throw error;
       return data || [];
     },
     refetchInterval: 30000,
   });
+  const activeIncidents = incidents.filter(i => i.status === 'active' || i.status === 'monitoring');
   const activeIncidentCount = activeIncidents.length;
   const hasActiveIncidents = activeIncidentCount > 0;
 
@@ -356,6 +375,98 @@ const LakeGeneva = () => {
       ? sortedCategories
       : sortedCategories.filter((c) => c === activeCategory);
 
+  // Build unified feed for "Most Recent" view
+  const buildUnifiedFeed = (): FeedItem[] => {
+    const feedItems: FeedItem[] = [];
+    
+    // Add stories
+    stories.forEach((story) => {
+      feedItems.push({
+        id: story.id,
+        type: 'story',
+        title: story.title,
+        summary: story.content_website || story.content_lg_base || story.summary,
+        category: story.category,
+        timestamp: story.publish_date || story.created_at,
+        url: story.original_url,
+        image_url: story.image_url,
+      });
+    });
+    
+    // Add incidents
+    incidents.forEach((incident) => {
+      feedItems.push({
+        id: incident.id,
+        type: 'incident',
+        title: incident.title,
+        summary: incident.location || null,
+        category: 'incident',
+        timestamp: incident.updated_at || incident.started_at,
+        url: `/incidents/${incident.slug}`,
+        image_url: null,
+        incident_type: incident.incident_type,
+        status: incident.status,
+      });
+    });
+    
+    // Sort by timestamp, newest first
+    return feedItems.sort((a, b) => 
+      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
+  };
+
+  const unifiedFeed = viewMode === 'recent' ? buildUnifiedFeed() : [];
+
+  // Get precise relative time for recent feed
+  const getPreciseRelativeTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const diffMs = Date.now() - date.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} min ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays === 1) return '1 day ago';
+    return `${diffDays} days ago`;
+  };
+
+  // Get icon/emoji for feed item type
+  const getFeedItemIcon = (item: FeedItem) => {
+    if (item.type === 'incident') {
+      switch (item.incident_type) {
+        case 'weather': return '🌧️';
+        case 'accident': return '🚧';
+        case 'fire': return '🔥';
+        case 'police': return '🚨';
+        case 'utility': return '⚡';
+        default: return '⚠️';
+      }
+    }
+    return getCategoryEmoji(item.category);
+  };
+
+  // Get label for feed item
+  const getFeedItemLabel = (item: FeedItem) => {
+    if (item.type === 'incident') {
+      const labels: Record<string, string> = {
+        weather: 'Weather',
+        accident: 'Traffic',
+        fire: 'Fire',
+        police: 'Police',
+        utility: 'Utility',
+      };
+      return labels[item.incident_type || ''] || 'Alert';
+    }
+    return item.category?.replace('_', ' ') || 'Update';
+  };
+
+  // Check if item is fresh (<1 hour)
+  const isFreshItem = (timestamp: string) => {
+    const diffMs = Date.now() - new Date(timestamp).getTime();
+    return diffMs < 60 * 60 * 1000;
+  };
+
   return (
     <PageShell
       title="Lake Geneva Brief – Local News, Simplified"
@@ -558,71 +669,187 @@ const LakeGeneva = () => {
               </div>
             ) : (
               <>
-                {/* Category Filter Pills */}
+                {/* View Toggle + Category Filter Pills */}
                 <section className="py-4 border-b border-slate-200 sticky top-[73px] z-20 bg-white">
-                  <div className="flex flex-wrap gap-2">
-                    {['all', ...sortedCategories].map((cat) => (
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    {/* View Mode Toggle */}
+                    <div className="flex items-center gap-1.5 bg-slate-100 rounded-full p-1">
                       <button
-                        key={cat}
-                        onClick={() => setActiveCategory(cat)}
-                        className={`rounded-full px-3 py-1.5 text-xs border transition-colors ${
-                          activeCategory === cat
-                            ? "bg-blue-600 text-white border-blue-600"
-                            : "bg-slate-50 text-slate-600 border-slate-200 hover:border-blue-500 hover:text-blue-700"
+                        onClick={() => setViewMode('topic')}
+                        className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                          viewMode === 'topic'
+                            ? "bg-white text-slate-900 shadow-sm"
+                            : "text-slate-500 hover:text-slate-700"
                         }`}
                       >
-                        {cat === 'all' ? 'All stories' : `${getCategoryEmoji(cat)} ${cat.replace('_', ' ')}`}
+                        By Topic
                       </button>
-                    ))}
+                      <button
+                        onClick={() => setViewMode('recent')}
+                        className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors flex items-center gap-1.5 ${
+                          viewMode === 'recent'
+                            ? "bg-white text-slate-900 shadow-sm"
+                            : "text-slate-500 hover:text-slate-700"
+                        }`}
+                      >
+                        Most Recent
+                        {hasActiveIncidents && (
+                          <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                        )}
+                      </button>
+                    </div>
+
+                    {/* Category Pills (only in topic view) */}
+                    {viewMode === 'topic' && (
+                      <div className="flex flex-wrap gap-2">
+                        {['all', ...sortedCategories].map((cat) => (
+                          <button
+                            key={cat}
+                            onClick={() => setActiveCategory(cat)}
+                            className={`rounded-full px-3 py-1.5 text-xs border transition-colors ${
+                              activeCategory === cat
+                                ? "bg-blue-600 text-white border-blue-600"
+                                : "bg-slate-50 text-slate-600 border-slate-200 hover:border-blue-500 hover:text-blue-700"
+                            }`}
+                          >
+                            {cat === 'all' ? 'All stories' : `${getCategoryEmoji(cat)} ${cat.replace('_', ' ')}`}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </section>
 
-                <section className="py-10">
-                  {visibleCategories.map((category) => (
-                  <div key={category} id={category} className="scroll-mt-24 mb-10 last:mb-0">
-                    <div className="flex items-baseline justify-between gap-2 mb-4">
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg">{getCategoryEmoji(category)}</span>
-                        <h2 className="font-semibold text-lg sm:text-xl capitalize text-slate-900">
-                          {category.replace('_', ' ')}
-                        </h2>
-                        <span className="rounded-full bg-white px-2.5 py-0.5 text-xs text-slate-500 border border-slate-200">
-                          {storiesByCategory[category].length} {storiesByCategory[category].length === 1 ? 'story' : 'stories'}
-                        </span>
+                {/* Most Recent Feed */}
+                {viewMode === 'recent' ? (
+                  <section className="py-6">
+                    <div className="space-y-3">
+                      {unifiedFeed.map((item) => (
+                        <a
+                          key={`${item.type}-${item.id}`}
+                          href={item.url || '#'}
+                          target={item.type === 'story' ? '_blank' : undefined}
+                          rel={item.type === 'story' ? 'noopener noreferrer' : undefined}
+                          className="block group"
+                        >
+                          <div className={`flex items-start gap-3 p-3 rounded-xl border transition-all hover:shadow-sm ${
+                            item.type === 'incident' && item.status === 'active'
+                              ? 'bg-red-50/50 border-red-200 hover:border-red-300'
+                              : 'bg-white border-slate-200 hover:border-slate-300'
+                          }`}>
+                            {/* Timestamp Column */}
+                            <div className="flex-shrink-0 w-16 text-right">
+                              <span className={`text-xs font-medium ${
+                                isFreshItem(item.timestamp) ? 'text-red-600' : 'text-slate-400'
+                              }`}>
+                                {getPreciseRelativeTime(item.timestamp)}
+                              </span>
+                              {isFreshItem(item.timestamp) && (
+                                <div className="flex items-center justify-end gap-1 mt-0.5">
+                                  <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
+                                  <span className="text-[10px] font-semibold text-red-600 uppercase">Live</span>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Content */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                                  item.type === 'incident'
+                                    ? item.status === 'active' 
+                                      ? 'bg-red-100 text-red-700' 
+                                      : 'bg-amber-100 text-amber-700'
+                                    : 'bg-slate-100 text-slate-600'
+                                }`}>
+                                  <span>{getFeedItemIcon(item)}</span>
+                                  <span>{getFeedItemLabel(item)}</span>
+                                </span>
+                                {item.type === 'incident' && item.status === 'active' && (
+                                  <span className="text-[10px] font-medium text-red-600 uppercase">Active</span>
+                                )}
+                              </div>
+                              <h3 className="text-sm font-semibold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-2">
+                                {item.title}
+                              </h3>
+                              {item.summary && (
+                                <p className="mt-0.5 text-xs text-slate-500 line-clamp-1">
+                                  {item.summary}
+                                </p>
+                              )}
+                            </div>
+
+                            {/* Optional Image */}
+                            {item.image_url && (
+                              <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden bg-slate-100">
+                                <img
+                                  src={item.image_url}
+                                  alt=""
+                                  className="w-full h-full object-cover"
+                                  loading="lazy"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </a>
+                      ))}
+                      
+                      {unifiedFeed.length === 0 && (
+                        <div className="text-center py-8 text-slate-500">
+                          No recent updates. Check back soon!
+                        </div>
+                      )}
+                    </div>
+                  </section>
+                ) : (
+                  /* Topic View (existing behavior) */
+                  <section className="py-10">
+                    {visibleCategories.map((category) => (
+                    <div key={category} id={category} className="scroll-mt-24 mb-10 last:mb-0">
+                      <div className="flex items-baseline justify-between gap-2 mb-4">
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">{getCategoryEmoji(category)}</span>
+                          <h2 className="font-semibold text-lg sm:text-xl capitalize text-slate-900">
+                            {category.replace('_', ' ')}
+                          </h2>
+                          <span className="rounded-full bg-white px-2.5 py-0.5 text-xs text-slate-500 border border-slate-200">
+                            {storiesByCategory[category].length} {storiesByCategory[category].length === 1 ? 'story' : 'stories'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="grid gap-4 sm:gap-5 sm:grid-cols-2">
+                        {storiesByCategory[category].map((story) => {
+                          const time = getRelativeTime(story.publish_date || story.created_at);
+                          let source: string | null = (story as any).source?.name || null;
+
+                          // Fallback: derive domain from original_url
+                          if (!source && story.original_url) {
+                            try {
+                              const url = new URL(story.original_url);
+                              source = url.hostname.replace(/^www\./, '');
+                            } catch {
+                              // ignore parse error
+                            }
+                          }
+
+                          return (
+                            <StoryCard
+                              key={story.id}
+                              title={story.title}
+                              summary={story.content_website || story.content_lg_base || story.summary}
+                              imageUrl={story.image_url}
+                              category={story.category}
+                              url={story.original_url}
+                              meta={{ time, source }}
+                            />
+                          );
+                        })}
                       </div>
                     </div>
-
-                    <div className="grid gap-4 sm:gap-5 sm:grid-cols-2">
-                      {storiesByCategory[category].map((story) => {
-                        const time = getRelativeTime(story.publish_date || story.created_at);
-                        let source: string | null = (story as any).source?.name || null;
-
-                        // Fallback: derive domain from original_url
-                        if (!source && story.original_url) {
-                          try {
-                            const url = new URL(story.original_url);
-                            source = url.hostname.replace(/^www\./, '');
-                          } catch {
-                            // ignore parse error
-                          }
-                        }
-
-                        return (
-                          <StoryCard
-                            key={story.id}
-                            title={story.title}
-                            summary={story.content_website || story.content_lg_base || story.summary}
-                            imageUrl={story.image_url}
-                            category={story.category}
-                            url={story.original_url}
-                            meta={{ time, source }}
-                          />
-                        );
-                      })}
-                    </div>
-                  </div>
-                  ))}
-                </section>
+                    ))}
+                  </section>
+                )}
               </>
             )}
 
