@@ -538,8 +538,11 @@ const LakeGeneva = () => {
 
         </div>
 
-        {/* Floating sidebar in right margin - xl screens only */}
-        <aside className="hidden xl:block fixed top-28 right-4 w-[200px]">
+        {/* Floating sidebar in right margin - xl screens only, width fills available margin */}
+        <aside 
+          className="hidden xl:block fixed top-28 right-4"
+          style={{ width: 'calc((100vw - 896px) / 2 - 24px)', minWidth: '180px', maxWidth: '280px' }}
+        >
           <div className="space-y-4">
             <LiveIncidentsSidebar />
             <WeekendSidebarWidget />
