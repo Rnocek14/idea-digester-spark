@@ -65,3 +65,6 @@ verify_jwt = false
 
 [functions.auto-resolve-incidents]
 verify_jwt = false
+
+[functions.backfill-civic-category]
+verify_jwt = false
