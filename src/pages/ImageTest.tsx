@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import PageShell from "@/components/PageShell";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -116,7 +115,11 @@ export default function ImageTest() {
   // Error state
   if (error) {
     return (
-      <PageShell title="Image Generation Test" description="Test AI image generation across different content categories">
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Image Generation Test</h1>
+          <p className="text-muted-foreground">Test AI image generation across different content categories</p>
+        </div>
         <Card>
           <CardContent className="py-12 text-center">
             <p className="text-destructive mb-4">Failed to load stories: {(error as Error).message}</p>
@@ -126,14 +129,18 @@ export default function ImageTest() {
             </Button>
           </CardContent>
         </Card>
-      </PageShell>
+      </div>
     );
   }
 
   // Loading state
   if (loadingStories) {
     return (
-      <PageShell title="Image Generation Test" description="Test AI image generation across different content categories">
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Image Generation Test</h1>
+          <p className="text-muted-foreground">Test AI image generation across different content categories</p>
+        </div>
         <Card>
           <CardContent className="py-12 flex flex-col items-center gap-4">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -144,12 +151,17 @@ export default function ImageTest() {
             </Button>
           </CardContent>
         </Card>
-      </PageShell>
+      </div>
     );
   }
 
   return (
-    <PageShell title="Image Generation Test" description="Test AI image generation across different content categories">
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Image Generation Test</h1>
+        <p className="text-muted-foreground">Test AI image generation across different content categories</p>
+      </div>
+
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Test Controls */}
         <Card>
@@ -245,7 +257,7 @@ export default function ImageTest() {
 
       {/* Test Results */}
       {testResults.length > 0 && (
-        <Card className="mt-6">
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span>Test Results ({testResults.length})</span>
@@ -309,6 +321,6 @@ export default function ImageTest() {
           </CardContent>
         </Card>
       )}
-    </PageShell>
+    </div>
   );
 }
