@@ -293,7 +293,7 @@ const SocialQueue = () => {
       try {
         let totalGenerated = 0;
         let hasMore = true;
-        const batchSize = 10;
+        const batchSize = 3; // Reduced from 10 to prevent 150s edge function timeout
         
         while (hasMore) {
           const { data, error } = await supabase.functions.invoke("bulk-generate-images", {
@@ -354,7 +354,7 @@ const SocialQueue = () => {
         
         let totalImages = 0;
         let hasMore = true;
-        const batchSize = 10;
+        const batchSize = 3; // Reduced from 10 to prevent 150s edge function timeout
         
         while (hasMore && !cancelRequestedRef.current) {
           const { data, error } = await supabase.functions.invoke("bulk-generate-images", {
