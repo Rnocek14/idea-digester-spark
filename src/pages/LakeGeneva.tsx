@@ -845,7 +845,7 @@ const LakeGeneva = () => {
                               <>
                                 <span className="flex items-center gap-1.5">
                                   <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                                  <span className="text-green-600 font-medium">● Live</span>
+                                  <span className="text-green-600 font-medium">Live</span>
                                 </span>
                                 <span className="text-slate-400">·</span>
                                 <span>Updates every 30 seconds</span>
