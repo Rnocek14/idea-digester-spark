@@ -230,12 +230,11 @@ const LakeGeneva = () => {
       title="Lake Geneva Brief – Local News, Simplified"
       description="Fast, trustworthy updates on Lake Geneva city hall, schools, events, and real estate."
     >
-      {/* Two-column page grid: Main content + Sticky Sidebar */}
-      <div className="mx-auto max-w-6xl px-4 lg:px-8">
-        <div className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,3fr)_280px] lg:gap-8">
-          
-          {/* MAIN COLUMN */}
-          <main className="min-w-0">
+      {/* Centered layout with floating margin sidebar */}
+      <div className="relative">
+        {/* Centered main content */}
+        <div className="mx-auto max-w-4xl px-4">
+          <main>
             {/* Hero Section - wrapped in card */}
             {featured && (
               <section className="py-8">
@@ -537,17 +536,18 @@ const LakeGeneva = () => {
             </section>
           </main>
 
-          {/* SIDEBAR COLUMN - Sticky on desktop */}
-          <aside className="hidden lg:block">
-            <div className="sticky top-28 space-y-4 w-[280px]">
-              <LiveIncidentsSidebar />
-              <WeekendSidebarWidget />
-            </div>
-          </aside>
         </div>
 
+        {/* Floating sidebar in right margin - xl screens only */}
+        <aside className="hidden xl:block fixed top-28 w-[280px]" style={{ right: 'max(1rem, calc((100vw - 896px) / 2 - 300px))' }}>
+          <div className="space-y-4">
+            <LiveIncidentsSidebar />
+            <WeekendSidebarWidget />
+          </div>
+        </aside>
+
         {/* Mobile/Tablet: Incidents + Weekend stacked below hero */}
-        <div className="lg:hidden mt-6 space-y-4">
+        <div className="xl:hidden mt-6 space-y-4">
           <LiveIncidentsSidebar />
           <WeekendSidebarWidget />
         </div>
