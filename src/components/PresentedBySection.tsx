@@ -122,82 +122,85 @@ export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionPr
 
         {/* Horizontal layout */}
         <div className="flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6">
-          {/* Left: Photo + Name + Zillow - Clickable to selling page */}
-          <Link 
-            to="/selling-lake-geneva"
-            onClick={() => fireTrackClick('sponsor_profile_click', sponsor.businessId, sponsor.placementId)}
-            className="flex items-center gap-3 flex-shrink-0 group cursor-pointer"
-          >
-            {/* Photo */}
-            <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm transition-transform duration-200 group-hover:scale-105">
-              {sponsor.logo_url ? (
-                <img
-                  src={sponsor.logo_url}
-                  alt={sponsor.name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <Home className="w-5 h-5 text-slate-400" />
-              )}
-            </div>
-
-            {/* Name + Zillow */}
-            <div>
-              <h3 className="text-sm font-semibold text-slate-900 leading-tight group-hover:text-blue-600 transition-colors">
-                {sponsor.name}
-              </h3>
-              {sponsor.metadata?.tagline && (
-                <p className="text-[11px] text-slate-500">
-                  {sponsor.metadata.tagline}
-                </p>
-              )}
-              {sponsor.zillow_rating && sponsor.zillow_review_count && (
-                <div className="flex items-center gap-1 mt-0.5">
-                  <div className="flex items-center">
-                    {Array.from({ length: 5 }, (_, i) => (
-                      <Star
-                        key={i}
-                        className={`w-3 h-3 ${
-                          i < Math.round(sponsor.zillow_rating || 0)
-                            ? "fill-yellow-400 text-yellow-400"
-                            : "text-slate-300"
-                        }`}
-                      />
-                    ))}
-                  </div>
-                  {sponsor.zillow_url ? (
-                    <a
-                      href={trackClickUrl(sponsor.zillow_url, 'sponsor_zillow', sponsor.businessId, sponsor.placementId)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      className="text-[10px] text-slate-500 hover:text-blue-600 hover:underline"
-                    >
-                      {sponsor.zillow_review_count} reviews
-                    </a>
-                  ) : (
-                    <span className="text-[10px] text-slate-500">
-                      {sponsor.zillow_review_count} reviews
-                    </span>
-                  )}
-                </div>
-              )}
-              <span className="text-[10px] text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                Learn more →
-              </span>
-            </div>
-          </Link>
-          
-          {/* Phone - Keep separate from link */}
-          {sponsor.phone && (
-            <a
-              href={trackClickUrl(`tel:+1${sponsor.phone.replace(/\D/g, '')}`, 'sponsor_phone', sponsor.businessId, sponsor.placementId)}
-              className="flex items-center gap-1 text-[11px] text-slate-600 hover:text-blue-600 flex-shrink-0"
+          {/* Left column: Photo + Name + Zillow + Phone */}
+          <div className="flex-shrink-0">
+            {/* Clickable link to selling page */}
+            <Link 
+              to="/selling-lake-geneva"
+              onClick={() => fireTrackClick('sponsor_profile_click', sponsor.businessId, sponsor.placementId)}
+              className="flex items-center gap-3 group cursor-pointer"
             >
-              <Phone className="w-3 h-3" />
-              <span>{sponsor.phone.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3')}</span>
-            </a>
-          )}
+              {/* Photo */}
+              <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm transition-transform duration-200 group-hover:scale-105">
+                {sponsor.logo_url ? (
+                  <img
+                    src={sponsor.logo_url}
+                    alt={sponsor.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <Home className="w-5 h-5 text-slate-400" />
+                )}
+              </div>
+
+              {/* Name + Zillow */}
+              <div>
+                <h3 className="text-sm font-semibold text-slate-900 leading-tight group-hover:text-blue-600 transition-colors">
+                  {sponsor.name}
+                </h3>
+                {sponsor.metadata?.tagline && (
+                  <p className="text-[11px] text-slate-500">
+                    {sponsor.metadata.tagline}
+                  </p>
+                )}
+                {sponsor.zillow_rating && sponsor.zillow_review_count && (
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <div className="flex items-center">
+                      {Array.from({ length: 5 }, (_, i) => (
+                        <Star
+                          key={i}
+                          className={`w-3 h-3 ${
+                            i < Math.round(sponsor.zillow_rating || 0)
+                              ? "fill-yellow-400 text-yellow-400"
+                              : "text-slate-300"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    {sponsor.zillow_url ? (
+                      <a
+                        href={trackClickUrl(sponsor.zillow_url, 'sponsor_zillow', sponsor.businessId, sponsor.placementId)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-[10px] text-slate-500 hover:text-blue-600 hover:underline"
+                      >
+                        {sponsor.zillow_review_count} reviews
+                      </a>
+                    ) : (
+                      <span className="text-[10px] text-slate-500">
+                        {sponsor.zillow_review_count} reviews
+                      </span>
+                    )}
+                  </div>
+                )}
+                <span className="text-[10px] text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                  Learn more →
+                </span>
+              </div>
+            </Link>
+            
+            {/* Phone - Separate clickable link, positioned under reviews */}
+            {sponsor.phone && (
+              <a
+                href={trackClickUrl(`tel:+1${sponsor.phone.replace(/\D/g, '')}`, 'sponsor_phone', sponsor.businessId, sponsor.placementId)}
+                className="flex items-center gap-1 text-[11px] text-slate-600 hover:text-blue-600 ml-[68px] mt-1"
+              >
+                <Phone className="w-3 h-3" />
+                <span>{sponsor.phone.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3')}</span>
+              </a>
+            )}
+          </div>
 
           {/* Center: Testimonial (flex-1 to take remaining space) */}
           {quote && (
