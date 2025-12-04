@@ -192,6 +192,26 @@ export default function IncidentDetail() {
               </p>
             </header>
 
+            {/* Subscribe CTA */}
+            <Card className="bg-brand-accent/5 border-brand-accent/20">
+              <CardContent className="py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div>
+                  <p className="font-medium text-foreground">Get alerts like this via email</p>
+                  <p className="text-sm text-muted-foreground">Lake Geneva news + incidents delivered every Friday.</p>
+                </div>
+                <Button 
+                  size="sm"
+                  onClick={() => {
+                    const el = document.getElementById('subscribe');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="rounded-full bg-brand-accent hover:bg-blue-700 text-white shrink-0"
+                >
+                  Subscribe Free
+                </Button>
+              </CardContent>
+            </Card>
+
             {/* Timeline */}
             <section>
               <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
