@@ -84,7 +84,7 @@ function generateOAuthHeader(method: string, url: string): string {
 }
 
 async function postToTwitter(text: string): Promise<{ success: boolean; tweetId?: string; error?: string }> {
-  const url = "https://api.x.com/2/tweets";
+  const url = "https://api.twitter.com/2/tweets";
   const method = "POST";
 
   try {
