@@ -68,3 +68,6 @@ verify_jwt = false
 
 [functions.backfill-civic-category]
 verify_jwt = false
+
+[functions.cleanup-bad-schedules]
+verify_jwt = false
