@@ -863,6 +863,45 @@ export type Database = {
         }
         Relationships: []
       }
+      real_estate_metrics: {
+        Row: {
+          active_listings: number
+          fetched_at: string | null
+          id: string
+          median_list_price: number | null
+          median_price: number
+          new_listings: number | null
+          source: string | null
+          updated_at: string | null
+          yoy_change: number
+          zip_code: string
+        }
+        Insert: {
+          active_listings: number
+          fetched_at?: string | null
+          id?: string
+          median_list_price?: number | null
+          median_price: number
+          new_listings?: number | null
+          source?: string | null
+          updated_at?: string | null
+          yoy_change: number
+          zip_code?: string
+        }
+        Update: {
+          active_listings?: number
+          fetched_at?: string | null
+          id?: string
+          median_list_price?: number | null
+          median_price?: number
+          new_listings?: number | null
+          source?: string | null
+          updated_at?: string | null
+          yoy_change?: number
+          zip_code?: string
+        }
+        Relationships: []
+      }
       sources: {
         Row: {
           category: string | null

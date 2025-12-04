@@ -1,6 +1,8 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Phone, ExternalLink, Home, TrendingUp, Clock } from "lucide-react";
+import { Phone, ExternalLink, Home, TrendingUp } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 type Sponsor = {
   name: string;
@@ -12,15 +14,6 @@ type Sponsor = {
   phone?: string | null;
   description?: string | null;
 };
-
-// Real estate market metrics for rotating display
-const REAL_ESTATE_MARKET_METRICS = [
-  { medianPrice: "$485K", yoyChange: "+6.2%", daysOnMarket: "28", activeListings: "142" },
-  { medianPrice: "$492K", yoyChange: "+4.8%", daysOnMarket: "31", activeListings: "138" },
-  { medianPrice: "$478K", yoyChange: "+7.1%", daysOnMarket: "25", activeListings: "156" },
-  { medianPrice: "$501K", yoyChange: "+5.4%", daysOnMarket: "29", activeListings: "147" },
-  { medianPrice: "$488K", yoyChange: "+6.5%", daysOnMarket: "27", activeListings: "151" },
-];
 
 const isRealEstateSponsor = (sponsor: Sponsor | null) => {
   if (!sponsor) return false;
@@ -34,11 +27,6 @@ const isRealEstateSponsor = (sponsor: Sponsor | null) => {
     label.includes("broker") ||
     label.includes("properties")
   );
-};
-
-const getRealEstateMarketMetrics = () => {
-  const dayIndex = Math.floor(Date.now() / (1000 * 60 * 60 * 24));
-  return REAL_ESTATE_MARKET_METRICS[dayIndex % REAL_ESTATE_MARKET_METRICS.length];
 };
 
 const trackClickUrl = (url: string, source: string, businessId?: string, placementId?: string) => {
@@ -60,13 +48,42 @@ const formatPhone = (phone: string | null) => {
   return phone;
 };
 
+const formatPrice = (price: number) => {
+  if (price >= 1000000) {
+    return `$${(price / 1000000).toFixed(1)}M`;
+  }
+  return `$${Math.round(price / 1000)}K`;
+};
+
+const formatDate = (date: string) => {
+  const d = new Date(date);
+  return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+};
+
 interface SponsorBlockProps {
   sponsor: Sponsor;
 }
 
 export const SponsorBlock = ({ sponsor }: SponsorBlockProps) => {
   const isRealEstate = isRealEstateSponsor(sponsor);
-  const metrics = isRealEstate ? getRealEstateMarketMetrics() : null;
+
+  const { data: metrics } = useQuery({
+    queryKey: ['real-estate-metrics', '53147'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('real_estate_metrics')
+        .select('*')
+        .eq('zip_code', '53147')
+        .order('fetched_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: isRealEstate,
+    staleTime: 1000 * 60 * 60, // 1 hour cache
+  });
 
   return (
     <Card className="overflow-hidden border-0 shadow-lg bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -123,33 +140,37 @@ export const SponsorBlock = ({ sponsor }: SponsorBlockProps) => {
                 <span className="text-base">🏡</span>
                 <span className="text-xs font-semibold text-white">Lake Geneva Market Snapshot</span>
               </div>
-              <span className="text-[10px] text-slate-500 uppercase tracking-wide">Live Data</span>
+              <span className="text-[10px] text-slate-500 uppercase tracking-wide">
+                {formatDate(metrics.fetched_at)}
+              </span>
             </div>
             
             {/* Metrics Grid */}
             <div className="grid grid-cols-4 divide-x divide-white/10">
               <div className="px-3 py-3 text-center">
-                <div className="text-lg font-bold text-white">{metrics.medianPrice}</div>
+                <div className="text-lg font-bold text-white">{formatPrice(metrics.median_price)}</div>
                 <div className="text-[9px] text-slate-400 uppercase tracking-wide mt-0.5">Median</div>
               </div>
               <div className="px-3 py-3 text-center">
                 <div className="text-lg font-bold text-emerald-400 flex items-center justify-center gap-0.5">
                   <TrendingUp className="w-3 h-3" />
-                  <span>{metrics.yoyChange}</span>
+                  <span>+{metrics.yoy_change}%</span>
                 </div>
                 <div className="text-[9px] text-slate-400 uppercase tracking-wide mt-0.5">YoY</div>
               </div>
               <div className="px-3 py-3 text-center">
-                <div className="text-lg font-bold text-white flex items-center justify-center gap-0.5">
-                  <Clock className="w-3 h-3 text-slate-400" />
-                  <span>{metrics.daysOnMarket}</span>
-                </div>
-                <div className="text-[9px] text-slate-400 uppercase tracking-wide mt-0.5">Avg Days</div>
-              </div>
-              <div className="px-3 py-3 text-center">
-                <div className="text-lg font-bold text-blue-400">{metrics.activeListings}</div>
+                <div className="text-lg font-bold text-white">{metrics.active_listings}</div>
                 <div className="text-[9px] text-slate-400 uppercase tracking-wide mt-0.5">Active</div>
               </div>
+              <div className="px-3 py-3 text-center">
+                <div className="text-lg font-bold text-blue-400">{formatPrice(metrics.median_list_price || 0)}</div>
+                <div className="text-[9px] text-slate-400 uppercase tracking-wide mt-0.5">List Price</div>
+              </div>
+            </div>
+
+            {/* Source Attribution */}
+            <div className="px-4 py-1.5 border-t border-white/5 text-center">
+              <span className="text-[9px] text-slate-500">Source: Zillow ZHVI · ZIP 53147</span>
             </div>
           </div>
         )}
