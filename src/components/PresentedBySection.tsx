@@ -194,7 +194,7 @@ export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionPr
             {sponsor.phone && (
               <a
                 href={trackClickUrl(`tel:+1${sponsor.phone.replace(/\D/g, '')}`, 'sponsor_phone', sponsor.businessId, sponsor.placementId)}
-                className="flex items-center gap-1 text-[11px] text-slate-600 hover:text-blue-600 ml-[68px] mt-1"
+                className="inline-flex items-center gap-1 text-[11px] text-slate-600 hover:text-blue-600 hover:scale-105 transition-all duration-200 ml-[68px] mt-1 origin-left"
               >
                 <Phone className="w-3 h-3" />
                 <span>{sponsor.phone.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3')}</span>
