@@ -151,9 +151,10 @@ export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionPr
               <Home className="w-3.5 h-3.5 mr-1.5" />
               Get Your Free Home Valuation
             </Button>
+          </div>
         </div>
         
-        {/* Market Data Footer */}
+        {/* Market Data Footer - Outside the flex container */}
         {yoyChangeText && (
           <div className="mt-3 pt-3 border-t border-slate-100">
             <p className="text-[10px] text-slate-400">
@@ -172,7 +173,6 @@ export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionPr
             </p>
           </div>
         )}
-      </div>
       </div>
 
       <MarketAnalysisDialog
