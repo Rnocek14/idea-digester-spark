@@ -63,17 +63,24 @@ export const PublicHeader = () => {
           </div>
 
           {/* Mobile Nav */}
-          <div className="flex sm:hidden gap-2">
+          <div className="flex sm:hidden items-center gap-2">
             {navItems.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
-                className="text-xs px-3 py-1.5 rounded-full border border-gray-200 hover:border-brand-accent hover:text-brand-accent transition-colors"
+                className="text-xs px-2 py-1 rounded-full border border-gray-200 hover:border-brand-accent hover:text-brand-accent transition-colors"
                 activeClassName="border-brand-accent text-brand-accent"
               >
                 {item.label}
               </NavLink>
             ))}
+            <Button
+              size="sm"
+              onClick={scrollToSubscribe}
+              className="rounded-full bg-brand-accent px-3 py-1 text-xs font-medium text-white shadow-sm hover:bg-blue-700 transition-colors"
+            >
+              Subscribe
+            </Button>
           </div>
         </div>
       </div>
