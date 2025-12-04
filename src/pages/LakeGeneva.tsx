@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ExternalLink, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import PageShell from "@/components/PageShell";
 import { StoryCard } from "@/components/StoryCard";
@@ -14,6 +14,7 @@ import WeekendSidebarWidget from "@/components/WeekendSidebarWidget";
 import AlsoTodayCard from "@/components/AlsoTodayCard";
 import { InlineSubscribeCTA } from "@/components/InlineSubscribeCTA";
 import { WelcomeModal } from "@/components/WelcomeModal";
+import { SponsorBlock } from "@/components/SponsorBlock";
 import { getSubscribeSource, getReferralSource } from "@/lib/referralTracking";
 
 type Story = {
@@ -36,46 +37,11 @@ type Sponsor = {
   placementId?: string;
   businessId?: string;
   category?: string | null;
-  market_fact_override?: string | null;
+  phone?: string | null;
+  description?: string | null;
 };
 
 const categoryOrder = ["news", "civic", "schools", "events", "dining", "real_estate", "community"];
-
-// Real estate market metrics for rotating display
-const REAL_ESTATE_MARKET_METRICS = [
-  { medianPrice: "$485K", yoyChange: "+6.2%", daysOnMarket: "28" },
-  { medianPrice: "$492K", yoyChange: "+4.8%", daysOnMarket: "31" },
-  { medianPrice: "$478K", yoyChange: "+7.1%", daysOnMarket: "25" },
-  { medianPrice: "$501K", yoyChange: "+5.4%", daysOnMarket: "29" },
-  { medianPrice: "$488K", yoyChange: "+6.5%", daysOnMarket: "27" },
-];
-
-const isRealEstateSponsor = (sponsor: Sponsor | null) => {
-  if (!sponsor) return false;
-  
-  // Normalize: lowercase and convert underscores/hyphens to spaces
-  const label = (sponsor.category || sponsor.name || "")
-    .toLowerCase()
-    .replace(/[_\s-]+/g, " ");
-  
-  return (
-    label.includes("real estate") ||
-    label.includes("realtor") ||
-    label.includes("realty") ||
-    label.includes("broker") ||
-    label.includes("properties")
-  );
-};
-
-const getRealEstateMarketMetrics = (sponsor: Sponsor | null) => {
-  // Simple, stable rotation: one metric set per day
-  if (REAL_ESTATE_MARKET_METRICS.length === 0) return { medianPrice: "$485K", yoyChange: "+6.2%", daysOnMarket: "28" };
-
-  const dayIndex = Math.floor(Date.now() / (1000 * 60 * 60 * 24));
-  const idx = dayIndex % REAL_ESTATE_MARKET_METRICS.length;
-
-  return REAL_ESTATE_MARKET_METRICS[idx];
-};
 
 const getRelativeTime = (dateString?: string | null) => {
   if (!dateString) return null;
@@ -299,7 +265,7 @@ const LakeGeneva = () => {
         .select(`
           id,
           business_id,
-          business:business_profiles(name, logo_url, website, category)
+          business:business_profiles(name, logo_url, website, category, phone, description)
         `)
         .eq("slot_id", "newsletter_header")
         .eq("status", "active")
@@ -687,73 +653,8 @@ const LakeGeneva = () => {
 
             {/* Sponsor Block */}
             {sponsor && (
-              <section className="py-8 border-b border-slate-200">
-                <Card className="p-5 bg-gradient-to-br from-blue-50/50 to-indigo-50/30 border-blue-100">
-                  <div className="flex items-center gap-4">
-                    {sponsor.logo_url && (
-                      <img
-                        src={sponsor.logo_url}
-                        alt={sponsor.name}
-                        className="h-14 w-14 object-contain rounded-lg bg-white p-2"
-                        loading="lazy"
-                      />
-                    )}
-                    <div className="flex-1">
-                      <p className="text-[10px] font-semibold text-blue-600 uppercase tracking-[0.15em] mb-1">
-                        Presented By
-                      </p>
-                      <p className="text-base font-semibold text-slate-900">{sponsor.name}</p>
-                      {sponsor.website && (
-                        <a
-                          href={`https://mzumvkrpnxhkvhdyzgqa.supabase.co/functions/v1/track-click?url=${encodeURIComponent(sponsor.website)}&source=web_brief&bid=${sponsor.businessId}&pid=${sponsor.placementId}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-blue-600 hover:underline inline-flex items-center gap-1 mt-1 font-medium"
-                        >
-                          Visit Website <ExternalLink className="h-3 w-3" />
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {/* Market Insight Widget for Real Estate Sponsors */}
-                  {isRealEstateSponsor(sponsor) && (() => {
-                    const metrics = getRealEstateMarketMetrics(sponsor);
-                    return (
-                      <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 overflow-hidden border-l-4 border-l-blue-500">
-                        {/* Header */}
-                        <div className="px-4 py-2.5 border-b border-slate-200 flex items-center gap-2">
-                          <span className="text-slate-600">🏡</span>
-                          <span className="text-xs font-semibold text-slate-700">Lake Geneva Market</span>
-                        </div>
-                        
-                        {/* Metrics Grid */}
-                        <div className="grid grid-cols-3 gap-px bg-slate-200">
-                          <div className="bg-white px-3 py-3 text-center">
-                            <div className="text-lg font-bold text-slate-900">{metrics.medianPrice}</div>
-                            <div className="text-[10px] text-slate-500 uppercase tracking-wide mt-0.5">Median Price</div>
-                          </div>
-                          <div className="bg-white px-3 py-3 text-center">
-                            <div className="text-lg font-bold text-emerald-600 flex items-center justify-center gap-1">
-                              <span>↑</span>
-                              <span>{metrics.yoyChange}</span>
-                            </div>
-                            <div className="text-[10px] text-slate-500 uppercase tracking-wide mt-0.5">YoY Change</div>
-                          </div>
-                          <div className="bg-white px-3 py-3 text-center">
-                            <div className="text-lg font-bold text-slate-900">{metrics.daysOnMarket}</div>
-                            <div className="text-[10px] text-slate-500 uppercase tracking-wide mt-0.5">Days on Market</div>
-                          </div>
-                        </div>
-                        
-                        {/* Footer */}
-                        <div className="px-4 py-2 bg-white border-t border-slate-100">
-                          <p className="text-[10px] text-slate-500">Market insight by {sponsor?.name}</p>
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </Card>
+              <section className="py-8">
+                <SponsorBlock sponsor={sponsor} />
               </section>
             )}
 
