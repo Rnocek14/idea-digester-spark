@@ -16,7 +16,7 @@ const TWITTER_ACCESS_TOKEN_SECRET = Deno.env.get("TWITTER_ACCESS_TOKEN_SECRET")?
 
 // Rate limiting configuration
 const DAILY_POST_LIMIT = 5;
-const MIN_HOURS_BETWEEN_POSTS = 3;
+const MIN_HOURS_BETWEEN_POSTS = 0; // TEMPORARY for image test - restore to 3
 const POSTING_START_HOUR = 7; // 7am Central
 const POSTING_END_HOUR = 21; // 9pm Central
 
@@ -83,6 +83,17 @@ function generateOAuthHeader(method: string, url: string): string {
   );
 }
 
+// Convert Uint8Array to base64 without stack overflow (chunked approach)
+function uint8ArrayToBase64(bytes: Uint8Array): string {
+  const CHUNK_SIZE = 0x8000; // 32KB chunks to avoid stack overflow
+  let result = '';
+  for (let i = 0; i < bytes.length; i += CHUNK_SIZE) {
+    const chunk = bytes.subarray(i, i + CHUNK_SIZE);
+    result += String.fromCharCode(...chunk);
+  }
+  return btoa(result);
+}
+
 // Upload image to Twitter and get media_id
 async function uploadMediaToTwitter(imageData: Uint8Array): Promise<{ success: boolean; mediaId?: string; error?: string }> {
   const url = "https://upload.twitter.com/1.1/media/upload.json";
@@ -92,8 +103,9 @@ async function uploadMediaToTwitter(imageData: Uint8Array): Promise<{ success: b
     const oauthHeader = generateOAuthHeader(method, url);
     console.log("[process-post-queue] Uploading image to X media endpoint...");
 
-    // Convert to base64 for the media_data parameter
-    const base64Data = btoa(String.fromCharCode(...imageData));
+    // Convert to base64 using chunked approach (handles large images)
+    const base64Data = uint8ArrayToBase64(imageData);
+    console.log("[process-post-queue] Base64 encoded, length:", base64Data.length);
     
     // Use application/x-www-form-urlencoded with media_data (base64)
     const body = new URLSearchParams();
