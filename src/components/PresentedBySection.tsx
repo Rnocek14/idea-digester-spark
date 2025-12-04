@@ -96,6 +96,9 @@ export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionPr
               <h3 className="text-sm font-semibold text-slate-900 leading-tight">
                 {sponsor.name}
               </h3>
+              <p className="text-[11px] text-slate-500">
+                Realtor · @properties
+              </p>
               {sponsor.zillow_rating && sponsor.zillow_review_count && (
                 <div className="flex items-center gap-1 mt-0.5">
                   <div className="flex items-center">
