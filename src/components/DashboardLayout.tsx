@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from "react"; // Dashboard layout
 import { useNavigate, Outlet } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { DashboardSidebar } from "@/components/DashboardSidebar";
 import { OperationsProvider } from "@/contexts/OperationsContext";
-import { ThemeProvider } from "@/contexts/ThemeContext";
+// ThemeProvider removed temporarily
 import { Button } from "@/components/ui/button";
 import { LogOut, User, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -129,37 +129,35 @@ const DashboardLayout = () => {
   }
 
   return (
-    <ThemeProvider>
-      <OperationsProvider>
-        <SidebarProvider>
-          <div className="min-h-screen flex w-full">
-            <DashboardSidebar />
-            <div className="flex-1 flex flex-col">
-              <header className="h-16 border-b bg-background flex items-center justify-between px-6">
-                <SidebarTrigger />
-                <div className="flex items-center gap-4">
-                  {user ? (
-                    <>
-                      <div className="flex items-center gap-2 text-sm">
-                        <User className="h-4 w-4" />
-                        <span className="text-muted-foreground">{user.email}</span>
-                      </div>
-                      <Button variant="outline" size="sm" onClick={handleSignOut}>
-                        <LogOut className="h-4 w-4 mr-2" />
-                        Sign Out
-                      </Button>
-                    </>
-                  ) : null}
-                </div>
-              </header>
-              <main className="flex-1 p-6 bg-muted/20">
-                <Outlet />
-              </main>
-            </div>
+    <OperationsProvider>
+      <SidebarProvider>
+        <div className="min-h-screen flex w-full">
+          <DashboardSidebar />
+          <div className="flex-1 flex flex-col">
+            <header className="h-16 border-b bg-background flex items-center justify-between px-6">
+              <SidebarTrigger />
+              <div className="flex items-center gap-4">
+                {user ? (
+                  <>
+                    <div className="flex items-center gap-2 text-sm">
+                      <User className="h-4 w-4" />
+                      <span className="text-muted-foreground">{user.email}</span>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={handleSignOut}>
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Sign Out
+                    </Button>
+                  </>
+                ) : null}
+              </div>
+            </header>
+            <main className="flex-1 p-6 bg-muted/20">
+              <Outlet />
+            </main>
           </div>
-        </SidebarProvider>
-      </OperationsProvider>
-    </ThemeProvider>
+        </div>
+      </SidebarProvider>
+    </OperationsProvider>
   );
 };
 
