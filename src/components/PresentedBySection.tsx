@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Home, Star, Phone } from "lucide-react";
@@ -71,6 +71,27 @@ const trackClickUrl = (url: string, source: string, businessId?: string, placeme
 
 export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionProps) => {
   const [showDialog, setShowDialog] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const sectionRef = useRef<HTMLElement>(null);
+
+  // Intersection Observer for entrance animation
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.2 }
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
 
   const dailyTestimonial = getDailyTestimonial(sponsor.metadata?.testimonials || []);
   const quote = dailyTestimonial?.quote || sponsor.testimonial_quote;
@@ -85,7 +106,14 @@ export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionPr
     : null;
 
   return (
-    <section className="py-6">
+    <section 
+      ref={sectionRef}
+      className={`py-6 transition-all duration-700 ease-out ${
+        isVisible 
+          ? 'opacity-100 translate-y-0' 
+          : 'opacity-0 translate-y-8'
+      }`}
+    >
       <div className="rounded-2xl bg-gradient-to-r from-slate-50 via-white to-blue-50/30 border border-slate-200 px-5 py-4 lg:px-6 lg:py-5">
         {/* Label */}
         <p className="text-[10px] font-medium uppercase tracking-[0.15em] text-slate-400 mb-3">
