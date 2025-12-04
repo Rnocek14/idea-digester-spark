@@ -80,7 +80,8 @@ export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionPr
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setIsVisible(true);
+          // Add small delay so animation is visible even on initial load
+          setTimeout(() => setIsVisible(true), 200);
           observer.disconnect();
         }
       },
@@ -97,7 +98,7 @@ export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionPr
   // Trigger star animation after entrance completes
   useEffect(() => {
     if (isVisible) {
-      const timer = setTimeout(() => setStarsAnimated(true), 400);
+      const timer = setTimeout(() => setStarsAnimated(true), 600);
       return () => clearTimeout(timer);
     }
   }, [isVisible]);
