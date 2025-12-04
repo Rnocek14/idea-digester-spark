@@ -35,6 +35,27 @@ type AutoPublishRule = {
   enabled: boolean;
 };
 
+// Normalize URL for deduplication (handles trailing slashes, encoding, case)
+function normalizeUrl(url: string): string {
+  try {
+    return decodeURIComponent(url)
+      .replace(/\/+$/, '')  // Remove trailing slashes
+      .toLowerCase()
+      .trim();
+  } catch {
+    return url.toLowerCase().trim();
+  }
+}
+
+// Check if title indicates a recurring event (e.g., "Every Wednesday...")
+function isRecurringEvent(title: string): boolean {
+  const lowerTitle = title.toLowerCase();
+  return lowerTitle.includes('every ') || 
+         lowerTitle.includes('weekly ') ||
+         lowerTitle.includes('daily ') ||
+         lowerTitle.includes('monthly ');
+}
+
 // Parse flexible date formats (handles "December 17, 2025, 3:00 PM - 8:30 PM", "All Day", etc.)
 function parseFlexibleDate(dateStr: string): string {
   if (!dateStr) return new Date().toISOString();
@@ -569,16 +590,37 @@ serve(async (req) => {
             console.log(`✅ Local match from regional source: "${title.substring(0, 50)}..."`);
           }
 
-          // Check for duplicates by URL
-          const { data: existingByUrl } = await supabase
+          // Check for duplicates by normalized URL (handles trailing slashes, encoding)
+          const normalizedUrl = normalizeUrl(originalUrl);
+          const { data: existingUrls } = await supabase
             .from("content_queue")
-            .select("id")
-            .eq("original_url", originalUrl)
-            .maybeSingle();
+            .select("id, original_url")
+            .eq("source_id", source.id)
+            .limit(500);
 
-          if (existingByUrl) {
+          const urlExists = existingUrls?.some(e => 
+            normalizeUrl(e.original_url || '') === normalizedUrl
+          );
+
+          if (urlExists) {
             result.skipped++;
             continue;
+          }
+
+          // Check for recurring events - skip if same title + source already exists (regardless of date)
+          if (isRecurringEvent(title)) {
+            const { data: existingRecurring } = await supabase
+              .from("content_queue")
+              .select("id")
+              .eq("source_id", source.id)
+              .eq("title", title)
+              .limit(1);
+
+            if (existingRecurring?.length) {
+              console.log(`⏭️ Skipping recurring event already in system: "${title.substring(0, 50)}..."`);
+              result.skipped++;
+              continue;
+            }
           }
 
           // Check for duplicates by title + publish_date (same event different scrape)
