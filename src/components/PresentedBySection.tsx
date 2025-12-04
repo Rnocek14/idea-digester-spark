@@ -104,11 +104,15 @@ export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionPr
     }
   }, [isVisible]);
 
-  // Trigger shimmer after all stars have filled (5 stars × 100ms delay + 300ms animation)
+  // Trigger shimmer after all stars have filled, then hide it
   useEffect(() => {
     if (starsAnimated) {
-      const timer = setTimeout(() => setShowShimmer(true), 800);
-      return () => clearTimeout(timer);
+      const shimmerTimer = setTimeout(() => setShowShimmer(true), 800);
+      const hideTimer = setTimeout(() => setShowShimmer(false), 2500); // Hide after shimmer completes
+      return () => {
+        clearTimeout(shimmerTimer);
+        clearTimeout(hideTimer);
+      };
     }
   }, [starsAnimated]);
 
@@ -189,10 +193,8 @@ export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionPr
                             key={i}
                             className={`w-3 h-3 transition-all duration-300 ${
                               shouldShowFilled
-                                ? "fill-yellow-400 text-yellow-400 scale-110"
-                                : isFilled
-                                  ? "fill-transparent text-slate-300 scale-100"
-                                  : "fill-transparent text-slate-300 scale-100"
+                                ? "fill-yellow-400 text-yellow-400"
+                                : "fill-transparent text-slate-300"
                             }`}
                             style={{ 
                               transitionDelay: starsAnimated ? `${i * 100}ms` : '0ms'
