@@ -14,8 +14,7 @@ import WeekendSidebarWidget from "@/components/WeekendSidebarWidget";
 import AlsoTodayCard from "@/components/AlsoTodayCard";
 import { InlineSubscribeCTA } from "@/components/InlineSubscribeCTA";
 import { WelcomeModal } from "@/components/WelcomeModal";
-import { SponsorBlock } from "@/components/SponsorBlock";
-import { RealEstateHeroStrip } from "@/components/RealEstateHeroStrip";
+import { PresentedBySection } from "@/components/PresentedBySection";
 import { getSubscribeSource, getReferralSource } from "@/lib/referralTracking";
 
 type Story = {
@@ -657,17 +656,9 @@ const LakeGeneva = () => {
               </section>
             )}
 
-            {/* Real Estate Hero Strip */}
-            <RealEstateHeroStrip 
-              sponsorId={sponsor?.businessId} 
-              sponsorEmail={sponsor?.email || undefined}
-            />
-
-            {/* Sponsor Block - Slim version */}
+            {/* Unified Sponsor Section */}
             {sponsor && (
-              <section className="py-4">
-                <SponsorBlock sponsor={sponsor} />
-              </section>
+              <PresentedBySection sponsor={sponsor} />
             )}
 
             {/* Stories by Category */}
