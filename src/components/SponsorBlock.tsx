@@ -175,25 +175,6 @@ export const SponsorBlock = ({ sponsor }: SponsorBlockProps) => {
           );
         })()}
 
-        {/* Single CTA */}
-        {isRealEstate && (
-          <Button 
-            size="sm" 
-            className="w-full mt-3 text-xs font-medium h-8"
-            onClick={() => {
-              fireTrackClick(
-                'market_analysis_form',
-                'sponsor_market_analysis',
-                sponsor.businessId,
-                sponsor.placementId
-              );
-              setShowMarketAnalysisDialog(true);
-            }}
-          >
-            <Home className="w-3.5 h-3.5 mr-1.5" />
-            What Could Your Home Sell For?
-          </Button>
-        )}
       </div>
 
       {/* Market Analysis Dialog */}
