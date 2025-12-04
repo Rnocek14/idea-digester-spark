@@ -265,7 +265,7 @@ const LakeGeneva = () => {
         .select(`
           id,
           business_id,
-          business:business_profiles(name, logo_url, website, category, phone, description)
+          business:business_profiles(name, logo_url, website, category, phone, description, email, zillow_url, zillow_rating, zillow_review_count)
         `)
         .eq("slot_id", "newsletter_header")
         .eq("status", "active")
