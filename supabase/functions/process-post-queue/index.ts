@@ -16,7 +16,7 @@ const TWITTER_ACCESS_TOKEN_SECRET = Deno.env.get("TWITTER_ACCESS_TOKEN_SECRET")?
 
 // Rate limiting configuration
 const DAILY_POST_LIMIT = 5;
-const MIN_HOURS_BETWEEN_POSTS = 0; // TEMPORARY for image test - restore to 3
+const MIN_HOURS_BETWEEN_POSTS = 3;
 const POSTING_START_HOUR = 7; // 7am Central
 const POSTING_END_HOUR = 21; // 9pm Central
 
