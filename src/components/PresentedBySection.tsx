@@ -1,7 +1,19 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Home, Star, Phone } from "lucide-react";
 import { MarketAnalysisDialog } from "@/components/MarketAnalysisDialog";
+
+const fireTrackClick = (source: string, businessId?: string, placementId?: string) => {
+  const params = new URLSearchParams({
+    url: '/selling-lake-geneva',
+    source: source,
+    track_only: 'true',
+    ...(businessId && { bid: businessId }),
+    ...(placementId && { pid: placementId }),
+  });
+  fetch(`https://mzumvkrpnxhkvhdyzgqa.supabase.co/functions/v1/track-click?${params.toString()}`).catch(() => {});
+};
 
 type Testimonial = {
   quote: string;
@@ -82,10 +94,14 @@ export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionPr
 
         {/* Horizontal layout */}
         <div className="flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6">
-          {/* Left: Photo + Name + Zillow */}
-          <div className="flex items-center gap-3 flex-shrink-0">
+          {/* Left: Photo + Name + Zillow - Clickable to selling page */}
+          <Link 
+            to="/selling-lake-geneva"
+            onClick={() => fireTrackClick('sponsor_profile_click', sponsor.businessId, sponsor.placementId)}
+            className="flex items-center gap-3 flex-shrink-0 group cursor-pointer"
+          >
             {/* Photo */}
-            <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm">
+            <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm transition-transform duration-200 group-hover:scale-105">
               {sponsor.logo_url ? (
                 <img
                   src={sponsor.logo_url}
@@ -99,7 +115,7 @@ export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionPr
 
             {/* Name + Zillow */}
             <div>
-              <h3 className="text-sm font-semibold text-slate-900 leading-tight">
+              <h3 className="text-sm font-semibold text-slate-900 leading-tight group-hover:text-blue-600 transition-colors">
                 {sponsor.name}
               </h3>
               {sponsor.metadata?.tagline && (
@@ -121,33 +137,27 @@ export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionPr
                       />
                     ))}
                   </div>
-                  {sponsor.zillow_url ? (
-                    <a
-                      href={trackClickUrl(sponsor.zillow_url, 'sponsor_zillow', sponsor.businessId, sponsor.placementId)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[10px] text-slate-500 hover:text-blue-600 hover:underline"
-                    >
-                      {sponsor.zillow_review_count} reviews
-                    </a>
-                  ) : (
-                      <span className="text-[10px] text-slate-500">
-                      {sponsor.zillow_review_count} reviews
-                    </span>
-                  )}
+                  <span className="text-[10px] text-slate-500">
+                    {sponsor.zillow_review_count} reviews
+                  </span>
                 </div>
               )}
-              {sponsor.phone && (
-                <a
-                  href={trackClickUrl(`tel:+1${sponsor.phone.replace(/\D/g, '')}`, 'sponsor_phone', sponsor.businessId, sponsor.placementId)}
-                  className="flex items-center gap-1 mt-1 text-[11px] text-slate-600 hover:text-blue-600"
-                >
-                  <Phone className="w-3 h-3" />
-                  <span>{sponsor.phone.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3')}</span>
-                </a>
-              )}
+              <span className="text-[10px] text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                Learn more →
+              </span>
             </div>
-          </div>
+          </Link>
+          
+          {/* Phone - Keep separate from link */}
+          {sponsor.phone && (
+            <a
+              href={trackClickUrl(`tel:+1${sponsor.phone.replace(/\D/g, '')}`, 'sponsor_phone', sponsor.businessId, sponsor.placementId)}
+              className="flex items-center gap-1 text-[11px] text-slate-600 hover:text-blue-600 flex-shrink-0"
+            >
+              <Phone className="w-3 h-3" />
+              <span>{sponsor.phone.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3')}</span>
+            </a>
+          )}
 
           {/* Center: Testimonial (flex-1 to take remaining space) */}
           {quote && (
