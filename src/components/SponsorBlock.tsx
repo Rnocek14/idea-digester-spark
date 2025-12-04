@@ -141,6 +141,7 @@ export const SponsorBlock = ({ sponsor }: SponsorBlockProps) => {
                     />
                   ))}
                 </div>
+                <span className="text-[11px] font-medium text-foreground">{sponsor.zillow_rating.toFixed(1)}</span>
                 {sponsor.zillow_url ? (
                   <a
                     href={trackClickUrl(sponsor.zillow_url, 'sponsor_zillow', sponsor.businessId, sponsor.placementId)}
@@ -156,6 +157,13 @@ export const SponsorBlock = ({ sponsor }: SponsorBlockProps) => {
                   </span>
                 )}
               </div>
+            )}
+            
+            {/* Testimonial Quote */}
+            {isRealEstate && (
+              <blockquote className="mt-2 pl-2.5 border-l-2 border-primary/30 italic text-[11px] text-muted-foreground leading-relaxed">
+                "Gina handled everything for us from Chicago — we closed above asking in 10 days."
+              </blockquote>
             )}
             <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
               {sponsor.description || (isRealEstate 
