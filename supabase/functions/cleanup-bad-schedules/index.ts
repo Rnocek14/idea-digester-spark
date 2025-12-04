@@ -29,12 +29,26 @@ serve(async (req) => {
 
     if (fetchError) throw fetchError;
 
-    // Filter to find posts scheduled outside 7am-9pm Central
+    // Optimal posting hours in Central Time
+    const OPTIMAL_SLOTS = [8, 10, 12, 14, 16, 18];
+    
+    // Filter to find posts scheduled outside optimal times:
+    // 1. Outside 7am-9pm Central window
+    // 2. Not at an optimal hour slot (8, 10, 12, 14, 16, 18)
+    // 3. Not at the top of the hour (minute != 0)
     const badPosts = (pendingPosts || []).filter(post => {
       const scheduledDate = new Date(post.scheduled_for);
       const centralTime = new Date(scheduledDate.toLocaleString("en-US", { timeZone: "America/Chicago" }));
       const hour = centralTime.getHours();
-      return hour < 7 || hour >= 21;
+      const minute = centralTime.getMinutes();
+      
+      // Outside posting window
+      if (hour < 7 || hour >= 21) return true;
+      
+      // Not at optimal hour slot OR not at top of hour
+      if (!OPTIMAL_SLOTS.includes(hour) || minute !== 0) return true;
+      
+      return false;
     });
 
     console.log(`[cleanup-bad-schedules] Found ${badPosts.length} posts scheduled outside 7am-9pm Central`);
