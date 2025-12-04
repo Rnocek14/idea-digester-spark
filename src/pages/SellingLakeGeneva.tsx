@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import lakeGenevaHero from "@/assets/lake-geneva-hero.jpg";
@@ -40,6 +40,24 @@ const SellingLakeGeneva = () => {
     address: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [scrollY, setScrollY] = useState(0);
+  const heroRef = useRef<HTMLElement>(null);
+
+  // Parallax scroll effect
+  useEffect(() => {
+    const handleScroll = () => {
+      if (heroRef.current) {
+        const rect = heroRef.current.getBoundingClientRect();
+        // Only update when hero is visible
+        if (rect.bottom > 0) {
+          setScrollY(window.scrollY * 0.4); // 0.4 = parallax intensity
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Fetch Gina's business profile
   const { data: sponsor } = useQuery({
@@ -136,33 +154,41 @@ const SellingLakeGeneva = () => {
 
   return (
     <PageShell>
-      {/* Hero with Video Background */}
-      <section className="relative py-12 lg:py-16 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 mb-8 overflow-hidden">
-        {/* Video Background */}
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          poster={lakeGenevaHero}
-          className="absolute inset-0 w-full h-full object-cover"
-        >
-          <source 
-            src="https://videos.pexels.com/video-files/1448735/1448735-uhd_2732_1440_24fps.mp4" 
-            type="video/mp4" 
-          />
-          {/* Fallback to image if video fails */}
-        </video>
-        
-        {/* Image Fallback for browsers that don't support video */}
+      {/* Hero with Video Background & Parallax */}
+      <section 
+        ref={heroRef}
+        className="relative py-12 lg:py-16 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 mb-8 overflow-hidden"
+      >
+        {/* Parallax Container */}
         <div 
-          className="absolute inset-0 -z-10"
-          style={{
-            backgroundImage: `url(${lakeGenevaHero})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }}
-        />
+          className="absolute inset-0 scale-110"
+          style={{ transform: `translateY(${scrollY}px)` }}
+        >
+          {/* Video Background */}
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            poster={lakeGenevaHero}
+            className="absolute inset-0 w-full h-full object-cover"
+          >
+            <source 
+              src="https://videos.pexels.com/video-files/1448735/1448735-uhd_2732_1440_24fps.mp4" 
+              type="video/mp4" 
+            />
+          </video>
+          
+          {/* Image Fallback */}
+          <div 
+            className="absolute inset-0 -z-10"
+            style={{
+              backgroundImage: `url(${lakeGenevaHero})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
+          />
+        </div>
         
         {/* Overlay */}
         <div className="absolute inset-0 bg-gradient-to-b from-slate-900/60 via-slate-900/50 to-slate-900/70" />
