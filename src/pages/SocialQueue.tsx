@@ -22,6 +22,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { XAnalyticsCard } from "@/components/XAnalyticsCard";
 
 const SocialQueue = () => {
   const queryClient = useQueryClient();
@@ -869,6 +870,9 @@ const SocialQueue = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* X Analytics Card */}
+      <XAnalyticsCard />
 
       {/* Prep History Card */}
       {prepHistory && prepHistory.length > 0 && (

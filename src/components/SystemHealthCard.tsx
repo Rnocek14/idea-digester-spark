@@ -14,6 +14,9 @@ interface AutomationSettings {
   newsletter_enabled: boolean;
   social_enabled: boolean;
   publish_enabled: boolean;
+  x_enabled?: boolean;
+  facebook_enabled?: boolean;
+  instagram_enabled?: boolean;
 }
 
 export function SystemHealthCard() {
@@ -187,6 +190,33 @@ export function SystemHealthCard() {
                   onCheckedChange={() => handleToggle('social_enabled')}
                 />
               </div>
+              
+              {/* Per-platform toggles under Social */}
+              {settings?.social_enabled && (
+                <div className="pl-4 pt-2 space-y-2 border-l border-border/50">
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground text-xs">X (Twitter)</span>
+                    <Switch
+                      checked={settings?.x_enabled !== false}
+                      onCheckedChange={() => handleToggle('x_enabled')}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground text-xs">Facebook</span>
+                    <Switch
+                      checked={settings?.facebook_enabled !== false}
+                      onCheckedChange={() => handleToggle('facebook_enabled')}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground text-xs">Instagram</span>
+                    <Switch
+                      checked={settings?.instagram_enabled !== false}
+                      onCheckedChange={() => handleToggle('instagram_enabled')}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
