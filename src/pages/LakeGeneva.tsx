@@ -39,6 +39,11 @@ type Sponsor = {
   category?: string | null;
   phone?: string | null;
   description?: string | null;
+  email?: string | null;
+  zillow_url?: string | null;
+  zillow_rating?: number | null;
+  zillow_review_count?: number | null;
+  testimonial_quote?: string | null;
 };
 
 const categoryOrder = ["news", "civic", "schools", "events", "dining", "real_estate", "community"];
@@ -265,7 +270,7 @@ const LakeGeneva = () => {
         .select(`
           id,
           business_id,
-          business:business_profiles(name, logo_url, website, category, phone, description, email, zillow_url, zillow_rating, zillow_review_count)
+          business:business_profiles(name, logo_url, website, category, phone, description, email, zillow_url, zillow_rating, zillow_review_count, testimonial_quote)
         `)
         .eq("slot_id", "newsletter_header")
         .eq("status", "active")

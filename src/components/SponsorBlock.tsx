@@ -17,6 +17,7 @@ type Sponsor = {
   zillow_url?: string | null;
   zillow_rating?: number | null;
   zillow_review_count?: number | null;
+  testimonial_quote?: string | null;
 };
 
 const isRealEstateSponsor = (sponsor: Sponsor | null) => {
@@ -160,9 +161,9 @@ export const SponsorBlock = ({ sponsor }: SponsorBlockProps) => {
             )}
             
             {/* Testimonial Quote */}
-            {isRealEstate && (
+            {sponsor.testimonial_quote && (
               <blockquote className="mt-2 pl-2.5 border-l-2 border-primary/30 italic text-[11px] text-muted-foreground leading-relaxed">
-                "Gina handled everything for us from Chicago — we closed above asking in 10 days."
+                "{sponsor.testimonial_quote}"
               </blockquote>
             )}
             <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
