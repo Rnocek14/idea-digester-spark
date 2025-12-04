@@ -158,9 +158,14 @@ export const SponsorBlock = ({ sponsor }: SponsorBlockProps) => {
               {sponsor.name}
             </h3>
             {isRealEstate && (
-              <p className="text-sm text-primary font-medium mt-0.5">
-                @properties Lake Geneva
-              </p>
+              <>
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-primary mt-0.5">
+                  Top Lake Geneva Listing Agent
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  @properties Lake Geneva
+                </p>
+              </>
             )}
             {/* Zillow Rating */}
             {sponsor.zillow_rating && sponsor.zillow_review_count && (
@@ -195,7 +200,7 @@ export const SponsorBlock = ({ sponsor }: SponsorBlockProps) => {
               </div>
             )}
             
-            {/* Testimonial Quote - daily rotation from metadata or fallback to static */}
+            {/* Seller-focused headline + Testimonial Quote */}
             {(() => {
               const dailyTestimonial = getDailyTestimonial(sponsor.metadata?.testimonials || []);
               const quote = dailyTestimonial?.quote || sponsor.testimonial_quote;
@@ -204,14 +209,22 @@ export const SponsorBlock = ({ sponsor }: SponsorBlockProps) => {
               if (!quote) return null;
               
               return (
-                <blockquote className="mt-2 pl-2.5 border-l-2 border-primary/30 italic text-[11px] text-muted-foreground leading-relaxed">
-                  "{quote}"
-                  {attribution && (
-                    <footer className="mt-0.5 not-italic text-[10px] text-muted-foreground/80">
-                      — {attribution}
-                    </footer>
+                <div className="mt-3">
+                  {isRealEstate && (
+                    <p className="text-xs font-semibold text-foreground mb-1.5 flex items-center gap-1.5">
+                      <Home className="w-3.5 h-3.5 text-primary" />
+                      Thinking of Selling?
+                    </p>
                   )}
-                </blockquote>
+                  <blockquote className="pl-2.5 border-l-2 border-primary/30 italic text-[11px] text-muted-foreground leading-relaxed">
+                    "{quote}"
+                    {attribution && (
+                      <footer className="mt-0.5 not-italic text-[10px] text-muted-foreground/80">
+                        — {attribution}
+                      </footer>
+                    )}
+                  </blockquote>
+                </div>
               );
             })()}
             <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
@@ -271,7 +284,7 @@ export const SponsorBlock = ({ sponsor }: SponsorBlockProps) => {
 
         {/* CTA Buttons */}
         <div className="mt-4 flex flex-col gap-2">
-          {/* Free Market Analysis CTA - prominent for real estate */}
+          {/* Seller-focused CTA - prominent for real estate */}
           {isRealEstate && (
             <Button 
               size="sm" 
@@ -286,8 +299,8 @@ export const SponsorBlock = ({ sponsor }: SponsorBlockProps) => {
                 setShowMarketAnalysisDialog(true);
               }}
             >
-              <BarChart3 className="w-3.5 h-3.5 mr-1.5" />
-              Free Market Analysis
+              <Home className="w-3.5 h-3.5 mr-1.5" />
+              What Could Your Home Sell For?
             </Button>
           )}
           
