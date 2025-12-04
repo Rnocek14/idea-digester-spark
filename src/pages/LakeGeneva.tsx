@@ -13,6 +13,7 @@ import LiveIncidentsSidebar from "@/components/LiveIncidentsSidebar";
 import WeekendSidebarWidget from "@/components/WeekendSidebarWidget";
 import AlsoTodayCard from "@/components/AlsoTodayCard";
 import { InlineSubscribeCTA } from "@/components/InlineSubscribeCTA";
+import { WelcomeModal } from "@/components/WelcomeModal";
 
 type Story = {
   id: string;
@@ -565,6 +566,7 @@ const LakeGeneva = () => {
       title="Lake Geneva Brief – Local News, Simplified"
       description="Fast, trustworthy updates on Lake Geneva city hall, schools, events, and real estate."
     >
+      <WelcomeModal />
       {/* Centered layout with floating margin sidebar */}
       <div className="relative">
         {/* Centered main content */}
