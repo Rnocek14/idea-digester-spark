@@ -512,6 +512,66 @@ export type Database = {
         }
         Relationships: []
       }
+      engagement_opportunities: {
+        Row: {
+          author_display_name: string | null
+          author_profile_url: string | null
+          author_username: string | null
+          created_at: string
+          fetched_at: string
+          hashtags: string[] | null
+          id: string
+          metadata: Json | null
+          opportunity_type: string
+          platform: string
+          priority_score: number | null
+          status: string
+          tweet_created_at: string | null
+          tweet_id: string | null
+          tweet_text: string | null
+          tweet_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          author_display_name?: string | null
+          author_profile_url?: string | null
+          author_username?: string | null
+          created_at?: string
+          fetched_at?: string
+          hashtags?: string[] | null
+          id?: string
+          metadata?: Json | null
+          opportunity_type: string
+          platform?: string
+          priority_score?: number | null
+          status?: string
+          tweet_created_at?: string | null
+          tweet_id?: string | null
+          tweet_text?: string | null
+          tweet_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          author_display_name?: string | null
+          author_profile_url?: string | null
+          author_username?: string | null
+          created_at?: string
+          fetched_at?: string
+          hashtags?: string[] | null
+          id?: string
+          metadata?: Json | null
+          opportunity_type?: string
+          platform?: string
+          priority_score?: number | null
+          status?: string
+          tweet_created_at?: string | null
+          tweet_id?: string | null
+          tweet_text?: string | null
+          tweet_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       incident_updates: {
         Row: {
           created_at: string
