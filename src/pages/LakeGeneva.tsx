@@ -14,6 +14,7 @@ import WeekendSidebarWidget from "@/components/WeekendSidebarWidget";
 import AlsoTodayCard from "@/components/AlsoTodayCard";
 import { InlineSubscribeCTA } from "@/components/InlineSubscribeCTA";
 import { WelcomeModal } from "@/components/WelcomeModal";
+import { getSubscribeSource, getReferralSource } from "@/lib/referralTracking";
 
 type Story = {
   id: string;
@@ -126,6 +127,8 @@ const LakeGeneva = () => {
 
   useEffect(() => {
     document.title = "Lake Geneva Brief – Today's Local News";
+    // Capture referral source on page load
+    getReferralSource();
   }, []);
 
   // Fetch incidents for both sidebar and recent feed
@@ -317,12 +320,13 @@ const LakeGeneva = () => {
   // Subscribe mutation
   const subscribeMutation = useMutation({
     mutationFn: async (subscriberEmail: string) => {
+      const source = getSubscribeSource("footer");
       const { error } = await supabase
         .from("subscribers")
         .insert({
           email: subscriberEmail,
           status: "active",
-          source: "website",
+          source,
         });
 
       if (error) throw error;
