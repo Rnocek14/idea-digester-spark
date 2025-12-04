@@ -5,7 +5,6 @@ import PageShell from "@/components/PageShell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { 
   Home, 
   TrendingUp, 
@@ -38,7 +37,6 @@ const SellingLakeGeneva = () => {
     email: "",
     phone: "",
     address: "",
-    message: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -49,7 +47,7 @@ const SellingLakeGeneva = () => {
       const { data, error } = await supabase
         .from("business_profiles")
         .select("*")
-        .eq("category", "real_estate")
+        .eq("category", "real-estate")
         .eq("status", "active")
         .single();
       
@@ -91,7 +89,7 @@ const SellingLakeGeneva = () => {
           email: formData.email,
           phone: formData.phone || null,
           business_name: formData.address || "Home Valuation Request",
-          notes: formData.message || null,
+          notes: null,
           source: "selling_page",
           business_profile_id: sponsor?.id || null,
         });
@@ -106,14 +104,13 @@ const SellingLakeGeneva = () => {
           contactName: formData.name,
           email: formData.email,
           phone: formData.phone,
-          notes: formData.message,
         }
       });
 
       toast.success("Request submitted!", {
         description: "Gina will reach out within 24 hours with your free home valuation.",
       });
-      setFormData({ name: "", email: "", phone: "", address: "", message: "" });
+      setFormData({ name: "", email: "", phone: "", address: "" });
     } catch (err) {
       toast.error("Something went wrong. Please try again.");
     } finally {
@@ -139,21 +136,45 @@ const SellingLakeGeneva = () => {
   return (
     <PageShell>
       <div className="max-w-5xl mx-auto">
-        {/* Hero */}
+          {/* Hero */}
         <section className="py-8 lg:py-12">
-          <div className="text-center mb-8">
+          <div className="text-center mb-6">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-xs font-semibold mb-4">
               <Home className="w-3.5 h-3.5" />
               Lake Geneva Real Estate
             </div>
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 mb-4">
-              Sell Your Lake Geneva Home<br />
-              <span className="text-blue-600">With Confidence</span>
+              What's Your Lake Geneva<br />
+              <span className="text-blue-600">Home Worth?</span>
             </h1>
-            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-              Get a free, no-obligation home valuation from Lake Geneva's top-rated listing agent. 
-              Find out what your home could sell for in today's market.
+            <p className="text-lg text-slate-600 max-w-2xl mx-auto mb-4">
+              Get a free, no-obligation home valuation from Lake Geneva's top-rated listing agent.
             </p>
+            
+            {/* Mobile Phone CTA */}
+            <a 
+              href="tel:+12627452360" 
+              className="inline-flex items-center gap-2 text-blue-600 font-medium hover:text-blue-700 lg:hidden"
+            >
+              <Phone className="w-4 h-4" />
+              Call Gina: (262) 745-2360
+            </a>
+          </div>
+
+          {/* Credibility Stats */}
+          <div className="flex flex-wrap justify-center gap-6 mb-8 py-4 px-4 bg-slate-50 rounded-xl">
+            <div className="flex items-center gap-2">
+              <Award className="w-5 h-5 text-blue-600" />
+              <span className="text-sm font-medium text-slate-700">15+ Years Experience</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-emerald-600" />
+              <span className="text-sm font-medium text-slate-700">Top Lake Geneva Agent</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
+              <span className="text-sm font-medium text-slate-700">72 Five-Star Reviews</span>
+            </div>
           </div>
 
           {/* Two Column: Form + Agent Info */}
@@ -164,7 +185,7 @@ const SellingLakeGeneva = () => {
                 Get Your Free Home Valuation
               </h2>
               <p className="text-sm text-slate-500 mb-6">
-                No commitment required. We'll provide a detailed market analysis within 24 hours.
+                Response within 24 hours · No commitment required
               </p>
 
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -174,6 +195,7 @@ const SellingLakeGeneva = () => {
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     required
+                    className="h-12"
                   />
                 </div>
                 <div>
@@ -183,38 +205,33 @@ const SellingLakeGeneva = () => {
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     required
+                    className="h-12"
                   />
                 </div>
                 <div>
                   <Input
                     type="tel"
-                    placeholder="Phone Number"
+                    placeholder="Phone Number (optional)"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    className="h-12"
                   />
                 </div>
                 <div>
                   <Input
-                    placeholder="Property Address"
+                    placeholder="Property Address (e.g., 123 Lakeshore Dr)"
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Textarea
-                    placeholder="Any details about your property or timeline..."
-                    value={formData.message}
-                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    rows={3}
+                    className="h-12"
                   />
                 </div>
                 <Button 
                   type="submit" 
                   size="lg" 
-                  className="w-full"
+                  className="w-full h-12 text-base"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? "Submitting..." : "Get My Free Valuation"}
+                  {isSubmitting ? "Submitting..." : "What's My Home Worth?"}
                 </Button>
               </form>
             </Card>
@@ -399,7 +416,7 @@ const SellingLakeGeneva = () => {
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           >
             <Home className="w-4 h-4 mr-2" />
-            Get My Free Valuation
+            What's My Home Worth?
           </Button>
         </section>
       </div>
