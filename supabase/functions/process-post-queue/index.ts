@@ -16,7 +16,8 @@ const TWITTER_ACCESS_TOKEN_SECRET = Deno.env.get("TWITTER_ACCESS_TOKEN_SECRET")?
 
 // Rate limiting configuration
 const DAILY_POST_LIMIT = 5;
-const MIN_HOURS_BETWEEN_POSTS = 3;
+// Note: Spacing is now handled by optimal slot scheduling in prepare-posts
+// Posts are scheduled at 8am, 10am, 12pm, 2pm, 4pm, 6pm Central (2hr natural spacing)
 const POSTING_START_HOUR = 7; // 7am Central
 const POSTING_END_HOUR = 21; // 9pm Central
 
@@ -264,8 +265,7 @@ serve(async (req) => {
     console.log(`[process-post-queue] X posts sent today: ${todayXPostCount || 0}/${DAILY_POST_LIMIT}`);
     const canPostToX = (todayXPostCount || 0) < DAILY_POST_LIMIT && inPostingWindow && twitterConfigured;
 
-    // Check last X post time for spacing
-    let lastXPostTime: Date | null = null;
+    // Log last X post time for monitoring (spacing now handled by prepare-posts optimal slots)
     if (canPostToX) {
       const { data: lastXPost } = await supabaseClient
         .from("post_queue")
@@ -277,13 +277,9 @@ serve(async (req) => {
         .single();
       
       if (lastXPost?.sent_at) {
-        lastXPostTime = new Date(lastXPost.sent_at);
+        const lastXPostTime = new Date(lastXPost.sent_at);
         const hoursSinceLastPost = (Date.now() - lastXPostTime.getTime()) / (1000 * 60 * 60);
         console.log(`[process-post-queue] Hours since last X post: ${hoursSinceLastPost.toFixed(1)}`);
-        
-        if (hoursSinceLastPost < MIN_HOURS_BETWEEN_POSTS) {
-          console.log(`[process-post-queue] ⏳ Spacing limit: need ${MIN_HOURS_BETWEEN_POSTS}h between posts, only ${hoursSinceLastPost.toFixed(1)}h elapsed`);
-        }
       }
     }
 
@@ -391,14 +387,8 @@ serve(async (req) => {
           continue;
         }
 
-        if (lastXPostTime) {
-          const hoursSinceLastPost = (Date.now() - lastXPostTime.getTime()) / (1000 * 60 * 60);
-          if (hoursSinceLastPost < MIN_HOURS_BETWEEN_POSTS && xPostsThisRun === 0) {
-            console.log(`[process-post-queue] ⏳ X post skipped: spacing limit (${MIN_HOURS_BETWEEN_POSTS}h)`);
-            results.push({ post_id: post.id, platform: post.platform, success: false, skipped: true, reason: "spacing_limit" });
-            continue;
-          }
-        }
+        // Note: Spacing is now handled by optimal slot scheduling in prepare-posts
+        // Posts are scheduled at 2-hour intervals (8am, 10am, 12pm, 2pm, 4pm, 6pm CT)
 
         // Only allow 1 X post per run for safety
         if (xPostsThisRun >= 1) {
