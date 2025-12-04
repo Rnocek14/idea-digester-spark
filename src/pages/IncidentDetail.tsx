@@ -11,6 +11,7 @@ import { PublicHeader } from "@/components/PublicHeader";
 import { PublicFooter } from "@/components/PublicFooter";
 import IncidentStatusControls from "@/components/IncidentStatusControls";
 import TipSubmissionForm from "@/components/TipSubmissionForm";
+import { ShareButtons } from "@/components/ShareButtons";
 
 type Incident = {
   id: string;
@@ -187,9 +188,15 @@ export default function IncidentDetail() {
                 )}
               </div>
 
-              <p className="text-sm text-muted-foreground mt-3">
-                Last updated {formatTimeAgo(incident.updated_at)}
-              </p>
+              <div className="flex items-center justify-between mt-3">
+                <p className="text-sm text-muted-foreground">
+                  Last updated {formatTimeAgo(incident.updated_at)}
+                </p>
+                <ShareButtons 
+                  title={incident.title} 
+                  url={`${window.location.origin}/incidents/${incident.slug}`} 
+                />
+              </div>
             </header>
 
             {/* Subscribe CTA */}
