@@ -114,7 +114,7 @@ export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionPr
           : 'opacity-0 translate-y-8'
       }`}
     >
-      <div className="rounded-2xl bg-gradient-to-r from-slate-50 via-white to-blue-50/30 border border-slate-200 px-5 py-4 lg:px-6 lg:py-5">
+      <div className="rounded-2xl bg-gradient-to-r from-slate-50 via-white to-blue-50/30 border border-slate-200 px-5 py-4 lg:px-6 lg:py-5 transition-all duration-300 hover:shadow-lg hover:shadow-slate-200/50 hover:-translate-y-1">
         {/* Label */}
         <p className="text-[10px] font-medium uppercase tracking-[0.15em] text-slate-400 mb-3">
           Presented By
