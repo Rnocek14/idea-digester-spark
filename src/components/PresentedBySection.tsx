@@ -73,6 +73,7 @@ export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionPr
   const [showDialog, setShowDialog] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [starsAnimated, setStarsAnimated] = useState(false);
+  const [showShimmer, setShowShimmer] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
 
   // Intersection Observer for entrance animation
@@ -102,6 +103,14 @@ export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionPr
       return () => clearTimeout(timer);
     }
   }, [isVisible]);
+
+  // Trigger shimmer after all stars have filled (5 stars × 100ms delay + 300ms animation)
+  useEffect(() => {
+    if (starsAnimated) {
+      const timer = setTimeout(() => setShowShimmer(true), 800);
+      return () => clearTimeout(timer);
+    }
+  }, [starsAnimated]);
 
   const dailyTestimonial = getDailyTestimonial(sponsor.metadata?.testimonials || []);
   const quote = dailyTestimonial?.quote || sponsor.testimonial_quote;
@@ -170,7 +179,7 @@ export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionPr
                 )}
                 {sponsor.zillow_rating && sponsor.zillow_review_count && (
                   <div className="flex items-center gap-1 mt-0.5">
-                    <div className="flex items-center">
+                    <div className="relative flex items-center">
                       {Array.from({ length: 5 }, (_, i) => {
                         const isFilled = i < Math.round(sponsor.zillow_rating || 0);
                         const shouldShowFilled = starsAnimated && isFilled;
@@ -191,6 +200,16 @@ export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionPr
                           />
                         );
                       })}
+                      {/* Shimmer overlay */}
+                      {showShimmer && (
+                        <div 
+                          className="absolute inset-0 pointer-events-none animate-shimmer-sweep"
+                          style={{
+                            background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.8) 50%, transparent 100%)',
+                            backgroundSize: '200% 100%',
+                          }}
+                        />
+                      )}
                     </div>
                     {sponsor.zillow_url ? (
                       <a
