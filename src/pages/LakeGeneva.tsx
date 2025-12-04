@@ -288,6 +288,22 @@ const LakeGeneva = () => {
     staleTime: 300000,
   });
 
+  // Query real estate market data
+  const { data: marketData } = useQuery({
+    queryKey: ["market-data"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("real_estate_metrics")
+        .select("yoy_change, zip_code")
+        .eq("zip_code", "53147")
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 3600000, // 1 hour
+  });
+
   // Subscribe mutation
   const subscribeMutation = useMutation({
     mutationFn: async (subscriberEmail: string) => {
@@ -658,7 +674,7 @@ const LakeGeneva = () => {
 
             {/* Unified Sponsor Section */}
             {sponsor && (
-              <PresentedBySection sponsor={sponsor} />
+              <PresentedBySection sponsor={sponsor} marketData={marketData} />
             )}
 
             {/* Stories by Category */}
