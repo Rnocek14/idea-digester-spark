@@ -225,6 +225,9 @@ serve(async (req) => {
     
     const automationEnabled = (settings?.value as any)?.enabled !== false;
     const socialEnabled = (settings?.value as any)?.social_enabled !== false;
+    const xEnabled = (settings?.value as any)?.x_enabled !== false;
+    const facebookEnabled = (settings?.value as any)?.facebook_enabled !== false;
+    const instagramEnabled = (settings?.value as any)?.instagram_enabled !== false;
     
     if (!automationEnabled || !socialEnabled) {
       console.log("[process-post-queue] ⛔ Social automation is disabled via kill switch");
@@ -239,6 +242,7 @@ serve(async (req) => {
       );
     }
     console.log("[process-post-queue] ✅ Kill switch check passed");
+    console.log(`[process-post-queue] Platform toggles: X=${xEnabled}, FB=${facebookEnabled}, IG=${instagramEnabled}`);
 
     // Check if Twitter credentials are configured
     const twitterConfigured = validateTwitterCredentials();
@@ -367,6 +371,13 @@ serve(async (req) => {
 
       // Handle X (Twitter) - REAL POSTING
       if (post.platform === "x" && twitterConfigured) {
+        // Check platform toggle
+        if (!xEnabled) {
+          console.log(`[process-post-queue] ⏳ X post skipped: x_enabled is OFF in settings`);
+          results.push({ post_id: post.id, platform: post.platform, success: false, skipped: true, reason: "platform_disabled" });
+          continue;
+        }
+
         // Check all rate limits for X
         if (!inPostingWindow) {
           console.log(`[process-post-queue] ⏳ X post skipped: outside posting window (7am-9pm CT)`);
