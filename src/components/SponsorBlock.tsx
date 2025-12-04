@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Phone, ExternalLink, Home, TrendingUp, BarChart3, Star } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { MarketAnalysisDialog } from "@/components/MarketAnalysisDialog";
 
 type Sponsor = {
   name: string;
@@ -83,6 +85,7 @@ interface SponsorBlockProps {
 }
 
 export const SponsorBlock = ({ sponsor }: SponsorBlockProps) => {
+  const [showMarketAnalysisDialog, setShowMarketAnalysisDialog] = useState(false);
   const isRealEstate = isRealEstateSponsor(sponsor);
 
   const { data: metrics } = useQuery({
@@ -237,25 +240,23 @@ export const SponsorBlock = ({ sponsor }: SponsorBlockProps) => {
         {/* CTA Buttons */}
         <div className="mt-4 flex flex-col gap-2">
           {/* Free Market Analysis CTA - prominent for real estate */}
-          {isRealEstate && sponsor.email && (
-            <a
-              href={`mailto:${sponsor.email}?subject=Free Market Analysis Request - Lake Geneva Brief&body=Hi ${sponsor.name.split(' ')[0]},%0D%0A%0D%0AI saw your profile on Lake Geneva Brief and would love to get a free market analysis for my property.%0D%0A%0D%0AThank you!`}
-              onClick={() => fireTrackClick(
-                `mailto:${sponsor.email}`,
-                'sponsor_market_analysis',
-                sponsor.businessId,
-                sponsor.placementId
-              )}
-              className="w-full"
+          {isRealEstate && (
+            <Button 
+              size="sm" 
+              className="w-full text-xs font-medium"
+              onClick={() => {
+                fireTrackClick(
+                  'market_analysis_form',
+                  'sponsor_market_analysis',
+                  sponsor.businessId,
+                  sponsor.placementId
+                );
+                setShowMarketAnalysisDialog(true);
+              }}
             >
-              <Button 
-                size="sm" 
-                className="w-full text-xs font-medium"
-              >
-                <BarChart3 className="w-3.5 h-3.5 mr-1.5" />
-                Free Market Analysis
-              </Button>
-            </a>
+              <BarChart3 className="w-3.5 h-3.5 mr-1.5" />
+              Free Market Analysis
+            </Button>
           )}
           
           <div className="flex gap-2">
@@ -308,6 +309,17 @@ export const SponsorBlock = ({ sponsor }: SponsorBlockProps) => {
           </div>
         )}
       </div>
+
+      {/* Market Analysis Dialog */}
+      {isRealEstate && (
+        <MarketAnalysisDialog
+          open={showMarketAnalysisDialog}
+          onOpenChange={setShowMarketAnalysisDialog}
+          sponsorName={sponsor.name}
+          sponsorId={sponsor.businessId || ''}
+          sponsorEmail={sponsor.email || undefined}
+        />
+      )}
     </Card>
   );
 };
