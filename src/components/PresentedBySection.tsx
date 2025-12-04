@@ -123,7 +123,12 @@ export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionPr
         {/* Horizontal layout */}
         <div className="flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6">
           {/* Left column: Photo + Name + Zillow + Phone */}
-          <div className="flex-shrink-0">
+          <div 
+            className={`flex-shrink-0 transition-all duration-500 ease-out ${
+              isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+            }`}
+            style={{ transitionDelay: isVisible ? '0ms' : '0ms' }}
+          >
             {/* Clickable link to selling page */}
             <Link 
               to="/selling-lake-geneva"
@@ -204,7 +209,12 @@ export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionPr
 
           {/* Center: Testimonial (flex-1 to take remaining space) */}
           {quote && (
-            <div className="flex-1 min-w-0">
+            <div 
+              className={`flex-1 min-w-0 transition-all duration-500 ease-out ${
+                isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+              }`}
+              style={{ transitionDelay: isVisible ? '150ms' : '0ms' }}
+            >
               <blockquote className="text-xs text-slate-600 italic leading-relaxed line-clamp-2">
                 "{quote}"
                 {attribution && (
@@ -215,7 +225,12 @@ export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionPr
           )}
 
           {/* Right: CTA Button */}
-          <div className="flex-shrink-0">
+          <div 
+            className={`flex-shrink-0 transition-all duration-500 ease-out ${
+              isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+            }`}
+            style={{ transitionDelay: isVisible ? '300ms' : '0ms' }}
+          >
             <Button
               size="sm"
               className="text-xs font-medium h-9 px-4"
