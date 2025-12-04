@@ -282,6 +282,27 @@ export const SponsorBlock = ({ sponsor }: SponsorBlockProps) => {
           </div>
         )}
 
+        {/* Why Sellers Choose Section */}
+        {isRealEstate && (
+          <div className="mt-4 p-3 rounded-lg bg-primary/[0.04] border border-primary/15">
+            <p className="text-[11px] font-semibold text-foreground mb-2">Why Sellers Choose Gina</p>
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2 text-[10px] text-muted-foreground">
+                <span className="text-primary font-bold mt-0.5">✓</span>
+                <span><strong className="text-foreground">Multiple offers in days</strong>, not weeks</span>
+              </li>
+              <li className="flex items-start gap-2 text-[10px] text-muted-foreground">
+                <span className="text-primary font-bold mt-0.5">✓</span>
+                <span><strong className="text-foreground">Chicago buyer network</strong> for higher sale prices</span>
+              </li>
+              <li className="flex items-start gap-2 text-[10px] text-muted-foreground">
+                <span className="text-primary font-bold mt-0.5">✓</span>
+                <span><strong className="text-foreground">Full-service listing</strong> — staging, photos, marketing</span>
+              </li>
+            </ul>
+          </div>
+        )}
+
         {/* CTA Buttons */}
         <div className="mt-4 flex flex-col gap-2">
           {/* Seller-focused CTA - prominent for real estate */}
@@ -340,10 +361,10 @@ export const SponsorBlock = ({ sponsor }: SponsorBlockProps) => {
           </div>
         </div>
 
-        {/* Expertise Tags */}
+        {/* Seller Expertise Tags */}
         {isRealEstate && (
           <div className="mt-3 flex flex-wrap gap-1.5">
-            {['Lakefront', 'Condos', 'Investment', 'Vacation'].map((tag) => (
+            {['Fast Sales', 'Lakefront Expert', 'Pricing Strategy', 'Chicago Buyers'].map((tag) => (
               <span 
                 key={tag}
                 className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-primary/10 text-primary border border-primary/20"
