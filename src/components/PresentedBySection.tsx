@@ -72,6 +72,7 @@ const trackClickUrl = (url: string, source: string, businessId?: string, placeme
 export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionProps) => {
   const [showDialog, setShowDialog] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [starsAnimated, setStarsAnimated] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
 
   // Intersection Observer for entrance animation
@@ -92,6 +93,14 @@ export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionPr
 
     return () => observer.disconnect();
   }, []);
+
+  // Trigger star animation after entrance completes
+  useEffect(() => {
+    if (isVisible) {
+      const timer = setTimeout(() => setStarsAnimated(true), 400);
+      return () => clearTimeout(timer);
+    }
+  }, [isVisible]);
 
   const dailyTestimonial = getDailyTestimonial(sponsor.metadata?.testimonials || []);
   const quote = dailyTestimonial?.quote || sponsor.testimonial_quote;
@@ -161,16 +170,26 @@ export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionPr
                 {sponsor.zillow_rating && sponsor.zillow_review_count && (
                   <div className="flex items-center gap-1 mt-0.5">
                     <div className="flex items-center">
-                      {Array.from({ length: 5 }, (_, i) => (
-                        <Star
-                          key={i}
-                          className={`w-3 h-3 ${
-                            i < Math.round(sponsor.zillow_rating || 0)
-                              ? "fill-yellow-400 text-yellow-400"
-                              : "text-slate-300"
-                          }`}
-                        />
-                      ))}
+                      {Array.from({ length: 5 }, (_, i) => {
+                        const isFilled = i < Math.round(sponsor.zillow_rating || 0);
+                        const shouldShowFilled = starsAnimated && isFilled;
+                        
+                        return (
+                          <Star
+                            key={i}
+                            className={`w-3 h-3 transition-all duration-300 ${
+                              shouldShowFilled
+                                ? "fill-yellow-400 text-yellow-400 scale-110"
+                                : isFilled
+                                  ? "fill-transparent text-slate-300 scale-100"
+                                  : "fill-transparent text-slate-300 scale-100"
+                            }`}
+                            style={{ 
+                              transitionDelay: starsAnimated ? `${i * 100}ms` : '0ms'
+                            }}
+                          />
+                        );
+                      })}
                     </div>
                     {sponsor.zillow_url ? (
                       <a
