@@ -12,6 +12,11 @@ type SponsorMetadata = {
   testimonials?: Testimonial[];
 };
 
+interface MarketData {
+  yoy_change: number;
+  zip_code: string;
+}
+
 interface Sponsor {
   name: string;
   logo_url: string | null;
@@ -30,6 +35,7 @@ interface Sponsor {
 
 interface PresentedBySectionProps {
   sponsor: Sponsor;
+  marketData?: MarketData | null;
 }
 
 const getDailyTestimonial = (testimonials: Testimonial[]): Testimonial | null => {
@@ -49,12 +55,16 @@ const trackClickUrl = (url: string, source: string, businessId?: string, placeme
   return `https://mzumvkrpnxhkvhdyzgqa.supabase.co/functions/v1/track-click?${params.toString()}`;
 };
 
-export const PresentedBySection = ({ sponsor }: PresentedBySectionProps) => {
+export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionProps) => {
   const [showDialog, setShowDialog] = useState(false);
 
   const dailyTestimonial = getDailyTestimonial(sponsor.metadata?.testimonials || []);
   const quote = dailyTestimonial?.quote || sponsor.testimonial_quote;
   const attribution = dailyTestimonial?.attribution;
+  
+  const yoyChangeText = marketData?.yoy_change 
+    ? `${marketData.yoy_change > 0 ? '+' : ''}${marketData.yoy_change.toFixed(1)}%`
+    : null;
 
   return (
     <section className="py-6">
@@ -141,8 +151,28 @@ export const PresentedBySection = ({ sponsor }: PresentedBySectionProps) => {
               <Home className="w-3.5 h-3.5 mr-1.5" />
               Get Your Free Home Valuation
             </Button>
-          </div>
         </div>
+        
+        {/* Market Data Footer */}
+        {yoyChangeText && (
+          <div className="mt-3 pt-3 border-t border-slate-100">
+            <p className="text-[10px] text-slate-400">
+              Lake Geneva home values{' '}
+              <span className={marketData?.yoy_change && marketData.yoy_change > 0 ? 'text-emerald-600 font-medium' : 'text-slate-500'}>
+                {yoyChangeText} this year
+              </span>
+              <span className="mx-1.5">·</span>
+              <span>Zillow ZHVI</span>
+              {marketData?.zip_code && (
+                <>
+                  <span className="mx-1.5">·</span>
+                  <span>ZIP {marketData.zip_code}</span>
+                </>
+              )}
+            </p>
+          </div>
+        )}
+      </div>
       </div>
 
       <MarketAnalysisDialog
