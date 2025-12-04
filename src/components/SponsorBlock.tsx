@@ -6,6 +6,16 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { MarketAnalysisDialog } from "@/components/MarketAnalysisDialog";
 
+type Testimonial = {
+  quote: string;
+  attribution?: string;
+  tag?: string;
+};
+
+type SponsorMetadata = {
+  testimonials?: Testimonial[];
+};
+
 type Sponsor = {
   name: string;
   logo_url: string | null;
@@ -20,6 +30,15 @@ type Sponsor = {
   zillow_rating?: number | null;
   zillow_review_count?: number | null;
   testimonial_quote?: string | null;
+  metadata?: SponsorMetadata;
+};
+
+// Get daily rotating testimonial (same quote all day, changes at midnight)
+const getDailyTestimonial = (testimonials: Testimonial[]): Testimonial | null => {
+  if (!testimonials?.length) return null;
+  const today = new Date();
+  const dayIndex = Math.floor(today.getTime() / (1000 * 60 * 60 * 24));
+  return testimonials[dayIndex % testimonials.length];
 };
 
 const isRealEstateSponsor = (sponsor: Sponsor | null) => {
@@ -176,12 +195,25 @@ export const SponsorBlock = ({ sponsor }: SponsorBlockProps) => {
               </div>
             )}
             
-            {/* Testimonial Quote */}
-            {sponsor.testimonial_quote && (
-              <blockquote className="mt-2 pl-2.5 border-l-2 border-primary/30 italic text-[11px] text-muted-foreground leading-relaxed">
-                "{sponsor.testimonial_quote}"
-              </blockquote>
-            )}
+            {/* Testimonial Quote - daily rotation from metadata or fallback to static */}
+            {(() => {
+              const dailyTestimonial = getDailyTestimonial(sponsor.metadata?.testimonials || []);
+              const quote = dailyTestimonial?.quote || sponsor.testimonial_quote;
+              const attribution = dailyTestimonial?.attribution;
+              
+              if (!quote) return null;
+              
+              return (
+                <blockquote className="mt-2 pl-2.5 border-l-2 border-primary/30 italic text-[11px] text-muted-foreground leading-relaxed">
+                  "{quote}"
+                  {attribution && (
+                    <footer className="mt-0.5 not-italic text-[10px] text-muted-foreground/80">
+                      — {attribution}
+                    </footer>
+                  )}
+                </blockquote>
+              );
+            })()}
             <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
               {sponsor.description || (isRealEstate 
                 ? "Your trusted Lake Geneva real estate expert."
