@@ -136,17 +136,36 @@ const SellingLakeGeneva = () => {
 
   return (
     <PageShell>
-      {/* Hero with Background */}
-      <section 
-        className="relative py-12 lg:py-16 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 mb-8"
-        style={{
-          backgroundImage: `url(${lakeGenevaHero})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }}
-      >
+      {/* Hero with Video Background */}
+      <section className="relative py-12 lg:py-16 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 mb-8 overflow-hidden">
+        {/* Video Background */}
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          poster={lakeGenevaHero}
+          className="absolute inset-0 w-full h-full object-cover"
+        >
+          <source 
+            src="https://videos.pexels.com/video-files/1448735/1448735-uhd_2732_1440_24fps.mp4" 
+            type="video/mp4" 
+          />
+          {/* Fallback to image if video fails */}
+        </video>
+        
+        {/* Image Fallback for browsers that don't support video */}
+        <div 
+          className="absolute inset-0 -z-10"
+          style={{
+            backgroundImage: `url(${lakeGenevaHero})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}
+        />
+        
         {/* Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-900/70 via-slate-900/60 to-slate-900/80" />
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-900/60 via-slate-900/50 to-slate-900/70" />
         
         <div className="relative max-w-5xl mx-auto">
           <div className="text-center mb-6">
