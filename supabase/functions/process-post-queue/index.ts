@@ -107,17 +107,17 @@ async function uploadMediaToTwitter(imageData: Uint8Array): Promise<{ success: b
     const base64Data = uint8ArrayToBase64(imageData);
     console.log("[process-post-queue] Base64 encoded, length:", base64Data.length);
     
-    // Use application/x-www-form-urlencoded with media_data (base64)
-    const body = new URLSearchParams();
-    body.append("media_data", base64Data);
+    // Use multipart/form-data - doesn't require body params in OAuth signature
+    const formData = new FormData();
+    formData.append("media_data", base64Data);
 
     const response = await fetch(url, {
       method,
       headers: {
         Authorization: oauthHeader,
-        "Content-Type": "application/x-www-form-urlencoded",
+        // Let FormData set Content-Type with boundary automatically
       },
-      body: body.toString(),
+      body: formData,
     });
 
     const responseText = await response.text();
