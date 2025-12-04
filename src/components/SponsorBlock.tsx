@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Phone, ExternalLink, Home, TrendingUp, BarChart3 } from "lucide-react";
+import { Phone, ExternalLink, Home, TrendingUp, BarChart3, Star } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -13,6 +13,10 @@ type Sponsor = {
   category?: string | null;
   phone?: string | null;
   description?: string | null;
+  email?: string | null;
+  zillow_url?: string | null;
+  zillow_rating?: number | null;
+  zillow_review_count?: number | null;
 };
 
 const isRealEstateSponsor = (sponsor: Sponsor | null) => {
@@ -122,6 +126,37 @@ export const SponsorBlock = ({ sponsor }: SponsorBlockProps) => {
                 @properties Lake Geneva
               </p>
             )}
+            {/* Zillow Rating */}
+            {sponsor.zillow_rating && sponsor.zillow_review_count && (
+              <div className="flex items-center gap-1.5 mt-1">
+                <div className="flex items-center">
+                  {Array.from({ length: 5 }, (_, i) => (
+                    <Star
+                      key={i}
+                      className={`w-3.5 h-3.5 ${
+                        i < Math.round(sponsor.zillow_rating || 0)
+                          ? "fill-yellow-400 text-yellow-400"
+                          : "text-muted-foreground"
+                      }`}
+                    />
+                  ))}
+                </div>
+                {sponsor.zillow_url ? (
+                  <a
+                    href={trackClickUrl(sponsor.zillow_url, 'sponsor_zillow', sponsor.businessId, sponsor.placementId)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[11px] text-muted-foreground hover:text-primary hover:underline"
+                  >
+                    ({sponsor.zillow_review_count} reviews)
+                  </a>
+                ) : (
+                  <span className="text-[11px] text-muted-foreground">
+                    ({sponsor.zillow_review_count} reviews)
+                  </span>
+                )}
+              </div>
+            )}
             <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
               {sponsor.description || (isRealEstate 
                 ? "Your trusted Lake Geneva real estate expert."
@@ -178,38 +213,62 @@ export const SponsorBlock = ({ sponsor }: SponsorBlockProps) => {
         )}
 
         {/* CTA Buttons */}
-        <div className="mt-4 flex flex-wrap gap-2">
-          {sponsor.phone && (
+        <div className="mt-4 flex flex-col gap-2">
+          {/* Free Market Analysis CTA - prominent for real estate */}
+          {isRealEstate && sponsor.email && (
             <a
-              href={trackClickUrl(`tel:${sponsor.phone.replace(/\D/g, '')}`, 'sponsor_phone', sponsor.businessId, sponsor.placementId)}
-              className="flex-1"
-            >
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="w-full text-xs font-medium border-primary/30 hover:bg-primary/5"
-              >
-                <Phone className="w-3.5 h-3.5 mr-1.5" />
-                {formatPhone(sponsor.phone)}
-              </Button>
-            </a>
-          )}
-          {sponsor.website && (
-            <a
-              href={trackClickUrl(sponsor.website, 'sponsor_website', sponsor.businessId, sponsor.placementId)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex-1"
+              href={trackClickUrl(
+                `mailto:${sponsor.email}?subject=Free Market Analysis Request - Lake Geneva Brief&body=Hi ${sponsor.name.split(' ')[0]},%0D%0A%0D%0AI saw your profile on Lake Geneva Brief and would love to get a free market analysis for my property.%0D%0A%0D%0AThank you!`,
+                'sponsor_market_analysis',
+                sponsor.businessId,
+                sponsor.placementId
+              )}
+              className="w-full"
             >
               <Button 
                 size="sm" 
                 className="w-full text-xs font-medium"
               >
-                <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
-                View Listings
+                <BarChart3 className="w-3.5 h-3.5 mr-1.5" />
+                Free Market Analysis
               </Button>
             </a>
           )}
+          
+          <div className="flex gap-2">
+            {sponsor.phone && (
+              <a
+                href={trackClickUrl(`tel:${sponsor.phone.replace(/\D/g, '')}`, 'sponsor_phone', sponsor.businessId, sponsor.placementId)}
+                className="flex-1"
+              >
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full text-xs font-medium border-primary/30 hover:bg-primary/5"
+                >
+                  <Phone className="w-3.5 h-3.5 mr-1.5" />
+                  {formatPhone(sponsor.phone)}
+                </Button>
+              </a>
+            )}
+            {sponsor.website && (
+              <a
+                href={trackClickUrl(sponsor.website, 'sponsor_website', sponsor.businessId, sponsor.placementId)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1"
+              >
+                <Button 
+                  variant="outline"
+                  size="sm" 
+                  className="w-full text-xs font-medium border-primary/30 hover:bg-primary/5"
+                >
+                  <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
+                  View Listings
+                </Button>
+              </a>
+            )}
+          </div>
         </div>
 
         {/* Expertise Tags */}

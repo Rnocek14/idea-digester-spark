@@ -247,6 +247,9 @@ export type Database = {
           status: string | null
           updated_at: string | null
           website: string | null
+          zillow_rating: number | null
+          zillow_review_count: number | null
+          zillow_url: string | null
         }
         Insert: {
           address?: string | null
@@ -263,6 +266,9 @@ export type Database = {
           status?: string | null
           updated_at?: string | null
           website?: string | null
+          zillow_rating?: number | null
+          zillow_review_count?: number | null
+          zillow_url?: string | null
         }
         Update: {
           address?: string | null
@@ -279,6 +285,9 @@ export type Database = {
           status?: string | null
           updated_at?: string | null
           website?: string | null
+          zillow_rating?: number | null
+          zillow_review_count?: number | null
+          zillow_url?: string | null
         }
         Relationships: []
       }
