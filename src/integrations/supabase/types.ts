@@ -613,7 +613,7 @@ export type Database = {
           id: string
           ip_address: string | null
           link_url: string
-          newsletter_id: string
+          newsletter_id: string | null
           subscriber_email: string | null
           subscriber_id: string | null
           user_agent: string | null
@@ -627,7 +627,7 @@ export type Database = {
           id?: string
           ip_address?: string | null
           link_url: string
-          newsletter_id: string
+          newsletter_id?: string | null
           subscriber_email?: string | null
           subscriber_id?: string | null
           user_agent?: string | null
@@ -641,7 +641,7 @@ export type Database = {
           id?: string
           ip_address?: string | null
           link_url?: string
-          newsletter_id?: string
+          newsletter_id?: string | null
           subscriber_email?: string | null
           subscriber_id?: string | null
           user_agent?: string | null

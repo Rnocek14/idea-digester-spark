@@ -44,6 +44,19 @@ const trackClickUrl = (url: string, source: string, businessId?: string, placeme
   return `https://mzumvkrpnxhkvhdyzgqa.supabase.co/functions/v1/track-click?${params.toString()}`;
 };
 
+// Fire-and-forget click tracking for non-redirect scenarios (mailto:, tel:)
+const fireTrackClick = (url: string, source: string, businessId?: string, placementId?: string) => {
+  const params = new URLSearchParams({
+    url: url,
+    source: source,
+    track_only: 'true',
+    ...(businessId && { bid: businessId }),
+    ...(placementId && { pid: placementId }),
+  });
+  fetch(`https://mzumvkrpnxhkvhdyzgqa.supabase.co/functions/v1/track-click?${params.toString()}`)
+    .catch(() => {}); // Fire and forget
+};
+
 const formatPhone = (phone: string | null) => {
   if (!phone) return null;
   const digits = phone.replace(/\D/g, '');
@@ -226,8 +239,9 @@ export const SponsorBlock = ({ sponsor }: SponsorBlockProps) => {
           {/* Free Market Analysis CTA - prominent for real estate */}
           {isRealEstate && sponsor.email && (
             <a
-              href={trackClickUrl(
-                `mailto:${sponsor.email}?subject=Free Market Analysis Request - Lake Geneva Brief&body=Hi ${sponsor.name.split(' ')[0]},%0D%0A%0D%0AI saw your profile on Lake Geneva Brief and would love to get a free market analysis for my property.%0D%0A%0D%0AThank you!`,
+              href={`mailto:${sponsor.email}?subject=Free Market Analysis Request - Lake Geneva Brief&body=Hi ${sponsor.name.split(' ')[0]},%0D%0A%0D%0AI saw your profile on Lake Geneva Brief and would love to get a free market analysis for my property.%0D%0A%0D%0AThank you!`}
+              onClick={() => fireTrackClick(
+                `mailto:${sponsor.email}`,
                 'sponsor_market_analysis',
                 sponsor.businessId,
                 sponsor.placementId

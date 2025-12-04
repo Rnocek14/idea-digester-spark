@@ -20,6 +20,7 @@ serve(async (req) => {
     const businessId = url.searchParams.get("bid");
     const placementId = url.searchParams.get("pid");
     const clickSource = url.searchParams.get("source");
+    const trackOnly = url.searchParams.get("track_only") === "true";
 
     // Must have target URL
     if (!targetUrl) {
@@ -63,7 +64,23 @@ serve(async (req) => {
       }
     }
 
-    // Redirect to the original URL
+    // If track_only mode, just return success JSON (for mailto: links and other non-redirect scenarios)
+    if (trackOnly) {
+      return new Response(JSON.stringify({ success: true, tracked: true }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // For mailto: URLs, return JSON instead of redirect (browsers can't redirect to mailto:)
+    if (decodedUrl.startsWith("mailto:")) {
+      return new Response(JSON.stringify({ success: true, tracked: true, url: decodedUrl }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Redirect to the original URL for normal http/https links
     return new Response(null, {
       status: 302,
       headers: {
@@ -79,13 +96,17 @@ serve(async (req) => {
     const targetUrl = url.searchParams.get("url");
     if (targetUrl) {
       try {
-        return new Response(null, {
-          status: 302,
-          headers: {
-            Location: decodeURIComponent(targetUrl),
-            ...corsHeaders,
-          },
-        });
+        const decoded = decodeURIComponent(targetUrl);
+        // Don't try to redirect mailto: URLs
+        if (!decoded.startsWith("mailto:")) {
+          return new Response(null, {
+            status: 302,
+            headers: {
+              Location: decoded,
+              ...corsHeaders,
+            },
+          });
+        }
       } catch {}
     }
     
