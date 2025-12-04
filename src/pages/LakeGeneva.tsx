@@ -15,6 +15,7 @@ import AlsoTodayCard from "@/components/AlsoTodayCard";
 import { InlineSubscribeCTA } from "@/components/InlineSubscribeCTA";
 import { WelcomeModal } from "@/components/WelcomeModal";
 import { SponsorBlock } from "@/components/SponsorBlock";
+import { RealEstateHeroStrip } from "@/components/RealEstateHeroStrip";
 import { getSubscribeSource, getReferralSource } from "@/lib/referralTracking";
 
 type Story = {
@@ -656,9 +657,15 @@ const LakeGeneva = () => {
               </section>
             )}
 
-            {/* Sponsor Block */}
+            {/* Real Estate Hero Strip */}
+            <RealEstateHeroStrip 
+              sponsorId={sponsor?.businessId} 
+              sponsorEmail={sponsor?.email || undefined}
+            />
+
+            {/* Sponsor Block - Slim version */}
             {sponsor && (
-              <section className="py-8">
+              <section className="py-4">
                 <SponsorBlock sponsor={sponsor} />
               </section>
             )}

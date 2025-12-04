@@ -3,7 +3,8 @@ import { Link, NavLink } from "react-router-dom";
 import { format } from "date-fns";
 
 const navItems = [
-  { label: "Today", to: "/lake-geneva" },
+  { label: "Today", to: "/" },
+  { label: "Selling?", to: "/selling-lake-geneva" },
   { label: "Directory", to: "/directory" },
   { label: "Advertise", to: "/advertise" },
 ];
@@ -32,7 +33,7 @@ const PageShell: React.FC<PageShellProps> = ({
         {/* Main nav */}
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 pb-3 pt-2">
           {/* Logo / brand */}
-          <Link to="/lake-geneva" className="flex items-baseline gap-2 group">
+          <Link to="/" className="flex items-baseline gap-2 group">
             <span className="text-lg font-semibold tracking-tight text-slate-900 group-hover:text-blue-600 transition-colors">
               Lake Geneva Brief
             </span>
@@ -73,7 +74,7 @@ const PageShell: React.FC<PageShellProps> = ({
 
           {/* Mobile nav – simple link list for now */}
           <nav className="flex items-center gap-2 text-xs font-medium text-slate-600 sm:hidden">
-            {navItems.map((item) => (
+            {navItems.slice(0, 3).map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
@@ -107,10 +108,17 @@ const PageShell: React.FC<PageShellProps> = ({
             </span>
             <span>•</span>
             <Link
+              to="/selling-lake-geneva"
+              className="hover:text-slate-900 hover:underline"
+            >
+              Selling Your Home?
+            </Link>
+            <span>•</span>
+            <Link
               to="/directory"
               className="hover:text-slate-900 hover:underline"
             >
-              Business Directory
+              Directory
             </Link>
             <span>•</span>
             <Link
@@ -121,8 +129,7 @@ const PageShell: React.FC<PageShellProps> = ({
             </Link>
           </div>
           <div className="text-[11px]">
-            © {new Date().getFullYear()} Lake Geneva Brief. All rights
-            reserved.
+            Lake Geneva Real Estate — Powered by Gina @properties
           </div>
         </div>
       </footer>
