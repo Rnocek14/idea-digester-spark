@@ -1,4 +1,4 @@
-import { Suspense, lazy } from "react";
+import { Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,20 +12,20 @@ import Incidents from "./pages/Incidents";
 import IncidentDetail from "./pages/IncidentDetail";
 import NotFound from "./pages/NotFound";
 
-// Lazy load dashboard components to avoid eager ThemeToggle import
-const DashboardLayout = lazy(() => import("./components/DashboardLayout"));
-const Dashboard = lazy(() => import("./pages/Dashboard"));
-const ContentQueue = lazy(() => import("./pages/ContentQueue"));
-const Sources = lazy(() => import("./pages/Sources"));
-const Sponsors = lazy(() => import("./pages/Sponsors"));
-const Directory = lazy(() => import("./pages/Directory"));
-const Newsletter = lazy(() => import("./pages/Newsletter"));
-const SocialQueue = lazy(() => import("./pages/SocialQueue"));
-const SponsorAnalytics = lazy(() => import("./pages/SponsorAnalytics"));
-const Leads = lazy(() => import("./pages/Leads"));
-const ImageTest = lazy(() => import("./pages/ImageTest"));
-const EngagementMonitor = lazy(() => import("./pages/EngagementMonitor"));
-const Auth = lazy(() => import("./pages/Auth"));
+// Direct imports for dashboard components (v2)
+import DashboardLayout from "./components/DashboardLayout";
+import Dashboard from "./pages/Dashboard";
+import ContentQueue from "./pages/ContentQueue";
+import Sources from "./pages/Sources";
+import Sponsors from "./pages/Sponsors";
+import Directory from "./pages/Directory";
+import Newsletter from "./pages/Newsletter";
+import SocialQueue from "./pages/SocialQueue";
+import SponsorAnalytics from "./pages/SponsorAnalytics";
+import Leads from "./pages/Leads";
+import ImageTest from "./pages/ImageTest";
+import EngagementMonitor from "./pages/EngagementMonitor";
+import Auth from "./pages/Auth";
 
 const queryClient = new QueryClient({
   defaultOptions: {
