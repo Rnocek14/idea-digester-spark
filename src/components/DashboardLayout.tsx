@@ -1,10 +1,9 @@
-import { useEffect, useState } from "react"; // Dashboard layout
+import { useEffect, useState } from "react";
 import { useNavigate, Outlet } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { DashboardSidebar } from "@/components/DashboardSidebar";
 import { OperationsProvider } from "@/contexts/OperationsContext";
-// ThemeProvider removed temporarily
 import { Button } from "@/components/ui/button";
 import { LogOut, User, AlertCircle } from "lucide-react";
 import { toast } from "sonner";

@@ -1,7 +1,6 @@
 import { FileText, Radio, Megaphone, LayoutDashboard, Mail, CalendarDays, Building2, BarChart3, Users, Image, Heart } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
-// ThemeToggle removed temporarily
 import {
   Sidebar,
   SidebarContent,
