@@ -137,9 +137,21 @@ export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionPr
                       />
                     ))}
                   </div>
-                  <span className="text-[10px] text-slate-500">
-                    {sponsor.zillow_review_count} reviews
-                  </span>
+                  {sponsor.zillow_url ? (
+                    <a
+                      href={trackClickUrl(sponsor.zillow_url, 'sponsor_zillow', sponsor.businessId, sponsor.placementId)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-[10px] text-slate-500 hover:text-blue-600 hover:underline"
+                    >
+                      {sponsor.zillow_review_count} reviews
+                    </a>
+                  ) : (
+                    <span className="text-[10px] text-slate-500">
+                      {sponsor.zillow_review_count} reviews
+                    </span>
+                  )}
                 </div>
               )}
               <span className="text-[10px] text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
