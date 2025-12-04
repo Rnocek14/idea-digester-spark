@@ -294,7 +294,7 @@ const LakeGeneva = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("real_estate_metrics")
-        .select("yoy_change, zip_code")
+        .select("yoy_change, zip_code, median_price")
         .eq("zip_code", "53147")
         .maybeSingle();
 

@@ -16,6 +16,7 @@ type SponsorMetadata = {
 interface MarketData {
   yoy_change: number;
   zip_code: string;
+  median_price?: number;
 }
 
 interface Sponsor {
@@ -65,6 +66,10 @@ export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionPr
   
   const yoyChangeText = marketData?.yoy_change 
     ? `${marketData.yoy_change > 0 ? '+' : ''}${marketData.yoy_change.toFixed(1)}%`
+    : null;
+
+  const medianPriceText = marketData?.median_price
+    ? `$${Math.round(marketData.median_price / 1000)}K`
     : null;
 
   return (
@@ -170,13 +175,26 @@ export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionPr
         </div>
         
         {/* Market Data Footer - Outside the flex container */}
-        {yoyChangeText && (
+        {(yoyChangeText || medianPriceText) && (
           <div className="mt-3 pt-3 border-t border-slate-100">
             <p className="text-[10px] text-slate-400">
-              Lake Geneva home values{' '}
-              <span className={marketData?.yoy_change && marketData.yoy_change > 0 ? 'text-emerald-600 font-medium' : 'text-slate-500'}>
-                {yoyChangeText} this year
-              </span>
+              Lake Geneva homes
+              {medianPriceText && (
+                <>
+                  <span className="mx-1.5">·</span>
+                  <span className="text-slate-600 font-medium">{medianPriceText}</span>
+                  <span className="text-slate-400"> median</span>
+                </>
+              )}
+              {yoyChangeText && (
+                <>
+                  <span className="mx-1.5">·</span>
+                  <span className={marketData?.yoy_change && marketData.yoy_change > 0 ? 'text-emerald-600 font-medium' : 'text-slate-500'}>
+                    {yoyChangeText}
+                  </span>
+                  <span> YoY</span>
+                </>
+              )}
               <span className="mx-1.5">·</span>
               <span>Zillow ZHVI</span>
               {marketData?.zip_code && (
