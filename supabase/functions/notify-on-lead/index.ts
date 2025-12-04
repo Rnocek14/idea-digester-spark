@@ -19,6 +19,8 @@ type LeadPayload = {
   notes?: string | null;
   source?: string | null;
   created_at?: string;
+  sponsor_name?: string | null;
+  sponsor_email?: string | null;
 };
 
 serve(async (req: Request) => {
@@ -54,9 +56,14 @@ serve(async (req: Request) => {
         ? "Directory"
         : lead.source === "manual"
         ? "Manual"
+        : lead.source === "market_analysis"
+        ? `Market Analysis Request${lead.sponsor_name ? ` for ${lead.sponsor_name}` : ""}`
         : lead.source || "Unknown";
 
-    const subject = `[New Advertiser Lead] ${lead.business_name} (${source})`;
+    const isMarketAnalysis = lead.source === "market_analysis";
+    const subject = isMarketAnalysis
+      ? `[Market Analysis Request] ${lead.contact_name} wants a home value report`
+      : `[New Advertiser Lead] ${lead.business_name} (${source})`;
 
     const dashboardUrl = lead.id
       ? `${APP_BASE_URL}/dashboard/leads?leadId=${lead.id}`
@@ -136,9 +143,15 @@ serve(async (req: Request) => {
       </div>
     `;
 
+    // Build recipient list - include sponsor for market analysis requests
+    const recipients = [LEAD_NOTIFY_TO];
+    if (isMarketAnalysis && lead.sponsor_email) {
+      recipients.push(lead.sponsor_email);
+    }
+
     const emailPayload = {
       from: "Lake Geneva Brief <newsletter@citybrief.info>",
-      to: [LEAD_NOTIFY_TO],
+      to: recipients,
       subject,
       html,
     };

@@ -142,6 +142,7 @@ export type Database = {
       }
       advertiser_leads: {
         Row: {
+          business_id: string | null
           business_name: string
           business_profile_id: string | null
           contact_name: string
@@ -156,6 +157,7 @@ export type Database = {
           website: string | null
         }
         Insert: {
+          business_id?: string | null
           business_name: string
           business_profile_id?: string | null
           contact_name: string
@@ -170,6 +172,7 @@ export type Database = {
           website?: string | null
         }
         Update: {
+          business_id?: string | null
           business_name?: string
           business_profile_id?: string | null
           contact_name?: string
@@ -184,6 +187,13 @@ export type Database = {
           website?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "advertiser_leads_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "advertiser_leads_business_profile_id_fkey"
             columns: ["business_profile_id"]
