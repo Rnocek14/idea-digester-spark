@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Home, Star } from "lucide-react";
+import { Home, Star, Phone } from "lucide-react";
 import { MarketAnalysisDialog } from "@/components/MarketAnalysisDialog";
 
 type Testimonial = {
@@ -79,7 +79,7 @@ export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionPr
           {/* Left: Photo + Name + Zillow */}
           <div className="flex items-center gap-3 flex-shrink-0">
             {/* Photo */}
-            <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm">
+            <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm">
               {sponsor.logo_url ? (
                 <img
                   src={sponsor.logo_url}
@@ -123,11 +123,20 @@ export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionPr
                       {sponsor.zillow_review_count} reviews
                     </a>
                   ) : (
-                    <span className="text-[10px] text-slate-500">
+                      <span className="text-[10px] text-slate-500">
                       {sponsor.zillow_review_count} reviews
                     </span>
                   )}
                 </div>
+              )}
+              {sponsor.phone && (
+                <a
+                  href={trackClickUrl(`tel:+1${sponsor.phone.replace(/\D/g, '')}`, 'sponsor_phone', sponsor.businessId, sponsor.placementId)}
+                  className="flex items-center gap-1 mt-1 text-[11px] text-slate-600 hover:text-blue-600"
+                >
+                  <Phone className="w-3 h-3" />
+                  <span>{sponsor.phone.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3')}</span>
+                </a>
               )}
             </div>
           </div>
