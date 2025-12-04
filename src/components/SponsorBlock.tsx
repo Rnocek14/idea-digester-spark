@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Phone, ExternalLink, Home, TrendingUp } from "lucide-react";
+import { Phone, ExternalLink, Home, TrendingUp, BarChart3 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -86,11 +86,11 @@ export const SponsorBlock = ({ sponsor }: SponsorBlockProps) => {
   });
 
   return (
-    <Card className="overflow-hidden border border-border/60 shadow-sm bg-card">
+    <Card className="overflow-hidden border-l-4 border-l-primary border-t border-r border-b border-border/60 shadow-md bg-gradient-to-br from-primary/[0.02] to-transparent">
       {/* Header Badge */}
-      <div className="px-5 pt-4 pb-3 border-b border-border/40">
+      <div className="px-5 pt-4 pb-3 border-b border-border/40 bg-primary/[0.03]">
         <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-primary">
-          <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+          <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
           Presented By
         </span>
       </div>
@@ -100,7 +100,7 @@ export const SponsorBlock = ({ sponsor }: SponsorBlockProps) => {
         {/* Sponsor Info Row */}
         <div className="flex items-start gap-4">
           {/* Logo/Avatar */}
-          <div className="flex-shrink-0 w-14 h-14 rounded-lg bg-muted flex items-center justify-center overflow-hidden border border-border">
+          <div className="flex-shrink-0 w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center overflow-hidden border border-primary/20 shadow-sm">
             {sponsor.logo_url ? (
               <img
                 src={sponsor.logo_url}
@@ -133,14 +133,14 @@ export const SponsorBlock = ({ sponsor }: SponsorBlockProps) => {
 
         {/* Real Estate Market Widget */}
         {isRealEstate && metrics && (
-          <div className="mt-4 rounded-lg overflow-hidden bg-muted/50 border border-border/60">
+          <div className="mt-4 rounded-lg overflow-hidden bg-card border border-primary/20 shadow-sm">
             {/* Widget Header */}
-            <div className="px-3 py-2 border-b border-border/40 flex items-center justify-between bg-muted/30">
+            <div className="px-3 py-2 border-b border-primary/10 flex items-center justify-between bg-primary/[0.04]">
               <div className="flex items-center gap-1.5">
-                <span className="text-sm">🏡</span>
+                <BarChart3 className="w-3.5 h-3.5 text-primary" />
                 <span className="text-[11px] font-semibold text-foreground">Market Snapshot</span>
               </div>
-              <span className="text-[9px] text-muted-foreground uppercase tracking-wide">
+              <span className="text-[9px] text-muted-foreground uppercase tracking-wide font-medium">
                 {formatDate(metrics.fetched_at)}
               </span>
             </div>
@@ -187,7 +187,7 @@ export const SponsorBlock = ({ sponsor }: SponsorBlockProps) => {
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="w-full text-xs font-medium"
+                className="w-full text-xs font-medium border-primary/30 hover:bg-primary/5"
               >
                 <Phone className="w-3.5 h-3.5 mr-1.5" />
                 {formatPhone(sponsor.phone)}
