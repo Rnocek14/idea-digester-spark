@@ -12,6 +12,7 @@ import WeatherWidget from "@/components/WeatherWidget";
 import LiveIncidentsSidebar from "@/components/LiveIncidentsSidebar";
 import WeekendSidebarWidget from "@/components/WeekendSidebarWidget";
 import AlsoTodayCard from "@/components/AlsoTodayCard";
+import { InlineSubscribeCTA } from "@/components/InlineSubscribeCTA";
 
 type Story = {
   id: string;
@@ -877,76 +878,72 @@ const LakeGeneva = () => {
                         </div>
                         
                         <div className="space-y-3">
-                          {displayFeed.map((item) => (
-                            <a
-                              key={`${item.type}-${item.id}`}
-                              href={item.url || '#'}
-                              target={item.type === 'story' ? '_blank' : undefined}
-                              rel={item.type === 'story' ? 'noopener noreferrer' : undefined}
-                              className="block group"
-                            >
-                              <div className={`flex items-start gap-3 p-3 rounded-xl border transition-all hover:shadow-sm ${
-                                item.type === 'incident' && item.status === 'active'
-                                  ? 'bg-red-50/50 border-red-200 hover:border-red-300'
-                                  : 'bg-white border-slate-200 hover:border-slate-300'
-                              }`}>
-                                {/* Timestamp Column */}
-                                <div className="flex-shrink-0 w-16 text-right">
-                                  <span className={`text-xs font-medium ${
-                                    isFreshItem(item.timestamp) ? 'text-red-600' : 'text-slate-400'
-                                  }`}>
-                                    {getPreciseRelativeTime(item.timestamp)}
-                                  </span>
-                                  {hasRecentActivity && isLiveItem(item.timestamp) && (
-                                    <div className="flex items-center justify-end gap-1 mt-0.5">
-                                      <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
-                                      <span className="text-[10px] font-semibold text-red-600 uppercase">Live</span>
+                          {displayFeed.map((item, idx) => (
+                            <div key={`${item.type}-${item.id}`}>
+                              <a
+                                href={item.url || '#'}
+                                target={item.type === 'story' ? '_blank' : undefined}
+                                rel={item.type === 'story' ? 'noopener noreferrer' : undefined}
+                                className="block group"
+                              >
+                                <div className={`flex items-start gap-3 p-3 rounded-xl border transition-all hover:shadow-sm ${
+                                  item.type === 'incident' && item.status === 'active'
+                                    ? 'bg-red-50/50 border-red-200 hover:border-red-300'
+                                    : 'bg-white border-slate-200 hover:border-slate-300'
+                                }`}>
+                                  {/* Timestamp Column */}
+                                  <div className="flex-shrink-0 w-16 text-right">
+                                    <span className={`text-xs font-medium ${
+                                      isFreshItem(item.timestamp) ? 'text-red-600' : 'text-slate-400'
+                                    }`}>
+                                      {getPreciseRelativeTime(item.timestamp)}
+                                    </span>
+                                    {hasRecentActivity && isLiveItem(item.timestamp) && (
+                                      <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-red-100 text-red-700 animate-pulse">
+                                        LIVE
+                                      </span>
+                                    )}
+                                  </div>
+                                  
+                                  {/* Content */}
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <span className="text-base">{getFeedItemIcon(item)}</span>
+                                      <span className="text-[10px] uppercase tracking-wide text-slate-400 font-medium">
+                                        {getFeedItemLabel(item)}
+                                      </span>
+                                    </div>
+                                    <h3 className="font-medium text-slate-900 text-sm leading-snug group-hover:text-blue-600 transition-colors line-clamp-2">
+                                      {item.title}
+                                    </h3>
+                                    {item.summary && (
+                                      <p className="text-xs text-slate-500 mt-1 line-clamp-2">
+                                        {item.summary}
+                                      </p>
+                                    )}
+                                  </div>
+                                  
+                                  {/* Thumbnail */}
+                                  {item.image_url && (
+                                    <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden bg-slate-100">
+                                      <img 
+                                        src={item.image_url} 
+                                        alt="" 
+                                        className="w-full h-full object-cover"
+                                        loading="lazy"
+                                      />
                                     </div>
                                   )}
                                 </div>
-
-                                {/* Content */}
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
-                                      item.type === 'incident'
-                                        ? item.status === 'active' 
-                                          ? 'bg-red-100 text-red-700' 
-                                          : 'bg-amber-100 text-amber-700'
-                                        : 'bg-slate-100 text-slate-600'
-                                    }`}>
-                                      <span>{getFeedItemIcon(item)}</span>
-                                      <span>{getFeedItemLabel(item)}</span>
-                                    </span>
-                                    {item.type === 'incident' && item.status === 'active' && (
-                                      <span className="text-[10px] font-medium text-red-600 uppercase">Active</span>
-                                    )}
-                                  </div>
-                                  <h3 className="text-sm font-semibold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-2">
-                                    {item.title}
-                                  </h3>
-                                  {item.summary && (
-                                    <p className="mt-0.5 text-xs text-slate-500 line-clamp-1">
-                                      {item.summary}
-                                    </p>
-                                  )}
+                              </a>
+                              {/* Insert inline subscribe CTA after every 3rd item */}
+                              {(idx + 1) % 3 === 0 && idx < displayFeed.length - 1 && (
+                                <div className="my-3">
+                                  <InlineSubscribeCTA />
                                 </div>
-
-                                {/* Optional Image */}
-                                {item.image_url && (
-                                  <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden bg-slate-100">
-                                    <img
-                                      src={item.image_url}
-                                      alt=""
-                                      className="w-full h-full object-cover"
-                                      loading="lazy"
-                                    />
-                                  </div>
-                                )}
-                              </div>
-                            </a>
+                              )}
+                            </div>
                           ))}
-                          
                           {displayFeed.length === 0 && (
                             <div className="text-center py-8 text-slate-500">
                               No recent updates. Check back soon!
@@ -959,48 +956,54 @@ const LakeGeneva = () => {
                 ) : (
                   /* Topic View (existing behavior) */
                   <section className="py-10">
-                    {visibleCategories.map((category) => (
-                    <div key={category} id={category} className="scroll-mt-24 mb-10 last:mb-0">
-                      <div className="flex items-baseline justify-between gap-2 mb-4">
-                        <div className="flex items-center gap-2">
-                          <span className="text-lg">{getCategoryEmoji(category)}</span>
-                          <h2 className="font-semibold text-lg sm:text-xl capitalize text-slate-900">
-                            {category.replace('_', ' ')}
-                          </h2>
-                          <span className="rounded-full bg-white px-2.5 py-0.5 text-xs text-slate-500 border border-slate-200">
-                            {storiesByCategory[category].length} {storiesByCategory[category].length === 1 ? 'story' : 'stories'}
-                          </span>
+                    {visibleCategories.map((category, catIndex) => (
+                    <div key={category}>
+                      <div id={category} className="scroll-mt-24 mb-10 last:mb-0">
+                        <div className="flex items-baseline justify-between gap-2 mb-4">
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg">{getCategoryEmoji(category)}</span>
+                            <h2 className="font-semibold text-lg sm:text-xl capitalize text-slate-900">
+                              {category.replace('_', ' ')}
+                            </h2>
+                            <span className="rounded-full bg-white px-2.5 py-0.5 text-xs text-slate-500 border border-slate-200">
+                              {storiesByCategory[category].length} {storiesByCategory[category].length === 1 ? 'story' : 'stories'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="grid gap-4 sm:gap-5 sm:grid-cols-2">
+                          {storiesByCategory[category].map((story) => {
+                            const time = getRelativeTime(story.publish_date || story.created_at);
+                            let source: string | null = (story as any).source?.name || null;
+
+                            // Fallback: derive domain from original_url
+                            if (!source && story.original_url) {
+                              try {
+                                const url = new URL(story.original_url);
+                                source = url.hostname.replace(/^www\./, '');
+                              } catch {
+                                // ignore parse error
+                              }
+                            }
+
+                            return (
+                              <StoryCard
+                                key={story.id}
+                                title={story.title}
+                                summary={story.content_website || story.content_lg_base || story.summary}
+                                imageUrl={story.image_url}
+                                category={story.category}
+                                url={story.original_url}
+                                meta={{ time, source }}
+                              />
+                            );
+                          })}
                         </div>
                       </div>
-
-                      <div className="grid gap-4 sm:gap-5 sm:grid-cols-2">
-                        {storiesByCategory[category].map((story) => {
-                          const time = getRelativeTime(story.publish_date || story.created_at);
-                          let source: string | null = (story as any).source?.name || null;
-
-                          // Fallback: derive domain from original_url
-                          if (!source && story.original_url) {
-                            try {
-                              const url = new URL(story.original_url);
-                              source = url.hostname.replace(/^www\./, '');
-                            } catch {
-                              // ignore parse error
-                            }
-                          }
-
-                          return (
-                            <StoryCard
-                              key={story.id}
-                              title={story.title}
-                              summary={story.content_website || story.content_lg_base || story.summary}
-                              imageUrl={story.image_url}
-                              category={story.category}
-                              url={story.original_url}
-                              meta={{ time, source }}
-                            />
-                          );
-                        })}
-                      </div>
+                      {/* Insert inline subscribe CTA after every 2nd category */}
+                      {(catIndex + 1) % 2 === 0 && catIndex < visibleCategories.length - 1 && (
+                        <InlineSubscribeCTA />
+                      )}
                     </div>
                     ))}
                   </section>
