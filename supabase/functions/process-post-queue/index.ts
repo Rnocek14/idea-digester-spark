@@ -83,7 +83,50 @@ function generateOAuthHeader(method: string, url: string): string {
   );
 }
 
-async function postToTwitter(text: string): Promise<{ success: boolean; tweetId?: string; error?: string }> {
+// Upload image to Twitter and get media_id
+async function uploadMediaToTwitter(imageData: Uint8Array): Promise<{ success: boolean; mediaId?: string; error?: string }> {
+  const url = "https://upload.twitter.com/1.1/media/upload.json";
+  const method = "POST";
+
+  try {
+    const oauthHeader = generateOAuthHeader(method, url);
+    console.log("[process-post-queue] Uploading image to X media endpoint...");
+
+    // Convert to base64 for the media_data parameter
+    const base64Data = btoa(String.fromCharCode(...imageData));
+    
+    // Use application/x-www-form-urlencoded with media_data (base64)
+    const body = new URLSearchParams();
+    body.append("media_data", base64Data);
+
+    const response = await fetch(url, {
+      method,
+      headers: {
+        Authorization: oauthHeader,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: body.toString(),
+    });
+
+    const responseText = await response.text();
+    console.log("[process-post-queue] X media upload response:", response.status, responseText.substring(0, 200));
+
+    if (!response.ok) {
+      return { success: false, error: `HTTP ${response.status}: ${responseText}` };
+    }
+
+    const data = JSON.parse(responseText);
+    const mediaId = data.media_id_string || String(data.media_id);
+    console.log("[process-post-queue] ✅ Media uploaded, media_id:", mediaId);
+    
+    return { success: true, mediaId };
+  } catch (error: any) {
+    console.error("[process-post-queue] X media upload error:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+async function postToTwitter(text: string, mediaIds?: string[]): Promise<{ success: boolean; tweetId?: string; error?: string }> {
   const url = "https://api.twitter.com/2/tweets";
   const method = "POST";
 
@@ -91,13 +134,19 @@ async function postToTwitter(text: string): Promise<{ success: boolean; tweetId?
     const oauthHeader = generateOAuthHeader(method, url);
     console.log("[process-post-queue] Posting to X API...");
 
+    const body: any = { text };
+    if (mediaIds && mediaIds.length > 0) {
+      body.media = { media_ids: mediaIds };
+      console.log("[process-post-queue] Including media_ids:", mediaIds);
+    }
+
     const response = await fetch(url, {
       method: method,
       headers: {
         Authorization: oauthHeader,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify(body),
     });
 
     const responseText = await response.text();
@@ -337,7 +386,40 @@ serve(async (req) => {
 
         // POST TO X FOR REAL
         console.log(`[process-post-queue] 🚀 REAL POST to X...`);
-        const tweetResult = await postToTwitter(post.post_text);
+        
+        // Try to upload image if available
+        let mediaIds: string[] | undefined;
+        const imageUrl = post.image_url || post.generated_image_url;
+        
+        if (imageUrl) {
+          try {
+            console.log(`[process-post-queue] Downloading image from: ${imageUrl}`);
+            const imgResp = await fetch(imageUrl);
+            
+            if (imgResp.ok) {
+              const arrayBuffer = await imgResp.arrayBuffer();
+              const imageData = new Uint8Array(arrayBuffer);
+              console.log(`[process-post-queue] Image downloaded, size: ${imageData.length} bytes`);
+              
+              const mediaResult = await uploadMediaToTwitter(imageData);
+              
+              if (mediaResult.success && mediaResult.mediaId) {
+                mediaIds = [mediaResult.mediaId];
+                console.log(`[process-post-queue] ✅ Image ready for tweet, media_id: ${mediaResult.mediaId}`);
+              } else {
+                console.log(`[process-post-queue] ⚠️ Image upload failed, posting text-only: ${mediaResult.error}`);
+              }
+            } else {
+              console.log(`[process-post-queue] ⚠️ Image download failed (${imgResp.status}), posting text-only`);
+            }
+          } catch (imgError: any) {
+            console.log(`[process-post-queue] ⚠️ Image processing error, posting text-only: ${imgError.message}`);
+          }
+        } else {
+          console.log(`[process-post-queue] No image URL available, posting text-only`);
+        }
+        
+        const tweetResult = await postToTwitter(post.post_text, mediaIds);
 
         if (tweetResult.success) {
           console.log(`[process-post-queue] ✅ Tweet posted! ID: ${tweetResult.tweetId}`);
@@ -351,6 +433,7 @@ serve(async (req) => {
                 ...post.metadata,
                 tweet_id: tweetResult.tweetId,
                 posted_at: now.toISOString(),
+                has_image: !!mediaIds,
               },
             })
             .eq("id", post.id);
@@ -363,6 +446,7 @@ serve(async (req) => {
             success: true,
             real_post: true,
             tweet_id: tweetResult.tweetId,
+            has_image: !!mediaIds,
           });
         } else {
           console.error(`[process-post-queue] ❌ Tweet failed: ${tweetResult.error}`);
