@@ -1,4 +1,5 @@
 import { ExternalLink } from "lucide-react";
+import { ShareButtons } from "@/components/ShareButtons";
 
 type StoryCardProps = {
   title: string;
@@ -102,8 +103,8 @@ export const StoryCard = ({
           </p>
         )}
 
-        {url && (
-          <div className="mt-auto pt-3">
+        <div className="mt-auto pt-3 flex items-center justify-between">
+          {url ? (
             <a
               href={url}
               target="_blank"
@@ -113,8 +114,11 @@ export const StoryCard = ({
               Read more
               <ExternalLink className="h-3 w-3" />
             </a>
-          </div>
-        )}
+          ) : (
+            <span />
+          )}
+          {url && <ShareButtons title={title} url={url} />}
+        </div>
       </div>
     </article>
   );
