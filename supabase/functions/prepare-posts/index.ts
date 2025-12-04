@@ -7,27 +7,31 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+// Optimal posting time slots in Central Time (24-hour format)
+// These are peak engagement hours for local news audiences
+const OPTIMAL_SLOTS_CENTRAL = [8, 10, 12, 14, 16, 18]; // 8am, 10am, 12pm, 2pm, 4pm, 6pm
+
 // Topic-specific civic image libraries for smart keyword mapping
 type CivicTopic = 'land_use' | 'historic' | 'council' | 'parks' | 'lakefront' | 'library' | 'safety' | 'tourism' | 'utilities' | 'finance' | 'default';
 
 const CIVIC_IMAGE_LIBRARIES: Record<CivicTopic, string[]> = {
   land_use: [
-    "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&q=80", // House/development concept
-    "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&q=80", // Construction site
-    "https://images.unsplash.com/photo-1486325212027-8a9ce835dc2e?w=800&q=80", // Suburban neighborhood aerial
-    "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80", // Residential development
+    "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&q=80",
+    "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&q=80",
+    "https://images.unsplash.com/photo-1486325212027-8a9ce835dc2e?w=800&q=80",
+    "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80",
   ],
   historic: [
-    "https://images.unsplash.com/photo-1558036117-15d82a90b9b1?w=800&q=80", // Small town downtown
-    "https://images.unsplash.com/photo-1565538810643-b5bdb714032a?w=800&q=80", // Old brick commercial building
-    "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=800&q=80", // Small town main street
-    "https://images.unsplash.com/photo-1594398028856-9b00722cefbc?w=800&q=80", // Tree-lined residential street
+    "https://images.unsplash.com/photo-1558036117-15d82a90b9b1?w=800&q=80",
+    "https://images.unsplash.com/photo-1565538810643-b5bdb714032a?w=800&q=80",
+    "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=800&q=80",
+    "https://images.unsplash.com/photo-1594398028856-9b00722cefbc?w=800&q=80",
   ],
   council: [
-    "https://images.unsplash.com/photo-1577962917302-cd874c4e31d2?w=800&q=80", // Council meeting room
-    "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800&q=80", // Business meeting at table
-    "https://images.unsplash.com/photo-1531482615713-2afd69097998?w=800&q=80", // People in discussion
-    "https://images.unsplash.com/photo-1568992687947-868a62a9f521?w=800&q=80", // Government/office interior
+    "https://images.unsplash.com/photo-1577962917302-cd874c4e31d2?w=800&q=80",
+    "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800&q=80",
+    "https://images.unsplash.com/photo-1531482615713-2afd69097998?w=800&q=80",
+    "https://images.unsplash.com/photo-1568992687947-868a62a9f521?w=800&q=80",
   ],
   parks: [
     "https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&q=80",
@@ -67,29 +71,23 @@ const CIVIC_IMAGE_LIBRARIES: Record<CivicTopic, string[]> = {
   ],
 };
 
-// Generic OG image patterns to detect and replace
 const GENERIC_OG_PATTERNS = ["IconModuleCalendar", "calendar-icon", "default-event", "placeholder"];
 
 function detectCivicTopic(title: string): CivicTopic {
   const t = title.toLowerCase();
   
-  // Order matters: more specific matches first to avoid false positives
-  // Land use/development catches Hillmoor, rezoning, subdivisions before historic
   if (t.includes('hillmoor') || t.includes('development') || t.includes('rezoning') || t.includes('zoning') || 
       t.includes('subdivision') || t.includes('neighborhood plan') || t.includes('annexation') || 
       t.includes('redevelopment') || t.includes('plat') || t.includes('land use')) return 'land_use';
   if (t.includes('historic') || t.includes('preservation')) return 'historic';
-  // Council/governance catches general government meetings
   if (t.includes('common council') || t.includes('city council') || t.includes('council') || 
       t.includes('committee of the whole') || t.includes('governing body') || t.includes('board of aldermen')) return 'council';
   if (t.includes('park') || t.includes('cemetery') || t.includes('tree') || t.includes('avian')) return 'parks';
   if (t.includes('library')) return 'library';
   if (t.includes('police') || t.includes('fire') || t.includes('court') || t.includes('safety')) return 'safety';
   if (t.includes('tourism') || t.includes('visitor')) return 'tourism';
-  // Utilities before lakefront so "Lake Geneva Utility Commission" → utilities, not lakefront
   if (t.includes('utility') || t.includes('utilities') || t.includes('water') || t.includes('sewer')) return 'utilities';
   if (t.includes('finance') || t.includes('licensing') || t.includes('regulation') || t.includes('budget')) return 'finance';
-  // Lakefront last among specifics (catches piers, harbors, lake-related)
   if (t.includes('pier') || t.includes('harbor') || t.includes('harbour') || t.includes('lakefront')) return 'lakefront';
   
   return 'default';
@@ -105,11 +103,76 @@ function getCuratedCivicImage(storyId: string, title: string): string {
   const images = CIVIC_IMAGE_LIBRARIES[topic] ?? CIVIC_IMAGE_LIBRARIES.default;
   const pool = images.length > 0 ? images : CIVIC_IMAGE_LIBRARIES.default;
   
-  // Deterministic hash using storyId + topic for consistency
   const key = `${storyId}:${topic}`;
   const hash = key.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   
   return pool[hash % pool.length];
+}
+
+/**
+ * Get the next available optimal posting slot for a platform.
+ * Returns a Date in UTC that corresponds to an optimal Central Time slot.
+ */
+function getNextOptimalSlot(
+  platform: string, 
+  usedSlots: Set<string>, // Set of "YYYY-MM-DD-HH" strings already scheduled
+  now: Date
+): Date {
+  // Convert now to Central Time for slot calculation
+  const centralNow = new Date(now.toLocaleString("en-US", { timeZone: "America/Chicago" }));
+  const currentCentralHour = centralNow.getHours();
+  const currentCentralMinutes = centralNow.getMinutes();
+  
+  // Start looking from today
+  let searchDate = new Date(centralNow);
+  searchDate.setHours(0, 0, 0, 0);
+  
+  // Look up to 7 days ahead
+  for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
+    const checkDate = new Date(searchDate);
+    checkDate.setDate(checkDate.getDate() + dayOffset);
+    
+    for (const slotHour of OPTIMAL_SLOTS_CENTRAL) {
+      // Skip slots that have already passed today
+      if (dayOffset === 0) {
+        if (slotHour < currentCentralHour || (slotHour === currentCentralHour && currentCentralMinutes > 0)) {
+          continue;
+        }
+      }
+      
+      // Create slot key for deduplication
+      const dateStr = checkDate.toISOString().split('T')[0];
+      const slotKey = `${platform}-${dateStr}-${slotHour}`;
+      
+      if (!usedSlots.has(slotKey)) {
+        usedSlots.add(slotKey);
+        
+        // Create the scheduled time in Central, then convert to UTC
+        const scheduledCentral = new Date(checkDate);
+        scheduledCentral.setHours(slotHour, 0, 0, 0);
+        
+        // Convert Central Time to UTC by parsing back
+        // Central is UTC-6 (CST) or UTC-5 (CDT)
+        const centralString = scheduledCentral.toLocaleString("en-US", { timeZone: "America/Chicago" });
+        const utcDate = new Date(centralString + " CST");
+        
+        // More reliable: calculate offset
+        const tempDate = new Date();
+        const utcTime = tempDate.getTime();
+        const centralTime = new Date(tempDate.toLocaleString("en-US", { timeZone: "America/Chicago" })).getTime();
+        const offset = utcTime - centralTime;
+        
+        const scheduledUTC = new Date(scheduledCentral.getTime() + offset);
+        
+        console.log(`[prepare-posts] Next optimal slot for ${platform}: ${slotHour}:00 CT on ${dateStr} (UTC: ${scheduledUTC.toISOString()})`);
+        return scheduledUTC;
+      }
+    }
+  }
+  
+  // Fallback: 24 hours from now if somehow no slots found
+  console.log(`[prepare-posts] Warning: No optimal slot found, using 24h fallback`);
+  return new Date(now.getTime() + 24 * 60 * 60 * 1000);
 }
 
 serve(async (req) => {
@@ -129,7 +192,7 @@ serve(async (req) => {
       }
     );
 
-    console.log("[prepare-posts] Starting post preparation...");
+    console.log("[prepare-posts] Starting post preparation with OPTIMAL SCHEDULING...");
 
     // KILL SWITCH CHECK
     const { data: settings } = await supabaseClient
@@ -155,12 +218,38 @@ serve(async (req) => {
     }
     console.log("[prepare-posts] ✅ Kill switch check passed");
 
-    // OPTIMIZATION: Only fetch recent stories (last 2 days) with hard limit
+    const now = new Date();
+    
+    // Pre-fetch existing scheduled posts to know which slots are taken
+    const usedSlotsByPlatform: Record<string, Set<string>> = {
+      instagram: new Set(),
+      facebook: new Set(),
+      x: new Set(),
+    };
+    
+    // Get all pending posts scheduled in the future
+    const { data: existingPosts } = await supabaseClient
+      .from("post_queue")
+      .select("platform, scheduled_for")
+      .eq("status", "pending")
+      .gte("scheduled_for", now.toISOString());
+    
+    if (existingPosts) {
+      for (const post of existingPosts) {
+        const scheduledDate = new Date(post.scheduled_for);
+        const centralTime = new Date(scheduledDate.toLocaleString("en-US", { timeZone: "America/Chicago" }));
+        const dateStr = centralTime.toISOString().split('T')[0];
+        const hour = centralTime.getHours();
+        const slotKey = `${post.platform}-${dateStr}-${hour}`;
+        usedSlotsByPlatform[post.platform]?.add(slotKey);
+      }
+    }
+    console.log(`[prepare-posts] Pre-loaded ${existingPosts?.length || 0} existing scheduled posts`);
+
+    // Fetch eligible content
     const since = new Date();
     since.setDate(since.getDate() - 2);
 
-    // Fetch eligible content: approved/auto_published/published, safe, with voice variants
-    // Order by breaking news first, then priority score, then creation date
     const { data: eligibleStories, error: fetchError } = await supabaseClient
       .from("content_queue")
       .select("*")
@@ -191,115 +280,81 @@ serve(async (req) => {
           prepared: 0,
           total: 0,
         }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Define platform scheduling intervals (in hours)
-    const platformConfig: Record<string, { interval: number; maxPerDay: number }> = {
-      instagram: { interval: 4, maxPerDay: 3 },
-      facebook: { interval: 6, maxPerDay: 2 },
-      x: { interval: 3, maxPerDay: 5 },
+    const platformConfig: Record<string, { maxPerDay: number }> = {
+      instagram: { maxPerDay: 3 },
+      facebook: { maxPerDay: 2 },
+      x: { maxPerDay: 5 },
     };
 
     let preparedCount = 0;
     let breakingPrepared = 0;
     let civicSkippedIG = 0;
     let curatedCivicUsed = 0;
-    const now = new Date();
-
-    // OPTIMIZATION: Pre-fetch last scheduled time for each platform (3 queries instead of N*3)
-    const lastScheduledByPlatform: Record<string, Date> = {};
-    for (const platform of Object.keys(platformConfig)) {
-      const { data: recentPosts } = await supabaseClient
-        .from("post_queue")
-        .select("scheduled_for")
-        .eq("platform", platform)
-        .order("scheduled_for", { ascending: false })
-        .limit(1);
-
-      if (recentPosts && recentPosts.length > 0) {
-        lastScheduledByPlatform[platform] = new Date(recentPosts[0].scheduled_for);
-      } else {
-        // Start 1 hour from now if no posts
-        lastScheduledByPlatform[platform] = new Date(now.getTime() + 60 * 60 * 1000);
-      }
-    }
-    console.log("[prepare-posts] Pre-fetched last scheduled times for all platforms");
 
     for (const story of eligibleStories) {
       const category = (story.category || '').toLowerCase();
       const isCivic = category === 'civic';
       
-      // STEP 1: Determine image ONCE per story (before platform loop)
+      // Determine image ONCE per story
       let finalImageUrl = story.image_url;
       let generatedImageUrl = null;
       let imageSource = 'og';
       const isSponsored = story.is_sponsored || false;
       
-      // Check if this is a generic civic OG image that needs replacement
       const hasGenericCivicImage = isCivic && isGenericCivicImage(story.image_url);
       
       if (hasGenericCivicImage) {
-        // Replace generic civic OG with topic-aware curated image
         const civicTopic = detectCivicTopic(story.title);
         finalImageUrl = getCuratedCivicImage(story.id, story.title);
         imageSource = 'curated_civic';
         curatedCivicUsed++;
-        console.log(`[prepare-posts] Using curated civic image (${civicTopic}) for story ${story.id}: "${story.title}"`);
+        console.log(`[prepare-posts] Using curated civic image (${civicTopic}) for story ${story.id}`);
       } else if (isSponsored && !story.image_url) {
-        // ONLY generate AI image for sponsored posts (mandatory)
         console.log(`[prepare-posts] Sponsored story ${story.id} needs AI image`);
         
         try {
           const { data: aiImageData, error: aiError } = await supabaseClient.functions.invoke(
             'generate-post-image',
-            {
-              body: { story_id: story.id, platform: 'instagram' }
-            }
+            { body: { story_id: story.id, platform: 'instagram' } }
           );
 
           if (aiError || !aiImageData?.image_url) {
             console.log(`[prepare-posts] BLOCKING sponsored story ${story.id} - AI generation failed`);
-            continue; // Skip entire story if sponsored and no AI image
+            continue;
           }
           
           generatedImageUrl = aiImageData.image_url;
           finalImageUrl = generatedImageUrl;
           imageSource = 'ai_sponsored';
-          console.log(`[prepare-posts] Generated AI image for sponsored story ${story.id}`);
         } catch (err) {
           console.error(`[prepare-posts] Exception generating AI image:`, err);
-          console.log(`[prepare-posts] BLOCKING sponsored story ${story.id} - exception during AI generation`);
-          continue; // Skip to next story
+          continue;
         }
       } else if (isSponsored && story.image_url) {
-        // Sponsored with existing image - use it
         finalImageUrl = story.image_url;
         imageSource = 'existing_sponsored';
-        console.log(`[prepare-posts] Sponsored story ${story.id} using existing image`);
       } else if (story.image_source === 'AI') {
         imageSource = 'ai';
       }
       
-      // STEP 2: Now loop through platforms using the SAME image
+      // Loop through platforms
       for (const [platform, config] of Object.entries(platformConfig)) {
-        // CIVIC FILTER: Skip ALL civic content on Instagram
+        // Skip civic content on Instagram
         if (platform === 'instagram' && isCivic) {
-          console.log(`[prepare-posts] Skipping civic content on Instagram: "${story.title}"`);
           civicSkippedIG++;
           continue;
         }
         
-        // Skip Instagram if no image available (non-civic)
+        // Skip Instagram if no image
         if (platform === 'instagram' && !finalImageUrl) {
-          console.log(`[prepare-posts] Skipping Instagram for story ${story.id} - no image`);
           continue;
         }
         
-        // Check if this story has already been queued/posted to this platform
+        // Check if already queued
         const { data: existing } = await supabaseClient
           .from("post_queue")
           .select("id")
@@ -308,37 +363,27 @@ serve(async (req) => {
           .single();
 
         if (existing) {
-          console.log(`[prepare-posts] Story ${story.id} already queued for ${platform}, skipping`);
           continue;
         }
 
-        // OPTIMIZATION: Use pre-fetched last scheduled time and advance pointer
         const isBreaking = story.is_breaking || false;
         let scheduledFor: Date;
         
         if (isBreaking && platform === 'x') {
-          // BREAKING NEWS OVERRIDE: X gets breaking news immediately (within 2 minutes)
+          // BREAKING NEWS: schedule immediately (within 2 minutes)
           scheduledFor = new Date(now.getTime() + 2 * 60 * 1000);
           console.log(`[prepare-posts] 🔴 BREAKING: Scheduling ${platform} post immediately`);
         } else {
-          // Schedule after the last scheduled time + interval
-          scheduledFor = new Date(
-            lastScheduledByPlatform[platform].getTime() + config.interval * 60 * 60 * 1000
-          );
+          // Use optimal slot scheduling
+          scheduledFor = getNextOptimalSlot(platform, usedSlotsByPlatform[platform], now);
         }
-        
-        // Update the pointer for next post on this platform
-        lastScheduledByPlatform[platform] = scheduledFor;
 
-        // Get the appropriate voice variant for this platform
         const postText = story[`content_${platform}`];
         
         if (!postText) {
-          console.log(`[prepare-posts] No content for ${platform} on story ${story.id}, skipping`);
           continue;
         }
 
-        // Create post_queue entry
         const { error: insertError } = await supabaseClient
           .from("post_queue")
           .insert({
@@ -360,6 +405,7 @@ serve(async (req) => {
               sponsored_safe: isSponsored ? (generatedImageUrl ? true : false) : true,
               type: isBreaking ? 'breaking' : 'normal',
               priority_score: story.priority_score || 0,
+              scheduling: 'optimal_slots',
             },
           });
 
@@ -369,39 +415,34 @@ serve(async (req) => {
         }
 
         const breakingLabel = isBreaking ? ' 🔴 BREAKING' : '';
-        console.log(`[prepare-posts] Scheduled ${platform} post for ${scheduledFor.toISOString()} [${imageSource}]${breakingLabel}`);
+        console.log(`[prepare-posts] ✅ Scheduled ${platform} post for ${scheduledFor.toISOString()} [${imageSource}]${breakingLabel}`);
         preparedCount++;
         if (isBreaking) breakingPrepared++;
       }
     }
 
-    console.log(`[prepare-posts] Prepared ${preparedCount} posts across all platforms`);
-    console.log(`[prepare-posts] Stats: ${breakingPrepared} breaking, ${civicSkippedIG} civic skipped on IG, ${curatedCivicUsed} curated civic images used`);
+    console.log(`[prepare-posts] Prepared ${preparedCount} posts with OPTIMAL SCHEDULING`);
+    console.log(`[prepare-posts] Stats: ${breakingPrepared} breaking, ${civicSkippedIG} civic skipped on IG, ${curatedCivicUsed} curated civic images`);
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: `Prepared ${preparedCount} posts for social media${breakingPrepared > 0 ? ` (${breakingPrepared} breaking)` : ''}`,
+        message: `Prepared ${preparedCount} posts with optimal scheduling${breakingPrepared > 0 ? ` (${breakingPrepared} breaking)` : ''}`,
         prepared: preparedCount,
         breakingPrepared,
         civicSkippedIG,
         curatedCivicUsed,
         storiesProcessed: eligibleStories.length,
+        scheduling: 'optimal_slots',
+        slots: OPTIMAL_SLOTS_CENTRAL.map(h => `${h}:00 CT`),
       }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: any) {
     console.error("[prepare-posts] Error:", error);
     return new Response(
-      JSON.stringify({
-        error: error.message,
-      }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      JSON.stringify({ error: error.message }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
