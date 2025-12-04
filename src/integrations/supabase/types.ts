@@ -245,6 +245,7 @@ export type Database = {
           name: string
           phone: string | null
           status: string | null
+          testimonial_quote: string | null
           updated_at: string | null
           website: string | null
           zillow_rating: number | null
@@ -264,6 +265,7 @@ export type Database = {
           name: string
           phone?: string | null
           status?: string | null
+          testimonial_quote?: string | null
           updated_at?: string | null
           website?: string | null
           zillow_rating?: number | null
@@ -283,6 +285,7 @@ export type Database = {
           name?: string
           phone?: string | null
           status?: string | null
+          testimonial_quote?: string | null
           updated_at?: string | null
           website?: string | null
           zillow_rating?: number | null
