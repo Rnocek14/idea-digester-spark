@@ -233,7 +233,9 @@ export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionPr
           >
             <Button
               size="sm"
-              className="text-xs font-medium h-9 px-4"
+              className={`text-xs font-medium h-9 px-4 ${
+                isVisible ? 'animate-[pulse_2s_ease-in-out_1s_2]' : ''
+              }`}
               onClick={() => setShowDialog(true)}
             >
               <Home className="w-3.5 h-3.5 mr-1.5" />
