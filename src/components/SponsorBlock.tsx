@@ -1,9 +1,7 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Phone, ExternalLink, Home, TrendingUp, BarChart3, Star } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { Home, Star } from "lucide-react";
 import { MarketAnalysisDialog } from "@/components/MarketAnalysisDialog";
 
 type Testimonial = {
@@ -65,7 +63,7 @@ const trackClickUrl = (url: string, source: string, businessId?: string, placeme
   return `https://mzumvkrpnxhkvhdyzgqa.supabase.co/functions/v1/track-click?${params.toString()}`;
 };
 
-// Fire-and-forget click tracking for non-redirect scenarios (mailto:, tel:)
+// Fire-and-forget click tracking for non-redirect scenarios
 const fireTrackClick = (url: string, source: string, businessId?: string, placementId?: string) => {
   const params = new URLSearchParams({
     url: url,
@@ -75,28 +73,7 @@ const fireTrackClick = (url: string, source: string, businessId?: string, placem
     ...(placementId && { pid: placementId }),
   });
   fetch(`https://mzumvkrpnxhkvhdyzgqa.supabase.co/functions/v1/track-click?${params.toString()}`)
-    .catch(() => {}); // Fire and forget
-};
-
-const formatPhone = (phone: string | null) => {
-  if (!phone) return null;
-  const digits = phone.replace(/\D/g, '');
-  if (digits.length === 10) {
-    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
-  }
-  return phone;
-};
-
-const formatPrice = (price: number) => {
-  if (price >= 1000000) {
-    return `$${(price / 1000000).toFixed(1)}M`;
-  }
-  return `$${Math.round(price / 1000)}K`;
-};
-
-const formatDate = (date: string) => {
-  const d = new Date(date);
-  return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    .catch(() => {});
 };
 
 interface SponsorBlockProps {
@@ -107,40 +84,20 @@ export const SponsorBlock = ({ sponsor }: SponsorBlockProps) => {
   const [showMarketAnalysisDialog, setShowMarketAnalysisDialog] = useState(false);
   const isRealEstate = isRealEstateSponsor(sponsor);
 
-  const { data: metrics } = useQuery({
-    queryKey: ['real-estate-metrics', '53147'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('real_estate_metrics')
-        .select('*')
-        .eq('zip_code', '53147')
-        .order('fetched_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      
-      if (error) throw error;
-      return data;
-    },
-    enabled: isRealEstate,
-    staleTime: 1000 * 60 * 60,
-  });
-
   return (
-    <Card className="overflow-hidden border-l-4 border-l-primary border-t border-r border-b border-border/60 shadow-md bg-gradient-to-br from-primary/[0.02] to-transparent">
-      {/* Header Badge */}
-      <div className="px-5 pt-4 pb-3 border-b border-border/40 bg-primary/[0.03]">
-        <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-primary">
-          <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+    <Card className="overflow-hidden border border-slate-200 shadow-sm bg-white">
+      {/* Compact Header */}
+      <div className="px-4 py-2.5 border-b border-slate-100 bg-slate-50/50">
+        <span className="text-[10px] font-medium uppercase tracking-[0.15em] text-slate-500">
           Presented By
         </span>
       </div>
 
-      {/* Main Content */}
-      <div className="px-5 py-4">
-        {/* Sponsor Info Row */}
-        <div className="flex items-start gap-4">
-          {/* Logo/Avatar */}
-          <div className="flex-shrink-0 w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center overflow-hidden border border-primary/20 shadow-sm">
+      {/* Main Content - Slim */}
+      <div className="px-4 py-3">
+        <div className="flex items-start gap-3">
+          {/* Logo */}
+          <div className="flex-shrink-0 w-11 h-11 rounded-lg bg-slate-100 flex items-center justify-center overflow-hidden border border-slate-200">
             {sponsor.logo_url ? (
               <img
                 src={sponsor.logo_url}
@@ -148,231 +105,94 @@ export const SponsorBlock = ({ sponsor }: SponsorBlockProps) => {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <Home className="w-6 h-6 text-primary" />
+              <Home className="w-5 h-5 text-slate-400" />
             )}
           </div>
 
-          {/* Name & Description */}
+          {/* Name & Info */}
           <div className="flex-1 min-w-0">
-            <h3 className="text-base font-bold text-foreground leading-tight font-serif">
+            <h3 className="text-sm font-semibold text-slate-900 leading-tight">
               {sponsor.name}
             </h3>
             {isRealEstate && (
-              <>
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-primary mt-0.5">
-                  Top Lake Geneva Listing Agent
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  @properties Lake Geneva
-                </p>
-              </>
+              <p className="text-[10px] font-medium text-blue-600 mt-0.5">
+                Top Lake Geneva Listing Agent
+              </p>
             )}
-            {/* Zillow Rating */}
+            
+            {/* Zillow Rating - Compact */}
             {sponsor.zillow_rating && sponsor.zillow_review_count && (
-              <div className="flex items-center gap-1.5 mt-1">
+              <div className="flex items-center gap-1 mt-1">
                 <div className="flex items-center">
                   {Array.from({ length: 5 }, (_, i) => (
                     <Star
                       key={i}
-                      className={`w-3.5 h-3.5 ${
+                      className={`w-3 h-3 ${
                         i < Math.round(sponsor.zillow_rating || 0)
                           ? "fill-yellow-400 text-yellow-400"
-                          : "text-muted-foreground"
+                          : "text-slate-300"
                       }`}
                     />
                   ))}
                 </div>
-                <span className="text-[11px] font-medium text-foreground">{sponsor.zillow_rating.toFixed(1)}</span>
+                <span className="text-[10px] font-medium text-slate-700">{sponsor.zillow_rating.toFixed(1)}</span>
                 {sponsor.zillow_url ? (
                   <a
                     href={trackClickUrl(sponsor.zillow_url, 'sponsor_zillow', sponsor.businessId, sponsor.placementId)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[11px] text-muted-foreground hover:text-primary hover:underline"
+                    className="text-[10px] text-slate-500 hover:text-blue-600 hover:underline"
                   >
                     ({sponsor.zillow_review_count} reviews)
                   </a>
                 ) : (
-                  <span className="text-[11px] text-muted-foreground">
+                  <span className="text-[10px] text-slate-500">
                     ({sponsor.zillow_review_count} reviews)
                   </span>
                 )}
               </div>
             )}
-            
-            {/* Seller-focused headline + Testimonial Quote */}
-            {(() => {
-              const dailyTestimonial = getDailyTestimonial(sponsor.metadata?.testimonials || []);
-              const quote = dailyTestimonial?.quote || sponsor.testimonial_quote;
-              const attribution = dailyTestimonial?.attribution;
-              
-              if (!quote) return null;
-              
-              return (
-                <div className="mt-3">
-                  {isRealEstate && (
-                    <p className="text-xs font-semibold text-foreground mb-1.5 flex items-center gap-1.5">
-                      <Home className="w-3.5 h-3.5 text-primary" />
-                      Thinking of Selling?
-                    </p>
-                  )}
-                  <blockquote className="pl-2.5 border-l-2 border-primary/30 italic text-[11px] text-muted-foreground leading-relaxed">
-                    "{quote}"
-                    {attribution && (
-                      <footer className="mt-0.5 not-italic text-[10px] text-muted-foreground/80">
-                        — {attribution}
-                      </footer>
-                    )}
-                  </blockquote>
-                </div>
-              );
-            })()}
-            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-              {sponsor.description || (isRealEstate 
-                ? "Your trusted Lake Geneva real estate expert."
-                : "Proud sponsor of Lake Geneva Brief"
-              )}
-            </p>
           </div>
         </div>
 
-        {/* Real Estate Market Widget */}
-        {isRealEstate && metrics && (
-          <div className="mt-4 rounded-lg overflow-hidden bg-card border border-primary/20 shadow-sm">
-            {/* Widget Header */}
-            <div className="px-3 py-2 border-b border-primary/10 flex items-center justify-between bg-primary/[0.04]">
-              <div className="flex items-center gap-1.5">
-                <BarChart3 className="w-3.5 h-3.5 text-primary" />
-                <span className="text-[11px] font-semibold text-foreground">Market Snapshot</span>
-              </div>
-              <span className="text-[9px] text-muted-foreground uppercase tracking-wide font-medium">
-                {formatDate(metrics.fetched_at)}
-              </span>
-            </div>
-            
-            {/* Metrics Grid */}
-            <div className="grid grid-cols-2 divide-x divide-border/40">
-              <div className="px-3 py-2.5 text-center">
-                <div className="text-base font-bold text-foreground">{formatPrice(metrics.median_price)}</div>
-                <div className="text-[9px] text-muted-foreground uppercase tracking-wide">Median Value</div>
-              </div>
-              <div className="px-3 py-2.5 text-center">
-                <div className="text-base font-bold text-emerald-600 flex items-center justify-center gap-0.5">
-                  <TrendingUp className="w-3 h-3" />
-                  <span>+{metrics.yoy_change}%</span>
-                </div>
-                <div className="text-[9px] text-muted-foreground uppercase tracking-wide">YoY Change</div>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 divide-x divide-border/40 border-t border-border/40">
-              <div className="px-3 py-2.5 text-center">
-                <div className="text-base font-bold text-foreground">{metrics.active_listings}</div>
-                <div className="text-[9px] text-muted-foreground uppercase tracking-wide">Active Listings</div>
-              </div>
-              <div className="px-3 py-2.5 text-center">
-                <div className="text-base font-bold text-foreground">{formatPrice(metrics.median_list_price || 0)}</div>
-                <div className="text-[9px] text-muted-foreground uppercase tracking-wide">List Price</div>
-              </div>
-            </div>
-
-            {/* Source Attribution */}
-            <div className="px-3 py-1.5 border-t border-border/40 text-center bg-muted/30">
-              <span className="text-[9px] text-muted-foreground">Source: Zillow ZHVI · ZIP 53147</span>
-            </div>
-          </div>
-        )}
-
-        {/* Why Sellers Choose Section */}
-        {isRealEstate && (
-          <div className="mt-4 p-3 rounded-lg bg-primary/[0.04] border border-primary/15">
-            <p className="text-[11px] font-semibold text-foreground mb-2">Why Sellers Choose Gina</p>
-            <ul className="space-y-1.5">
-              <li className="flex items-start gap-2 text-[10px] text-muted-foreground">
-                <span className="text-primary font-bold mt-0.5">✓</span>
-                <span><strong className="text-foreground">Multiple offers in days</strong>, not weeks</span>
-              </li>
-              <li className="flex items-start gap-2 text-[10px] text-muted-foreground">
-                <span className="text-primary font-bold mt-0.5">✓</span>
-                <span><strong className="text-foreground">Chicago buyer network</strong> for higher sale prices</span>
-              </li>
-              <li className="flex items-start gap-2 text-[10px] text-muted-foreground">
-                <span className="text-primary font-bold mt-0.5">✓</span>
-                <span><strong className="text-foreground">Full-service listing</strong> — staging, photos, marketing</span>
-              </li>
-            </ul>
-          </div>
-        )}
-
-        {/* CTA Buttons */}
-        <div className="mt-4 flex flex-col gap-2">
-          {/* Seller-focused CTA - prominent for real estate */}
-          {isRealEstate && (
-            <Button 
-              size="sm" 
-              className="w-full text-xs font-medium"
-              onClick={() => {
-                fireTrackClick(
-                  'market_analysis_form',
-                  'sponsor_market_analysis',
-                  sponsor.businessId,
-                  sponsor.placementId
-                );
-                setShowMarketAnalysisDialog(true);
-              }}
-            >
-              <Home className="w-3.5 h-3.5 mr-1.5" />
-              What Could Your Home Sell For?
-            </Button>
-          )}
+        {/* Single Testimonial */}
+        {(() => {
+          const dailyTestimonial = getDailyTestimonial(sponsor.metadata?.testimonials || []);
+          const quote = dailyTestimonial?.quote || sponsor.testimonial_quote;
+          const attribution = dailyTestimonial?.attribution;
           
-          <div className="flex gap-2">
-            {sponsor.phone && (
-              <a
-                href={trackClickUrl(`tel:${sponsor.phone.replace(/\D/g, '')}`, 'sponsor_phone', sponsor.businessId, sponsor.placementId)}
-                className="flex-1"
-              >
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full text-xs font-medium border-primary/30 hover:bg-primary/5"
-                >
-                  <Phone className="w-3.5 h-3.5 mr-1.5" />
-                  {formatPhone(sponsor.phone)}
-                </Button>
-              </a>
-            )}
-            {sponsor.website && (
-              <a
-                href={trackClickUrl(sponsor.website, 'sponsor_website', sponsor.businessId, sponsor.placementId)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1"
-              >
-                <Button 
-                  variant="outline"
-                  size="sm" 
-                  className="w-full text-xs font-medium border-primary/30 hover:bg-primary/5"
-                >
-                  <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
-                  View Listings
-                </Button>
-              </a>
-            )}
-          </div>
-        </div>
+          if (!quote) return null;
+          
+          return (
+            <blockquote className="mt-3 pl-3 border-l-2 border-blue-200 italic text-[11px] text-slate-600 leading-relaxed">
+              "{quote}"
+              {attribution && (
+                <footer className="mt-0.5 not-italic text-[10px] text-slate-500">
+                  — {attribution}
+                </footer>
+              )}
+            </blockquote>
+          );
+        })()}
 
-        {/* Seller Expertise Tags */}
+        {/* Single CTA */}
         {isRealEstate && (
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {['Fast Sales', 'Lakefront Expert', 'Pricing Strategy', 'Chicago Buyers'].map((tag) => (
-              <span 
-                key={tag}
-                className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-primary/10 text-primary border border-primary/20"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
+          <Button 
+            size="sm" 
+            className="w-full mt-3 text-xs font-medium h-8"
+            onClick={() => {
+              fireTrackClick(
+                'market_analysis_form',
+                'sponsor_market_analysis',
+                sponsor.businessId,
+                sponsor.placementId
+              );
+              setShowMarketAnalysisDialog(true);
+            }}
+          >
+            <Home className="w-3.5 h-3.5 mr-1.5" />
+            What Could Your Home Sell For?
+          </Button>
         )}
       </div>
 

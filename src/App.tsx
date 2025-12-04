@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import LakeGeneva from "./pages/LakeGeneva";
+import SellingLakeGeneva from "./pages/SellingLakeGeneva";
 import PublicDirectory from "./pages/PublicDirectory";
 import Advertise from "./pages/Advertise";
 import Incidents from "./pages/Incidents";
@@ -45,6 +46,7 @@ const App = () => (
           <Route path="/" element={<LakeGeneva />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/lake-geneva" element={<Navigate to="/" replace />} />
+          <Route path="/selling-lake-geneva" element={<SellingLakeGeneva />} />
           <Route path="/directory" element={<PublicDirectory />} />
           <Route path="/advertise" element={<Advertise />} />
           <Route path="/incidents" element={<Incidents />} />
