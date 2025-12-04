@@ -522,6 +522,7 @@ export type Database = {
           hashtags: string[] | null
           id: string
           metadata: Json | null
+          notes: string | null
           opportunity_type: string
           platform: string
           priority_score: number | null
@@ -541,6 +542,7 @@ export type Database = {
           hashtags?: string[] | null
           id?: string
           metadata?: Json | null
+          notes?: string | null
           opportunity_type: string
           platform?: string
           priority_score?: number | null
@@ -560,6 +562,7 @@ export type Database = {
           hashtags?: string[] | null
           id?: string
           metadata?: Json | null
+          notes?: string | null
           opportunity_type?: string
           platform?: string
           priority_score?: number | null

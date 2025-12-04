@@ -7,23 +7,24 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { 
-  RefreshCw, 
   Heart, 
   Repeat2, 
   MessageCircle, 
   UserPlus,
   ExternalLink,
-  Check,
-  X,
   Clock,
-  TrendingUp,
   Hash,
   AtSign,
   Plus,
   Link,
-  Trash2
+  Trash2,
+  Tag,
+  Pencil,
+  Check,
+  X
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
@@ -45,6 +46,7 @@ interface EngagementOpportunity {
   status: OpportunityStatus;
   priority_score: number;
   metadata: any;
+  notes: string | null;
   created_at: string;
 }
 
@@ -57,9 +59,6 @@ interface ParsedTweet {
 // Parse tweet URL to extract ID and username
 function parseTweetUrl(url: string): ParsedTweet | null {
   const trimmed = url.trim();
-  // Match patterns like:
-  // https://twitter.com/username/status/1234567890
-  // https://x.com/username/status/1234567890
   const match = trimmed.match(/(?:twitter\.com|x\.com)\/([^\/]+)\/status\/(\d+)/i);
   if (match) {
     return {
@@ -74,6 +73,7 @@ function parseTweetUrl(url: string): ParsedTweet | null {
 export default function EngagementMonitor() {
   const [activeTab, setActiveTab] = useState<string>("curate");
   const [tweetUrls, setTweetUrls] = useState("");
+  const [batchNotes, setBatchNotes] = useState("");
   const [parsedTweets, setParsedTweets] = useState<ParsedTweet[]>([]);
   const queryClient = useQueryClient();
 
@@ -101,7 +101,8 @@ export default function EngagementMonitor() {
         author_username: t.username,
         tweet_url: t.url,
         status: 'new',
-        priority_score: 10, // Manual curation = high priority
+        priority_score: 10,
+        notes: batchNotes.trim() || null,
       }));
 
       const { error } = await supabase
@@ -114,6 +115,7 @@ export default function EngagementMonitor() {
     onSuccess: (count) => {
       toast.success(`Added ${count} tweets to queue`);
       setTweetUrls("");
+      setBatchNotes("");
       setParsedTweets([]);
       queryClient.invalidateQueries({ queryKey: ['engagement-opportunities'] });
       queryClient.invalidateQueries({ queryKey: ['engagement-stats'] });
@@ -124,7 +126,7 @@ export default function EngagementMonitor() {
   });
 
   // Fetch opportunities
-  const { data: opportunities, isLoading, refetch: refetchOpportunities } = useQuery({
+  const { data: opportunities, isLoading } = useQuery({
     queryKey: ['engagement-opportunities', activeTab],
     queryFn: async () => {
       let query = supabase
@@ -159,7 +161,7 @@ export default function EngagementMonitor() {
       
       if (error) throw error;
 
-      const counts = {
+      return {
         total: data.length,
         new: data.filter(d => d.status === 'new').length,
         engaged: data.filter(d => d.status === 'engaged').length,
@@ -167,7 +169,6 @@ export default function EngagementMonitor() {
         hashtag: data.filter(d => d.opportunity_type === 'hashtag').length,
         mention: data.filter(d => d.opportunity_type === 'mention').length,
       };
-      return counts;
     },
     staleTime: 30000,
   });
@@ -184,6 +185,20 @@ export default function EngagementMonitor() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['engagement-opportunities'] });
       queryClient.invalidateQueries({ queryKey: ['engagement-stats'] });
+    },
+  });
+
+  // Update notes mutation
+  const updateNotes = useMutation({
+    mutationFn: async ({ id, notes }: { id: string; notes: string }) => {
+      const { error } = await supabase
+        .from('engagement_opportunities')
+        .update({ notes: notes.trim() || null })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['engagement-opportunities'] });
     },
   });
 
@@ -290,7 +305,7 @@ export default function EngagementMonitor() {
               </CardTitle>
               <CardDescription>
                 Paste tweet URLs from X (one per line or comma-separated). 
-                Search #LakeGeneva, local businesses, community accounts manually on X and paste links here.
+                Add optional notes to tag why you saved them.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -300,6 +315,15 @@ export default function EngagementMonitor() {
                 onChange={(e) => handleUrlsChange(e.target.value)}
                 className="min-h-[100px] font-mono text-sm"
               />
+              
+              <div className="flex items-center gap-2">
+                <Tag className="h-4 w-4 text-muted-foreground shrink-0" />
+                <Input
+                  placeholder="Add notes: e.g., local business, influencer, event mention"
+                  value={batchNotes}
+                  onChange={(e) => setBatchNotes(e.target.value)}
+                />
+              </div>
               
               {parsedTweets.length > 0 && (
                 <div className="space-y-2">
@@ -368,6 +392,7 @@ export default function EngagementMonitor() {
                   key={opp.id} 
                   opportunity={opp}
                   onUpdateStatus={(status) => updateStatus.mutate({ id: opp.id, status })}
+                  onUpdateNotes={(notes) => updateNotes.mutate({ id: opp.id, notes })}
                   onDelete={() => deleteTweet.mutate(opp.id)}
                   onEngagement={(action) => handleEngagement(opp.id, action)}
                   getLikeUrl={getLikeUrl}
@@ -400,6 +425,7 @@ export default function EngagementMonitor() {
                   key={opp.id} 
                   opportunity={opp}
                   onUpdateStatus={(status) => updateStatus.mutate({ id: opp.id, status })}
+                  onUpdateNotes={(notes) => updateNotes.mutate({ id: opp.id, notes })}
                   onDelete={() => deleteTweet.mutate(opp.id)}
                   onEngagement={(action) => handleEngagement(opp.id, action)}
                   getLikeUrl={getLikeUrl}
@@ -432,6 +458,7 @@ export default function EngagementMonitor() {
                   key={opp.id} 
                   opportunity={opp}
                   onUpdateStatus={(status) => updateStatus.mutate({ id: opp.id, status })}
+                  onUpdateNotes={(notes) => updateNotes.mutate({ id: opp.id, notes })}
                   onDelete={() => deleteTweet.mutate(opp.id)}
                   onEngagement={(action) => handleEngagement(opp.id, action)}
                   getLikeUrl={getLikeUrl}
@@ -451,6 +478,7 @@ export default function EngagementMonitor() {
 interface CuratedTweetCardProps {
   opportunity: EngagementOpportunity;
   onUpdateStatus: (status: OpportunityStatus) => void;
+  onUpdateNotes: (notes: string) => void;
   onDelete: () => void;
   onEngagement: (action: string) => void;
   getLikeUrl: (id: string) => string;
@@ -462,6 +490,7 @@ interface CuratedTweetCardProps {
 function CuratedTweetCard({ 
   opportunity, 
   onUpdateStatus,
+  onUpdateNotes,
   onDelete,
   onEngagement,
   getLikeUrl,
@@ -469,22 +498,35 @@ function CuratedTweetCard({
   getReplyUrl,
   getFollowUrl,
 }: CuratedTweetCardProps) {
+  const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [editedNotes, setEditedNotes] = useState(opportunity.notes || "");
   const isEngaged = opportunity.status === 'engaged';
+
+  const handleSaveNotes = () => {
+    onUpdateNotes(editedNotes);
+    setIsEditingNotes(false);
+    toast.success("Notes saved");
+  };
+
+  const handleCancelEdit = () => {
+    setEditedNotes(opportunity.notes || "");
+    setIsEditingNotes(false);
+  };
   
   return (
     <Card className={`${opportunity.status === 'new' ? 'border-orange-500/50' : ''} ${isEngaged ? 'opacity-60' : ''}`}>
       <CardContent className="pt-4">
-        <div className="flex items-center justify-between gap-4">
-          {/* User Info */}
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="flex flex-col min-w-0">
-              <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-3">
+          <div className="flex items-start justify-between gap-4">
+            {/* User Info */}
+            <div className="flex flex-col min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
                 {opportunity.author_username && (
                   <a 
                     href={`https://x.com/${opportunity.author_username}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-semibold hover:underline truncate"
+                    className="font-semibold hover:underline"
                   >
                     @{opportunity.author_username}
                   </a>
@@ -502,82 +544,121 @@ function CuratedTweetCard({
                 Added {formatDistanceToNow(new Date(opportunity.created_at), { addSuffix: true })}
               </p>
             </div>
+
+            {/* Quick Actions */}
+            <div className="flex items-center gap-1 shrink-0">
+              {opportunity.tweet_id && (
+                <>
+                  <a
+                    href={getLikeUrl(opportunity.tweet_id)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => onEngagement('like')}
+                  >
+                    <Button size="sm" variant="outline" className="gap-1">
+                      <Heart className="h-4 w-4" />
+                      <span className="hidden sm:inline">Like</span>
+                    </Button>
+                  </a>
+                  <a
+                    href={getRetweetUrl(opportunity.tweet_id)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => onEngagement('retweet')}
+                  >
+                    <Button size="sm" variant="outline" className="gap-1">
+                      <Repeat2 className="h-4 w-4" />
+                      <span className="hidden sm:inline">RT</span>
+                    </Button>
+                  </a>
+                  <a
+                    href={getReplyUrl(opportunity.tweet_id)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => onEngagement('reply')}
+                  >
+                    <Button size="sm" variant="outline" className="gap-1">
+                      <MessageCircle className="h-4 w-4" />
+                      <span className="hidden sm:inline">Reply</span>
+                    </Button>
+                  </a>
+                </>
+              )}
+              
+              {opportunity.author_username && (
+                <a
+                  href={getFollowUrl(opportunity.author_username)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => onEngagement('follow')}
+                >
+                  <Button size="sm" variant="outline" className="gap-1">
+                    <UserPlus className="h-4 w-4" />
+                    <span className="hidden sm:inline">Follow</span>
+                  </Button>
+                </a>
+              )}
+
+              {opportunity.tweet_url && (
+                <a
+                  href={opportunity.tweet_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Button size="sm" variant="ghost">
+                    <ExternalLink className="h-4 w-4" />
+                  </Button>
+                </a>
+              )}
+
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-destructive hover:text-destructive"
+                onClick={onDelete}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
-          {/* Quick Actions */}
-          <div className="flex items-center gap-1 shrink-0">
-            {opportunity.tweet_id && (
-              <>
-                <a
-                  href={getLikeUrl(opportunity.tweet_id)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => onEngagement('like')}
-                >
-                  <Button size="sm" variant="outline" className="gap-1">
-                    <Heart className="h-4 w-4" />
-                    <span className="hidden sm:inline">Like</span>
-                  </Button>
-                </a>
-                <a
-                  href={getRetweetUrl(opportunity.tweet_id)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => onEngagement('retweet')}
-                >
-                  <Button size="sm" variant="outline" className="gap-1">
-                    <Repeat2 className="h-4 w-4" />
-                    <span className="hidden sm:inline">RT</span>
-                  </Button>
-                </a>
-                <a
-                  href={getReplyUrl(opportunity.tweet_id)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => onEngagement('reply')}
-                >
-                  <Button size="sm" variant="outline" className="gap-1">
-                    <MessageCircle className="h-4 w-4" />
-                    <span className="hidden sm:inline">Reply</span>
-                  </Button>
-                </a>
-              </>
-            )}
-            
-            {opportunity.author_username && (
-              <a
-                href={getFollowUrl(opportunity.author_username)}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => onEngagement('follow')}
-              >
-                <Button size="sm" variant="outline" className="gap-1">
-                  <UserPlus className="h-4 w-4" />
-                  <span className="hidden sm:inline">Follow</span>
+          {/* Notes Section */}
+          <div className="border-t pt-2">
+            {isEditingNotes ? (
+              <div className="flex items-center gap-2">
+                <Tag className="h-4 w-4 text-muted-foreground shrink-0" />
+                <Input
+                  value={editedNotes}
+                  onChange={(e) => setEditedNotes(e.target.value)}
+                  placeholder="Add notes..."
+                  className="h-8 text-sm"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleSaveNotes();
+                    if (e.key === 'Escape') handleCancelEdit();
+                  }}
+                />
+                <Button size="sm" variant="ghost" onClick={handleSaveNotes} className="h-8 w-8 p-0">
+                  <Check className="h-4 w-4 text-green-500" />
                 </Button>
-              </a>
-            )}
-
-            {opportunity.tweet_url && (
-              <a
-                href={opportunity.tweet_url}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Button size="sm" variant="ghost">
-                  <ExternalLink className="h-4 w-4" />
+                <Button size="sm" variant="ghost" onClick={handleCancelEdit} className="h-8 w-8 p-0">
+                  <X className="h-4 w-4 text-red-500" />
                 </Button>
-              </a>
+              </div>
+            ) : (
+              <div 
+                className="flex items-center gap-2 cursor-pointer group"
+                onClick={() => setIsEditingNotes(true)}
+              >
+                <Tag className="h-4 w-4 text-muted-foreground shrink-0" />
+                {opportunity.notes ? (
+                  <span className="text-sm">{opportunity.notes}</span>
+                ) : (
+                  <span className="text-sm text-muted-foreground italic">Add notes...</span>
+                )}
+                <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
             )}
-
-            <Button
-              size="sm"
-              variant="ghost"
-              className="text-destructive hover:text-destructive"
-              onClick={onDelete}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
           </div>
         </div>
       </CardContent>
