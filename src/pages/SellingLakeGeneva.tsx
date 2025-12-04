@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import lakeGenevaHero from "@/assets/lake-geneva-hero.jpg";
 import PageShell from "@/components/PageShell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -135,26 +136,36 @@ const SellingLakeGeneva = () => {
 
   return (
     <PageShell>
-      <div className="max-w-5xl mx-auto">
-          {/* Hero */}
-        <section className="py-8 lg:py-12">
+      {/* Hero with Background */}
+      <section 
+        className="relative py-12 lg:py-16 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 mb-8"
+        style={{
+          backgroundImage: `url(${lakeGenevaHero})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-900/70 via-slate-900/60 to-slate-900/80" />
+        
+        <div className="relative max-w-5xl mx-auto">
           <div className="text-center mb-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-xs font-semibold mb-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 text-white text-xs font-semibold mb-4">
               <Home className="w-3.5 h-3.5" />
               Lake Geneva Real Estate
             </div>
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 mb-4">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 drop-shadow-lg">
               What's Your Lake Geneva<br />
-              <span className="text-blue-600">Home Worth?</span>
+              <span className="text-blue-300">Home Worth?</span>
             </h1>
-            <p className="text-lg text-slate-600 max-w-2xl mx-auto mb-4">
+            <p className="text-lg text-white/90 max-w-2xl mx-auto mb-4">
               Get a free, no-obligation home valuation from Lake Geneva's top-rated listing agent.
             </p>
             
             {/* Mobile Phone CTA */}
             <a 
               href="tel:+12627452360" 
-              className="inline-flex items-center gap-2 text-blue-600 font-medium hover:text-blue-700 lg:hidden"
+              className="inline-flex items-center gap-2 text-blue-300 font-medium hover:text-blue-200 lg:hidden"
             >
               <Phone className="w-4 h-4" />
               Call Gina: (262) 745-2360
@@ -162,18 +173,18 @@ const SellingLakeGeneva = () => {
           </div>
 
           {/* Credibility Stats */}
-          <div className="flex flex-wrap justify-center gap-6 mb-8 py-4 px-4 bg-slate-50 rounded-xl">
+          <div className="flex flex-wrap justify-center gap-6 mb-8 py-4 px-4 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
             <div className="flex items-center gap-2">
-              <Award className="w-5 h-5 text-blue-600" />
-              <span className="text-sm font-medium text-slate-700">15+ Years Experience</span>
+              <Award className="w-5 h-5 text-blue-300" />
+              <span className="text-sm font-medium text-white">15+ Years Experience</span>
             </div>
             <div className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-emerald-600" />
-              <span className="text-sm font-medium text-slate-700">Top Lake Geneva Agent</span>
+              <TrendingUp className="w-5 h-5 text-emerald-400" />
+              <span className="text-sm font-medium text-white">Top Lake Geneva Agent</span>
             </div>
             <div className="flex items-center gap-2">
-              <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
-              <span className="text-sm font-medium text-slate-700">72 Five-Star Reviews</span>
+              <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+              <span className="text-sm font-medium text-white">72 Five-Star Reviews</span>
             </div>
           </div>
 
@@ -344,7 +355,11 @@ const SellingLakeGeneva = () => {
               </Card>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
+
+      {/* Rest of page content */}
+      <div className="max-w-5xl mx-auto">
 
         {/* Market Snapshot */}
         {metrics && (
