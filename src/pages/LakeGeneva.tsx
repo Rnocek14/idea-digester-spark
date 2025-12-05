@@ -320,6 +320,28 @@ const LakeGeneva = () => {
     refetchInterval: viewMode === 'recent' ? 30000 : false,
   });
 
+  // Compute local coverage from loaded stories
+  const localCoverage = (() => {
+    if (!stories || !stories.length) {
+      return { total: 0, tier1Count: 0, tier2Count: 0, tier1Percent: 0, tier2Percent: 0 };
+    }
+    const total = stories.length;
+    let tier1Count = 0;
+    let tier2Count = 0;
+    for (const s of stories) {
+      if (s.geo_tier === 1) tier1Count++;
+      else if (s.geo_tier === 2) tier2Count++;
+    }
+    const hyperlocalTotal = tier1Count + tier2Count || 1;
+    return {
+      total,
+      tier1Count,
+      tier2Count,
+      tier1Percent: Math.round((tier1Count / hyperlocalTotal) * 100),
+      tier2Percent: Math.round((tier2Count / hyperlocalTotal) * 100),
+    };
+  })();
+
 
   // Query sponsor
   const { data: sponsor } = useQuery({
@@ -831,6 +853,16 @@ const LakeGeneva = () => {
                           </p>
                         </div>
                       </div>
+
+                      {/* Local Coverage Score */}
+                      {localCoverage.total > 0 && (
+                        <div className="hidden sm:flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5 text-[11px] text-slate-600">
+                          <span className="font-semibold text-slate-700">Coverage</span>
+                          <span className="flex items-center gap-0.5">🏙️ {localCoverage.tier1Percent}%</span>
+                          <span className="text-slate-400">/</span>
+                          <span className="flex items-center gap-0.5">🗺️ {localCoverage.tier2Percent}%</span>
+                        </div>
+                      )}
                     </div>
 
                     {/* Category Pills (only in topic view) */}
