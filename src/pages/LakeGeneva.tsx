@@ -676,7 +676,7 @@ const LakeGeneva = () => {
                             <img
                               src={featured.image_url}
                               alt={featured.title}
-                              className="h-full w-full object-cover transition-transform duration-500 hover:scale-[1.03]"
+                              className="h-full w-full object-cover object-top transition-transform duration-500 hover:scale-[1.03]"
                             />
                           )}
                           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-black/30 to-transparent" />
