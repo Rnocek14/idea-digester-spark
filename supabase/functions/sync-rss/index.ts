@@ -113,6 +113,36 @@ const DEFAULT_COVERAGE_KEYWORDS = [
   'lakewood', 'lyons', 'sugar creek', 'east troy', 'whitewater'
 ];
 
+// Hyperlocal tier detection for geo-filtering
+const HYPERLOCAL_TIER_1 = [
+  'lake geneva', 'geneva lake', 'williams bay', 'fontana', 'downtown lake geneva'
+];
+
+const HYPERLOCAL_TIER_2 = [
+  'walworth county', 'walworth', 'delavan', 'elkhorn', 'linn', 'bloomfield',
+  'darien', 'east troy', 'como', 'big foot', 'badger high school'
+];
+
+type LocalityResult = { tier: 0 | 1 | 2; label: string | null };
+
+function detectLocality(title: string, summary?: string | null): LocalityResult {
+  const text = `${title} ${summary || ''}`.toLowerCase();
+
+  for (const name of HYPERLOCAL_TIER_1) {
+    if (text.includes(name.toLowerCase())) {
+      return { tier: 1, label: 'Lake Geneva' };
+    }
+  }
+
+  for (const name of HYPERLOCAL_TIER_2) {
+    if (text.includes(name.toLowerCase())) {
+      return { tier: 2, label: 'Walworth County' };
+    }
+  }
+
+  return { tier: 0, label: null };
+}
+
 // Check if story is fresh enough to be breaking (within 24 hours)
 function isFreshEnoughForBreaking(publishedAt: string | null): boolean {
   if (!publishedAt) return true; // Be lenient when missing
@@ -864,7 +894,14 @@ When in doubt between safe and sensitive, choose sensitive. Only use blocked for
           if (isBreaking) {
             console.log(`🔴 BREAKING: "${title.substring(0, 40)}..." (score: ${priorityScore})`);
           }
-          console.log(`📋 Story "${title.substring(0, 40)}..." → category: ${aiCategory}, safety: ${safetyLevel}, status: ${status}, priority: ${priorityScore}`);
+          
+          // Detect locality tier for hyperlocal filtering
+          const locality = detectLocality(title, aiResult.summary);
+          // Use source default_geo_tier as fallback if no keywords matched
+          const geoTier = locality.tier > 0 ? locality.tier : (source.default_geo_tier || 0);
+          const geoLabel = locality.label || (source.default_geo_tier === 1 ? 'Lake Geneva' : source.default_geo_tier === 2 ? 'Walworth County' : null);
+          
+          console.log(`📋 Story "${title.substring(0, 40)}..." → category: ${aiCategory}, safety: ${safetyLevel}, status: ${status}, priority: ${priorityScore}, geo: tier${geoTier}`);
 
           // Insert into content_queue
           const { error: insertError } = await supabase
@@ -885,6 +922,8 @@ When in doubt between safe and sensitive, choose sensitive. Only use blocked for
               safety_reason: aiResult.safety_reason || "",
               is_breaking: isBreaking,
               priority_score: priorityScore,
+              geo_tier: geoTier,
+              geo_label: geoLabel,
               metadata: {
                 source_name: source.name,
                 original_published_at: pubDate,

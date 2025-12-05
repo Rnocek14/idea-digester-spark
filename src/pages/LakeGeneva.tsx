@@ -239,40 +239,46 @@ const LakeGeneva = () => {
       const EVENTS_TARGET = 12;
       const OTHER_TARGET = 12;
       
-      // Fetch news + civic (priority content)
+      // Fetch news + civic (priority content) - hyperlocal only (geo_tier >= 1)
       const { data: newsCivic = [] } = await supabase
         .from("content_queue")
         .select("*, source:sources(name)")
         .in("status", ["published", "auto_published"])
         .eq("safety_level", "safe")
         .in("category", ["news", "civic", "schools"])
+        .gte("geo_tier", 1) // Only Lake Geneva (1) or Walworth County (2)
         .gte("created_at", weekAgo)
         .lte("publish_date", now)
+        .order("geo_tier", { ascending: true }) // Tier 1 (Lake Geneva) first
         .order("is_breaking", { ascending: false })
         .order("publish_date", { ascending: false })
         .limit(NEWS_CIVIC_TARGET);
       
-      // Fetch events (capped)
+      // Fetch events (capped) - hyperlocal only
       const { data: events = [] } = await supabase
         .from("content_queue")
         .select("*, source:sources(name)")
         .in("status", ["published", "auto_published"])
         .eq("safety_level", "safe")
         .eq("category", "events")
+        .gte("geo_tier", 1) // Only hyperlocal events
         .gte("created_at", weekAgo)
         .lte("publish_date", now)
+        .order("geo_tier", { ascending: true })
         .order("publish_date", { ascending: false })
         .limit(EVENTS_TARGET);
       
-      // Fetch other categories (dining, community, real_estate)
+      // Fetch other categories (dining, community, real_estate) - hyperlocal only
       const { data: other = [] } = await supabase
         .from("content_queue")
         .select("*, source:sources(name)")
         .in("status", ["published", "auto_published"])
         .eq("safety_level", "safe")
         .in("category", ["dining", "community", "real_estate", "weather"])
+        .gte("geo_tier", 1)
         .gte("created_at", weekAgo)
         .lte("publish_date", now)
+        .order("geo_tier", { ascending: true })
         .order("publish_date", { ascending: false })
         .limit(OTHER_TARGET);
       
@@ -305,15 +311,19 @@ const LakeGeneva = () => {
     refetchInterval: viewMode === 'recent' ? 30000 : false,
   });
 
-  // Debug: Log weighted feed category breakdown (temporary)
+  // Debug: Log weighted feed breakdown with geo tiers (temporary)
   useEffect(() => {
     if (!stories?.length) return;
-    const counts = stories.reduce((acc: Record<string, number>, s: any) => {
-      const key = s.category || 'uncategorized';
-      acc[key] = (acc[key] || 0) + 1;
+    const categoryCounts = stories.reduce((acc: Record<string, number>, s: any) => {
+      acc[s.category || 'uncategorized'] = (acc[s.category || 'uncategorized'] || 0) + 1;
       return acc;
     }, {});
-    console.log('🎯 Weighted feed breakdown:', counts, `(${stories.length} total)`);
+    const geoCounts = stories.reduce((acc: Record<string, number>, s: any) => {
+      const tier = `tier${s.geo_tier ?? 0}`;
+      acc[tier] = (acc[tier] || 0) + 1;
+      return acc;
+    }, {});
+    console.log('🎯 Weighted feed:', categoryCounts, '| Geo:', geoCounts, `(${stories.length} total)`);
   }, [stories]);
 
   // Query sponsor
