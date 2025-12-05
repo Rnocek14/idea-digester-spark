@@ -671,7 +671,7 @@ const LakeGeneva = () => {
 
                       {/* Featured story card */}
                       <article className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100">
-                        <div className="relative h-52 sm:h-56">
+                        <div className="relative aspect-[3/2]">
                           {featured.image_url && (
                             <img
                               src={featured.image_url}
