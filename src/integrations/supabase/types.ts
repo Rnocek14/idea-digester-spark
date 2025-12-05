@@ -316,6 +316,8 @@ export type Database = {
           content_website: string | null
           content_x: string | null
           created_at: string
+          geo_label: string | null
+          geo_tier: number | null
           id: string
           image_source: string | null
           image_url: string | null
@@ -351,6 +353,8 @@ export type Database = {
           content_website?: string | null
           content_x?: string | null
           created_at?: string
+          geo_label?: string | null
+          geo_tier?: number | null
           id?: string
           image_source?: string | null
           image_url?: string | null
@@ -386,6 +390,8 @@ export type Database = {
           content_website?: string | null
           content_x?: string | null
           created_at?: string
+          geo_label?: string | null
+          geo_tier?: number | null
           id?: string
           image_source?: string | null
           image_url?: string | null
@@ -991,6 +997,7 @@ export type Database = {
         Row: {
           category: string | null
           created_at: string
+          default_geo_tier: number | null
           fetch_frequency_minutes: number | null
           id: string
           last_fetched_at: string | null
@@ -1004,6 +1011,7 @@ export type Database = {
         Insert: {
           category?: string | null
           created_at?: string
+          default_geo_tier?: number | null
           fetch_frequency_minutes?: number | null
           id?: string
           last_fetched_at?: string | null
@@ -1017,6 +1025,7 @@ export type Database = {
         Update: {
           category?: string | null
           created_at?: string
+          default_geo_tier?: number | null
           fetch_frequency_minutes?: number | null
           id?: string
           last_fetched_at?: string | null
