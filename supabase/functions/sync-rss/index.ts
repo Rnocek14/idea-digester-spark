@@ -438,13 +438,39 @@ serve(async (req) => {
       errors: [],
     };
 
+    // Daily cap for events per source (prevents flood from high-volume event scrapers)
+    const MAX_EVENTS_PER_SOURCE_PER_DAY = 15;
+    const syncToday = new Date().toISOString().split('T')[0];
+
     // Process each source
     for (const source of sources || []) {
       result.sourcesProcessed++;
 
       try {
         console.log(`Processing ${source.type} source: ${source.name}`);
-
+        
+        // Pre-check daily event cap for this source if it's an events category
+        const isEventSource = source.category === 'events' || source.name.toLowerCase().includes('event');
+        let eventsInsertedToday = 0;
+        let remainingEventSlots = MAX_EVENTS_PER_SOURCE_PER_DAY;
+        
+        if (isEventSource) {
+          const { count } = await supabase
+            .from("content_queue")
+            .select("*", { count: "exact", head: true })
+            .eq("source_id", source.id)
+            .gte("created_at", `${syncToday}T00:00:00Z`)
+            .lte("created_at", `${syncToday}T23:59:59Z`);
+          
+          eventsInsertedToday = count || 0;
+          remainingEventSlots = Math.max(0, MAX_EVENTS_PER_SOURCE_PER_DAY - eventsInsertedToday);
+          console.log(`📊 ${source.name}: ${eventsInsertedToday}/${MAX_EVENTS_PER_SOURCE_PER_DAY} events inserted today, ${remainingEventSlots} slots remaining`);
+          
+          if (remainingEventSlots <= 0) {
+            console.log(`⏸️ Daily event cap reached for ${source.name}, skipping source entirely`);
+            continue;
+          }
+        }
         let items: RSSItem[] = [];
 
         if (source.type === "rss") {
@@ -875,6 +901,15 @@ When in doubt between safe and sensitive, choose sensitive. Only use blocked for
             result.errors.push(`Insert failed: ${title.substring(0, 50)}`);
           } else {
             result.articlesInserted++;
+            
+            // Track event insertions against daily cap
+            if (isEventSource) {
+              remainingEventSlots--;
+              if (remainingEventSlots <= 0) {
+                console.log(`📊 Daily event cap reached mid-sync for ${source.name}, stopping item processing`);
+                break; // Exit the items loop for this source
+              }
+            }
             
             // Link breaking stories to incidents
             if (isBreaking) {
