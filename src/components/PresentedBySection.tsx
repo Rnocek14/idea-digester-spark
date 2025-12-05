@@ -191,16 +191,19 @@ export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionPr
                         );
                       })}
                     </div>
+                    {/* Use span with click handler to avoid nested <a> inside <Link> */}
                     {sponsor.zillow_url ? (
-                      <a
-                        href={trackClickUrl(sponsor.zillow_url, 'sponsor_zillow', sponsor.businessId, sponsor.placementId)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                        className="text-[10px] text-slate-500 hover:text-blue-600 hover:underline"
+                      <span
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          fireTrackClick('sponsor_zillow', sponsor.businessId, sponsor.placementId);
+                          window.open(sponsor.zillow_url!, '_blank');
+                        }}
+                        className="text-[10px] text-slate-500 hover:text-blue-600 hover:underline cursor-pointer"
                       >
                         {sponsor.zillow_review_count} reviews
-                      </a>
+                      </span>
                     ) : (
                       <span className="text-[10px] text-slate-500">
                         {sponsor.zillow_review_count} reviews
