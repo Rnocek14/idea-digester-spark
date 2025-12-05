@@ -134,6 +134,12 @@ function classifyBreaking(story: {
   source_name?: string | null;
   published_at?: string | null;
 }): { isBreaking: boolean; priorityScore: number } {
+  // GUARD: Events should never be classified as breaking news or create incidents
+  const category = (story.category || '').toLowerCase();
+  if (category === 'events' || category === 'event' || category === 'community') {
+    return { isBreaking: false, priorityScore: 0 };
+  }
+  
   const text = `${story.title || ''} ${story.summary || ''}`.toLowerCase();
   let score = 0;
 
