@@ -8,6 +8,8 @@ type StoryCardProps = {
   category: string | null;
   url: string | null;
   sponsored?: boolean;
+  geoTier?: number | null;
+  geoLabel?: string | null;
   meta?: {
     time?: string | null;
     source?: string | null;
@@ -26,6 +28,12 @@ const getCategoryEmoji = (category: string | null) => {
   }
 };
 
+const getGeoIcon = (tier: number | null | undefined) => {
+  if (tier === 1) return "🏙️";
+  if (tier === 2) return "🗺️";
+  return null;
+};
+
 export const StoryCard = ({
   title,
   summary,
@@ -33,8 +41,11 @@ export const StoryCard = ({
   category,
   url,
   sponsored = false,
+  geoTier,
+  geoLabel,
   meta,
 }: StoryCardProps) => {
+  const geoIcon = getGeoIcon(geoTier);
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow">
       {imageUrl && (
@@ -95,11 +106,18 @@ export const StoryCard = ({
           </p>
         )}
 
-        {meta && (meta.time || meta.source) && (
+        {(meta?.time || meta?.source || geoIcon) && (
           <p className="mt-1 text-xs text-slate-500 flex flex-wrap items-center gap-x-1">
-            {meta.source && <span>{meta.source}</span>}
-            {meta.source && meta.time && <span>•</span>}
-            {meta.time && <span>{meta.time}</span>}
+            {geoIcon && geoLabel && (
+              <span className="inline-flex items-center gap-0.5 text-slate-400">
+                <span>{geoIcon}</span>
+                <span className="text-[10px]">{geoLabel}</span>
+              </span>
+            )}
+            {geoIcon && geoLabel && (meta?.source || meta?.time) && <span>•</span>}
+            {meta?.source && <span>{meta.source}</span>}
+            {meta?.source && meta?.time && <span>•</span>}
+            {meta?.time && <span>{meta.time}</span>}
           </p>
         )}
 

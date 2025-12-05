@@ -28,6 +28,8 @@ type Story = {
   original_url: string | null;
   image_url: string | null;
   created_at: string;
+  geo_tier?: number | null;
+  geo_label?: string | null;
 };
 
 type Sponsor = {
@@ -92,6 +94,7 @@ const LakeGeneva = () => {
   const [activeCategory, setActiveCategory] = useState<'all' | string>('all');
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
   const [viewMode, setViewMode] = useState<'topic' | 'recent'>('topic');
+  const [includeRegional, setIncludeRegional] = useState(true); // false = tier 1 only, true = tier 1+2
   const [newUpdatesCount, setNewUpdatesCount] = useState(0);
   const previousFeedIdsRef = useRef<Set<string>>(new Set());
   const isInitialLoadRef = useRef(true);
@@ -229,7 +232,7 @@ const LakeGeneva = () => {
   // Fetch today's published stories
   // Weighted category feed: 40% news/civic, 30% events, 30% community/dining
   const { data: stories = [], isLoading: storiesLoading, dataUpdatedAt: storiesUpdatedAt } = useQuery({
-    queryKey: ["public-stories-weighted"],
+    queryKey: ["public-stories-weighted", includeRegional],
     queryFn: async () => {
       const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
       const now = new Date().toISOString();
@@ -239,14 +242,19 @@ const LakeGeneva = () => {
       const EVENTS_TARGET = 12;
       const OTHER_TARGET = 12;
       
-      // Fetch news + civic (priority content) - hyperlocal only (geo_tier >= 1)
+      // Geo filter based on toggle: tier 1 only, or tier 1+2
+      const minGeoTier = includeRegional ? 1 : 1;
+      const maxGeoTier = includeRegional ? 2 : 1;
+      
+      // Fetch news + civic (priority content) - hyperlocal only
       const { data: newsCivic = [] } = await supabase
         .from("content_queue")
         .select("*, source:sources(name)")
         .in("status", ["published", "auto_published"])
         .eq("safety_level", "safe")
         .in("category", ["news", "civic", "schools"])
-        .gte("geo_tier", 1) // Only Lake Geneva (1) or Walworth County (2)
+        .gte("geo_tier", minGeoTier)
+        .lte("geo_tier", maxGeoTier)
         .gte("created_at", weekAgo)
         .lte("publish_date", now)
         .order("geo_tier", { ascending: true }) // Tier 1 (Lake Geneva) first
@@ -261,7 +269,8 @@ const LakeGeneva = () => {
         .in("status", ["published", "auto_published"])
         .eq("safety_level", "safe")
         .eq("category", "events")
-        .gte("geo_tier", 1) // Only hyperlocal events
+        .gte("geo_tier", minGeoTier)
+        .lte("geo_tier", maxGeoTier)
         .gte("created_at", weekAgo)
         .lte("publish_date", now)
         .order("geo_tier", { ascending: true })
@@ -275,7 +284,8 @@ const LakeGeneva = () => {
         .in("status", ["published", "auto_published"])
         .eq("safety_level", "safe")
         .in("category", ["dining", "community", "real_estate", "weather"])
-        .gte("geo_tier", 1)
+        .gte("geo_tier", minGeoTier)
+        .lte("geo_tier", maxGeoTier)
         .gte("created_at", weekAgo)
         .lte("publish_date", now)
         .order("geo_tier", { ascending: true })
@@ -792,6 +802,30 @@ const LakeGeneva = () => {
                       </button>
                     </div>
 
+                    {/* Geo Filter Toggle */}
+                    <div className="flex items-center gap-2 rounded-full bg-slate-100 px-1 py-1">
+                      <button
+                        onClick={() => setIncludeRegional(false)}
+                        className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors flex items-center gap-1 ${
+                          !includeRegional
+                            ? "bg-white text-slate-900 shadow-sm"
+                            : "text-slate-500 hover:text-slate-700"
+                        }`}
+                      >
+                        🏙️ Lake Geneva
+                      </button>
+                      <button
+                        onClick={() => setIncludeRegional(true)}
+                        className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors flex items-center gap-1 ${
+                          includeRegional
+                            ? "bg-white text-slate-900 shadow-sm"
+                            : "text-slate-500 hover:text-slate-700"
+                        }`}
+                      >
+                        🗺️ + Walworth County
+                      </button>
+                    </div>
+
                     {/* Category Pills (only in topic view) */}
                     {viewMode === 'topic' && (
                       <div className="flex flex-wrap gap-2">
@@ -987,6 +1021,8 @@ const LakeGeneva = () => {
                                 imageUrl={story.image_url}
                                 category={story.category}
                                 url={story.original_url}
+                                geoTier={(story as any).geo_tier}
+                                geoLabel={(story as any).geo_label}
                                 meta={{ time, source }}
                               />
                             );
