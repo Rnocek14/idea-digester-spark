@@ -787,28 +787,50 @@ const LakeGeneva = () => {
                       </button>
                     </div>
 
-                    {/* Geo Filter Toggle */}
-                    <div className="flex items-center gap-2 rounded-full bg-slate-100 px-1 py-1">
-                      <button
-                        onClick={() => setIncludeRegional(false)}
-                        className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors flex items-center gap-1 ${
-                          !includeRegional
-                            ? "bg-white text-slate-900 shadow-sm"
-                            : "text-slate-500 hover:text-slate-700"
-                        }`}
-                      >
-                        🏙️ Lake Geneva
-                      </button>
-                      <button
-                        onClick={() => setIncludeRegional(true)}
-                        className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors flex items-center gap-1 ${
-                          includeRegional
-                            ? "bg-white text-slate-900 shadow-sm"
-                            : "text-slate-500 hover:text-slate-700"
-                        }`}
-                      >
-                        🗺️ + Walworth County
-                      </button>
+                    {/* Geo Filter Toggle + Tooltip */}
+                    <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 rounded-full bg-slate-100 px-1 py-1">
+                        <button
+                          onClick={() => setIncludeRegional(false)}
+                          className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors flex items-center gap-1 ${
+                            !includeRegional
+                              ? "bg-white text-slate-900 shadow-sm"
+                              : "text-slate-500 hover:text-slate-700"
+                          }`}
+                        >
+                          🏙️ Lake Geneva
+                        </button>
+                        <button
+                          onClick={() => setIncludeRegional(true)}
+                          className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors flex items-center gap-1 ${
+                            includeRegional
+                              ? "bg-white text-slate-900 shadow-sm"
+                              : "text-slate-500 hover:text-slate-700"
+                          }`}
+                        >
+                          🗺️ + Walworth County
+                        </button>
+                      </div>
+
+                      {/* Info Tooltip */}
+                      <div className="relative group">
+                        <button
+                          type="button"
+                          aria-label="Location filter info"
+                          className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-slate-300 text-[10px] text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                        >
+                          ?
+                        </button>
+                        <div className="pointer-events-none absolute right-0 z-20 mt-1 w-56 rounded-md bg-slate-900 px-2.5 py-2 text-[11px] text-slate-50 opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+                          <p className="font-semibold mb-1">Location Filter</p>
+                          <p>
+                            <span className="font-medium">🏙️ Lake Geneva</span> shows stories from Lake Geneva, Williams Bay & Fontana.
+                          </p>
+                          <p className="mt-1">
+                            <span className="font-medium">🗺️ + Walworth County</span> adds Delavan, Elkhorn & nearby towns.
+                          </p>
+                        </div>
+                      </div>
                     </div>
 
                     {/* Category Pills (only in topic view) */}

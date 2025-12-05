@@ -71,3 +71,6 @@ verify_jwt = false
 
 [functions.cleanup-bad-schedules]
 verify_jwt = false
+
+[functions.backfill-geo-tiers]
+verify_jwt = false
