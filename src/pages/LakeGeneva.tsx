@@ -305,6 +305,17 @@ const LakeGeneva = () => {
     refetchInterval: viewMode === 'recent' ? 30000 : false,
   });
 
+  // Debug: Log weighted feed category breakdown (temporary)
+  useEffect(() => {
+    if (!stories?.length) return;
+    const counts = stories.reduce((acc: Record<string, number>, s: any) => {
+      const key = s.category || 'uncategorized';
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {});
+    console.log('🎯 Weighted feed breakdown:', counts, `(${stories.length} total)`);
+  }, [stories]);
+
   // Query sponsor
   const { data: sponsor } = useQuery({
     queryKey: ["public-sponsor"],
