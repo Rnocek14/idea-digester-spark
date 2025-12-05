@@ -49,7 +49,7 @@ export const StoryCard = ({
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow">
       {imageUrl && (
-        <div className="relative aspect-[16/9] overflow-hidden bg-slate-100">
+        <div className="relative aspect-[3/2] overflow-hidden bg-slate-100">
           {url ? (
             <a href={url} target="_blank" rel="noopener noreferrer" className="block h-full w-full">
               <img
