@@ -55,7 +55,7 @@ export const StoryCard = ({
               <img
                 src={imageUrl}
                 alt={title}
-                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                className="h-full w-full object-cover object-top transition-transform duration-300 group-hover:scale-[1.03]"
                 loading="lazy"
               />
             </a>
@@ -63,7 +63,7 @@ export const StoryCard = ({
             <img
               src={imageUrl}
               alt={title}
-              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+              className="h-full w-full object-cover object-top transition-transform duration-300 group-hover:scale-[1.03]"
               loading="lazy"
             />
           )}
