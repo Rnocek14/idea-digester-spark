@@ -227,28 +227,74 @@ const LakeGeneva = () => {
   };
 
   // Fetch today's published stories
+  // Weighted category feed: 40% news/civic, 30% events, 30% community/dining
   const { data: stories = [], isLoading: storiesLoading, dataUpdatedAt: storiesUpdatedAt } = useQuery({
-    queryKey: ["public-stories"],
+    queryKey: ["public-stories-weighted"],
     queryFn: async () => {
-      const today = new Date();
-      const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-      const { data, error } = await supabase
+      const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const now = new Date().toISOString();
+      
+      // Target mix: 40% news/civic, 30% events, 30% other
+      const NEWS_CIVIC_TARGET = 16;
+      const EVENTS_TARGET = 12;
+      const OTHER_TARGET = 12;
+      
+      // Fetch news + civic (priority content)
+      const { data: newsCivic = [] } = await supabase
         .from("content_queue")
         .select("*, source:sources(name)")
         .in("status", ["published", "auto_published"])
         .eq("safety_level", "safe")
-        .gte("created_at", weekAgo.toISOString())
-        .lte("publish_date", new Date().toISOString()) // Only show today or past
+        .in("category", ["news", "civic", "schools"])
+        .gte("created_at", weekAgo)
+        .lte("publish_date", now)
         .order("is_breaking", { ascending: false })
         .order("publish_date", { ascending: false })
-        .order("created_at", { ascending: false })
-        .limit(100);
-
-      if (error) throw error;
+        .limit(NEWS_CIVIC_TARGET);
+      
+      // Fetch events (capped)
+      const { data: events = [] } = await supabase
+        .from("content_queue")
+        .select("*, source:sources(name)")
+        .in("status", ["published", "auto_published"])
+        .eq("safety_level", "safe")
+        .eq("category", "events")
+        .gte("created_at", weekAgo)
+        .lte("publish_date", now)
+        .order("publish_date", { ascending: false })
+        .limit(EVENTS_TARGET);
+      
+      // Fetch other categories (dining, community, real_estate)
+      const { data: other = [] } = await supabase
+        .from("content_queue")
+        .select("*, source:sources(name)")
+        .in("status", ["published", "auto_published"])
+        .eq("safety_level", "safe")
+        .in("category", ["dining", "community", "real_estate", "weather"])
+        .gte("created_at", weekAgo)
+        .lte("publish_date", now)
+        .order("publish_date", { ascending: false })
+        .limit(OTHER_TARGET);
+      
+      // Combine and dedupe
+      const combined = [...newsCivic, ...events, ...other];
+      const seenIds = new Set<string>();
+      const deduped = combined.filter(story => {
+        if (seenIds.has(story.id)) return false;
+        seenIds.add(story.id);
+        return true;
+      });
+      
+      // Sort combined: breaking first, then by date
+      deduped.sort((a, b) => {
+        if (a.is_breaking && !b.is_breaking) return -1;
+        if (!a.is_breaking && b.is_breaking) return 1;
+        return new Date(b.publish_date || b.created_at).getTime() - 
+               new Date(a.publish_date || a.created_at).getTime();
+      });
       
       // Replace generic civic images with topic-aware curated ones
-      return (data || []).map((story: any) => ({
+      return deduped.map((story: any) => ({
         ...story,
         image_url: isGenericCivicImage(story.image_url) 
           ? getCuratedCivicImage(story.id, story.title) 
@@ -256,7 +302,7 @@ const LakeGeneva = () => {
       }));
     },
     staleTime: 60000,
-    refetchInterval: viewMode === 'recent' ? 30000 : false, // Auto-refresh every 30s in recent view
+    refetchInterval: viewMode === 'recent' ? 30000 : false,
   });
 
   // Query sponsor
