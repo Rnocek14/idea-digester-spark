@@ -242,8 +242,7 @@ const LakeGeneva = () => {
       const EVENTS_TARGET = 12;
       const OTHER_TARGET = 12;
       
-      // Geo filter based on toggle: tier 1 only, or tier 1+2
-      const minGeoTier = includeRegional ? 1 : 1;
+      // Geo filter based on toggle: tier 1 only (Lake Geneva), or tier 1+2 (+ Walworth County)
       const maxGeoTier = includeRegional ? 2 : 1;
       
       // Fetch news + civic (priority content) - hyperlocal only
@@ -253,7 +252,7 @@ const LakeGeneva = () => {
         .in("status", ["published", "auto_published"])
         .eq("safety_level", "safe")
         .in("category", ["news", "civic", "schools"])
-        .gte("geo_tier", minGeoTier)
+        .gte("geo_tier", 1)
         .lte("geo_tier", maxGeoTier)
         .gte("created_at", weekAgo)
         .lte("publish_date", now)
@@ -269,7 +268,7 @@ const LakeGeneva = () => {
         .in("status", ["published", "auto_published"])
         .eq("safety_level", "safe")
         .eq("category", "events")
-        .gte("geo_tier", minGeoTier)
+        .gte("geo_tier", 1)
         .lte("geo_tier", maxGeoTier)
         .gte("created_at", weekAgo)
         .lte("publish_date", now)
@@ -284,7 +283,7 @@ const LakeGeneva = () => {
         .in("status", ["published", "auto_published"])
         .eq("safety_level", "safe")
         .in("category", ["dining", "community", "real_estate", "weather"])
-        .gte("geo_tier", minGeoTier)
+        .gte("geo_tier", 1)
         .lte("geo_tier", maxGeoTier)
         .gte("created_at", weekAgo)
         .lte("publish_date", now)
@@ -321,20 +320,6 @@ const LakeGeneva = () => {
     refetchInterval: viewMode === 'recent' ? 30000 : false,
   });
 
-  // Debug: Log weighted feed breakdown with geo tiers (temporary)
-  useEffect(() => {
-    if (!stories?.length) return;
-    const categoryCounts = stories.reduce((acc: Record<string, number>, s: any) => {
-      acc[s.category || 'uncategorized'] = (acc[s.category || 'uncategorized'] || 0) + 1;
-      return acc;
-    }, {});
-    const geoCounts = stories.reduce((acc: Record<string, number>, s: any) => {
-      const tier = `tier${s.geo_tier ?? 0}`;
-      acc[tier] = (acc[tier] || 0) + 1;
-      return acc;
-    }, {});
-    console.log('🎯 Weighted feed:', categoryCounts, '| Geo:', geoCounts, `(${stories.length} total)`);
-  }, [stories]);
 
   // Query sponsor
   const { data: sponsor } = useQuery({
