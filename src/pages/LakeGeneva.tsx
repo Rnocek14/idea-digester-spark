@@ -672,13 +672,13 @@ const LakeGeneva = () => {
                       {/* Featured story card */}
                       <article className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100">
                         <div className="relative aspect-[3/2]">
-                          {featured.image_url && (
-                            <img
-                              src={featured.image_url}
-                              alt={featured.title}
-                              className="h-full w-full object-cover object-top transition-transform duration-500 hover:scale-[1.03]"
-                            />
-                          )}
+                          <img
+                            src={featured.image_url || (featured.category === 'weather' 
+                              ? 'https://images.unsplash.com/photo-1491002052546-bf38f186af56?w=800&q=80'
+                              : 'https://images.unsplash.com/photo-1500375592092-40eb2168fd21?w=800&q=80')}
+                            alt={featured.title}
+                            className="h-full w-full object-cover object-top transition-transform duration-500 hover:scale-[1.03]"
+                          />
                           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-black/30 to-transparent" />
                           <div className="pointer-events-none absolute inset-x-0 bottom-0 p-4 sm:p-5">
                             <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-200">
