@@ -112,67 +112,108 @@ function getCuratedCivicImage(storyId: string, title: string): string {
 /**
  * Get the next available optimal posting slot for a platform.
  * Returns a Date in UTC that corresponds to an optimal Central Time slot.
+ * Respects daily caps per platform.
+ * 
+ * Central Time is UTC-6 (CST) or UTC-5 (CDT during daylight saving).
+ * December = CST = UTC-6
  */
 function getNextOptimalSlot(
   platform: string, 
-  usedSlots: Set<string>, // Set of "YYYY-MM-DD-HH" strings already scheduled
-  now: Date
-): Date {
-  // Convert now to Central Time for slot calculation
-  const centralNow = new Date(now.toLocaleString("en-US", { timeZone: "America/Chicago" }));
-  const currentCentralHour = centralNow.getHours();
-  const currentCentralMinutes = centralNow.getMinutes();
+  usedSlots: Map<string, number>, // Map of "platform-YYYY-MM-DD" -> count of posts that day
+  now: Date,
+  maxPerDay: number
+): Date | null {
+  // Get current time in Central Time zone
+  const centralFormatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Chicago',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  });
   
-  // Start looking from today
-  let searchDate = new Date(centralNow);
-  searchDate.setHours(0, 0, 0, 0);
+  const centralParts = centralFormatter.formatToParts(now);
+  const centralYear = parseInt(centralParts.find(p => p.type === 'year')?.value || '2025');
+  const centralMonth = parseInt(centralParts.find(p => p.type === 'month')?.value || '1') - 1;
+  const centralDay = parseInt(centralParts.find(p => p.type === 'day')?.value || '1');
+  const centralHour = parseInt(centralParts.find(p => p.type === 'hour')?.value || '0');
+  const centralMinute = parseInt(centralParts.find(p => p.type === 'minute')?.value || '0');
   
-  // Look up to 7 days ahead
-  for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
-    const checkDate = new Date(searchDate);
-    checkDate.setDate(checkDate.getDate() + dayOffset);
+  // Central Time offset from UTC (CST = -6, CDT = -5)
+  const testDate = new Date(now);
+  const utcHour = testDate.getUTCHours();
+  const centralOffset = centralHour - utcHour + (centralDay !== testDate.getUTCDate() ? (centralDay > testDate.getUTCDate() ? 24 : -24) : 0);
+  const utcOffset = -centralOffset; // Hours to ADD to Central to get UTC
+  
+  // Look up to 14 days ahead
+  for (let dayOffset = 0; dayOffset < 14; dayOffset++) {
+    // Calculate the date for this offset
+    const checkDate = new Date(Date.UTC(centralYear, centralMonth, centralDay + dayOffset, 12, 0, 0));
+    const dateStr = checkDate.toISOString().split('T')[0];
+    const dayKey = `${platform}-${dateStr}`;
+    
+    // Check if this day is already at capacity
+    const currentDayCount = usedSlots.get(dayKey) || 0;
+    if (currentDayCount >= maxPerDay) {
+      continue; // Skip to next day
+    }
+    
+    // Find which slots are available on this day
+    const daySlotKey = `${platform}-${dateStr}-slots`;
+    const usedHours = new Set<number>();
+    
+    // Check existing scheduled posts for this day
+    for (const [key, _] of usedSlots.entries()) {
+      if (key.startsWith(`${platform}-${dateStr}-`) && key !== dayKey) {
+        const hour = parseInt(key.split('-').pop() || '0');
+        usedHours.add(hour);
+      }
+    }
     
     for (const slotHour of OPTIMAL_SLOTS_CENTRAL) {
       // Skip slots that have already passed today
       if (dayOffset === 0) {
-        if (slotHour < currentCentralHour || (slotHour === currentCentralHour && currentCentralMinutes > 0)) {
+        if (slotHour < centralHour || (slotHour === centralHour && centralMinute > 0)) {
           continue;
         }
       }
       
-      // Create slot key for deduplication
-      const dateStr = checkDate.toISOString().split('T')[0];
-      const slotKey = `${platform}-${dateStr}-${slotHour}`;
-      
-      if (!usedSlots.has(slotKey)) {
-        usedSlots.add(slotKey);
-        
-        // Create the scheduled time in Central, then convert to UTC
-        const scheduledCentral = new Date(checkDate);
-        scheduledCentral.setHours(slotHour, 0, 0, 0);
-        
-        // Convert Central Time to UTC by parsing back
-        // Central is UTC-6 (CST) or UTC-5 (CDT)
-        const centralString = scheduledCentral.toLocaleString("en-US", { timeZone: "America/Chicago" });
-        const utcDate = new Date(centralString + " CST");
-        
-        // More reliable: calculate offset
-        const tempDate = new Date();
-        const utcTime = tempDate.getTime();
-        const centralTime = new Date(tempDate.toLocaleString("en-US", { timeZone: "America/Chicago" })).getTime();
-        const offset = utcTime - centralTime;
-        
-        const scheduledUTC = new Date(scheduledCentral.getTime() + offset);
-        
-        console.log(`[prepare-posts] Next optimal slot for ${platform}: ${slotHour}:00 CT on ${dateStr} (UTC: ${scheduledUTC.toISOString()})`);
-        return scheduledUTC;
+      // Skip if this hour slot is already used
+      const hourKey = `${platform}-${dateStr}-${slotHour}`;
+      if (usedSlots.has(hourKey)) {
+        continue;
       }
+      
+      // Found an available slot!
+      usedSlots.set(hourKey, 1);
+      usedSlots.set(dayKey, currentDayCount + 1);
+      
+      // Convert Central Time slot to UTC
+      const utcHourForSlot = slotHour + utcOffset;
+      
+      // Handle day rollover
+      let finalDay = centralDay + dayOffset;
+      let finalHour = utcHourForSlot;
+      if (finalHour >= 24) {
+        finalHour -= 24;
+        finalDay += 1;
+      } else if (finalHour < 0) {
+        finalHour += 24;
+        finalDay -= 1;
+      }
+      
+      const scheduledUTC = new Date(Date.UTC(centralYear, centralMonth, finalDay, finalHour, 0, 0));
+      
+      console.log(`[prepare-posts] ✅ Slot: ${platform} ${slotHour}:00 CT on ${dateStr} (day ${currentDayCount + 1}/${maxPerDay}) → UTC: ${scheduledUTC.toISOString()}`);
+      return scheduledUTC;
     }
   }
   
-  // Fallback: 24 hours from now if somehow no slots found
-  console.log(`[prepare-posts] Warning: No optimal slot found, using 24h fallback`);
-  return new Date(now.getTime() + 24 * 60 * 60 * 1000);
+  // No slots available in the next 14 days
+  console.log(`[prepare-posts] ⚠️ No available slots for ${platform} in next 14 days (all at capacity)`);
+  return null;
 }
 
 serve(async (req) => {
@@ -221,10 +262,11 @@ serve(async (req) => {
     const now = new Date();
     
     // Pre-fetch existing scheduled posts to know which slots are taken
-    const usedSlotsByPlatform: Record<string, Set<string>> = {
-      instagram: new Set(),
-      facebook: new Set(),
-      x: new Set(),
+    // Map: "platform-YYYY-MM-DD" -> count, "platform-YYYY-MM-DD-HH" -> 1
+    const usedSlotsByPlatform: Record<string, Map<string, number>> = {
+      instagram: new Map(),
+      facebook: new Map(),
+      x: new Map(),
     };
     
     // Get all pending posts scheduled in the future
@@ -240,8 +282,14 @@ serve(async (req) => {
         const centralTime = new Date(scheduledDate.toLocaleString("en-US", { timeZone: "America/Chicago" }));
         const dateStr = centralTime.toISOString().split('T')[0];
         const hour = centralTime.getHours();
-        const slotKey = `${post.platform}-${dateStr}-${hour}`;
-        usedSlotsByPlatform[post.platform]?.add(slotKey);
+        const dayKey = `${post.platform}-${dateStr}`;
+        const hourKey = `${post.platform}-${dateStr}-${hour}`;
+        
+        const platformMap = usedSlotsByPlatform[post.platform];
+        if (platformMap) {
+          platformMap.set(hourKey, 1);
+          platformMap.set(dayKey, (platformMap.get(dayKey) || 0) + 1);
+        }
       }
     }
     console.log(`[prepare-posts] Pre-loaded ${existingPosts?.length || 0} existing scheduled posts`);
@@ -374,8 +422,13 @@ serve(async (req) => {
           scheduledFor = new Date(now.getTime() + 2 * 60 * 1000);
           console.log(`[prepare-posts] 🔴 BREAKING: Scheduling ${platform} post immediately`);
         } else {
-          // Use optimal slot scheduling
-          scheduledFor = getNextOptimalSlot(platform, usedSlotsByPlatform[platform], now);
+          // Use optimal slot scheduling with daily cap
+          const maybeScheduled = getNextOptimalSlot(platform, usedSlotsByPlatform[platform], now, config.maxPerDay);
+          if (!maybeScheduled) {
+            console.log(`[prepare-posts] ⏭️ Skipping ${platform} - no available slots`);
+            continue;
+          }
+          scheduledFor = maybeScheduled;
         }
 
         const postText = story[`content_${platform}`];
