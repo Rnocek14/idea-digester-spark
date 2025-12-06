@@ -9,6 +9,65 @@ const corsHeaders = {
 const NWS_ZONE = 'WIZ063'; // Walworth County
 const NWS_ALERTS_URL = `https://api.weather.gov/alerts/active?zone=${NWS_ZONE}`;
 
+// Weather-type-specific fallback images for alerts
+const WEATHER_IMAGES: Record<string, string> = {
+  // Winter weather
+  snow: 'https://images.unsplash.com/photo-1491002052546-bf38f186af56?w=800&q=80',
+  winter: 'https://images.unsplash.com/photo-1516912481808-3406841bd33c?w=800&q=80',
+  blizzard: 'https://images.unsplash.com/photo-1547754980-3df97fed72a8?w=800&q=80',
+  ice: 'https://images.unsplash.com/photo-1483664852095-d6cc6870702d?w=800&q=80',
+  freeze: 'https://images.unsplash.com/photo-1610141160708-53221889e5b1?w=800&q=80',
+  frost: 'https://images.unsplash.com/photo-1610141160708-53221889e5b1?w=800&q=80',
+  cold: 'https://images.unsplash.com/photo-1516912481808-3406841bd33c?w=800&q=80',
+  
+  // Severe weather
+  tornado: 'https://images.unsplash.com/photo-1527482937786-6f0ba41471a8?w=800&q=80',
+  thunderstorm: 'https://images.unsplash.com/photo-1605727216801-e27ce1d0cc28?w=800&q=80',
+  severe: 'https://images.unsplash.com/photo-1478265409131-1f65c88f965c?w=800&q=80',
+  storm: 'https://images.unsplash.com/photo-1605727216801-e27ce1d0cc28?w=800&q=80',
+  
+  // Wind
+  wind: 'https://images.unsplash.com/photo-1527482937786-6f0ba41471a8?w=800&q=80',
+  gust: 'https://images.unsplash.com/photo-1527482937786-6f0ba41471a8?w=800&q=80',
+  
+  // Rain/Flood
+  rain: 'https://images.unsplash.com/photo-1519692933481-e162a57d6721?w=800&q=80',
+  flood: 'https://images.unsplash.com/photo-1547683905-f686c993aae5?w=800&q=80',
+  flash: 'https://images.unsplash.com/photo-1547683905-f686c993aae5?w=800&q=80',
+  
+  // Heat
+  heat: 'https://images.unsplash.com/photo-1504370805625-d32c54b16100?w=800&q=80',
+  excessive: 'https://images.unsplash.com/photo-1504370805625-d32c54b16100?w=800&q=80',
+  
+  // Fog/Visibility
+  fog: 'https://images.unsplash.com/photo-1543968996-ee822b8176ba?w=800&q=80',
+  dense: 'https://images.unsplash.com/photo-1543968996-ee822b8176ba?w=800&q=80',
+  
+  // Default weather
+  default: 'https://images.unsplash.com/photo-1491002052546-bf38f186af56?w=800&q=80',
+};
+
+// Get appropriate weather image based on event type
+function getWeatherImage(event: string): string {
+  const eventLower = event.toLowerCase();
+  
+  // Check for specific weather keywords in order of priority
+  const keywords = [
+    'tornado', 'blizzard', 'thunderstorm', 'flood', 'flash',
+    'snow', 'winter', 'ice', 'freeze', 'frost', 'cold',
+    'wind', 'gust', 'storm', 'severe',
+    'rain', 'heat', 'excessive', 'fog', 'dense'
+  ];
+  
+  for (const keyword of keywords) {
+    if (eventLower.includes(keyword)) {
+      return WEATHER_IMAGES[keyword] || WEATHER_IMAGES.default;
+    }
+  }
+  
+  return WEATHER_IMAGES.default;
+}
+
 // Generate URL-friendly slug from title
 function slugifyIncidentTitle(title: string): string {
   return title
@@ -272,6 +331,10 @@ Deno.serve(async (req) => {
       ].filter(Boolean).join('');
 
       const publishDate = props.effective || props.sent || new Date().toISOString();
+      
+      // Get weather-type-specific image
+      const imageUrl = getWeatherImage(props.event || '');
+      console.log(`[sync-nws] Using image for "${props.event}": ${imageUrl.substring(0, 50)}...`);
 
       // Insert into content_queue
       const { data: insertedAlert, error: insertError } = await supabase
@@ -292,6 +355,8 @@ Deno.serve(async (req) => {
           priority_score: priorityScore,
           geo_tier: 1, // NWS alerts for our zone are always local (tier 1)
           geo_label: 'Lake Geneva',
+          image_url: imageUrl, // Weather-type-specific image
+          image_source: 'fallback_weather',
           metadata: {
             source_name: 'NWS Weather Alerts',
             nws_id: alertId,
