@@ -17,6 +17,8 @@ const TIER1_KEYWORDS = [
   "downtown lake geneva",
   "riviera",
   "big foot beach",
+  "nws milwaukee", // NWS alerts for our zone
+  "sullivan wi", // NWS station covers Lake Geneva
 ];
 
 const TIER2_KEYWORDS = [
@@ -27,6 +29,7 @@ const TIER2_KEYWORDS = [
   "darien",
   "bloomfield",
   "linn",
+  "south central wisconsin", // NWS regional zone
 ];
 
 type Locality = { tier: 0 | 1 | 2; label: string | null };

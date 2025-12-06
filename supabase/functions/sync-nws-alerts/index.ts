@@ -290,6 +290,8 @@ Deno.serve(async (req) => {
           safety_reason: safetyLevel === 'sensitive' ? `High severity: ${props.severity}` : null,
           is_breaking: isBreaking,
           priority_score: priorityScore,
+          geo_tier: 1, // NWS alerts for our zone are always local (tier 1)
+          geo_label: 'Lake Geneva',
           metadata: {
             source_name: 'NWS Weather Alerts',
             nws_id: alertId,
