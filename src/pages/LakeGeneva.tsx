@@ -125,58 +125,110 @@ const LakeGeneva = () => {
   const activeIncidentCount = activeIncidents.length;
   const hasActiveIncidents = activeIncidentCount > 0;
 
+  // Category-specific fallback images for all story types
+  const CATEGORY_FALLBACK_IMAGES: Record<string, string[]> = {
+    weather: [
+      "https://images.unsplash.com/photo-1491002052546-bf38f186af56?w=800&q=80", // Snowy winter scene
+      "https://images.unsplash.com/photo-1516912481808-3406841bd33c?w=800&q=80", // Winter snow
+      "https://images.unsplash.com/photo-1478265409131-1f65c88f965c?w=800&q=80", // Storm clouds
+    ],
+    news: [
+      "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&q=80", // Newspaper
+      "https://images.unsplash.com/photo-1495020689067-958852a7765e?w=800&q=80", // News desk
+      "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=800&q=80", // Breaking news
+    ],
+    events: [
+      "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&q=80", // Event crowd
+      "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800&q=80", // Party lights
+      "https://images.unsplash.com/photo-1505236858219-8359eb29e329?w=800&q=80", // Festival
+    ],
+    dining: [
+      "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&q=80", // Restaurant interior
+      "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80", // Fine dining
+      "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=800&q=80", // Cafe scene
+    ],
+    community: [
+      "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&q=80", // Community gathering
+      "https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=800&q=80", // Town square
+      "https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=800&q=80", // Local event
+    ],
+    schools: [
+      "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=800&q=80", // School building
+      "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&q=80", // Students
+      "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800&q=80", // Graduation
+    ],
+    real_estate: [
+      "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&q=80", // House exterior
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80", // Residential home
+      "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80", // Luxury home
+    ],
+    default: [
+      "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?w=800&q=80", // Lake waves
+      "https://images.unsplash.com/photo-1482938289607-e9573fc25ebb?w=800&q=80", // Calm lake
+      "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80", // Lake pier
+    ],
+  };
+
+  // Get deterministic fallback image based on story ID and category
+  const getCategoryFallbackImage = (storyId: string, category: string | null): string => {
+    const cat = category?.toLowerCase() || 'default';
+    const images = CATEGORY_FALLBACK_IMAGES[cat] || CATEGORY_FALLBACK_IMAGES.default;
+    const hash = storyId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return images[hash % images.length];
+  };
+
   // Topic-specific civic image libraries for smart keyword mapping
   type CivicTopic = 'land_use' | 'historic' | 'council' | 'parks' | 'lakefront' | 'library' | 'safety' | 'tourism' | 'utilities' | 'finance' | 'default';
 
   const CIVIC_IMAGE_LIBRARIES: Record<CivicTopic, string[]> = {
     land_use: [
-      "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&q=80", // House/development concept
-      "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&q=80", // Construction site
-      "https://images.unsplash.com/photo-1486325212027-8a9ce835dc2e?w=800&q=80", // Suburban neighborhood aerial
-      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80", // Residential development
+      "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&q=80",
+      "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&q=80",
+      "https://images.unsplash.com/photo-1486325212027-8a9ce835dc2e?w=800&q=80",
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80",
     ],
     historic: [
-      "https://images.unsplash.com/photo-1558036117-15d82a90b9b1?w=800&q=80", // Small town downtown
-      "https://images.unsplash.com/photo-1565538810643-b5bdb714032a?w=800&q=80", // Old brick commercial building
-      "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=800&q=80", // Small town main street
-      "https://images.unsplash.com/photo-1594398028856-9b00722cefbc?w=800&q=80", // Tree-lined residential street
+      "https://images.unsplash.com/photo-1558036117-15d82a90b9b1?w=800&q=80",
+      "https://images.unsplash.com/photo-1565538810643-b5bdb714032a?w=800&q=80",
+      "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=800&q=80",
+      "https://images.unsplash.com/photo-1594398028856-9b00722cefbc?w=800&q=80",
     ],
     council: [
-      "https://images.unsplash.com/photo-1577962917302-cd874c4e31d2?w=800&q=80", // Council meeting room
-      "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800&q=80", // Business meeting at table
-      "https://images.unsplash.com/photo-1531482615713-2afd69097998?w=800&q=80", // People in discussion
-      "https://images.unsplash.com/photo-1568992687947-868a62a9f521?w=800&q=80", // Government/office interior
+      "https://images.unsplash.com/photo-1577962917302-cd874c4e31d2?w=800&q=80",
+      "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800&q=80",
+      "https://images.unsplash.com/photo-1531482615713-2afd69097998?w=800&q=80",
+      "https://images.unsplash.com/photo-1568992687947-868a62a9f521?w=800&q=80",
     ],
     parks: [
-      "https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&q=80", // Green park
-      "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&q=80", // Forest path
-      "https://images.unsplash.com/photo-1472396961693-142e6e269027?w=800&q=80", // Nature scene
+      "https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&q=80",
+      "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&q=80",
+      "https://images.unsplash.com/photo-1472396961693-142e6e269027?w=800&q=80",
     ],
     lakefront: [
-      "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?w=800&q=80", // Lake waves
-      "https://images.unsplash.com/photo-1482938289607-e9573fc25ebb?w=800&q=80", // Calm lake
-      "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80", // Lake pier
+      "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?w=800&q=80",
+      "https://images.unsplash.com/photo-1482938289607-e9573fc25ebb?w=800&q=80",
+      "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80",
     ],
     library: [
-      "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=800&q=80", // Library interior
-      "https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=800&q=80", // Bookshelves
-      "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&q=80", // Reading room
+      "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=800&q=80",
+      "https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=800&q=80",
+      "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&q=80",
     ],
     safety: [
-      "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=800&q=80", // Public safety
-      "https://images.unsplash.com/photo-1582139329536-e7284fece509?w=800&q=80", // Emergency services
+      "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=800&q=80",
+      "https://images.unsplash.com/photo-1582139329536-e7284fece509?w=800&q=80",
     ],
     tourism: [
-      "https://images.unsplash.com/photo-1555636222-cae831e670b3?w=800&q=80", // Downtown street
-      "https://images.unsplash.com/photo-1517732306149-e8f829eb588a?w=800&q=80", // Town square
+      "https://images.unsplash.com/photo-1555636222-cae831e670b3?w=800&q=80",
+      "https://images.unsplash.com/photo-1517732306149-e8f829eb588a?w=800&q=80",
     ],
     utilities: [
-      "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80", // Utility infrastructure
-      "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80", // Office building
+      "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80",
+      "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80",
     ],
     finance: [
-      "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&q=80", // Financial documents
-      "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80", // Business meeting
+      "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&q=80",
+      "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80",
     ],
     default: [
       "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Lake_Geneva_Wisconsin_City_Hall.jpg/1280px-Lake_Geneva_Wisconsin_City_Hall.jpg",
@@ -307,13 +359,19 @@ const LakeGeneva = () => {
                new Date(a.publish_date || a.created_at).getTime();
       });
       
-      // Replace generic civic images with topic-aware curated ones
-      return deduped.map((story: any) => ({
-        ...story,
-        image_url: isGenericCivicImage(story.image_url) 
-          ? getCuratedCivicImage(story.id, story.title) 
-          : story.image_url
-      }));
+      // Apply fallback images: civic uses topic-aware, others use category fallback
+      return deduped.map((story: any) => {
+        // If story has a valid image that's not generic, keep it
+        if (story.image_url && !isGenericCivicImage(story.image_url)) {
+          return story;
+        }
+        // Civic stories get topic-aware images
+        if (story.category?.toLowerCase() === 'civic') {
+          return { ...story, image_url: getCuratedCivicImage(story.id, story.title) };
+        }
+        // All other categories get category-specific fallbacks
+        return { ...story, image_url: getCategoryFallbackImage(story.id, story.category) };
+      });
     },
     staleTime: 60000,
     refetchInterval: viewMode === 'recent' ? 30000 : false,
@@ -673,9 +731,7 @@ const LakeGeneva = () => {
                       <article className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100">
                         <div className="relative aspect-[3/2]">
                           <img
-                            src={featured.image_url || (featured.category === 'weather' 
-                              ? 'https://images.unsplash.com/photo-1491002052546-bf38f186af56?w=800&q=80'
-                              : 'https://images.unsplash.com/photo-1500375592092-40eb2168fd21?w=800&q=80')}
+                            src={featured.image_url || getCategoryFallbackImage(featured.id, featured.category)}
                             alt={featured.title}
                             className="h-full w-full object-cover object-top transition-transform duration-500 hover:scale-[1.03]"
                           />
