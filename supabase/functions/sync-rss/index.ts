@@ -56,6 +56,62 @@ function isRecurringEvent(title: string): boolean {
          lowerTitle.includes('monthly ');
 }
 
+// Extract recurring days of week from title/content (e.g., "Every Friday" → ["friday"])
+function extractRecurringDays(title: string, content?: string): string[] | null {
+  const text = `${title} ${content || ''}`.toLowerCase();
+  
+  // Check if this is actually a recurring event
+  const isRecurring = text.includes('every ') || 
+                      text.includes('weekly ') || 
+                      text.includes('daily ') ||
+                      text.includes('recurring');
+  
+  // Also check for day-of-week in title (common pattern for venue event listings)
+  const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  const foundDays: string[] = [];
+  
+  for (const day of dayNames) {
+    // Match patterns like "every friday", "fridays", "friday nights", "live music friday"
+    const patterns = [
+      new RegExp(`every\\s+${day}`, 'i'),
+      new RegExp(`${day}s\\b`, 'i'), // plurals like "Fridays"
+      new RegExp(`${day}\\s+night`, 'i'),
+      new RegExp(`${day}\\s+live`, 'i'),
+      new RegExp(`live\\s+music\\s+${day}`, 'i'),
+    ];
+    
+    // If explicitly recurring, check for day mention
+    if (isRecurring && text.includes(day)) {
+      foundDays.push(day);
+    } else {
+      // Check specific patterns that imply recurring
+      for (const pattern of patterns) {
+        if (pattern.test(text)) {
+          foundDays.push(day);
+          break;
+        }
+      }
+    }
+  }
+  
+  // Handle "daily" - all days
+  if (text.includes('daily ') || text.includes('every day')) {
+    return dayNames;
+  }
+  
+  // Handle "weekends" or "weekend"
+  if (text.includes('weekend') && foundDays.length === 0) {
+    return ['friday', 'saturday', 'sunday'];
+  }
+  
+  // Handle "weeknights" or "weekdays"
+  if ((text.includes('weeknight') || text.includes('weekday')) && foundDays.length === 0) {
+    return ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+  }
+  
+  return foundDays.length > 0 ? [...new Set(foundDays)] : null;
+}
+
 // Get the next occurrence of a specific day of week (0=Sunday, 6=Saturday)
 function getNextDayOfWeek(dayOfWeek: number): Date {
   const now = new Date();
@@ -1086,6 +1142,7 @@ When in doubt between safe and sensitive, choose sensitive. Only use blocked for
                 ai_model: "gpt-4o-mini",
                 content_tags: aiResult.content_tags || [],
                 verticals: aiResult.verticals || ["local"],
+                recurring_days: isNightlifeContent ? extractRecurringDays(title, rawContent) : null,
               },
             });
 

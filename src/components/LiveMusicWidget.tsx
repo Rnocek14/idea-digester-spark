@@ -8,12 +8,51 @@ type MusicEvent = {
   title: string;
   publish_date: string | null;
   original_url: string | null;
-  metadata: { verticals?: string[]; content_tags?: string[]; event_date?: string } | null;
+  metadata: { 
+    verticals?: string[]; 
+    content_tags?: string[]; 
+    event_date?: string;
+    recurring_days?: string[] | null; // e.g., ["friday", "saturday"]
+  } | null;
   event_date: string | null;
   event_time: string | null;
   performer: string | null;
   created_at: string;
 };
+
+// Day name to number mapping for recurring_days
+const DAY_NAME_TO_NUMBER: Record<string, number> = {
+  'sunday': 0, 'monday': 1, 'tuesday': 2, 'wednesday': 3,
+  'thursday': 4, 'friday': 5, 'saturday': 6
+};
+
+// Check if event matches a day using metadata.recurring_days (preferred) or title fallback
+function eventMatchesDay(event: MusicEvent, dayOfWeek: number): boolean {
+  const recurringDays = event.metadata?.recurring_days;
+  
+  // Use recurring_days from metadata if available
+  if (recurringDays && Array.isArray(recurringDays) && recurringDays.length > 0) {
+    return recurringDays.some(day => DAY_NAME_TO_NUMBER[day.toLowerCase()] === dayOfWeek);
+  }
+  
+  // Fallback to title parsing for older events without metadata
+  return matchesRecurringDay(event.title, dayOfWeek);
+}
+
+// Check if event is generic recurring (no specific days)
+function isGenericRecurring(event: MusicEvent): boolean {
+  const recurringDays = event.metadata?.recurring_days;
+  
+  // If has recurring_days, it's not generic
+  if (recurringDays && Array.isArray(recurringDays) && recurringDays.length > 0) {
+    return false;
+  }
+  
+  // Fallback: check if title mentions no specific days
+  const t = event.title.toLowerCase();
+  const allDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+  return !allDays.some(day => t.includes(day));
+}
 
 // Known venues for extraction and validation
 const KNOWN_VENUES = [
@@ -253,25 +292,8 @@ export default function LiveMusicWidget() {
       // Filter recurring events that match today's day of week
       const todayDayOfWeek = getTodayDayOfWeek();
       const matchingRecurring = (recurringEvents as MusicEvent[] || []).filter(e => {
-        // Check if title mentions today's day or common weekend patterns
-        const t = e.title.toLowerCase();
-        const dayNames: Record<number, string[]> = {
-          0: ['sunday'],
-          1: ['monday'],
-          2: ['tuesday'],
-          3: ['wednesday'],
-          4: ['thursday'],
-          5: ['friday'],
-          6: ['saturday']
-        };
-        const todayNames = dayNames[todayDayOfWeek] || [];
-        
-        // Match if title contains today's day name OR if it's a generic recurring event
-        // (like "Live Music at Mars Resort" which happens multiple days)
-        const mentionsToday = todayNames.some(name => t.includes(name));
-        const isGenericRecurring = !Object.values(dayNames).flat().some(day => t.includes(day));
-        
-        return mentionsToday || isGenericRecurring;
+        // Use metadata.recurring_days if available, fallback to title parsing
+        return eventMatchesDay(e, todayDayOfWeek) || isGenericRecurring(e);
       });
 
       // Merge and deduplicate
@@ -346,27 +368,23 @@ export default function LiveMusicWidget() {
         .order("created_at", { ascending: false })
         .limit(30);
 
-      // Filter recurring events by day of week mentioned in title
+      // Filter recurring events by day of week using metadata.recurring_days or title fallback
       const satRecurring: MusicEvent[] = [];
       const sunRecurring: MusicEvent[] = [];
       
       for (const event of (recurringEvents as MusicEvent[]) || []) {
-        const t = event.title.toLowerCase();
-        // Check for Saturday
-        if (t.includes('saturday')) {
+        // Check for Saturday (day 6)
+        if (eventMatchesDay(event, 6)) {
           satRecurring.push(event);
         }
-        // Check for Sunday
-        if (t.includes('sunday')) {
+        // Check for Sunday (day 0)
+        if (eventMatchesDay(event, 0)) {
           sunRecurring.push(event);
         }
-        // Generic recurring events (no day specified) - show on both days
-        const mentionsAnyDay = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
-          .some(day => t.includes(day));
-        if (!mentionsAnyDay) {
-          // It's a generic "Live Music at Venue" event - add to both weekend days
-          satRecurring.push(event);
-          sunRecurring.push(event);
+        // Generic recurring events (no specific days) - show on both weekend days
+        if (isGenericRecurring(event)) {
+          if (!satRecurring.includes(event)) satRecurring.push(event);
+          if (!sunRecurring.includes(event)) sunRecurring.push(event);
         }
       }
 
