@@ -92,6 +92,15 @@ function extractVenue(title: string): string {
     }
   }
   
+  // Handle show-style titles like "Christmas Show: Performer Name"
+  // If no venue found but title has colon, return the show name part
+  if (title.includes(':') && !title.toLowerCase().includes('live music')) {
+    const showPart = title.split(':')[0].trim();
+    if (showPart.length > 3 && showPart.length < 50) {
+      return showPart;
+    }
+  }
+  
   return '';
 }
 
@@ -151,7 +160,20 @@ function getDisplayPerformer(event: MusicEvent): string | null {
   return null;
 }
 
-// Filter to only include actual live music events
+// Check if performer should be displayed (avoid redundancy with title)
+function shouldShowPerformer(title: string, performer: string | null): boolean {
+  if (!performer) return false;
+  const titleLower = title.toLowerCase();
+  const performerLower = performer.toLowerCase();
+  // If performer name is already in the title, don't repeat it
+  if (titleLower.includes(performerLower)) return false;
+  // Also check for partial matches (first name only)
+  const performerFirst = performerLower.split(' ')[0];
+  if (performerFirst.length > 3 && titleLower.includes(performerFirst)) return false;
+  return true;
+}
+
+// Filter to only include actual live music events with useful info
 function isLiveMusicEvent(event: MusicEvent): boolean {
   const title = event.title.toLowerCase();
   
@@ -170,7 +192,18 @@ function isLiveMusicEvent(event: MusicEvent): boolean {
   const hasLiveMusic = title.includes('live music') || title.includes('live:');
   const hasCleanPerformer = getDisplayPerformer(event) !== null;
   
-  return hasLiveMusic || hasCleanPerformer;
+  if (!hasLiveMusic && !hasCleanPerformer) return false;
+  
+  // Require at least performer OR specific time to be worth showing
+  const displayPerformer = getDisplayPerformer(event);
+  const hasSpecificTime = event.event_time && 
+    !event.event_time.toLowerCase().includes('all day') &&
+    event.event_time.trim().length > 0;
+  
+  // Must have at least one useful detail (performer or time)
+  if (!displayPerformer && !hasSpecificTime) return false;
+  
+  return true;
 }
 
 function getEventEmoji(title: string, tags?: string[]): string {
@@ -453,9 +486,11 @@ export default function LiveMusicWidget() {
                         {venue || e.title}
                       </p>
                     )}
-                    {(displayPerformer || e.event_time) && (
+                    {(shouldShowPerformer(e.title, displayPerformer) || e.event_time) && (
                       <p className="text-[11px] text-slate-500 mt-0.5">
-                        {displayPerformer}{displayPerformer && e.event_time && ' · '}{e.event_time}
+                        {shouldShowPerformer(e.title, displayPerformer) && displayPerformer}
+                        {shouldShowPerformer(e.title, displayPerformer) && e.event_time && ' · '}
+                        {e.event_time}
                       </p>
                     )}
                   </div>
@@ -502,9 +537,11 @@ export default function LiveMusicWidget() {
                             {venue || e.title}
                           </p>
                         )}
-                        {(displayPerformer || e.event_time) && (
+                        {(shouldShowPerformer(e.title, displayPerformer) || e.event_time) && (
                           <p className="text-[11px] text-slate-500 mt-0.5">
-                            {displayPerformer}{displayPerformer && e.event_time && ' · '}{e.event_time}
+                            {shouldShowPerformer(e.title, displayPerformer) && displayPerformer}
+                            {shouldShowPerformer(e.title, displayPerformer) && e.event_time && ' · '}
+                            {e.event_time}
                           </p>
                         )}
                       </div>
@@ -541,9 +578,11 @@ export default function LiveMusicWidget() {
                             {venue || e.title}
                           </p>
                         )}
-                        {(displayPerformer || e.event_time) && (
+                        {(shouldShowPerformer(e.title, displayPerformer) || e.event_time) && (
                           <p className="text-[11px] text-slate-500 mt-0.5">
-                            {displayPerformer}{displayPerformer && e.event_time && ' · '}{e.event_time}
+                            {shouldShowPerformer(e.title, displayPerformer) && displayPerformer}
+                            {shouldShowPerformer(e.title, displayPerformer) && e.event_time && ' · '}
+                            {e.event_time}
                           </p>
                         )}
                       </div>
