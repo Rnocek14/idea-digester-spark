@@ -152,13 +152,16 @@ function getTodayDateString(): string {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 }
 
+function getTodayDayOfWeek(): number {
+  return new Date().getDay(); // 0 = Sunday, 6 = Saturday
+}
+
 function getUpcomingWeekendDates(): { saturday: string; sunday: string } {
   const now = new Date();
-  const dayOfWeek = now.getDay(); // 0 = Sunday, 6 = Saturday
+  const dayOfWeek = now.getDay();
   
   let daysUntilSaturday = (6 - dayOfWeek + 7) % 7;
   if (daysUntilSaturday === 0 && now.getHours() >= 18) {
-    // It's Saturday evening, show next weekend
     daysUntilSaturday = 7;
   }
   
@@ -172,6 +175,24 @@ function getUpcomingWeekendDates(): { saturday: string; sunday: string } {
     `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   
   return { saturday: formatDate(saturday), sunday: formatDate(sunday) };
+}
+
+// Check if a recurring event matches a specific day of week
+// Day names: 0=Sunday, 1=Monday, 2=Tuesday, 3=Wednesday, 4=Thursday, 5=Friday, 6=Saturday
+function matchesRecurringDay(title: string, targetDayOfWeek: number): boolean {
+  const t = title.toLowerCase();
+  const dayNames: Record<number, string[]> = {
+    0: ['sunday', 'sun '],
+    1: ['monday', 'mon '],
+    2: ['tuesday', 'tue '],
+    3: ['wednesday', 'wed '],
+    4: ['thursday', 'thu '],
+    5: ['friday', 'fri '],
+    6: ['saturday', 'sat ']
+  };
+  
+  const targetNames = dayNames[targetDayOfWeek] || [];
+  return targetNames.some(name => t.includes(name));
 }
 
 function deduplicateByVenue(events: MusicEvent[], limit: number): MusicEvent[] {
@@ -213,11 +234,8 @@ export default function LiveMusicWidget() {
         console.error("[LiveMusicWidget] Error loading tonight events by date", dateError);
       }
 
-      // Fallback: check for events ingested today without event_date (legacy)
-      const now = new Date();
-      const utcMidnight = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
-      
-      const { data: fallbackEvents, error: fallbackError } = await supabase
+      // Also fetch recurring events (no event_date) that might match today's day of week
+      const { data: recurringEvents, error: recurringError } = await supabase
         .from("content_queue")
         .select("id, title, publish_date, original_url, metadata, event_date, event_time, performer, created_at")
         .in("status", ["approved", "auto_published", "published"])
@@ -225,16 +243,39 @@ export default function LiveMusicWidget() {
         .eq("category", "events")
         .contains("metadata", { verticals: ["nightlife"] })
         .is("event_date", null)
-        .gte("created_at", utcMidnight.toISOString())
         .order("created_at", { ascending: false })
-        .limit(10);
+        .limit(30);
 
-      if (fallbackError) {
-        console.error("[LiveMusicWidget] Error loading tonight fallback events", fallbackError);
+      if (recurringError) {
+        console.error("[LiveMusicWidget] Error loading recurring events", recurringError);
       }
 
+      // Filter recurring events that match today's day of week
+      const todayDayOfWeek = getTodayDayOfWeek();
+      const matchingRecurring = (recurringEvents as MusicEvent[] || []).filter(e => {
+        // Check if title mentions today's day or common weekend patterns
+        const t = e.title.toLowerCase();
+        const dayNames: Record<number, string[]> = {
+          0: ['sunday'],
+          1: ['monday'],
+          2: ['tuesday'],
+          3: ['wednesday'],
+          4: ['thursday'],
+          5: ['friday'],
+          6: ['saturday']
+        };
+        const todayNames = dayNames[todayDayOfWeek] || [];
+        
+        // Match if title contains today's day name OR if it's a generic recurring event
+        // (like "Live Music at Mars Resort" which happens multiple days)
+        const mentionsToday = todayNames.some(name => t.includes(name));
+        const isGenericRecurring = !Object.values(dayNames).flat().some(day => t.includes(day));
+        
+        return mentionsToday || isGenericRecurring;
+      });
+
       // Merge and deduplicate
-      const allEvents = [...(dateEvents || []), ...(fallbackEvents || [])] as MusicEvent[];
+      const allEvents = [...(dateEvents || []), ...matchingRecurring] as MusicEvent[];
       const seenIds = new Set<string>();
       const uniqueEvents = allEvents.filter(e => {
         if (seenIds.has(e.id)) return false;
@@ -249,7 +290,7 @@ export default function LiveMusicWidget() {
     staleTime: 300000,
   });
 
-  // Weekend events - use event_date column
+  // Weekend events - use event_date column plus recurring events
   const { data: weekendEvents } = useQuery({
     queryKey: ["live-music-weekend", saturdayStr, sundayStr],
     queryFn: async () => {
@@ -293,50 +334,62 @@ export default function LiveMusicWidget() {
         console.error("[LiveMusicWidget] Error loading Sunday events", sunError);
       }
 
-      // Fallback: if no events with event_date, check title keywords in recent events
-      if ((!satEvents || satEvents.length === 0) && (!sunEvents || sunEvents.length === 0)) {
-        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        
-        const { data: fallback } = await supabase
-          .from("content_queue")
-          .select("id, title, publish_date, original_url, metadata, event_date, event_time, performer, created_at")
-          .in("status", ["approved", "auto_published", "published"])
-          .eq("safety_level", "safe")
-          .eq("category", "events")
-          .contains("metadata", { verticals: ["nightlife"] })
-          .is("event_date", null)
-          .gte("created_at", weekAgo.toISOString())
-          .limit(20);
+      // Also fetch recurring events (no event_date) to fill gaps
+      const { data: recurringEvents } = await supabase
+        .from("content_queue")
+        .select("id, title, publish_date, original_url, metadata, event_date, event_time, performer, created_at")
+        .in("status", ["approved", "auto_published", "published"])
+        .eq("safety_level", "safe")
+        .eq("category", "events")
+        .contains("metadata", { verticals: ["nightlife"] })
+        .is("event_date", null)
+        .order("created_at", { ascending: false })
+        .limit(30);
 
-        const satFallback: MusicEvent[] = [];
-        const sunFallback: MusicEvent[] = [];
-
-        for (const event of (fallback as MusicEvent[]) || []) {
-          const title = event.title.toLowerCase();
-          if (title.includes('saturday') || title.includes('sat ')) {
-            satFallback.push(event);
-          } else if (title.includes('sunday') || title.includes('sun ')) {
-            sunFallback.push(event);
-          }
+      // Filter recurring events by day of week mentioned in title
+      const satRecurring: MusicEvent[] = [];
+      const sunRecurring: MusicEvent[] = [];
+      
+      for (const event of (recurringEvents as MusicEvent[]) || []) {
+        const t = event.title.toLowerCase();
+        // Check for Saturday
+        if (t.includes('saturday')) {
+          satRecurring.push(event);
         }
-
-        // Filter to music only
-        const satMusic = satFallback.filter(isLiveMusicEvent);
-        const sunMusic = sunFallback.filter(isLiveMusicEvent);
-
-        return {
-          saturday: deduplicateByVenue(satMusic, 3),
-          sunday: deduplicateByVenue(sunMusic, 3)
-        };
+        // Check for Sunday
+        if (t.includes('sunday')) {
+          sunRecurring.push(event);
+        }
+        // Generic recurring events (no day specified) - show on both days
+        const mentionsAnyDay = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+          .some(day => t.includes(day));
+        if (!mentionsAnyDay) {
+          // It's a generic "Live Music at Venue" event - add to both weekend days
+          satRecurring.push(event);
+          sunRecurring.push(event);
+        }
       }
 
-      // Filter to music only
-      const satMusic = ((satEvents as MusicEvent[]) || []).filter(isLiveMusicEvent);
-      const sunMusic = ((sunEvents as MusicEvent[]) || []).filter(isLiveMusicEvent);
+      // Merge dated events with recurring events
+      const allSat = [...(satEvents as MusicEvent[] || []), ...satRecurring];
+      const allSun = [...(sunEvents as MusicEvent[] || []), ...sunRecurring];
+
+      // Deduplicate by ID
+      const dedupeById = (events: MusicEvent[]): MusicEvent[] => {
+        const seen = new Set<string>();
+        return events.filter(e => {
+          if (seen.has(e.id)) return false;
+          seen.add(e.id);
+          return true;
+        });
+      };
+
+      const satMusic = dedupeById(allSat).filter(isLiveMusicEvent);
+      const sunMusic = dedupeById(allSun).filter(isLiveMusicEvent);
 
       return {
-        saturday: deduplicateByVenue(satMusic, 3),
-        sunday: deduplicateByVenue(sunMusic, 3)
+        saturday: deduplicateByVenue(satMusic, 4),
+        sunday: deduplicateByVenue(sunMusic, 4)
       };
     },
     staleTime: 300000,
