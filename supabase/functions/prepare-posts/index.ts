@@ -402,15 +402,17 @@ serve(async (req) => {
           continue;
         }
         
-        // Check if already queued
+        // Check if already queued or sent (prevent duplicates)
         const { data: existing } = await supabaseClient
           .from("post_queue")
-          .select("id")
+          .select("id, status")
           .eq("story_id", story.id)
           .eq("platform", platform)
-          .single();
+          .in("status", ["pending", "sent", "simulated"])
+          .maybeSingle();
 
         if (existing) {
+          console.log(`[prepare-posts] Skipping ${platform} for story ${story.id} - already ${existing.status}`);
           continue;
         }
 
