@@ -268,18 +268,39 @@ function matchesRecurringDay(title: string, targetDayOfWeek: number): boolean {
 }
 
 function deduplicateByVenue(events: MusicEvent[], limit: number): MusicEvent[] {
-  const seenVenues = new Set<string>();
-  const uniqueEvents: MusicEvent[] = [];
+  // Group events by venue
+  const eventsByVenue = new Map<string, MusicEvent[]>();
   
   for (const event of events) {
     const venue = extractVenue(event.title).toLowerCase();
-    if (venue && seenVenues.has(venue)) continue;
-    if (venue) seenVenues.add(venue);
-    uniqueEvents.push(event);
-    if (uniqueEvents.length >= limit) break;
+    const key = venue || event.id; // Use ID if no venue extracted
+    if (!eventsByVenue.has(key)) {
+      eventsByVenue.set(key, []);
+    }
+    eventsByVenue.get(key)!.push(event);
   }
   
-  return uniqueEvents;
+  // For each venue, pick the event with most complete data
+  const uniqueEvents: MusicEvent[] = [];
+  for (const venueEvents of eventsByVenue.values()) {
+    // Sort by data completeness: prefer events with performer AND time
+    const sorted = venueEvents.sort((a, b) => {
+      const aScore = (a.performer ? 2 : 0) + (a.event_time ? 1 : 0);
+      const bScore = (b.performer ? 2 : 0) + (b.event_time ? 1 : 0);
+      return bScore - aScore; // Higher score = more complete = first
+    });
+    uniqueEvents.push(sorted[0]);
+  }
+  
+  // Sort final list by event_time if available, then return limited
+  return uniqueEvents
+    .sort((a, b) => {
+      // Prefer events with times, sort by time
+      if (a.event_time && !b.event_time) return -1;
+      if (!a.event_time && b.event_time) return 1;
+      return 0;
+    })
+    .slice(0, limit);
 }
 
 export default function LiveMusicWidget() {
