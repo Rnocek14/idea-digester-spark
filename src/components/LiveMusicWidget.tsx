@@ -82,13 +82,18 @@ function deduplicateByVenue(events: MusicEvent[], limit: number): MusicEvent[] {
 }
 
 export default function LiveMusicWidget() {
-  // Tonight's events (ingested today)
+  // Tonight's events (ingested today) - use UTC midnight to match ingestion pipeline
   const { data: tonightEvents } = useQuery({
     queryKey: ["live-music-tonight"],
     queryFn: async () => {
       const now = new Date();
-      const todayMidnight = new Date(now);
-      todayMidnight.setHours(0, 0, 0, 0);
+      // Use UTC midnight to match ingestion pipeline timing
+      const utcMidnight = new Date(Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate(),
+        0, 0, 0, 0
+      ));
       
       const { data, error } = await supabase
         .from("content_queue")
@@ -97,7 +102,7 @@ export default function LiveMusicWidget() {
         .eq("safety_level", "safe")
         .eq("category", "events")
         .contains("metadata", { verticals: ["nightlife"] })
-        .gte("created_at", todayMidnight.toISOString())
+        .gte("created_at", utcMidnight.toISOString())
         .order("publish_date", { ascending: true })
         .limit(12);
 
