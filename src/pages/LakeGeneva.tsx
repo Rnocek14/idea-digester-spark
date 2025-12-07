@@ -1108,16 +1108,25 @@ const LakeGeneva = () => {
 
         </div>
 
+        {/* Left shoulder - Live Music - xl screens only */}
+        <aside 
+          className="hidden xl:block fixed top-28 left-4"
+          style={{ width: 'calc((100vw - 896px) / 2 - 24px)', minWidth: '180px', maxWidth: '280px' }}
+        >
+          <div className="max-h-[calc(100vh-8rem)] overflow-y-auto">
+            <LiveMusicWidget />
+          </div>
+        </aside>
+
         {/* Floating sidebar in right margin - xl screens only */}
         {isSidebarVisible ? (
           <aside 
             className="hidden xl:block fixed top-28 right-4"
             style={{ width: 'calc((100vw - 896px) / 2 - 24px)', minWidth: '180px', maxWidth: '280px' }}
           >
-            <div className="space-y-4">
+            <div className="space-y-4 max-h-[calc(100vh-8rem)] overflow-y-auto">
               <LiveIncidentsSidebar onHide={() => setIsSidebarVisible(false)} showCloseButton />
               <WeekendSidebarWidget />
-              <LiveMusicWidget />
             </div>
           </aside>
         ) : hasActiveIncidents ? (
