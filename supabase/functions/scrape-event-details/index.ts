@@ -45,24 +45,78 @@ function formatTimeRange(start: string, end?: string): string {
   return normalizedStart;
 }
 
+// Venue keywords to filter out from performer extraction
+const VENUE_KEYWORDS = [
+  'pier', 'resort', 'bar', 'tap house', 'lookout', 'mansion', 'abbey', 
+  'evolve', 'topsy turvy', 'hogs', 'kisses', 'grand geneva', 'lake lawn',
+  'mars', 'baker house', 'maxwell', 'club', 'lounge', 'restaurant',
+  'grill', 'pub', 'tavern', 'inn', 'hotel', 'casino'
+];
+
+// Garbage text patterns that should not be performers
+const GARBAGE_PATTERNS = [
+  'humor', 'wit', 'joyous', 'wonderful', 'amazing', 'incredible', 
+  'enjoy', 'welcome', 'experience', 'celebration', 'featuring live',
+  'live music', 'every', 'cocktail', 'drink', 'special', 'event'
+];
+
+// Validate that extracted performer is actually a person/band name
+function isValidPerformer(performer: string, title?: string): boolean {
+  if (!performer || performer.length < 2 || performer.length > 50) return false;
+  
+  const lower = performer.toLowerCase();
+  
+  // Reject if starts with venue prefix
+  if (lower.startsWith('at ') || lower.startsWith('@ ') || lower.startsWith('the ')) return false;
+  
+  // Reject venue names
+  if (VENUE_KEYWORDS.some(kw => lower.includes(kw))) return false;
+  
+  // Reject garbage promotional text
+  if (GARBAGE_PATTERNS.some(pattern => lower.includes(pattern))) return false;
+  
+  // Reject if too similar to title (likely venue/event name)
+  if (title && lower === title.toLowerCase()) return false;
+  
+  // Reject URLs
+  if (lower.includes('http') || lower.includes('www.')) return false;
+  
+  return true;
+}
+
 // Extract performer from text
 function extractPerformerFromText(text: string, title?: string): string | null {
-  // First try to extract from title if it follows "Live Music: Artist" pattern
+  // Try to extract from title patterns like "LIVE MUSIC AT THE LOOKOUT: KEVIN KENNEDY"
   if (title) {
-    const titleMatch = title.match(/live\s+music[:\s-]+(.+)/i);
-    if (titleMatch) {
-      const performer = titleMatch[1].trim();
-      if (performer.length > 2 && performer.length < 80) {
+    // Pattern: "VENUE: PERFORMER NAME"
+    const colonMatch = title.match(/:\s*([^:]+?)\s*$/i);
+    if (colonMatch) {
+      const performer = colonMatch[1].trim();
+      if (isValidPerformer(performer, title)) {
+        return performer;
+      }
+    }
+    
+    // Pattern: "Live Music - Artist Name" or "Live: Artist"
+    const liveMusicMatch = title.match(/live\s*(?:music)?[:\s-]+(.+)/i);
+    if (liveMusicMatch) {
+      const performer = liveMusicMatch[1].trim();
+      // Clean up "AT VENUE: PERFORMER" pattern
+      const afterColon = performer.match(/:\s*(.+)/);
+      if (afterColon && isValidPerformer(afterColon[1], title)) {
+        return afterColon[1].trim();
+      }
+      if (isValidPerformer(performer, title)) {
         return performer;
       }
     }
   }
   
-  // Pattern: "Live Music: Artist Name" - avoid markdown links
-  const liveMusicMatch = text.match(/live\s+music[:\s-]+([^[\n\r@|]+?)(?:\s*[@\-–|]|\s*\[|\s*\n|\s*$)/i);
-  if (liveMusicMatch) {
-    const performer = liveMusicMatch[1].trim();
-    if (performer.length > 2 && performer.length < 80 && !performer.toLowerCase().includes('every')) {
+  // Pattern: "Live Music: Artist Name" in body text
+  const liveMusicBodyMatch = text.match(/live\s+music[:\s-]+([^[\n\r@|]+?)(?:\s*[@\-–|]|\s*\[|\s*\n|\s*$)/i);
+  if (liveMusicBodyMatch) {
+    const performer = liveMusicBodyMatch[1].trim();
+    if (isValidPerformer(performer, title)) {
       return performer;
     }
   }
@@ -70,32 +124,18 @@ function extractPerformerFromText(text: string, title?: string): string | null {
   // Pattern: "featuring Artist Name"
   const featMatch = text.match(/(?:featuring|feat\.?)\s+([^\n\r,@]+)/i);
   if (featMatch) {
-    return featMatch[1].trim();
+    const performer = featMatch[1].trim();
+    if (isValidPerformer(performer, title)) {
+      return performer;
+    }
   }
   
   // Pattern: "with Artist Name"
   const withMatch = text.match(/\bwith\s+([A-Z][^\n\r,@]+?)(?:\s*[-–@]|\s*\n|\s*$)/i);
   if (withMatch) {
     const performer = withMatch[1].trim();
-    if (performer.length > 2 && performer.length < 60) {
+    if (isValidPerformer(performer, title)) {
       return performer;
-    }
-  }
-  
-  // If title looks like a performer name (2-4 words, capitalized)
-  if (title) {
-    const words = title.trim().split(/\s+/);
-    if (words.length >= 2 && words.length <= 5) {
-      const allCapitalized = words.every(w => /^[A-Z]/.test(w) || /^(the|and|of|&)$/i.test(w));
-      const looksLikeName = allCapitalized && 
-        !title.toLowerCase().includes('live music') && 
-        !title.toLowerCase().includes('event') && 
-        !title.toLowerCase().includes('special') &&
-        !title.toLowerCase().includes('fish fry') &&
-        !title.toLowerCase().includes('ladies night');
-      if (looksLikeName) {
-        return title.trim();
-      }
     }
   }
   
