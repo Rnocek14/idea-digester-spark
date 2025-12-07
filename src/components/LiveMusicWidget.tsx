@@ -34,6 +34,28 @@ function extractVenue(title: string): string {
   return '';
 }
 
+// Filter to only include actual live music events
+function isLiveMusicEvent(event: MusicEvent): boolean {
+  const title = event.title.toLowerCase();
+  const performer = event.performer?.toLowerCase() || '';
+  
+  // Must have "live music" in title OR have a performer listed
+  const hasLiveMusic = title.includes('live music') || title.includes('live:');
+  const hasPerformer = performer.length > 0 && !performer.includes('ladies') && !performer.includes('penn');
+  
+  // Exclude non-music events
+  const excludeKeywords = [
+    'ladies night', 'trivia', 'comedy', 'penn & teller', 'penn and teller',
+    'bingo', 'game night', 'wine tasting', 'wine night', 'paint night',
+    'yoga', 'brunch', 'wonderful!', 'magic show', 'poker'
+  ];
+  
+  const isExcluded = excludeKeywords.some(kw => title.includes(kw));
+  if (isExcluded) return false;
+  
+  return hasLiveMusic || hasPerformer;
+}
+
 function getEventEmoji(title: string, tags?: string[]): string {
   const t = title.toLowerCase();
   const tagList = tags?.join(' ') || '';
@@ -142,7 +164,9 @@ export default function LiveMusicWidget() {
         return true;
       });
 
-      return deduplicateByVenue(uniqueEvents, 5);
+      // Filter to only actual live music events
+      const musicOnly = uniqueEvents.filter(isLiveMusicEvent);
+      return deduplicateByVenue(musicOnly, 5);
     },
     staleTime: 300000,
   });
@@ -218,15 +242,23 @@ export default function LiveMusicWidget() {
           }
         }
 
+        // Filter to music only
+        const satMusic = satFallback.filter(isLiveMusicEvent);
+        const sunMusic = sunFallback.filter(isLiveMusicEvent);
+
         return {
-          saturday: deduplicateByVenue(satFallback, 3),
-          sunday: deduplicateByVenue(sunFallback, 3)
+          saturday: deduplicateByVenue(satMusic, 3),
+          sunday: deduplicateByVenue(sunMusic, 3)
         };
       }
 
+      // Filter to music only
+      const satMusic = ((satEvents as MusicEvent[]) || []).filter(isLiveMusicEvent);
+      const sunMusic = ((sunEvents as MusicEvent[]) || []).filter(isLiveMusicEvent);
+
       return {
-        saturday: deduplicateByVenue((satEvents as MusicEvent[]) || [], 3),
-        sunday: deduplicateByVenue((sunEvents as MusicEvent[]) || [], 3)
+        saturday: deduplicateByVenue(satMusic, 3),
+        sunday: deduplicateByVenue(sunMusic, 3)
       };
     },
     staleTime: 300000,
@@ -262,12 +294,13 @@ export default function LiveMusicWidget() {
                         href={e.original_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm font-medium text-slate-900 leading-snug line-clamp-1 hover:text-blue-600 transition-colors"
+                        className="text-sm font-medium text-slate-900 leading-snug hover:text-blue-600 transition-colors"
+                        title={venue || e.title}
                       >
                         {venue || e.title}
                       </a>
                     ) : (
-                      <p className="text-sm font-medium text-slate-900 leading-snug line-clamp-1">
+                      <p className="text-sm font-medium text-slate-900 leading-snug" title={venue || e.title}>
                         {venue || e.title}
                       </p>
                     )}
