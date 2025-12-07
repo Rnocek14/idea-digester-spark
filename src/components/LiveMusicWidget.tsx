@@ -8,14 +8,8 @@ type MusicEvent = {
   title: string;
   publish_date: string | null;
   original_url: string | null;
+  metadata: { verticals?: string[]; content_tags?: string[] } | null;
 };
-
-// Keywords to identify live music events
-const MUSIC_KEYWORDS = [
-  'live music', 'dj', 'band', 'concert', 'open mic', 
-  'karaoke', 'jazz', 'blues', 'speakeasy', 'dancing',
-  'dean martin', 'candlelight concert', 'musical'
-];
 
 function extractVenue(title: string): string {
   // Try to extract venue from common patterns like "Live Music @ VENUE" or "at VENUE"
@@ -54,13 +48,16 @@ function formatEventDate(dateString: string | null): string {
   return date.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
-function getEventEmoji(title: string): string {
+function getEventEmoji(title: string, tags?: string[]): string {
   const t = title.toLowerCase();
-  if (t.includes('dj') || t.includes('dancing')) return '🎧';
+  const tagList = tags?.join(' ') || '';
+  
+  if (t.includes('dj') || tagList.includes('dj')) return '🎧';
   if (t.includes('jazz') || t.includes('blues')) return '🎷';
   if (t.includes('christmas') || t.includes('holiday')) return '🎄';
   if (t.includes('candlelight')) return '🕯️';
   if (t.includes('karaoke')) return '🎤';
+  if (tagList.includes('late-night')) return '🌙';
   return '🎵';
 }
 
@@ -69,33 +66,29 @@ export default function LiveMusicWidget() {
     queryKey: ["live-music-sidebar"],
     queryFn: async () => {
       const now = new Date();
-      const weekFromNow = new Date(now);
-      weekFromNow.setDate(now.getDate() + 7);
-
-      // Build the ILIKE filter for music keywords
-      const keywordFilters = MUSIC_KEYWORDS.map(k => `title.ilike.%${k}%`).join(',');
       
+      // Query for nightlife vertical content (AI-tagged at ingestion)
       const { data, error } = await supabase
         .from("content_queue")
-        .select("id, title, publish_date, original_url")
+        .select("id, title, publish_date, original_url, metadata")
         .in("status", ["approved", "auto_published", "published"])
         .eq("safety_level", "safe")
         .eq("category", "events")
-        .or(keywordFilters)
-        .gte("created_at", new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString()) // Last 24 hours (fresh events)
-        .order("publish_date", { ascending: true })
-        .limit(8);
+        .contains("metadata", { verticals: ["nightlife"] })
+        .gte("created_at", new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString())
+        .order("created_at", { ascending: false })
+        .limit(12);
 
       if (error) {
         console.error("[LiveMusicWidget] Error loading events", error);
         return [];
       }
 
-      // Deduplicate by venue (keep only the soonest event per venue)
+      // Deduplicate by venue (keep only the most recent per venue)
       const seenVenues = new Set<string>();
-      const uniqueEvents: typeof data = [];
+      const uniqueEvents: MusicEvent[] = [];
       
-      for (const event of data || []) {
+      for (const event of (data as MusicEvent[]) || []) {
         const venue = extractVenue(event.title).toLowerCase();
         if (venue && seenVenues.has(venue)) continue;
         if (venue) seenVenues.add(venue);
@@ -125,7 +118,7 @@ export default function LiveMusicWidget() {
           const venue = extractVenue(e.title);
           return (
             <li key={e.id} className="flex gap-2 items-start">
-              <span className="mt-0.5 text-sm">{getEventEmoji(e.title)}</span>
+              <span className="mt-0.5 text-sm">{getEventEmoji(e.title, e.metadata?.content_tags)}</span>
               <div className="flex-1 min-w-0">
                 {e.original_url ? (
                   <a 
