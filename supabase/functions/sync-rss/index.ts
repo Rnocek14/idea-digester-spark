@@ -56,6 +56,60 @@ function isRecurringEvent(title: string): boolean {
          lowerTitle.includes('monthly ');
 }
 
+// Get the next occurrence of a specific day of week (0=Sunday, 6=Saturday)
+function getNextDayOfWeek(dayOfWeek: number): Date {
+  const now = new Date();
+  const currentDay = now.getDay();
+  let daysUntil = dayOfWeek - currentDay;
+  if (daysUntil <= 0) daysUntil += 7; // If it's already passed this week, get next week
+  const nextDate = new Date(now);
+  nextDate.setDate(now.getDate() + daysUntil);
+  nextDate.setHours(0, 0, 0, 0);
+  return nextDate;
+}
+
+// Parse event date from title/content patterns (recurring weekly events, specific dates)
+function parseEventDate(title: string, content?: string): Date | null {
+  const text = `${title} ${content || ''}`.toLowerCase();
+  
+  // Check for day-of-week patterns (recurring events)
+  const dayPatterns: { pattern: RegExp; day: number }[] = [
+    { pattern: /\b(every\s+)?sunday/i, day: 0 },
+    { pattern: /\b(every\s+)?monday/i, day: 1 },
+    { pattern: /\b(every\s+)?tuesday/i, day: 2 },
+    { pattern: /\b(every\s+)?wednesday/i, day: 3 },
+    { pattern: /\b(every\s+)?thursday/i, day: 4 },
+    { pattern: /\b(every\s+)?friday/i, day: 5 },
+    { pattern: /\b(every\s+)?saturday/i, day: 6 },
+  ];
+  
+  for (const { pattern, day } of dayPatterns) {
+    if (pattern.test(text)) {
+      return getNextDayOfWeek(day);
+    }
+  }
+  
+  // Check for specific date patterns like "December 7, 2025" or "12/7/2025"
+  const specificDateMatch = text.match(/([a-z]+)\s+(\d{1,2}),?\s+(\d{4})/i);
+  if (specificDateMatch) {
+    const parsed = new Date(`${specificDateMatch[1]} ${specificDateMatch[2]}, ${specificDateMatch[3]}`);
+    if (!isNaN(parsed.getTime())) {
+      return parsed;
+    }
+  }
+  
+  // Check for MM/DD/YYYY or M/D/YYYY
+  const slashDateMatch = text.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (slashDateMatch) {
+    const parsed = new Date(`${slashDateMatch[1]}/${slashDateMatch[2]}/${slashDateMatch[3]}`);
+    if (!isNaN(parsed.getTime())) {
+      return parsed;
+    }
+  }
+  
+  return null;
+}
+
 // Parse flexible date formats (handles "December 17, 2025, 3:00 PM - 8:30 PM", "All Day", etc.)
 function parseFlexibleDate(dateStr: string): string {
   if (!dateStr) return new Date().toISOString();
@@ -903,6 +957,20 @@ When in doubt between safe and sensitive, choose sensitive. Only use blocked for
           
           console.log(`📋 Story "${title.substring(0, 40)}..." → category: ${aiCategory}, safety: ${safetyLevel}, status: ${status}, priority: ${priorityScore}, geo: tier${geoTier}`);
 
+          // Parse actual event date for nightlife/events content
+          const isNightlifeContent = aiResult.verticals?.includes('nightlife') || 
+                                     aiCategory === 'events' ||
+                                     source.metadata?.default_nightlife === true;
+          let eventDate: string | null = null;
+          
+          if (isNightlifeContent) {
+            const parsedEventDate = parseEventDate(title, rawContent);
+            if (parsedEventDate) {
+              eventDate = parsedEventDate.toISOString().split('T')[0]; // Just the date part (YYYY-MM-DD)
+              console.log(`📅 Parsed event date for "${title.substring(0, 40)}...": ${eventDate}`);
+            }
+          }
+
           // Insert into content_queue
           const { error: insertError } = await supabase
             .from("content_queue")
@@ -916,6 +984,7 @@ When in doubt between safe and sensitive, choose sensitive. Only use blocked for
               image_url: imageUrl,
               image_source: imageSource,
               publish_date: parseFlexibleDate(pubDate),
+              event_date: eventDate,
               status,
               safety_level: aiResult.safety_level || "safe",
               safety_tags: aiResult.safety_tags || [],
@@ -928,6 +997,7 @@ When in doubt between safe and sensitive, choose sensitive. Only use blocked for
                 source_name: source.name,
                 original_published_at: pubDate,
                 raw_event_date: pubDate,
+                event_date: eventDate,
                 location_tags: source.metadata?.location_tags || ["Lake Geneva"],
                 ai_model: "gpt-4o-mini",
                 content_tags: aiResult.content_tags || [],

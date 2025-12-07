@@ -316,6 +316,7 @@ export type Database = {
           content_website: string | null
           content_x: string | null
           created_at: string
+          event_date: string | null
           geo_label: string | null
           geo_tier: number | null
           id: string
@@ -353,6 +354,7 @@ export type Database = {
           content_website?: string | null
           content_x?: string | null
           created_at?: string
+          event_date?: string | null
           geo_label?: string | null
           geo_tier?: number | null
           id?: string
@@ -390,6 +392,7 @@ export type Database = {
           content_website?: string | null
           content_x?: string | null
           created_at?: string
+          event_date?: string | null
           geo_label?: string | null
           geo_tier?: number | null
           id?: string
