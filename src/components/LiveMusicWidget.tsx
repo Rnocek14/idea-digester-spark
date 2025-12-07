@@ -15,17 +15,39 @@ type MusicEvent = {
   created_at: string;
 };
 
+// Known venues for extraction and validation
+const KNOWN_VENUES = [
+  'Geneva Tap House', 'PIER 290', 'Mars Resort', 'The Lookout Bar', 'The Lookout',
+  'Evolve', 'Baker House', 'Hogs & Kisses', 'Topsy Turvy',
+  'Maxwell Mansion', 'Abbey Resort', 'Lake Lawn Resort', 'Grand Geneva',
+  'Pier 290', 'Lookout Bar'
+];
+
+// Keywords that indicate garbage performer data
+const GARBAGE_PERFORMER_KEYWORDS = [
+  'http', 'ladies', 'penn', 'humor', 'wit', 'casino', 'cocktail', 
+  'fish fry', 'carson hall', 'resort', 'pier', 'bar', 'tap house',
+  'enjoy', 'live music', 'featuring', 'every', 'welcome', 'joyous',
+  'wonderful', 'amazing', 'experience', '@', 'at the', 'lookout'
+];
+
 function extractVenue(title: string): string {
-  const atMatch = title.match(/(?:@|at)\s+(.+?)(?:\s*[-–]|$)/i);
-  if (atMatch) return atMatch[1].trim();
+  // Pattern: "LIVE MUSIC AT THE LOOKOUT: PERFORMER" -> "The Lookout"
+  const atVenueMatch = title.match(/(?:@|at\s+(?:the\s+)?)([\w\s]+?)(?:\s*[:\-–]|$)/i);
+  if (atVenueMatch) {
+    const venue = atVenueMatch[1].trim();
+    // Verify it's a known venue
+    for (const known of KNOWN_VENUES) {
+      if (known.toLowerCase().includes(venue.toLowerCase()) || 
+          venue.toLowerCase().includes(known.toLowerCase().replace('the ', ''))) {
+        return known;
+      }
+    }
+    return venue;
+  }
   
-  const venues = [
-    'Geneva Tap House', 'PIER 290', 'Mars Resort', 'The Lookout Bar',
-    'Evolve', 'Baker House', 'Hogs & Kisses', 'Topsy Turvy',
-    'Maxwell Mansion', 'Abbey Resort', 'Lake Lawn Resort', 'Grand Geneva'
-  ];
-  
-  for (const venue of venues) {
+  // Check for known venues in title
+  for (const venue of KNOWN_VENUES) {
     if (title.toLowerCase().includes(venue.toLowerCase())) {
       return venue;
     }
@@ -34,41 +56,82 @@ function extractVenue(title: string): string {
   return '';
 }
 
+// Extract performer name from title like "LIVE MUSIC AT THE LOOKOUT: KEVIN KENNEDY"
+function extractPerformerFromTitle(title: string): string | null {
+  // Pattern: "VENUE: PERFORMER" or "LIVE MUSIC AT VENUE: PERFORMER"
+  const colonMatch = title.match(/:\s*([^:]+?)\s*$/i);
+  if (colonMatch) {
+    const performer = colonMatch[1].trim();
+    if (isCleanPerformer(performer, title)) {
+      return cleanPerformerName(performer);
+    }
+  }
+  return null;
+}
+
+// Clean performer name (proper casing, trimming)
+function cleanPerformerName(name: string): string {
+  if (!name) return name;
+  // Title case the name
+  return name.split(' ').map(word => 
+    word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+  ).join(' ');
+}
+
+// Validate performer is actually a person/band name, not garbage
+function isCleanPerformer(performer: string | null, title?: string): boolean {
+  if (!performer) return false;
+  const lower = performer.toLowerCase();
+  
+  // Too short or too long
+  if (performer.length < 2 || performer.length > 50) return false;
+  
+  // Contains garbage keywords
+  if (GARBAGE_PERFORMER_KEYWORDS.some(kw => lower.includes(kw))) return false;
+  
+  // Is same as title (likely venue name repeated)
+  if (title && lower === title.toLowerCase()) return false;
+  
+  // Starts with venue-like prefixes
+  if (lower.startsWith('at ') || lower.startsWith('the ')) return false;
+  
+  return true;
+}
+
+// Get clean performer for display
+function getDisplayPerformer(event: MusicEvent): string | null {
+  // First try to extract from title (most reliable for our data)
+  const fromTitle = extractPerformerFromTitle(event.title);
+  if (fromTitle) return fromTitle;
+  
+  // Then try database performer if valid
+  if (event.performer && isCleanPerformer(event.performer, event.title)) {
+    return cleanPerformerName(event.performer);
+  }
+  
+  return null;
+}
+
 // Filter to only include actual live music events
 function isLiveMusicEvent(event: MusicEvent): boolean {
   const title = event.title.toLowerCase();
-  const performer = event.performer?.toLowerCase() || '';
   
-  // FIRST: Hard exclude non-music events by title (highest priority)
+  // Hard exclude non-music events by title
   const excludeTitleKeywords = [
     'ladies night', 'trivia', 'comedy', 'penn & teller', 'penn and teller',
     'bingo', 'game night', 'wine tasting', 'wine night', 'paint night',
     'yoga', 'brunch', 'wonderful!', 'magic show', 'poker', 'fish fry',
     'new year', 'happy new year', 'thank you for attending', 'casino',
-    'skeptics', 'las vegas headliners'
+    'skeptics', 'las vegas headliners', 'carson hall', 'thank you'
   ];
   
-  const isTitleExcluded = excludeTitleKeywords.some(kw => title.includes(kw));
-  if (isTitleExcluded) return false;
+  if (excludeTitleKeywords.some(kw => title.includes(kw))) return false;
   
-  // SECOND: Validate performer field is actually a person name (not garbage text)
-  const isValidPerformer = performer.length > 0 && 
-    performer.length < 50 && // Real names are short
-    !performer.includes('http') &&
-    !performer.includes('ladies') &&
-    !performer.includes('penn') &&
-    !performer.includes('humor') &&
-    !performer.includes('wit') &&
-    !performer.includes('casino') &&
-    !performer.includes('cocktail') &&
-    !performer.includes('fish fry') &&
-    !performer.includes('carson hall') &&
-    performer !== title.toLowerCase(); // Performer shouldn't match title
-  
-  // Must have "live music" in title OR have a valid performer
+  // Must have "live music" in title, OR have a clean performer
   const hasLiveMusic = title.includes('live music') || title.includes('live:');
+  const hasCleanPerformer = getDisplayPerformer(event) !== null;
   
-  return hasLiveMusic || isValidPerformer;
+  return hasLiveMusic || hasCleanPerformer;
 }
 
 function getEventEmoji(title: string, tags?: string[]): string {
@@ -299,7 +362,7 @@ export default function LiveMusicWidget() {
           <ul className="space-y-2.5">
             {tonightEvents.map((e) => {
               const venue = extractVenue(e.title);
-              const displayPerformer = e.performer || (venue ? null : e.title.replace(/.*?(?:@|at)\s*/i, '').substring(0, 40));
+              const displayPerformer = getDisplayPerformer(e);
               return (
                 <li key={e.id} className="flex gap-2 items-start">
                   <span className="mt-0.5 text-sm">{getEventEmoji(e.title, e.metadata?.content_tags)}</span>
@@ -320,7 +383,7 @@ export default function LiveMusicWidget() {
                       </p>
                     )}
                     {(displayPerformer || e.event_time) && (
-                      <p className="text-[11px] text-slate-500 mt-0.5 truncate">
+                      <p className="text-[11px] text-slate-500 mt-0.5">
                         {displayPerformer}{displayPerformer && e.event_time && ' · '}{e.event_time}
                       </p>
                     )}
@@ -348,7 +411,7 @@ export default function LiveMusicWidget() {
               <ul className="space-y-2">
                 {weekendEvents!.saturday.map((e) => {
                   const venue = extractVenue(e.title);
-                  const displayPerformer = e.performer || null;
+                  const displayPerformer = getDisplayPerformer(e);
                   return (
                     <li key={e.id} className="flex gap-2 items-start">
                       <span className="mt-0.5 text-sm">{getEventEmoji(e.title, e.metadata?.content_tags)}</span>
@@ -387,7 +450,7 @@ export default function LiveMusicWidget() {
               <ul className="space-y-2">
                 {weekendEvents!.sunday.map((e) => {
                   const venue = extractVenue(e.title);
-                  const displayPerformer = e.performer || null;
+                  const displayPerformer = getDisplayPerformer(e);
                   return (
                     <li key={e.id} className="flex gap-2 items-start">
                       <span className="mt-0.5 text-sm">{getEventEmoji(e.title, e.metadata?.content_tags)}</span>
