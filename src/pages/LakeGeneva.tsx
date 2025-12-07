@@ -11,6 +11,7 @@ import { StoryCard } from "@/components/StoryCard";
 import WeatherWidget from "@/components/WeatherWidget";
 import LiveIncidentsSidebar from "@/components/LiveIncidentsSidebar";
 import WeekendSidebarWidget from "@/components/WeekendSidebarWidget";
+import LiveMusicWidget from "@/components/LiveMusicWidget";
 import AlsoTodayCard from "@/components/AlsoTodayCard";
 import { InlineSubscribeCTA } from "@/components/InlineSubscribeCTA";
 import { WelcomeModal } from "@/components/WelcomeModal";
@@ -1109,6 +1110,7 @@ const LakeGeneva = () => {
             <div className="space-y-4">
               <LiveIncidentsSidebar onHide={() => setIsSidebarVisible(false)} showCloseButton />
               <WeekendSidebarWidget />
+              <LiveMusicWidget />
             </div>
           </aside>
         ) : hasActiveIncidents ? (
@@ -1131,6 +1133,7 @@ const LakeGeneva = () => {
         <div className="xl:hidden mt-6 space-y-4">
           <LiveIncidentsSidebar />
           <WeekendSidebarWidget />
+          <LiveMusicWidget />
         </div>
       </div>
     </PageShell>
