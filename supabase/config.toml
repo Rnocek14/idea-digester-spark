@@ -86,3 +86,6 @@ verify_jwt = false
 
 [functions.backfill-events-firecrawl]
 verify_jwt = false
+
+[functions.backfill-recurring-days]
+verify_jwt = false
