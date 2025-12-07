@@ -113,7 +113,7 @@ export default function LiveMusicWidget() {
       <div className="flex items-center gap-2 mb-3">
         <Music className="h-4 w-4 text-purple-600" />
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-          Live Music
+          Live Tonight
         </p>
       </div>
       
@@ -138,15 +138,11 @@ export default function LiveMusicWidget() {
                     {venue || e.title}
                   </p>
                 )}
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                  {formatEventDate(e.publish_date)}
-                  {venue && e.title !== venue && (
-                    <span className="ml-1 text-slate-300">•</span>
-                  )}
-                  {venue && e.title !== venue && (
-                    <span className="ml-1 truncate">{e.title.replace(/.*?(?:@|at)\s*/i, '').substring(0, 25)}</span>
-                  )}
-                </p>
+                {venue && e.title !== venue && (
+                  <p className="text-[11px] text-slate-400 mt-0.5 truncate">
+                    {e.title.replace(/.*?(?:@|at)\s*/i, '').substring(0, 30)}
+                  </p>
+                )}
               </div>
             </li>
           );
