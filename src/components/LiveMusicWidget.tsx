@@ -67,6 +67,10 @@ export default function LiveMusicWidget() {
     queryFn: async () => {
       const now = new Date();
       
+      // Filter for events ingested today only (to avoid showing yesterday's events)
+      const todayMidnight = new Date(now);
+      todayMidnight.setHours(0, 0, 0, 0);
+      
       // Query for nightlife vertical content (AI-tagged at ingestion)
       const { data, error } = await supabase
         .from("content_queue")
@@ -75,8 +79,8 @@ export default function LiveMusicWidget() {
         .eq("safety_level", "safe")
         .eq("category", "events")
         .contains("metadata", { verticals: ["nightlife"] })
-        .gte("created_at", new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString())
-        .order("created_at", { ascending: false })
+        .gte("created_at", todayMidnight.toISOString())
+        .order("publish_date", { ascending: true })
         .limit(12);
 
       if (error) {
