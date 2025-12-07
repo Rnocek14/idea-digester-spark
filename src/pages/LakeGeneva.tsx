@@ -1113,7 +1113,7 @@ const LakeGeneva = () => {
           className="hidden xl:block fixed top-28 left-4"
           style={{ width: 'calc((100vw - 896px) / 2 - 24px)', minWidth: '180px', maxWidth: '280px' }}
         >
-          <div className="max-h-[calc(100vh-8rem)] overflow-y-auto rounded-2xl shadow-md">
+          <div className="max-h-[calc(100vh-8rem)] overflow-y-auto rounded-2xl shadow-lg">
             <LiveMusicWidget />
           </div>
         </aside>
