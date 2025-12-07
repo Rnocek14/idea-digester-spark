@@ -67,7 +67,22 @@ const GARBAGE_PERFORMER_KEYWORDS = [
   'http', 'ladies', 'penn', 'humor', 'wit', 'casino', 'cocktail', 
   'fish fry', 'carson hall', 'resort', 'pier', 'bar', 'tap house',
   'enjoy', 'live music', 'featuring', 'every', 'welcome', 'joyous',
-  'wonderful', 'amazing', 'experience', '@', 'at the', 'lookout'
+  'wonderful', 'amazing', 'experience', '@', 'at the', 'lookout',
+  // Sentence fragments / descriptions
+  'the first', 'the second', 'the third', 'of each', 'during the',
+  'such as', 'songs of', 'your meal', 'afternoon', 'evening',
+  'contemporaries', 'menu', 'dinner', 'lunch', 'brunch',
+  'wednesday', 'thursday', 'friday', 'saturday', 'sunday', 'monday', 'tuesday'
+];
+
+// Patterns that indicate truncated sentences or garbage
+const GARBAGE_PERFORMER_PATTERNS = [
+  /…$/, // Ends with ellipsis
+  /\.\.\.$/, // Ends with ...
+  /\b(the|of|and|with|your|each|from|such|as|for|on|in|to)\s+(the|of|and|with|your|each|from|such|as|for|on|in|to)\b/i, // Multiple articles/prepositions
+  /\b(enjoy|featuring|experience|welcome|menu|meal)\b/i, // Description words
+  /^\d/, // Starts with number
+  /[<>{}[\]]/, // Contains brackets
 ];
 
 function extractVenue(title: string): string {
@@ -131,17 +146,24 @@ function isCleanPerformer(performer: string | null, title?: string): boolean {
   if (!performer) return false;
   const lower = performer.toLowerCase();
   
-  // Too short or too long
-  if (performer.length < 2 || performer.length > 50) return false;
+  // Too short or too long (40 is more realistic max for a performer name)
+  if (performer.length < 2 || performer.length > 40) return false;
   
   // Contains garbage keywords
   if (GARBAGE_PERFORMER_KEYWORDS.some(kw => lower.includes(kw))) return false;
+  
+  // Matches garbage patterns (truncated sentences, etc.)
+  if (GARBAGE_PERFORMER_PATTERNS.some(pattern => pattern.test(performer))) return false;
   
   // Is same as title (likely venue name repeated)
   if (title && lower === title.toLowerCase()) return false;
   
   // Starts with venue-like prefixes
   if (lower.startsWith('at ') || lower.startsWith('the ')) return false;
+  
+  // Contains too many words (likely a description, not a name)
+  const wordCount = performer.trim().split(/\s+/).length;
+  if (wordCount > 6) return false;
   
   return true;
 }
