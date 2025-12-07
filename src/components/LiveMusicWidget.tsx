@@ -8,7 +8,8 @@ type MusicEvent = {
   title: string;
   publish_date: string | null;
   original_url: string | null;
-  metadata: { verticals?: string[]; content_tags?: string[] } | null;
+  metadata: { verticals?: string[]; content_tags?: string[]; event_date?: string } | null;
+  event_date: string | null;
   created_at: string;
 };
 
@@ -19,7 +20,7 @@ function extractVenue(title: string): string {
   const venues = [
     'Geneva Tap House', 'PIER 290', 'Mars Resort', 'The Lookout Bar',
     'Evolve', 'Baker House', 'Hogs & Kisses', 'Topsy Turvy',
-    'Maxwell Mansion', 'Abbey Resort'
+    'Maxwell Mansion', 'Abbey Resort', 'Lake Lawn Resort', 'Grand Geneva'
   ];
   
   for (const venue of venues) {
@@ -44,7 +45,12 @@ function getEventEmoji(title: string, tags?: string[]): string {
   return '🎵';
 }
 
-function getUpcomingWeekend(): { saturday: Date; sunday: Date } {
+function getTodayDateString(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+}
+
+function getUpcomingWeekendDates(): { saturday: string; sunday: string } {
   const now = new Date();
   const dayOfWeek = now.getDay(); // 0 = Sunday, 6 = Saturday
   
@@ -52,18 +58,18 @@ function getUpcomingWeekend(): { saturday: Date; sunday: Date } {
   if (daysUntilSaturday === 0 && now.getHours() >= 18) {
     // It's Saturday evening, show next weekend
     daysUntilSaturday = 7;
-  } else if (daysUntilSaturday === 0) {
-    // It's Saturday, keep it
   }
   
   const saturday = new Date(now);
   saturday.setDate(now.getDate() + daysUntilSaturday);
-  saturday.setHours(0, 0, 0, 0);
   
   const sunday = new Date(saturday);
   sunday.setDate(saturday.getDate() + 1);
   
-  return { saturday, sunday };
+  const formatDate = (d: Date) => 
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  
+  return { saturday: formatDate(saturday), sunday: formatDate(sunday) };
 }
 
 function deduplicateByVenue(events: MusicEvent[], limit: number): MusicEvent[] {
@@ -82,96 +88,143 @@ function deduplicateByVenue(events: MusicEvent[], limit: number): MusicEvent[] {
 }
 
 export default function LiveMusicWidget() {
-  // Tonight's events (ingested today) - use UTC midnight to match ingestion pipeline
+  const todayStr = getTodayDateString();
+  const { saturday: saturdayStr, sunday: sundayStr } = getUpcomingWeekendDates();
+
+  // Tonight's events - use event_date column with fallback to title keywords
   const { data: tonightEvents } = useQuery({
-    queryKey: ["live-music-tonight"],
+    queryKey: ["live-music-tonight", todayStr],
     queryFn: async () => {
-      const now = new Date();
-      // Use UTC midnight to match ingestion pipeline timing
-      const utcMidnight = new Date(Date.UTC(
-        now.getUTCFullYear(),
-        now.getUTCMonth(),
-        now.getUTCDate(),
-        0, 0, 0, 0
-      ));
-      
-      const { data, error } = await supabase
+      // First try events with event_date = today
+      const { data: dateEvents, error: dateError } = await supabase
         .from("content_queue")
-        .select("id, title, publish_date, original_url, metadata, created_at")
+        .select("id, title, publish_date, original_url, metadata, event_date, created_at")
         .in("status", ["approved", "auto_published", "published"])
         .eq("safety_level", "safe")
         .eq("category", "events")
         .contains("metadata", { verticals: ["nightlife"] })
-        .gte("created_at", utcMidnight.toISOString())
-        .order("publish_date", { ascending: true })
-        .limit(12);
+        .eq("event_date", todayStr)
+        .order("created_at", { ascending: false })
+        .limit(10);
 
-      if (error) {
-        console.error("[LiveMusicWidget] Error loading tonight events", error);
-        return [];
+      if (dateError) {
+        console.error("[LiveMusicWidget] Error loading tonight events by date", dateError);
       }
 
-      return deduplicateByVenue((data as MusicEvent[]) || [], 5);
+      // Fallback: check for events ingested today without event_date (legacy)
+      const now = new Date();
+      const utcMidnight = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
+      
+      const { data: fallbackEvents, error: fallbackError } = await supabase
+        .from("content_queue")
+        .select("id, title, publish_date, original_url, metadata, event_date, created_at")
+        .in("status", ["approved", "auto_published", "published"])
+        .eq("safety_level", "safe")
+        .eq("category", "events")
+        .contains("metadata", { verticals: ["nightlife"] })
+        .is("event_date", null)
+        .gte("created_at", utcMidnight.toISOString())
+        .order("created_at", { ascending: false })
+        .limit(10);
+
+      if (fallbackError) {
+        console.error("[LiveMusicWidget] Error loading tonight fallback events", fallbackError);
+      }
+
+      // Merge and deduplicate
+      const allEvents = [...(dateEvents || []), ...(fallbackEvents || [])] as MusicEvent[];
+      const seenIds = new Set<string>();
+      const uniqueEvents = allEvents.filter(e => {
+        if (seenIds.has(e.id)) return false;
+        seenIds.add(e.id);
+        return true;
+      });
+
+      return deduplicateByVenue(uniqueEvents, 5);
     },
     staleTime: 300000,
   });
 
-  // Weekend events (Saturday and Sunday)
+  // Weekend events - use event_date column
   const { data: weekendEvents } = useQuery({
-    queryKey: ["live-music-weekend"],
+    queryKey: ["live-music-weekend", saturdayStr, sundayStr],
     queryFn: async () => {
-      const { saturday, sunday } = getUpcomingWeekend();
       const now = new Date();
       const dayOfWeek = now.getDay();
       
       // Only fetch weekend events if it's not already the weekend
-      // (If it's Saturday/Sunday, "tonight" already covers it)
       if (dayOfWeek === 0 || dayOfWeek === 6) {
         return { saturday: [], sunday: [] };
       }
       
-      const saturdayEnd = new Date(saturday);
-      saturdayEnd.setHours(23, 59, 59, 999);
-      
-      const sundayEnd = new Date(sunday);
-      sundayEnd.setHours(23, 59, 59, 999);
-      
-      // Query events created within the last 7 days that have weekend dates
-      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      
-      const { data, error } = await supabase
+      // Saturday events by event_date
+      const { data: satEvents, error: satError } = await supabase
         .from("content_queue")
-        .select("id, title, publish_date, original_url, metadata, created_at")
+        .select("id, title, publish_date, original_url, metadata, event_date, created_at")
         .in("status", ["approved", "auto_published", "published"])
         .eq("safety_level", "safe")
         .eq("category", "events")
         .contains("metadata", { verticals: ["nightlife"] })
-        .gte("created_at", weekAgo.toISOString())
-        .order("publish_date", { ascending: true })
-        .limit(20);
+        .eq("event_date", saturdayStr)
+        .order("created_at", { ascending: false })
+        .limit(5);
 
-      if (error) {
-        console.error("[LiveMusicWidget] Error loading weekend events", error);
-        return { saturday: [], sunday: [] };
+      if (satError) {
+        console.error("[LiveMusicWidget] Error loading Saturday events", satError);
       }
 
-      // Filter by weekend dates in title or metadata
-      const satEvents: MusicEvent[] = [];
-      const sunEvents: MusicEvent[] = [];
-      
-      for (const event of (data as MusicEvent[]) || []) {
-        const title = event.title.toLowerCase();
-        // Check for day mentions in title
-        if (title.includes('saturday') || title.includes('sat ')) {
-          satEvents.push(event);
-        } else if (title.includes('sunday') || title.includes('sun ')) {
-          sunEvents.push(event);
+      // Sunday events by event_date
+      const { data: sunEvents, error: sunError } = await supabase
+        .from("content_queue")
+        .select("id, title, publish_date, original_url, metadata, event_date, created_at")
+        .in("status", ["approved", "auto_published", "published"])
+        .eq("safety_level", "safe")
+        .eq("category", "events")
+        .contains("metadata", { verticals: ["nightlife"] })
+        .eq("event_date", sundayStr)
+        .order("created_at", { ascending: false })
+        .limit(5);
+
+      if (sunError) {
+        console.error("[LiveMusicWidget] Error loading Sunday events", sunError);
+      }
+
+      // Fallback: if no events with event_date, check title keywords in recent events
+      if ((!satEvents || satEvents.length === 0) && (!sunEvents || sunEvents.length === 0)) {
+        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        
+        const { data: fallback } = await supabase
+          .from("content_queue")
+          .select("id, title, publish_date, original_url, metadata, event_date, created_at")
+          .in("status", ["approved", "auto_published", "published"])
+          .eq("safety_level", "safe")
+          .eq("category", "events")
+          .contains("metadata", { verticals: ["nightlife"] })
+          .is("event_date", null)
+          .gte("created_at", weekAgo.toISOString())
+          .limit(20);
+
+        const satFallback: MusicEvent[] = [];
+        const sunFallback: MusicEvent[] = [];
+
+        for (const event of (fallback as MusicEvent[]) || []) {
+          const title = event.title.toLowerCase();
+          if (title.includes('saturday') || title.includes('sat ')) {
+            satFallback.push(event);
+          } else if (title.includes('sunday') || title.includes('sun ')) {
+            sunFallback.push(event);
+          }
         }
+
+        return {
+          saturday: deduplicateByVenue(satFallback, 3),
+          sunday: deduplicateByVenue(sunFallback, 3)
+        };
       }
 
       return {
-        saturday: deduplicateByVenue(satEvents, 3),
-        sunday: deduplicateByVenue(sunEvents, 3)
+        saturday: deduplicateByVenue((satEvents as MusicEvent[]) || [], 3),
+        sunday: deduplicateByVenue((sunEvents as MusicEvent[]) || [], 3)
       };
     },
     staleTime: 300000,
