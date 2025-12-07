@@ -39,21 +39,36 @@ function isLiveMusicEvent(event: MusicEvent): boolean {
   const title = event.title.toLowerCase();
   const performer = event.performer?.toLowerCase() || '';
   
-  // Must have "live music" in title OR have a performer listed
-  const hasLiveMusic = title.includes('live music') || title.includes('live:');
-  const hasPerformer = performer.length > 0 && !performer.includes('ladies') && !performer.includes('penn');
-  
-  // Exclude non-music events
-  const excludeKeywords = [
+  // FIRST: Hard exclude non-music events by title (highest priority)
+  const excludeTitleKeywords = [
     'ladies night', 'trivia', 'comedy', 'penn & teller', 'penn and teller',
     'bingo', 'game night', 'wine tasting', 'wine night', 'paint night',
-    'yoga', 'brunch', 'wonderful!', 'magic show', 'poker'
+    'yoga', 'brunch', 'wonderful!', 'magic show', 'poker', 'fish fry',
+    'new year', 'happy new year', 'thank you for attending', 'casino',
+    'skeptics', 'las vegas headliners'
   ];
   
-  const isExcluded = excludeKeywords.some(kw => title.includes(kw));
-  if (isExcluded) return false;
+  const isTitleExcluded = excludeTitleKeywords.some(kw => title.includes(kw));
+  if (isTitleExcluded) return false;
   
-  return hasLiveMusic || hasPerformer;
+  // SECOND: Validate performer field is actually a person name (not garbage text)
+  const isValidPerformer = performer.length > 0 && 
+    performer.length < 50 && // Real names are short
+    !performer.includes('http') &&
+    !performer.includes('ladies') &&
+    !performer.includes('penn') &&
+    !performer.includes('humor') &&
+    !performer.includes('wit') &&
+    !performer.includes('casino') &&
+    !performer.includes('cocktail') &&
+    !performer.includes('fish fry') &&
+    !performer.includes('carson hall') &&
+    performer !== title.toLowerCase(); // Performer shouldn't match title
+  
+  // Must have "live music" in title OR have a valid performer
+  const hasLiveMusic = title.includes('live music') || title.includes('live:');
+  
+  return hasLiveMusic || isValidPerformer;
 }
 
 function getEventEmoji(title: string, tags?: string[]): string {
@@ -343,17 +358,18 @@ export default function LiveMusicWidget() {
                             href={e.original_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-sm font-medium text-slate-900 leading-snug line-clamp-1 hover:text-blue-600 transition-colors"
+                            className="text-sm font-medium text-slate-900 leading-snug hover:text-blue-600 transition-colors"
+                            title={venue || e.title}
                           >
                             {venue || e.title}
                           </a>
                         ) : (
-                          <p className="text-sm font-medium text-slate-900 leading-snug line-clamp-1">
+                          <p className="text-sm font-medium text-slate-900 leading-snug" title={venue || e.title}>
                             {venue || e.title}
                           </p>
                         )}
                         {(displayPerformer || e.event_time) && (
-                          <p className="text-[11px] text-slate-500 mt-0.5 truncate">
+                          <p className="text-[11px] text-slate-500 mt-0.5">
                             {displayPerformer}{displayPerformer && e.event_time && ' · '}{e.event_time}
                           </p>
                         )}
@@ -381,17 +397,18 @@ export default function LiveMusicWidget() {
                             href={e.original_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-sm font-medium text-slate-900 leading-snug line-clamp-1 hover:text-blue-600 transition-colors"
+                            className="text-sm font-medium text-slate-900 leading-snug hover:text-blue-600 transition-colors"
+                            title={venue || e.title}
                           >
                             {venue || e.title}
                           </a>
                         ) : (
-                          <p className="text-sm font-medium text-slate-900 leading-snug line-clamp-1">
+                          <p className="text-sm font-medium text-slate-900 leading-snug" title={venue || e.title}>
                             {venue || e.title}
                           </p>
                         )}
                         {(displayPerformer || e.event_time) && (
-                          <p className="text-[11px] text-slate-500 mt-0.5 truncate">
+                          <p className="text-[11px] text-slate-500 mt-0.5">
                             {displayPerformer}{displayPerformer && e.event_time && ' · '}{e.event_time}
                           </p>
                         )}
