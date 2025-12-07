@@ -80,3 +80,9 @@ verify_jwt = false
 
 [functions.backfill-performer-times]
 verify_jwt = false
+
+[functions.scrape-event-details]
+verify_jwt = false
+
+[functions.backfill-events-firecrawl]
+verify_jwt = false
