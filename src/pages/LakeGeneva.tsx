@@ -1108,12 +1108,12 @@ const LakeGeneva = () => {
 
         </div>
 
-        {/* Left shoulder - Live Music - xl screens only */}
+        {/* Left shoulder - Live Music - 2xl screens only (avoid overlap on smaller xl screens) */}
         <aside 
-          className="hidden xl:block fixed top-28 left-4"
-          style={{ width: 'calc((100vw - 896px) / 2 - 24px)', minWidth: '180px', maxWidth: '280px' }}
+          className="hidden 2xl:block fixed top-40 left-6"
+          style={{ width: '240px', maxWidth: '260px' }}
         >
-          <div className="max-h-[calc(100vh-8rem)] overflow-y-auto rounded-2xl shadow-lg">
+          <div className="max-h-[calc(100vh-12rem)] overflow-y-auto">
             <LiveMusicWidget />
           </div>
         </aside>
