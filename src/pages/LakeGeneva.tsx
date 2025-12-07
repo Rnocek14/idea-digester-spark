@@ -1097,6 +1097,13 @@ const LakeGeneva = () => {
                 </p>
               </div>
             </section>
+
+            {/* Mobile/Tablet: Incidents + Weekend + Live Music stacked below main content */}
+            <div className="xl:hidden mt-6 space-y-4 px-1">
+              <LiveIncidentsSidebar />
+              <WeekendSidebarWidget />
+              <LiveMusicWidget />
+            </div>
           </main>
 
         </div>
@@ -1128,13 +1135,6 @@ const LakeGeneva = () => {
             )}
           </button>
         ) : null}
-
-        {/* Mobile/Tablet: Incidents + Weekend stacked below hero */}
-        <div className="xl:hidden mt-6 space-y-4">
-          <LiveIncidentsSidebar />
-          <WeekendSidebarWidget />
-          <LiveMusicWidget />
-        </div>
       </div>
     </PageShell>
   );
