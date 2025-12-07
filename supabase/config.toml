@@ -77,3 +77,6 @@ verify_jwt = false
 
 [functions.backfill-event-dates]
 verify_jwt = false
+
+[functions.backfill-performer-times]
+verify_jwt = false

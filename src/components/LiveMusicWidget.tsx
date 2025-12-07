@@ -10,6 +10,8 @@ type MusicEvent = {
   original_url: string | null;
   metadata: { verticals?: string[]; content_tags?: string[]; event_date?: string } | null;
   event_date: string | null;
+  event_time: string | null;
+  performer: string | null;
   created_at: string;
 };
 
@@ -98,7 +100,7 @@ export default function LiveMusicWidget() {
       // First try events with event_date = today
       const { data: dateEvents, error: dateError } = await supabase
         .from("content_queue")
-        .select("id, title, publish_date, original_url, metadata, event_date, created_at")
+        .select("id, title, publish_date, original_url, metadata, event_date, event_time, performer, created_at")
         .in("status", ["approved", "auto_published", "published"])
         .eq("safety_level", "safe")
         .eq("category", "events")
@@ -117,7 +119,7 @@ export default function LiveMusicWidget() {
       
       const { data: fallbackEvents, error: fallbackError } = await supabase
         .from("content_queue")
-        .select("id, title, publish_date, original_url, metadata, event_date, created_at")
+        .select("id, title, publish_date, original_url, metadata, event_date, event_time, performer, created_at")
         .in("status", ["approved", "auto_published", "published"])
         .eq("safety_level", "safe")
         .eq("category", "events")
@@ -160,7 +162,7 @@ export default function LiveMusicWidget() {
       // Saturday events by event_date
       const { data: satEvents, error: satError } = await supabase
         .from("content_queue")
-        .select("id, title, publish_date, original_url, metadata, event_date, created_at")
+        .select("id, title, publish_date, original_url, metadata, event_date, event_time, performer, created_at")
         .in("status", ["approved", "auto_published", "published"])
         .eq("safety_level", "safe")
         .eq("category", "events")
@@ -176,7 +178,7 @@ export default function LiveMusicWidget() {
       // Sunday events by event_date
       const { data: sunEvents, error: sunError } = await supabase
         .from("content_queue")
-        .select("id, title, publish_date, original_url, metadata, event_date, created_at")
+        .select("id, title, publish_date, original_url, metadata, event_date, event_time, performer, created_at")
         .in("status", ["approved", "auto_published", "published"])
         .eq("safety_level", "safe")
         .eq("category", "events")
@@ -195,7 +197,7 @@ export default function LiveMusicWidget() {
         
         const { data: fallback } = await supabase
           .from("content_queue")
-          .select("id, title, publish_date, original_url, metadata, event_date, created_at")
+          .select("id, title, publish_date, original_url, metadata, event_date, event_time, performer, created_at")
           .in("status", ["approved", "auto_published", "published"])
           .eq("safety_level", "safe")
           .eq("category", "events")
@@ -250,6 +252,7 @@ export default function LiveMusicWidget() {
           <ul className="space-y-2.5">
             {tonightEvents.map((e) => {
               const venue = extractVenue(e.title);
+              const displayPerformer = e.performer || (venue ? null : e.title.replace(/.*?(?:@|at)\s*/i, '').substring(0, 40));
               return (
                 <li key={e.id} className="flex gap-2 items-start">
                   <span className="mt-0.5 text-sm">{getEventEmoji(e.title, e.metadata?.content_tags)}</span>
@@ -259,18 +262,18 @@ export default function LiveMusicWidget() {
                         href={e.original_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm text-slate-900 leading-snug line-clamp-2 hover:text-blue-600 transition-colors"
+                        className="text-sm font-medium text-slate-900 leading-snug line-clamp-1 hover:text-blue-600 transition-colors"
                       >
                         {venue || e.title}
                       </a>
                     ) : (
-                      <p className="text-sm text-slate-900 leading-snug line-clamp-2">
+                      <p className="text-sm font-medium text-slate-900 leading-snug line-clamp-1">
                         {venue || e.title}
                       </p>
                     )}
-                    {venue && e.title !== venue && (
-                      <p className="text-[11px] text-slate-400 mt-0.5 truncate">
-                        {e.title.replace(/.*?(?:@|at)\s*/i, '').substring(0, 30)}
+                    {(displayPerformer || e.event_time) && (
+                      <p className="text-[11px] text-slate-500 mt-0.5 truncate">
+                        {displayPerformer}{displayPerformer && e.event_time && ' · '}{e.event_time}
                       </p>
                     )}
                   </div>
@@ -297,6 +300,7 @@ export default function LiveMusicWidget() {
               <ul className="space-y-2">
                 {weekendEvents!.saturday.map((e) => {
                   const venue = extractVenue(e.title);
+                  const displayPerformer = e.performer || null;
                   return (
                     <li key={e.id} className="flex gap-2 items-start">
                       <span className="mt-0.5 text-sm">{getEventEmoji(e.title, e.metadata?.content_tags)}</span>
@@ -306,13 +310,18 @@ export default function LiveMusicWidget() {
                             href={e.original_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-sm text-slate-900 leading-snug line-clamp-1 hover:text-blue-600 transition-colors"
+                            className="text-sm font-medium text-slate-900 leading-snug line-clamp-1 hover:text-blue-600 transition-colors"
                           >
                             {venue || e.title}
                           </a>
                         ) : (
-                          <p className="text-sm text-slate-900 leading-snug line-clamp-1">
+                          <p className="text-sm font-medium text-slate-900 leading-snug line-clamp-1">
                             {venue || e.title}
+                          </p>
+                        )}
+                        {(displayPerformer || e.event_time) && (
+                          <p className="text-[11px] text-slate-500 mt-0.5 truncate">
+                            {displayPerformer}{displayPerformer && e.event_time && ' · '}{e.event_time}
                           </p>
                         )}
                       </div>
@@ -329,6 +338,7 @@ export default function LiveMusicWidget() {
               <ul className="space-y-2">
                 {weekendEvents!.sunday.map((e) => {
                   const venue = extractVenue(e.title);
+                  const displayPerformer = e.performer || null;
                   return (
                     <li key={e.id} className="flex gap-2 items-start">
                       <span className="mt-0.5 text-sm">{getEventEmoji(e.title, e.metadata?.content_tags)}</span>
@@ -338,13 +348,18 @@ export default function LiveMusicWidget() {
                             href={e.original_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-sm text-slate-900 leading-snug line-clamp-1 hover:text-blue-600 transition-colors"
+                            className="text-sm font-medium text-slate-900 leading-snug line-clamp-1 hover:text-blue-600 transition-colors"
                           >
                             {venue || e.title}
                           </a>
                         ) : (
-                          <p className="text-sm text-slate-900 leading-snug line-clamp-1">
+                          <p className="text-sm font-medium text-slate-900 leading-snug line-clamp-1">
                             {venue || e.title}
+                          </p>
+                        )}
+                        {(displayPerformer || e.event_time) && (
+                          <p className="text-[11px] text-slate-500 mt-0.5 truncate">
+                            {displayPerformer}{displayPerformer && e.event_time && ' · '}{e.event_time}
                           </p>
                         )}
                       </div>

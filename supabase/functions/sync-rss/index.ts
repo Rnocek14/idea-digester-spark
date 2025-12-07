@@ -110,6 +110,75 @@ function parseEventDate(title: string, content?: string): Date | null {
   return null;
 }
 
+// Extract performer name from event title/content
+function extractPerformer(title: string, content?: string): string | null {
+  const text = `${title} ${content || ''}`;
+  
+  // Pattern: "Live Music: Artist Name" or "Live Music - Artist Name"
+  const liveMusicMatch = text.match(/live\s+music[:\s-]+([^@\n\r]+?)(?:\s*[@\-–]|\s*$)/i);
+  if (liveMusicMatch) {
+    const performer = liveMusicMatch[1].trim();
+    // Avoid returning generic text
+    if (performer.length > 2 && performer.length < 80 && !performer.toLowerCase().includes('every')) {
+      return performer;
+    }
+  }
+  
+  // Pattern: "featuring Artist Name" or "feat. Artist"
+  const featMatch = text.match(/(?:featuring|feat\.?)\s+([^@\n\r,]+)/i);
+  if (featMatch) {
+    return featMatch[1].trim();
+  }
+  
+  // Pattern: "with Artist Name" (at start or after venue)
+  const withMatch = text.match(/\bwith\s+([A-Z][^@\n\r,]+?)(?:\s*[-–@]|\s*$)/i);
+  if (withMatch) {
+    const performer = withMatch[1].trim();
+    if (performer.length > 2 && performer.length < 60) {
+      return performer;
+    }
+  }
+  
+  // Pattern: Title is just the artist name (for venue-specific pages where title = performer)
+  // Check if title looks like a name (2-4 words, capitalized)
+  const words = title.trim().split(/\s+/);
+  if (words.length >= 2 && words.length <= 5) {
+    const allCapitalized = words.every(w => /^[A-Z]/.test(w) || /^(the|and|of|&)$/i.test(w));
+    const looksLikeName = allCapitalized && !title.toLowerCase().includes('live music') && 
+                          !title.toLowerCase().includes('event') && !title.toLowerCase().includes('special');
+    if (looksLikeName) {
+      return title.trim();
+    }
+  }
+  
+  return null;
+}
+
+// Extract event time from content
+function extractEventTime(title: string, content?: string): string | null {
+  const text = `${title} ${content || ''}`;
+  
+  // Pattern: "2:00 PM to 5:00 PM" or "2pm - 5pm" or "2:00 PM – 5:00 PM"
+  const timeRangeMatch = text.match(/(\d{1,2}(?::\d{2})?\s*(?:am|pm))\s*(?:to|-|–)\s*(\d{1,2}(?::\d{2})?\s*(?:am|pm))/i);
+  if (timeRangeMatch) {
+    return `${timeRangeMatch[1].toUpperCase().replace(/\s/g, '')} - ${timeRangeMatch[2].toUpperCase().replace(/\s/g, '')}`;
+  }
+  
+  // Pattern: single time like "starts at 7pm" or "@ 8:00 PM"
+  const singleTimeMatch = text.match(/(?:starts?\s+(?:at\s+)?|@\s*)(\d{1,2}(?::\d{2})?\s*(?:am|pm))/i);
+  if (singleTimeMatch) {
+    return singleTimeMatch[1].toUpperCase().replace(/\s/g, '');
+  }
+  
+  // Pattern: "5:30 pm - 8:30 pm" (lowercase)
+  const lowercaseRange = text.match(/(\d{1,2}:\d{2}\s*(?:am|pm))\s*-\s*(\d{1,2}:\d{2}\s*(?:am|pm))/i);
+  if (lowercaseRange) {
+    return `${lowercaseRange[1].toUpperCase().replace(/\s/g, '')} - ${lowercaseRange[2].toUpperCase().replace(/\s/g, '')}`;
+  }
+  
+  return null;
+}
+
 // Parse flexible date formats (handles "December 17, 2025, 3:00 PM - 8:30 PM", "All Day", etc.)
 function parseFlexibleDate(dateStr: string): string {
   if (!dateStr) return new Date().toISOString();
@@ -957,17 +1026,30 @@ When in doubt between safe and sensitive, choose sensitive. Only use blocked for
           
           console.log(`📋 Story "${title.substring(0, 40)}..." → category: ${aiCategory}, safety: ${safetyLevel}, status: ${status}, priority: ${priorityScore}, geo: tier${geoTier}`);
 
-          // Parse actual event date for nightlife/events content
+          // Parse actual event date, performer, and time for nightlife/events content
           const isNightlifeContent = aiResult.verticals?.includes('nightlife') || 
                                      aiCategory === 'events' ||
                                      source.metadata?.default_nightlife === true;
           let eventDate: string | null = null;
+          let performer: string | null = null;
+          let eventTime: string | null = null;
           
           if (isNightlifeContent) {
             const parsedEventDate = parseEventDate(title, rawContent);
             if (parsedEventDate) {
               eventDate = parsedEventDate.toISOString().split('T')[0]; // Just the date part (YYYY-MM-DD)
               console.log(`📅 Parsed event date for "${title.substring(0, 40)}...": ${eventDate}`);
+            }
+            
+            // Extract performer and time
+            performer = extractPerformer(title, rawContent);
+            eventTime = extractEventTime(title, rawContent);
+            
+            if (performer) {
+              console.log(`🎤 Extracted performer: "${performer}" for "${title.substring(0, 40)}..."`);
+            }
+            if (eventTime) {
+              console.log(`⏰ Extracted time: "${eventTime}" for "${title.substring(0, 40)}..."`);
             }
           }
 
@@ -985,6 +1067,8 @@ When in doubt between safe and sensitive, choose sensitive. Only use blocked for
               image_source: imageSource,
               publish_date: parseFlexibleDate(pubDate),
               event_date: eventDate,
+              performer: performer,
+              event_time: eventTime,
               status,
               safety_level: aiResult.safety_level || "safe",
               safety_tags: aiResult.safety_tags || [],

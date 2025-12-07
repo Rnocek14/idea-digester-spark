@@ -317,6 +317,7 @@ export type Database = {
           content_x: string | null
           created_at: string
           event_date: string | null
+          event_time: string | null
           geo_label: string | null
           geo_tier: number | null
           id: string
@@ -327,6 +328,7 @@ export type Database = {
           last_newsletter_id: string | null
           metadata: Json | null
           original_url: string | null
+          performer: string | null
           priority_score: number | null
           publish_date: string | null
           reviewed_at: string | null
@@ -355,6 +357,7 @@ export type Database = {
           content_x?: string | null
           created_at?: string
           event_date?: string | null
+          event_time?: string | null
           geo_label?: string | null
           geo_tier?: number | null
           id?: string
@@ -365,6 +368,7 @@ export type Database = {
           last_newsletter_id?: string | null
           metadata?: Json | null
           original_url?: string | null
+          performer?: string | null
           priority_score?: number | null
           publish_date?: string | null
           reviewed_at?: string | null
@@ -393,6 +397,7 @@ export type Database = {
           content_x?: string | null
           created_at?: string
           event_date?: string | null
+          event_time?: string | null
           geo_label?: string | null
           geo_tier?: number | null
           id?: string
@@ -403,6 +408,7 @@ export type Database = {
           last_newsletter_id?: string | null
           metadata?: Json | null
           original_url?: string | null
+          performer?: string | null
           priority_score?: number | null
           publish_date?: string | null
           reviewed_at?: string | null
