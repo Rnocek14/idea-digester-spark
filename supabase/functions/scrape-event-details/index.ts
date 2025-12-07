@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import FirecrawlApp from "https://esm.sh/@mendable/firecrawl-js@4.8.1?bundle-deps&no-dts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,10 +11,9 @@ interface EventDetails {
   event_date: string | null;
   venue: string | null;
   description: string | null;
-  ticket_url: string | null;
 }
 
-// Extract date from URL patterns like /2025-12-09/ or /event/2025-12-09
+// Extract date from URL patterns like /2025-12-09/
 function extractDateFromUrl(url: string): string | null {
   const match = url.match(/\/(\d{4}-\d{2}-\d{2})\/?(?:$|[?#])/);
   if (match) {
@@ -47,6 +45,86 @@ function formatTimeRange(start: string, end?: string): string {
   return normalizedStart;
 }
 
+// Extract performer from text
+function extractPerformerFromText(text: string, title?: string): string | null {
+  // First try to extract from title if it follows "Live Music: Artist" pattern
+  if (title) {
+    const titleMatch = title.match(/live\s+music[:\s-]+(.+)/i);
+    if (titleMatch) {
+      const performer = titleMatch[1].trim();
+      if (performer.length > 2 && performer.length < 80) {
+        return performer;
+      }
+    }
+  }
+  
+  // Pattern: "Live Music: Artist Name" - avoid markdown links
+  const liveMusicMatch = text.match(/live\s+music[:\s-]+([^[\n\r@|]+?)(?:\s*[@\-–|]|\s*\[|\s*\n|\s*$)/i);
+  if (liveMusicMatch) {
+    const performer = liveMusicMatch[1].trim();
+    if (performer.length > 2 && performer.length < 80 && !performer.toLowerCase().includes('every')) {
+      return performer;
+    }
+  }
+  
+  // Pattern: "featuring Artist Name"
+  const featMatch = text.match(/(?:featuring|feat\.?)\s+([^\n\r,@]+)/i);
+  if (featMatch) {
+    return featMatch[1].trim();
+  }
+  
+  // Pattern: "with Artist Name"
+  const withMatch = text.match(/\bwith\s+([A-Z][^\n\r,@]+?)(?:\s*[-–@]|\s*\n|\s*$)/i);
+  if (withMatch) {
+    const performer = withMatch[1].trim();
+    if (performer.length > 2 && performer.length < 60) {
+      return performer;
+    }
+  }
+  
+  // If title looks like a performer name (2-4 words, capitalized)
+  if (title) {
+    const words = title.trim().split(/\s+/);
+    if (words.length >= 2 && words.length <= 5) {
+      const allCapitalized = words.every(w => /^[A-Z]/.test(w) || /^(the|and|of|&)$/i.test(w));
+      const looksLikeName = allCapitalized && 
+        !title.toLowerCase().includes('live music') && 
+        !title.toLowerCase().includes('event') && 
+        !title.toLowerCase().includes('special') &&
+        !title.toLowerCase().includes('fish fry') &&
+        !title.toLowerCase().includes('ladies night');
+      if (looksLikeName) {
+        return title.trim();
+      }
+    }
+  }
+  
+  return null;
+}
+
+// Extract time from text
+function extractTimeFromText(text: string): string | null {
+  // Pattern: "5:30 pm - 8:30 pm" or "5:30pm - 8:30pm" or "5:30 PM – 8:30 PM"
+  const timeRangeMatch = text.match(/(\d{1,2}(?::\d{2})?\s*(?:am|pm))\s*[-–to]+\s*(\d{1,2}(?::\d{2})?\s*(?:am|pm))/i);
+  if (timeRangeMatch) {
+    return formatTimeRange(timeRangeMatch[1], timeRangeMatch[2]);
+  }
+  
+  // Pattern: "starts at 7pm" or "@ 8:00 PM" or "time: 7pm"
+  const singleTimeMatch = text.match(/(?:starts?\s+(?:at\s+)?|@\s*|time[:\s]+)(\d{1,2}(?::\d{2})?\s*(?:am|pm))/i);
+  if (singleTimeMatch) {
+    return normalizeTime(singleTimeMatch[1]);
+  }
+  
+  // Generic time pattern in the first 500 chars (likely to be event time)
+  const genericTimeMatch = text.substring(0, 500).match(/\b(\d{1,2}:\d{2}\s*(?:am|pm))\b/i);
+  if (genericTimeMatch) {
+    return normalizeTime(genericTimeMatch[1]);
+  }
+  
+  return null;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -73,121 +151,97 @@ serve(async (req) => {
 
     console.log(`🔥 Firecrawl scraping: ${url}`);
 
-    const firecrawl = new FirecrawlApp({ apiKey });
-
-    // First, try to extract date from URL (very reliable for sites like PIER 290)
+    // Extract date from URL first (very reliable)
     const urlDate = extractDateFromUrl(url);
     if (urlDate) {
       console.log(`📅 Found date in URL: ${urlDate}`);
     }
 
-    // Use Firecrawl with JSON extraction for structured event data
-    const response = await firecrawl.scrape(url, {
-      formats: [
-        'markdown',
-        {
-          type: 'json',
-          schema: {
-            type: 'object',
-            properties: {
-              performer: {
-                type: 'string',
-                description: 'The name of the artist, band, musician, or performer. Look for names after "Live Music:", "featuring", or the main title if it appears to be a person/band name.'
-              },
-              event_time_start: {
-                type: 'string',
-                description: 'The start time of the event (e.g., "5:30 PM", "7pm", "19:00"). Look for times near the event details.'
-              },
-              event_time_end: {
-                type: 'string',
-                description: 'The end time of the event if specified (e.g., "8:30 PM", "10pm"). May not always be present.'
-              },
-              event_date: {
-                type: 'string',
-                description: 'The date of the event in YYYY-MM-DD format if found on the page.'
-              },
-              venue: {
-                type: 'string',
-                description: 'The name of the venue or location where the event takes place.'
-              },
-              description: {
-                type: 'string',
-                description: 'A brief description of the event or performer, up to 200 characters.'
-              },
-              ticket_url: {
-                type: 'string',
-                description: 'Link to purchase tickets if available.'
-              }
-            },
-            required: ['performer']
-          }
-        }
-      ],
-      onlyMainContent: true,
-      waitFor: 2000, // Wait 2 seconds for dynamic content
+    // Use Firecrawl API directly with simpler markdown format
+    const response = await fetch("https://api.firecrawl.dev/v1/scrape", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        url,
+        formats: ["markdown"],
+        onlyMainContent: true,
+        waitFor: 2000,
+      }),
     });
 
-    if (!response.success) {
-      console.error(`Firecrawl failed for ${url}`);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Firecrawl API error: ${response.status} - ${errorText}`);
+      
+      // Return what we can extract from URL even if API fails
       return new Response(
-        JSON.stringify({ error: "Firecrawl scrape failed", details: response }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ 
+          success: true, 
+          data: {
+            performer: null,
+            event_time: null,
+            event_date: urlDate,
+            venue: null,
+            description: null,
+          },
+          url,
+          fallback: true,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const firecrawlData = await response.json();
+    
+    if (!firecrawlData.success) {
+      console.error(`Firecrawl failed for ${url}:`, firecrawlData);
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          data: {
+            performer: null,
+            event_time: null,
+            event_date: urlDate,
+            venue: null,
+            description: null,
+          },
+          url,
+          fallback: true,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     console.log(`✅ Firecrawl success for ${url}`);
 
-    // Extract structured data from response
-    const jsonData = response.json || {};
+    const markdown = firecrawlData.data?.markdown || "";
     
-    // Build the event details with fallbacks
+    // Extract event details from markdown
+    const performer = extractPerformerFromText(markdown, title);
+    const eventTime = extractTimeFromText(markdown);
+    
+    // Try to extract venue from metadata or markdown
+    let venue = firecrawlData.data?.metadata?.ogSiteName || null;
+    if (!venue) {
+      const venueMatch = markdown.match(/(?:venue|location|at)\s*[:\-]\s*([^\n\r]+)/i);
+      if (venueMatch) {
+        venue = venueMatch[1].trim();
+      }
+    }
+    
+    // Extract description from metadata
+    const description = firecrawlData.data?.metadata?.description?.substring(0, 200) || null;
+
     const eventDetails: EventDetails = {
-      performer: jsonData.performer || null,
-      event_time: null,
-      event_date: urlDate || jsonData.event_date || null,
-      venue: jsonData.venue || null,
-      description: jsonData.description || null,
-      ticket_url: jsonData.ticket_url || null,
+      performer,
+      event_time: eventTime,
+      event_date: urlDate || null,
+      venue,
+      description,
     };
-
-    // Format the time range if we have times
-    if (jsonData.event_time_start) {
-      eventDetails.event_time = formatTimeRange(
-        jsonData.event_time_start,
-        jsonData.event_time_end
-      );
-    }
-
-    // If performer not found in JSON, try to extract from title
-    if (!eventDetails.performer && title) {
-      const liveMusicMatch = title.match(/live\s+music[:\s-]+([^@\n\r]+?)(?:\s*[@\-–]|\s*$)/i);
-      if (liveMusicMatch) {
-        const performer = liveMusicMatch[1].trim();
-        if (performer.length > 2 && performer.length < 80) {
-          eventDetails.performer = performer;
-          console.log(`🎤 Extracted performer from title: ${performer}`);
-        }
-      }
-    }
-
-    // Also try to find time patterns in markdown if JSON didn't capture it
-    if (!eventDetails.event_time && response.markdown) {
-      const markdown = response.markdown;
-      
-      // Pattern: "5:30 pm - 8:30 pm" or "5:30pm - 8:30pm"
-      const timeRangeMatch = markdown.match(/(\d{1,2}(?::\d{2})?\s*(?:am|pm))\s*[-–to]+\s*(\d{1,2}(?::\d{2})?\s*(?:am|pm))/i);
-      if (timeRangeMatch) {
-        eventDetails.event_time = formatTimeRange(timeRangeMatch[1], timeRangeMatch[2]);
-        console.log(`⏰ Found time range in markdown: ${eventDetails.event_time}`);
-      } else {
-        // Single time pattern
-        const singleTimeMatch = markdown.match(/(?:starts?\s+(?:at\s+)?|@\s*|time[:\s]+)(\d{1,2}(?::\d{2})?\s*(?:am|pm))/i);
-        if (singleTimeMatch) {
-          eventDetails.event_time = normalizeTime(singleTimeMatch[1]);
-          console.log(`⏰ Found single time in markdown: ${eventDetails.event_time}`);
-        }
-      }
-    }
 
     console.log(`📋 Event details extracted:`, eventDetails);
 
@@ -196,7 +250,7 @@ serve(async (req) => {
         success: true, 
         data: eventDetails,
         url,
-        rawJson: jsonData,
+        markdown: markdown.substring(0, 500), // Include preview for debugging
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
