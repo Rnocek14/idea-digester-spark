@@ -356,6 +356,27 @@ function getUpcomingWeekendDates(): { saturday: string; sunday: string } {
   return { saturday: formatDate(saturday), sunday: formatDate(sunday) };
 }
 
+// Get upcoming weekdays (Tuesday through Friday, excluding today and weekend)
+function getUpcomingWeekdays(): { dayOfWeek: number; dayName: string }[] {
+  const now = new Date();
+  const todayDayOfWeek = now.getDay();
+  const weekdays: { dayOfWeek: number; dayName: string }[] = [];
+  
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  
+  // On Saturday/Sunday, don't show weekdays (irrelevant)
+  if (todayDayOfWeek === 0 || todayDayOfWeek === 6) {
+    return [];
+  }
+  
+  // Add remaining weekdays after today (up to Friday)
+  for (let i = todayDayOfWeek + 1; i <= 5; i++) {
+    weekdays.push({ dayOfWeek: i, dayName: dayNames[i] });
+  }
+  
+  return weekdays;
+}
+
 // Check if a recurring event matches a specific day of week
 // Day names: 0=Sunday, 1=Monday, 2=Tuesday, 3=Wednesday, 4=Thursday, 5=Friday, 6=Saturday
 function matchesRecurringDay(title: string, targetDayOfWeek: number): boolean {
@@ -579,10 +600,64 @@ export default function LiveMusicWidget() {
     staleTime: 300000,
   });
 
+  // Weekday events (Tuesday through Friday, excluding today)
+  const upcomingWeekdays = getUpcomingWeekdays();
+  const { data: weekdayEvents } = useQuery({
+    queryKey: ["live-music-weekdays", todayStr],
+    queryFn: async () => {
+      if (upcomingWeekdays.length === 0) {
+        return {};
+      }
+
+      // Fetch recurring events to find those matching upcoming weekdays
+      const { data: recurringEvents, error } = await supabase
+        .from("content_queue")
+        .select("id, title, publish_date, original_url, metadata, event_date, event_time, performer, created_at")
+        .in("status", ["approved", "auto_published", "published"])
+        .eq("safety_level", "safe")
+        .eq("category", "events")
+        .contains("metadata", { verticals: ["nightlife"] })
+        .is("event_date", null)
+        .order("created_at", { ascending: false })
+        .limit(100);
+
+      if (error) {
+        console.error("[LiveMusicWidget] Error loading weekday events", error);
+        return {};
+      }
+
+      // Group events by day of week
+      const eventsByDay: Record<string, MusicEvent[]> = {};
+      
+      for (const weekday of upcomingWeekdays) {
+        const matchingEvents: MusicEvent[] = [];
+        
+        for (const event of (recurringEvents as MusicEvent[]) || []) {
+          if (eventMatchesDay(event, weekday.dayOfWeek)) {
+            matchingEvents.push(event);
+          }
+        }
+        
+        // Filter to music events and deduplicate
+        const musicOnly = matchingEvents.filter(isLiveMusicEvent);
+        const deduped = deduplicateByVenue(musicOnly, 3);
+        
+        if (deduped.length > 0) {
+          eventsByDay[weekday.dayName] = deduped;
+        }
+      }
+      
+      return eventsByDay;
+    },
+    staleTime: 300000,
+    enabled: upcomingWeekdays.length > 0,
+  });
+
   const hasTonight = tonightEvents && tonightEvents.length > 0;
+  const hasWeekdays = weekdayEvents && Object.keys(weekdayEvents).length > 0;
   const hasWeekend = weekendEvents && (weekendEvents.saturday.length > 0 || weekendEvents.sunday.length > 0);
 
-  if (!hasTonight && !hasWeekend) return null;
+  if (!hasTonight && !hasWeekdays && !hasWeekend) return null;
 
   return (
     <aside className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
@@ -636,9 +711,69 @@ export default function LiveMusicWidget() {
         </>
       )}
 
+      {/* This Week Section (Weekday events) */}
+      {hasWeekdays && (
+        <div className={hasTonight ? "mt-4 pt-4 border-t border-slate-100" : ""}>
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-sm">📅</span>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+              This Week
+            </p>
+          </div>
+
+          {upcomingWeekdays.map(({ dayName }) => {
+            const dayEvents = weekdayEvents![dayName];
+            if (!dayEvents || dayEvents.length === 0) return null;
+            
+            return (
+              <div key={dayName} className="mb-3">
+                <p className="text-[11px] font-medium text-slate-400 mb-1.5">{dayName}</p>
+                <ul className="space-y-2">
+                  {dayEvents.map((e) => {
+                    const venue = extractVenue(e.title);
+                    const displayName = venue || e.title;
+                    const displayPerformer = getDisplayPerformer(e);
+                    const showPerformer = shouldShowPerformer(displayName, displayPerformer);
+                    return (
+                      <li key={e.id} className="flex gap-2 items-start">
+                        <span className="mt-0.5 text-sm">{getEventEmoji(e.title, e.metadata?.content_tags)}</span>
+                        <div className="flex-1 min-w-0">
+                          {e.original_url ? (
+                            <a 
+                              href={e.original_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-sm font-medium text-slate-900 leading-snug hover:text-blue-600 transition-colors"
+                              title={displayName}
+                            >
+                              {displayName}
+                            </a>
+                          ) : (
+                            <p className="text-sm font-medium text-slate-900 leading-snug" title={displayName}>
+                              {displayName}
+                            </p>
+                          )}
+                          {(showPerformer || e.event_time) && (
+                            <p className="text-[11px] text-slate-500 mt-0.5">
+                              {showPerformer && displayPerformer}
+                              {showPerformer && e.event_time && ' · '}
+                              {e.event_time}
+                            </p>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {/* Weekend Section */}
       {hasWeekend && (
-        <div className={hasTonight ? "mt-4 pt-4 border-t border-slate-100" : ""}>
+        <div className={(hasTonight || hasWeekdays) ? "mt-4 pt-4 border-t border-slate-100" : ""}>
           <div className="flex items-center gap-2 mb-3">
             <span className="text-sm">🎸</span>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
