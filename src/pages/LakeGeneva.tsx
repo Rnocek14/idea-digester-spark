@@ -287,6 +287,7 @@ const LakeGeneva = () => {
     queryKey: ["public-stories-weighted"],
     queryFn: async () => {
       const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
       const now = new Date().toISOString();
       
       // Target mix: 40% news/civic, 30% events, 30% other
@@ -298,6 +299,7 @@ const LakeGeneva = () => {
       const maxGeoTier = 2;
       
       // Fetch news + civic (priority content) - hyperlocal only
+      // STALE CONTENT FILTER: Reject any content with publish_date > 30 days old
       const { data: newsCivic = [] } = await supabase
         .from("content_queue")
         .select("*, source:sources(name)")
@@ -307,6 +309,7 @@ const LakeGeneva = () => {
         .gte("geo_tier", 1)
         .lte("geo_tier", maxGeoTier)
         .gte("created_at", weekAgo)
+        .gte("publish_date", fourteenDaysAgo) // CRITICAL: Reject ancient publish_dates
         .lte("publish_date", now)
         .order("geo_tier", { ascending: true }) // Tier 1 (Lake Geneva) first
         .order("is_breaking", { ascending: false })
@@ -323,6 +326,7 @@ const LakeGeneva = () => {
         .gte("geo_tier", 1)
         .lte("geo_tier", maxGeoTier)
         .gte("created_at", weekAgo)
+        .gte("publish_date", fourteenDaysAgo) // CRITICAL: Reject ancient publish_dates
         .lte("publish_date", now)
         .order("geo_tier", { ascending: true })
         .order("publish_date", { ascending: false })
@@ -338,6 +342,7 @@ const LakeGeneva = () => {
         .gte("geo_tier", 1)
         .lte("geo_tier", maxGeoTier)
         .gte("created_at", weekAgo)
+        .gte("publish_date", fourteenDaysAgo) // CRITICAL: Reject ancient publish_dates
         .lte("publish_date", now)
         .order("geo_tier", { ascending: true })
         .order("publish_date", { ascending: false })
