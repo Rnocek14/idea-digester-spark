@@ -89,3 +89,9 @@ verify_jwt = false
 
 [functions.backfill-recurring-days]
 verify_jwt = false
+
+[functions.scrape-incident-details]
+verify_jwt = false
+
+[functions.backfill-incident-details]
+verify_jwt = false
