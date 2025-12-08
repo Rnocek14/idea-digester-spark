@@ -95,3 +95,6 @@ verify_jwt = false
 
 [functions.backfill-incident-details]
 verify_jwt = false
+
+[functions.sync-511-traffic]
+verify_jwt = false
