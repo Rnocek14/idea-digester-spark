@@ -21,22 +21,24 @@ interface IncidentDetails {
 function extractLocation(text: string): string | null {
   // Pattern: "in the X block of Y Street", "on Highway 50 near X", "at 123 Main St"
   const patterns = [
-    /(?:in the\s+)?(\d{1,5}\s+block\s+of\s+[^,.\n]+)/i,
-    /(?:on|at|near)\s+(highway\s+\d+[^,.\n]{0,40})/i,
-    /(?:on|at|near)\s+((?:us|state)\s*[-]?\s*\d+[^,.\n]{0,40})/i,
-    /(?:at|near)\s+(\d+\s+[A-Z][a-z]+\s+(?:st|street|ave|avenue|rd|road|dr|drive|ln|lane|ct|court|blvd|boulevard)[^,.\n]{0,20})/i,
-    /(?:in|near|at)\s+(downtown\s+[a-z\s]+)/i,
-    /(?:in|near)\s+([a-z]+\s+(?:lake|park|beach|resort|marina)[^,.\n]{0,30})/i,
-    /intersection\s+of\s+([^,.\n]+)/i,
-    /corner\s+of\s+([^,.\n]+)/i,
+    /(?:in the\s+)?(\d{1,5}\s+block\s+of\s+[^,.\n\[\]]+)/i,
+    /(?:on|at|near)\s+(highway\s+\d+[^,.\n\[\]]{0,40})/i,
+    /(?:on|at|near)\s+((?:us|state)\s*[-]?\s*\d+[^,.\n\[\]]{0,40})/i,
+    /(?:at|near)\s+(\d+\s+[A-Z][a-z]+\s+(?:st|street|ave|avenue|rd|road|dr|drive|ln|lane|ct|court|blvd|boulevard)[^,.\n\[\]]{0,20})/i,
+    /(?:in|near|at)\s+(downtown\s+[a-z\s]{3,20})/i,
+    /(?:in|near)\s+([a-z]+\s+(?:lake|park|beach|resort|marina)[^,.\n\[\]]{0,30})/i,
+    /intersection\s+of\s+([^,.\n\[\]]+)/i,
+    /corner\s+of\s+([^,.\n\[\]]+)/i,
   ];
 
   for (const pattern of patterns) {
     const match = text.match(pattern);
     if (match) {
-      const location = match[1].trim();
+      let location = match[1].trim();
+      // Remove any markdown artifacts
+      location = location.replace(/\[.*?\]\(.*?\)/g, '').replace(/[\[\]]/g, '').trim();
       // Clean up and validate
-      if (location.length > 5 && location.length < 100) {
+      if (location.length > 5 && location.length < 100 && !location.includes('http')) {
         return location.charAt(0).toUpperCase() + location.slice(1);
       }
     }
