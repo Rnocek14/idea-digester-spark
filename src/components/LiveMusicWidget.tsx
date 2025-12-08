@@ -54,14 +54,6 @@ function isGenericRecurring(event: MusicEvent): boolean {
   return !allDays.some(day => t.includes(day));
 }
 
-// Known venues for extraction and validation
-const KNOWN_VENUES = [
-  'Geneva Tap House', 'PIER 290', 'Mars Resort', 'The Lookout Bar', 'The Lookout',
-  'Evolve', 'Baker House', 'Hogs & Kisses', 'Topsy Turvy',
-  'Maxwell Mansion', 'Abbey Resort', 'Lake Lawn Resort', 'Grand Geneva',
-  'Pier 290', 'Lookout Bar'
-];
-
 // Keywords that indicate garbage performer data
 const GARBAGE_PERFORMER_KEYWORDS = [
   'http', 'ladies', 'penn', 'humor', 'wit', 'casino', 'cocktail', 
@@ -85,12 +77,42 @@ const GARBAGE_PERFORMER_PATTERNS = [
   /[<>{}[\]]/, // Contains brackets
 ];
 
+// Known venues for extraction and validation
+const KNOWN_VENUES = [
+  'Geneva Tap House', 'PIER 290', 'Mars Resort', 'The Lookout Bar', 'The Lookout',
+  'Evolve', 'Baker House', 'Hogs & Kisses', 'Topsy Turvy', 'The Cat',
+  'Maxwell Mansion', 'Abbey Resort', 'Lake Lawn Resort', 'Grand Geneva',
+  'Pier 290', 'Lookout Bar', 'The Getaway', 'Harpoon Willies', "Harpoon Willie's"
+];
+
+// Venue name aliases for normalization
+const VENUE_ALIASES: Record<string, string> = {
+  'the lookout': 'The Lookout Bar',
+  'lookout bar': 'The Lookout Bar',
+  'the lookout bar': 'The Lookout Bar',
+  'pier 290': 'PIER 290',
+  'the cat': 'The Cat',
+  'topsy turvy': 'Topsy Turvy',
+  'at topsy turvy': 'Topsy Turvy',
+  'the getaway': 'The Getaway',
+  "harpoon willie's": "Harpoon Willie's",
+  'harpoon willies': "Harpoon Willie's",
+};
+
+function normalizeVenueName(venue: string): string {
+  const lower = venue.toLowerCase().trim();
+  return VENUE_ALIASES[lower] || venue;
+}
+
 function extractVenue(title: string): string {
-  // Pattern: "LIVE MUSIC AT THE LOOKOUT: PERFORMER" -> "The Lookout"
-  const atVenueMatch = title.match(/(?:@|at\s+(?:the\s+)?)([\w\s]+?)(?:\s*[:\-–]|$)/i);
+  // Pattern: "LIVE MUSIC AT THE LOOKOUT: PERFORMER" -> "The Lookout Bar"
+  const atVenueMatch = title.match(/(?:@|at\s+(?:the\s+)?)([\w\s']+?)(?:\s*[:\-–]|$)/i);
   if (atVenueMatch) {
     const venue = atVenueMatch[1].trim();
-    // Verify it's a known venue
+    // Normalize and verify it's a known venue
+    const normalized = normalizeVenueName(venue);
+    if (normalized !== venue) return normalized;
+    
     for (const known of KNOWN_VENUES) {
       if (known.toLowerCase().includes(venue.toLowerCase()) || 
           venue.toLowerCase().includes(known.toLowerCase().replace('the ', ''))) {
@@ -100,11 +122,20 @@ function extractVenue(title: string): string {
     return venue;
   }
   
-  // Check for known venues in title
+  // Check for known venues in title and return normalized
   for (const venue of KNOWN_VENUES) {
     if (title.toLowerCase().includes(venue.toLowerCase())) {
-      return venue;
+      return normalizeVenueName(venue);
     }
+  }
+  
+  // Handle "At [Venue] - Description" pattern
+  const atDashMatch = title.match(/^At\s+([\w\s']+?)\s*[-–]/i);
+  if (atDashMatch) {
+    const venue = atDashMatch[1].trim();
+    const normalized = normalizeVenueName(venue);
+    if (normalized !== venue) return normalized;
+    return venue;
   }
   
   // Handle show-style titles like "Christmas Show: Performer Name"
@@ -120,15 +151,42 @@ function extractVenue(title: string): string {
 }
 
 // Extract performer name from title like "LIVE MUSIC AT THE LOOKOUT: KEVIN KENNEDY"
+// Also handles "Christmas Show: Frankie Seta LIVE as Dean Martin" -> "Frankie Seta"
 function extractPerformerFromTitle(title: string): string | null {
   // Pattern: "VENUE: PERFORMER" or "LIVE MUSIC AT VENUE: PERFORMER"
   const colonMatch = title.match(/:\s*([^:]+?)\s*$/i);
   if (colonMatch) {
-    const performer = colonMatch[1].trim();
+    let performer = colonMatch[1].trim();
+    
+    // Handle "Frankie Seta LIVE as Dean Martin" -> "Frankie Seta"
+    const liveAsMatch = performer.match(/^(.+?)\s+LIVE\s+(?:as|performing|plays)/i);
+    if (liveAsMatch) {
+      performer = liveAsMatch[1].trim();
+    }
+    
+    // Handle "Jeff Trudell" from "At Topsy Turvy - Live Music - Jeff Trudell"
+    // If performer contains " - ", take the last part
+    if (performer.includes(' - ')) {
+      const parts = performer.split(' - ');
+      performer = parts[parts.length - 1].trim();
+    }
+    
     if (isCleanPerformer(performer, title)) {
       return cleanPerformerName(performer);
     }
   }
+  
+  // Pattern: "At Venue - Live Music - Performer Name"
+  const dashMatch = title.match(/[-–]\s*(?:Live Music\s*[-–]\s*)?([^-–]+?)\s*$/i);
+  if (dashMatch) {
+    const performer = dashMatch[1].trim();
+    // Only use if it looks like a name (2-4 words, not venue-like)
+    const wordCount = performer.split(/\s+/).length;
+    if (wordCount >= 2 && wordCount <= 4 && isCleanPerformer(performer, title)) {
+      return cleanPerformerName(performer);
+    }
+  }
+  
   return null;
 }
 
@@ -182,16 +240,23 @@ function getDisplayPerformer(event: MusicEvent): string | null {
   return null;
 }
 
-// Check if performer should be displayed (avoid redundancy with title)
-function shouldShowPerformer(title: string, performer: string | null): boolean {
+// Check if performer should be displayed (avoid redundancy with what's shown)
+// Compare against DISPLAYED venue name, not the full title
+function shouldShowPerformer(displayedVenue: string, performer: string | null): boolean {
   if (!performer) return false;
-  const titleLower = title.toLowerCase();
+  const venueLower = displayedVenue.toLowerCase();
   const performerLower = performer.toLowerCase();
-  // If performer name is already in the title, don't repeat it
-  if (titleLower.includes(performerLower)) return false;
+  
+  // If performer name is already in the displayed venue, don't repeat it
+  if (venueLower.includes(performerLower)) return false;
+  
   // Also check for partial matches (first name only)
   const performerFirst = performerLower.split(' ')[0];
-  if (performerFirst.length > 3 && titleLower.includes(performerFirst)) return false;
+  if (performerFirst.length > 3 && venueLower.includes(performerFirst)) return false;
+  
+  // Don't show if performer looks like a venue name
+  if (KNOWN_VENUES.some(v => v.toLowerCase() === performerLower)) return false;
+  
   return true;
 }
 
@@ -290,12 +355,13 @@ function matchesRecurringDay(title: string, targetDayOfWeek: number): boolean {
 }
 
 function deduplicateByVenue(events: MusicEvent[], limit: number): MusicEvent[] {
-  // Group events by venue
+  // Group events by normalized venue name
   const eventsByVenue = new Map<string, MusicEvent[]>();
   
   for (const event of events) {
-    const venue = extractVenue(event.title).toLowerCase();
-    const key = venue || event.id; // Use ID if no venue extracted
+    const venue = extractVenue(event.title);
+    const normalizedVenue = normalizeVenueName(venue).toLowerCase();
+    const key = normalizedVenue || event.id; // Use ID if no venue extracted
     if (!eventsByVenue.has(key)) {
       eventsByVenue.set(key, []);
     }
@@ -306,9 +372,12 @@ function deduplicateByVenue(events: MusicEvent[], limit: number): MusicEvent[] {
   const uniqueEvents: MusicEvent[] = [];
   for (const venueEvents of eventsByVenue.values()) {
     // Sort by data completeness: prefer events with performer AND time
+    // Also consider if performer can be extracted from title
     const sorted = venueEvents.sort((a, b) => {
-      const aScore = (a.performer ? 2 : 0) + (a.event_time ? 1 : 0);
-      const bScore = (b.performer ? 2 : 0) + (b.event_time ? 1 : 0);
+      const aPerformer = a.performer || extractPerformerFromTitle(a.title);
+      const bPerformer = b.performer || extractPerformerFromTitle(b.title);
+      const aScore = (aPerformer ? 3 : 0) + (a.performer ? 1 : 0) + (a.event_time ? 1 : 0);
+      const bScore = (bPerformer ? 3 : 0) + (b.performer ? 1 : 0) + (b.event_time ? 1 : 0);
       return bScore - aScore; // Higher score = more complete = first
     });
     uniqueEvents.push(sorted[0]);
@@ -509,7 +578,9 @@ export default function LiveMusicWidget() {
           <ul className="space-y-2.5">
             {tonightEvents.map((e) => {
               const venue = extractVenue(e.title);
+              const displayName = venue || e.title;
               const displayPerformer = getDisplayPerformer(e);
+              const showPerformer = shouldShowPerformer(displayName, displayPerformer);
               return (
                 <li key={e.id} className="flex gap-2 items-start">
                   <span className="mt-0.5 text-sm">{getEventEmoji(e.title, e.metadata?.content_tags)}</span>
@@ -520,19 +591,19 @@ export default function LiveMusicWidget() {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-sm font-medium text-slate-900 leading-snug hover:text-blue-600 transition-colors"
-                        title={venue || e.title}
+                        title={displayName}
                       >
-                        {venue || e.title}
+                        {displayName}
                       </a>
                     ) : (
-                      <p className="text-sm font-medium text-slate-900 leading-snug" title={venue || e.title}>
-                        {venue || e.title}
+                      <p className="text-sm font-medium text-slate-900 leading-snug" title={displayName}>
+                        {displayName}
                       </p>
                     )}
-                    {(shouldShowPerformer(e.title, displayPerformer) || e.event_time) && (
+                    {(showPerformer || e.event_time) && (
                       <p className="text-[11px] text-slate-500 mt-0.5">
-                        {shouldShowPerformer(e.title, displayPerformer) && displayPerformer}
-                        {shouldShowPerformer(e.title, displayPerformer) && e.event_time && ' · '}
+                        {showPerformer && displayPerformer}
+                        {showPerformer && e.event_time && ' · '}
                         {e.event_time}
                       </p>
                     )}
@@ -560,7 +631,9 @@ export default function LiveMusicWidget() {
               <ul className="space-y-2">
                 {weekendEvents!.saturday.map((e) => {
                   const venue = extractVenue(e.title);
+                  const displayName = venue || e.title;
                   const displayPerformer = getDisplayPerformer(e);
+                  const showPerformer = shouldShowPerformer(displayName, displayPerformer);
                   return (
                     <li key={e.id} className="flex gap-2 items-start">
                       <span className="mt-0.5 text-sm">{getEventEmoji(e.title, e.metadata?.content_tags)}</span>
@@ -571,19 +644,19 @@ export default function LiveMusicWidget() {
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-sm font-medium text-slate-900 leading-snug hover:text-blue-600 transition-colors"
-                            title={venue || e.title}
+                            title={displayName}
                           >
-                            {venue || e.title}
+                            {displayName}
                           </a>
                         ) : (
-                          <p className="text-sm font-medium text-slate-900 leading-snug" title={venue || e.title}>
-                            {venue || e.title}
+                          <p className="text-sm font-medium text-slate-900 leading-snug" title={displayName}>
+                            {displayName}
                           </p>
                         )}
-                        {(shouldShowPerformer(e.title, displayPerformer) || e.event_time) && (
+                        {(showPerformer || e.event_time) && (
                           <p className="text-[11px] text-slate-500 mt-0.5">
-                            {shouldShowPerformer(e.title, displayPerformer) && displayPerformer}
-                            {shouldShowPerformer(e.title, displayPerformer) && e.event_time && ' · '}
+                            {showPerformer && displayPerformer}
+                            {showPerformer && e.event_time && ' · '}
                             {e.event_time}
                           </p>
                         )}
@@ -601,7 +674,9 @@ export default function LiveMusicWidget() {
               <ul className="space-y-2">
                 {weekendEvents!.sunday.map((e) => {
                   const venue = extractVenue(e.title);
+                  const displayName = venue || e.title;
                   const displayPerformer = getDisplayPerformer(e);
+                  const showPerformer = shouldShowPerformer(displayName, displayPerformer);
                   return (
                     <li key={e.id} className="flex gap-2 items-start">
                       <span className="mt-0.5 text-sm">{getEventEmoji(e.title, e.metadata?.content_tags)}</span>
@@ -612,19 +687,19 @@ export default function LiveMusicWidget() {
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-sm font-medium text-slate-900 leading-snug hover:text-blue-600 transition-colors"
-                            title={venue || e.title}
+                            title={displayName}
                           >
-                            {venue || e.title}
+                            {displayName}
                           </a>
                         ) : (
-                          <p className="text-sm font-medium text-slate-900 leading-snug" title={venue || e.title}>
-                            {venue || e.title}
+                          <p className="text-sm font-medium text-slate-900 leading-snug" title={displayName}>
+                            {displayName}
                           </p>
                         )}
-                        {(shouldShowPerformer(e.title, displayPerformer) || e.event_time) && (
+                        {(showPerformer || e.event_time) && (
                           <p className="text-[11px] text-slate-500 mt-0.5">
-                            {shouldShowPerformer(e.title, displayPerformer) && displayPerformer}
-                            {shouldShowPerformer(e.title, displayPerformer) && e.event_time && ' · '}
+                            {showPerformer && displayPerformer}
+                            {showPerformer && e.event_time && ' · '}
                             {e.event_time}
                           </p>
                         )}
