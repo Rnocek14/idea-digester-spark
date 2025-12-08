@@ -294,11 +294,12 @@ function isLiveMusicEvent(event: MusicEvent): boolean {
   
   if (excludeTitleKeywords.some(kw => title.includes(kw))) return false;
   
-  // Must have "live music" in title, OR have a clean performer
+  // Must have "live music" in title, OR "music mondays/tuesdays/etc" pattern, OR have a clean performer
   const hasLiveMusic = title.includes('live music') || title.includes('live:');
+  const hasMusicDayPattern = /music (monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i.test(title);
   const hasCleanPerformer = getDisplayPerformer(event) !== null;
   
-  if (!hasLiveMusic && !hasCleanPerformer) return false;
+  if (!hasLiveMusic && !hasMusicDayPattern && !hasCleanPerformer) return false;
   
   // Require at least performer OR specific time to be worth showing
   const displayPerformer = getDisplayPerformer(event);
@@ -438,6 +439,7 @@ export default function LiveMusicWidget() {
       }
 
       // Also fetch recurring events (no event_date) that might match today's day of week
+      // Use higher limit to capture older recurring venue events that may have been created earlier
       const { data: recurringEvents, error: recurringError } = await supabase
         .from("content_queue")
         .select("id, title, publish_date, original_url, metadata, event_date, event_time, performer, created_at")
@@ -447,7 +449,7 @@ export default function LiveMusicWidget() {
         .contains("metadata", { verticals: ["nightlife"] })
         .is("event_date", null)
         .order("created_at", { ascending: false })
-        .limit(30);
+        .limit(100);
 
       if (recurringError) {
         console.error("[LiveMusicWidget] Error loading recurring events", recurringError);
