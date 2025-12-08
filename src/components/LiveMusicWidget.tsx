@@ -357,10 +357,10 @@ function getUpcomingWeekendDates(): { saturday: string; sunday: string } {
 }
 
 // Get upcoming weekdays (Tuesday through Friday, excluding today and weekend)
-function getUpcomingWeekdays(): { dayOfWeek: number; dayName: string }[] {
+function getUpcomingWeekdays(): { dayOfWeek: number; dayName: string; dateStr: string }[] {
   const now = new Date();
   const todayDayOfWeek = now.getDay();
-  const weekdays: { dayOfWeek: number; dayName: string }[] = [];
+  const weekdays: { dayOfWeek: number; dayName: string; dateStr: string }[] = [];
   
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   
@@ -371,7 +371,11 @@ function getUpcomingWeekdays(): { dayOfWeek: number; dayName: string }[] {
   
   // Add remaining weekdays after today (up to Friday)
   for (let i = todayDayOfWeek + 1; i <= 5; i++) {
-    weekdays.push({ dayOfWeek: i, dayName: dayNames[i] });
+    const daysAhead = i - todayDayOfWeek;
+    const futureDate = new Date(now);
+    futureDate.setDate(now.getDate() + daysAhead);
+    const dateStr = `${futureDate.getFullYear()}-${String(futureDate.getMonth() + 1).padStart(2, '0')}-${String(futureDate.getDate()).padStart(2, '0')}`;
+    weekdays.push({ dayOfWeek: i, dayName: dayNames[i], dateStr });
   }
   
   return weekdays;
@@ -602,15 +606,17 @@ export default function LiveMusicWidget() {
 
   // Weekday events (Tuesday through Friday, excluding today)
   const upcomingWeekdays = getUpcomingWeekdays();
+  const weekdayDateStrings = upcomingWeekdays.map(w => w.dateStr);
+  
   const { data: weekdayEvents } = useQuery({
-    queryKey: ["live-music-weekdays", todayStr],
+    queryKey: ["live-music-weekdays", todayStr, weekdayDateStrings.join(',')],
     queryFn: async () => {
       if (upcomingWeekdays.length === 0) {
         return {};
       }
 
       // Fetch recurring events to find those matching upcoming weekdays
-      const { data: recurringEvents, error } = await supabase
+      const { data: recurringEvents, error: recurringError } = await supabase
         .from("content_queue")
         .select("id, title, publish_date, original_url, metadata, event_date, event_time, performer, created_at")
         .in("status", ["approved", "auto_published", "published"])
@@ -621,9 +627,24 @@ export default function LiveMusicWidget() {
         .order("created_at", { ascending: false })
         .limit(100);
 
-      if (error) {
-        console.error("[LiveMusicWidget] Error loading weekday events", error);
-        return {};
+      if (recurringError) {
+        console.error("[LiveMusicWidget] Error loading recurring weekday events", recurringError);
+      }
+
+      // Also fetch one-off events with specific dates matching upcoming weekdays
+      const { data: datedEvents, error: datedError } = await supabase
+        .from("content_queue")
+        .select("id, title, publish_date, original_url, metadata, event_date, event_time, performer, created_at")
+        .in("status", ["approved", "auto_published", "published"])
+        .eq("safety_level", "safe")
+        .eq("category", "events")
+        .contains("metadata", { verticals: ["nightlife"] })
+        .in("event_date", weekdayDateStrings)
+        .order("created_at", { ascending: false })
+        .limit(30);
+
+      if (datedError) {
+        console.error("[LiveMusicWidget] Error loading dated weekday events", datedError);
       }
 
       // Group events by day of week
@@ -632,14 +653,30 @@ export default function LiveMusicWidget() {
       for (const weekday of upcomingWeekdays) {
         const matchingEvents: MusicEvent[] = [];
         
+        // Add recurring events that match this day
         for (const event of (recurringEvents as MusicEvent[]) || []) {
           if (eventMatchesDay(event, weekday.dayOfWeek)) {
             matchingEvents.push(event);
           }
         }
         
-        // Filter to music events and deduplicate
-        const musicOnly = matchingEvents.filter(isLiveMusicEvent);
+        // Add one-off events with event_date matching this day
+        for (const event of (datedEvents as MusicEvent[]) || []) {
+          if (event.event_date === weekday.dateStr) {
+            matchingEvents.push(event);
+          }
+        }
+        
+        // Deduplicate by ID
+        const seenIds = new Set<string>();
+        const uniqueEvents = matchingEvents.filter(e => {
+          if (seenIds.has(e.id)) return false;
+          seenIds.add(e.id);
+          return true;
+        });
+        
+        // Filter to music events and deduplicate by venue
+        const musicOnly = uniqueEvents.filter(isLiveMusicEvent);
         const deduped = deduplicateByVenue(musicOnly, 3);
         
         if (deduped.length > 0) {
