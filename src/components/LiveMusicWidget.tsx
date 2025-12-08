@@ -39,19 +39,38 @@ function eventMatchesDay(event: MusicEvent, dayOfWeek: number): boolean {
   return matchesRecurringDay(event.title, dayOfWeek);
 }
 
+// Check if event is fresh enough to show (for undated events without recurring_days)
+function isFreshEvent(event: MusicEvent): boolean {
+  // If published within last 24 hours, consider it fresh/relevant
+  if (!event.publish_date) return false;
+  const publishDate = new Date(event.publish_date);
+  const now = new Date();
+  const hoursDiff = (now.getTime() - publishDate.getTime()) / (1000 * 60 * 60);
+  return hoursDiff <= 24;
+}
+
 // Check if event is generic recurring (no specific days)
+// CHANGED: No longer treats undated events as "show every day"
+// Now requires either: recurring_days set, title mentions day, or freshly published
 function isGenericRecurring(event: MusicEvent): boolean {
   const recurringDays = event.metadata?.recurring_days;
   
-  // If has recurring_days, it's not generic
+  // If has recurring_days, it's NOT generic - it's day-specific
   if (recurringDays && Array.isArray(recurringDays) && recurringDays.length > 0) {
     return false;
   }
   
-  // Fallback: check if title mentions no specific days
+  // Check if title mentions specific days - if so, NOT generic
   const t = event.title.toLowerCase();
   const allDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-  return !allDays.some(day => t.includes(day));
+  if (allDays.some(day => t.includes(day))) {
+    return false;
+  }
+  
+  // For events without recurring_days and no day in title:
+  // Only show if freshly published (within 24 hours)
+  // This prevents old one-off events from showing indefinitely
+  return isFreshEvent(event);
 }
 
 // Keywords that indicate garbage performer data
