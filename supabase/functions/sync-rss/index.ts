@@ -1171,7 +1171,7 @@ When in doubt between safe and sensitive, choose sensitive. Only use blocked for
                 .single();
               
               if (insertedStory) {
-                await linkStoryToIncident({
+                const incident = await linkStoryToIncident({
                   supabase,
                   storyId: insertedStory.id,
                   title,
@@ -1181,6 +1181,27 @@ When in doubt between safe and sensitive, choose sensitive. Only use blocked for
                   source: 'rss',
                   sourceLabel: source.name,
                 });
+                
+                // Fire-and-forget Firecrawl enrichment for incident details
+                if (incident && originalUrl) {
+                  const firecrawlApiKey = Deno.env.get("FIRECRAWL_API_KEY");
+                  if (firecrawlApiKey) {
+                    console.log(`[incidents] Triggering Firecrawl enrichment for incident ${incident.id}`);
+                    // Background task: scrape article for location, severity, agencies
+                    fetch(`${supabaseUrl}/functions/v1/scrape-incident-details`, {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${supabaseServiceKey}`,
+                      },
+                      body: JSON.stringify({
+                        url: originalUrl,
+                        title,
+                        incident_id: incident.id,
+                      }),
+                    }).catch(err => console.error("[incidents] Firecrawl enrichment failed:", err));
+                  }
+                }
               }
             }
           }
