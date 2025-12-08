@@ -335,17 +335,23 @@ function isFreshEnoughForBreaking(publishedAt: string | null): boolean {
   }
 }
 
-// EXCLUSION PATTERNS - stories that sound like incidents but aren't
-const NON_INCIDENT_PATTERNS = [
+// EXCLUSION PATTERNS - only block if these appear at START of title (not mid-story mentions)
+const TITLE_START_EXCLUSIONS = [
+  // Legal outcomes (headline-leading pattern)
+  'sentenced', 'pleads guilty', 'convicted', 'found guilty', 'verdict',
+  'man sentenced', 'woman sentenced', 'driver sentenced', 'suspect sentenced',
+  
+  // Historical/memorial (headline-leading)
+  'community grieves', 'family mourns', 'memorial', 'in memoriam', 'obituary',
+  'remembering', 'looking back', 'years ago', 'funeral for', 'tribute to'
+];
+
+// Patterns that should exclude anywhere in story (administrative/educational)
+const FULL_TEXT_EXCLUSIONS = [
   // Policy/administrative news
   'expands support', 'new policy', 'policy change', 'announces plan',
   'study finds', 'study shows', 'study flags', 'report finds', 'analysis shows',
-  'department announces', 'city announces', 'council approves', 'board approves',
-  
-  // Historical/memorial content
-  'grieves', 'mourns', 'memorial', 'anniversary', 'remembering',
-  'years ago', 'looking back', 'in memoriam', 'funeral', 'obituary',
-  'tribute to', 'honoring', 'in memory of',
+  'department announces', 'council approves', 'board approves',
   
   // Prevention/safety education
   'fire prevention', 'fire safety', 'safety tips', 'how to prevent',
@@ -353,13 +359,9 @@ const NON_INCIDENT_PATTERNS = [
   'fire department hosts', 'fire department open house',
   
   // Department operations (not incidents)
-  'new hire', 'retires', 'promoted', 'budget', 'equipment purchase',
+  'new hire', 'retires', 'promoted', 'equipment purchase',
   'station renovation', 'open house', 'recruitment', 'staffing',
   'department expands', 'fire chief', 'police chief', 'department celebrates',
-  
-  // Legal/court proceedings (not active incidents)
-  'sentenced', 'pleads guilty', 'convicted', 'trial begins', 'charges filed',
-  'arraignment', 'court date', 'verdict', 'indicted', 'lawsuit filed',
   
   // Events/entertainment (not incidents)
   'dj ', 'ladies night', 'live music', 'karaoke', 'trivia', 'concert',
@@ -372,7 +374,8 @@ const INCIDENT_LOCAL_KEYWORDS = [
   'lake geneva', 'williams bay', 'fontana', 'geneva lake', 'town of linn',
   
   // Tier 2: Immediate Walworth County
-  'walworth county', 'elkhorn', 'delavan', 'como', 'darien',
+  'walworth county', 'elkhorn', 'delavan', 'como', 'darien', 'whitewater',
+  'east troy', 'lyons', 'bloomfield', 'sharon', 'walworth',
   
   // Local roads (incidents often mention roads)
   'highway 50', 'hwy 50', 'highway 12', 'hwy 12', 'us-12', 'us 12',
@@ -380,7 +383,7 @@ const INCIDENT_LOCAL_KEYWORDS = [
   'county road o', 'county road b', 'highway 67', 'hwy 67'
 ];
 
-// EXPLICITLY EXCLUDE non-local areas - if these appear, it's NOT our incident
+// EXPLICITLY EXCLUDE non-local areas - only block if this is the PRIMARY location
 const NON_LOCAL_AREAS = [
   'kenosha', 'racine', 'milwaukee', 'madison', 'waukesha',
   'janesville', 'beloit', 'chicago', 'rockford', 'green bay',
@@ -388,43 +391,78 @@ const NON_LOCAL_AREAS = [
   'eau claire', 'wausau', 'superior', 'brookfield', 'wauwatosa'
 ];
 
-// Check if story is local enough to create an incident (stricter than general content filtering)
-function isLocalEnoughForIncident(story: { title?: string; summary?: string }): boolean {
+// Check if story is local enough to create an incident
+// trustedSource = true means the source only covers our area, so we trust it
+function isLocalEnoughForIncident(
+  story: { title?: string; summary?: string },
+  trustedSource: boolean = false
+): boolean {
   const text = `${story.title || ''} ${story.summary || ''}`.toLowerCase();
   
-  // REJECT if it mentions a non-local area prominently
-  if (NON_LOCAL_AREAS.some(area => text.includes(area))) {
-    return false;
+  // Check for local keywords first
+  const hasLocalKeyword = INCIDENT_LOCAL_KEYWORDS.some(keyword => text.includes(keyword));
+  
+  // Check for non-local areas
+  const hasNonLocalArea = NON_LOCAL_AREAS.some(area => text.includes(area));
+  
+  // If story explicitly mentions local area, allow it even if non-local areas mentioned
+  // (e.g., "Kenosha woman arrested in Lake Geneva" should create incident)
+  if (hasLocalKeyword) {
+    return true;
   }
   
-  // REQUIRE explicit mention of local area for incident creation
-  return INCIDENT_LOCAL_KEYWORDS.some(keyword => text.includes(keyword));
+  // If from trusted local source (like TMJ4 Walworth, Walworth Sheriff), be lenient
+  // Only reject if non-local area is prominent without any local mention
+  if (trustedSource) {
+    // Reject only if story prominently features non-local area (appears in first 50 chars of title)
+    const titleStart = (story.title || '').toLowerCase().substring(0, 50);
+    const nonLocalInTitle = NON_LOCAL_AREAS.some(area => titleStart.includes(area));
+    if (nonLocalInTitle && !hasLocalKeyword) {
+      return false;
+    }
+    return true; // Trust the source
+  }
+  
+  // For non-trusted regional sources, require explicit local mention
+  return false;
 }
 
 // Check if story matches exclusion patterns (false positive incidents)
-function matchesExclusionPattern(text: string): boolean {
-  return NON_INCIDENT_PATTERNS.some(pattern => text.includes(pattern));
+function matchesExclusionPattern(title: string, fullText: string): boolean {
+  const lowerTitle = title.toLowerCase();
+  const lowerText = fullText.toLowerCase();
+  
+  // Check title-start exclusions (only if pattern appears in first 30 chars of title)
+  const titleStart = lowerTitle.substring(0, 30);
+  if (TITLE_START_EXCLUSIONS.some(pattern => titleStart.includes(pattern))) {
+    return true;
+  }
+  
+  // Check full-text exclusions anywhere
+  return FULL_TEXT_EXCLUSIONS.some(pattern => lowerText.includes(pattern));
 }
 
 // Classify breaking news based on keywords with smart severity detection
+// trustedSource = true means source only covers our area (e.g., TMJ4 Walworth, Walworth Sheriff)
 function classifyBreaking(story: {
   title?: string | null;
   summary?: string | null;
   category?: string | null;
   source_name?: string | null;
   published_at?: string | null;
-}): { isBreaking: boolean; priorityScore: number } {
+}, trustedSource: boolean = false): { isBreaking: boolean; priorityScore: number } {
   // GUARD: Events should never be classified as breaking news or create incidents
   const category = (story.category || '').toLowerCase();
   if (category === 'events' || category === 'event' || category === 'community' || category === 'nightlife') {
     return { isBreaking: false, priorityScore: 0 };
   }
   
-  const text = `${story.title || ''} ${story.summary || ''}`.toLowerCase();
+  const title = story.title || '';
+  const text = `${title} ${story.summary || ''}`.toLowerCase();
   
   // EXCLUSION CHECK: Reject stories that match false-incident patterns
-  if (matchesExclusionPattern(text)) {
-    console.log(`[incidents] ⛔ Excluded by pattern: "${(story.title || '').substring(0, 50)}..."`);
+  if (matchesExclusionPattern(title, text)) {
+    console.log(`[incidents] ⛔ Excluded by pattern: "${title.substring(0, 50)}..."`);
     return { isBreaking: false, priorityScore: 0 };
   }
   
@@ -492,18 +530,18 @@ function classifyBreaking(story: {
   const rawIsBreaking = score >= 4;
   const isFresh = isFreshEnoughForBreaking(story.published_at || null);
   
-  // GEO-FILTER: Require local mention for incident creation
+  // GEO-FILTER: Require local mention for incident creation (trustedSource = lenient filtering)
   const isLocal = isLocalEnoughForIncident({ 
     title: story.title || '', 
     summary: story.summary || '' 
-  });
+  }, trustedSource);
   
   // Log when geo-filter or freshness blocks
   if (rawIsBreaking && isFresh && !isLocal) {
-    console.log(`[incidents] ⛔ Geo-filtered: "${(story.title || '').substring(0, 50)}..." - no local keywords found`);
+    console.log(`[incidents] ⛔ Geo-filtered: "${title.substring(0, 50)}..." - no local keywords found (trusted=${trustedSource})`);
   }
   if (rawIsBreaking && !isFresh) {
-    console.log(`[incidents] ⛔ Stale story blocked: "${(story.title || '').substring(0, 50)}..."`);
+    console.log(`[incidents] ⛔ Stale story blocked: "${title.substring(0, 50)}..."`);
   }
   
   const isBreaking = rawIsBreaking && isFresh && isLocal;
@@ -1172,13 +1210,15 @@ When in doubt between safe and sensitive, choose sensitive. Only use blocked for
           const status = decideStatusForStory(rules as AutoPublishRule[], source.id, aiCategory, safetyLevel);
 
           // Classify breaking news priority (with freshness check)
+          // Check if source is trusted for locality (e.g., TMJ4 Walworth, Walworth Sheriff)
+          const trustedForLocality = source.metadata?.trust_locality === true;
           const { isBreaking, priorityScore } = classifyBreaking({
             title,
             summary: aiResult.summary,
             category: aiCategory,
             source_name: source.name,
             published_at: parsedDate,
-          });
+          }, trustedForLocality);
 
           if (isBreaking) {
             console.log(`🔴 BREAKING: "${title.substring(0, 40)}..." (score: ${priorityScore})`);
