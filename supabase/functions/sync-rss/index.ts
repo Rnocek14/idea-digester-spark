@@ -788,10 +788,12 @@ serve(async (req) => {
         let items: RSSItem[] = [];
 
         if (source.type === "rss") {
-          // Fetch RSS feed
+          // Fetch RSS feed with full browser-like headers to avoid 403 blocks
           const rssResponse = await fetch(source.url, {
             headers: {
-              "User-Agent": "Mozilla/5.0 (compatible; LakeGenevaBot/1.0)",
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+              "Accept": "application/rss+xml, application/xml, text/xml, */*",
+              "Accept-Language": "en-US,en;q=0.9",
             },
           });
 
@@ -822,9 +824,12 @@ serve(async (req) => {
           console.log(`Found ${items.length} RSS items in ${source.name}`);
         } else if (source.type === "scrape") {
           // Fetch HTML page
+          // Fetch HTML with full browser-like headers to avoid 403 blocks
           const htmlResponse = await fetch(source.url, {
             headers: {
-              "User-Agent": "Mozilla/5.0 (compatible; LakeGenevaBot/1.0)",
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+              "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+              "Accept-Language": "en-US,en;q=0.9",
             },
           });
 
