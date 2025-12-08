@@ -352,12 +352,21 @@ const LakeGeneva = () => {
         return true;
       });
       
-      // Sort combined: breaking first, then by date
+      // Sort combined: RECENCY FIRST, then breaking status
+      // This ensures fresh content always rises to top, even if not breaking
       deduped.sort((a, b) => {
-        if (a.is_breaking && !b.is_breaking) return -1;
-        if (!a.is_breaking && b.is_breaking) return 1;
-        return new Date(b.publish_date || b.created_at).getTime() - 
-               new Date(a.publish_date || a.created_at).getTime();
+        // Primary sort: most recent created_at first (when content entered system)
+        const aTime = new Date(a.created_at).getTime();
+        const bTime = new Date(b.created_at).getTime();
+        
+        // If both from last 24 hours, prioritize breaking
+        const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
+        if (aTime > dayAgo && bTime > dayAgo) {
+          if (a.is_breaking && !b.is_breaking) return -1;
+          if (!a.is_breaking && b.is_breaking) return 1;
+        }
+        
+        return bTime - aTime;
       });
       
       // Apply fallback images: civic uses topic-aware, others use category fallback
@@ -694,11 +703,19 @@ const LakeGeneva = () => {
                     <div className="space-y-5">
                       {/* Greeting + headline */}
                       <div className="space-y-1">
-                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                          Good morning, Lake Geneva
-                        </p>
+                        <div className="flex items-center gap-3">
+                          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                            Good morning, Lake Geneva
+                          </p>
+                          {storiesUpdatedAt && (
+                            <span className="inline-flex items-center gap-1 text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                              Updated {getRelativeTime(new Date(storiesUpdatedAt).toISOString())}
+                            </span>
+                          )}
+                        </div>
                         <h1 className="font-semibold text-2xl sm:text-3xl leading-tight text-slate-900">
-                          Here's what's happening this week
+                          Here's what's happening today
                         </h1>
                         <p className="max-w-xl text-sm text-slate-600 leading-relaxed">
                           Short, trustworthy updates on city hall, schools, events, and real estate — in under 5 minutes.
