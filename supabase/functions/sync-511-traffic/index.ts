@@ -7,7 +7,8 @@ const corsHeaders = {
 };
 
 // Wisconsin 511 API endpoints - Walworth County area focus
-const WI_511_API_BASE = 'https://511wi.gov/api/v2';
+// Official API docs: https://511wi.gov/developers/doc
+const WI_511_API_BASE = 'https://511wi.gov/api';
 
 // Walworth County approximate bounding box
 const WALWORTH_BOUNDS = {
@@ -112,45 +113,49 @@ serve(async (req) => {
     // Try multiple API endpoints - the 511 API has different endpoints for different data
     let eventsData = [];
     
-    // Try Events endpoint first
+    // Try getevents endpoint (official documented endpoint)
     try {
-      const eventsResponse = await fetch(
-        `${WI_511_API_BASE}/get/event?key=${apiKey}&format=json`,
-        { headers: { 'Accept': 'application/json' } }
-      );
+      const eventsUrl = `${WI_511_API_BASE}/getevents?key=${apiKey}&format=json`;
+      console.log(`[sync-511-traffic] Fetching: ${eventsUrl.replace(apiKey, 'API_KEY')}`);
       
-      console.log(`[sync-511-traffic] Events API response status: ${eventsResponse.status}`);
+      const eventsResponse = await fetch(eventsUrl, { 
+        headers: { 'Accept': 'application/json' } 
+      });
+      
+      console.log(`[sync-511-traffic] getevents response status: ${eventsResponse.status}`);
       
       if (eventsResponse.ok) {
         eventsData = await eventsResponse.json();
-        console.log(`[sync-511-traffic] Events API returned ${eventsData?.length || 0} events`);
+        console.log(`[sync-511-traffic] getevents returned ${eventsData?.length || 0} events`);
       } else {
         const errorText = await eventsResponse.text();
-        console.error('[sync-511-traffic] Events API Error:', eventsResponse.status, errorText.substring(0, 200));
+        console.error('[sync-511-traffic] getevents Error:', eventsResponse.status, errorText.substring(0, 300));
       }
     } catch (fetchError: any) {
-      console.error('[sync-511-traffic] Events API fetch error:', fetchError.message);
+      console.error('[sync-511-traffic] getevents fetch error:', fetchError.message);
     }
     
-    // If Events endpoint failed or empty, try Incidents endpoint
+    // If getevents failed or empty, try getalerts endpoint
     if (!eventsData || eventsData.length === 0) {
       try {
-        const incidentsResponse = await fetch(
-          `${WI_511_API_BASE}/get/incident?key=${apiKey}&format=json`,
-          { headers: { 'Accept': 'application/json' } }
-        );
+        const alertsUrl = `${WI_511_API_BASE}/getalerts?key=${apiKey}&format=json`;
+        console.log(`[sync-511-traffic] Fetching: ${alertsUrl.replace(apiKey, 'API_KEY')}`);
         
-        console.log(`[sync-511-traffic] Incidents API response status: ${incidentsResponse.status}`);
+        const alertsResponse = await fetch(alertsUrl, { 
+          headers: { 'Accept': 'application/json' } 
+        });
         
-        if (incidentsResponse.ok) {
-          eventsData = await incidentsResponse.json();
-          console.log(`[sync-511-traffic] Incidents API returned ${eventsData?.length || 0} incidents`);
+        console.log(`[sync-511-traffic] getalerts response status: ${alertsResponse.status}`);
+        
+        if (alertsResponse.ok) {
+          eventsData = await alertsResponse.json();
+          console.log(`[sync-511-traffic] getalerts returned ${eventsData?.length || 0} alerts`);
         } else {
-          const errorText = await incidentsResponse.text();
-          console.error('[sync-511-traffic] Incidents API Error:', incidentsResponse.status, errorText.substring(0, 200));
+          const errorText = await alertsResponse.text();
+          console.error('[sync-511-traffic] getalerts Error:', alertsResponse.status, errorText.substring(0, 300));
         }
       } catch (fetchError: any) {
-        console.error('[sync-511-traffic] Incidents API fetch error:', fetchError.message);
+        console.error('[sync-511-traffic] getalerts fetch error:', fetchError.message);
       }
     }
 
