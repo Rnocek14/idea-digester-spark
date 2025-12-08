@@ -1016,6 +1016,18 @@ serve(async (req) => {
           const parsedDate = parseFlexibleDate(pubDate);
           const publishDateOnly = parsedDate.split('T')[0]; // Just the date part
           
+          // STALE CONTENT GATE: Reject stories with publish_date older than 14 days
+          // Exception: recurring events (they represent ongoing schedules, not dated news)
+          const publishedAtDate = new Date(parsedDate);
+          const daysOld = (Date.now() - publishedAtDate.getTime()) / (1000 * 60 * 60 * 24);
+          const MAX_STORY_AGE_DAYS = 14;
+          
+          if (daysOld > MAX_STORY_AGE_DAYS && !isRecurringEvent(title)) {
+            console.log(`⏭️ Skipping stale story (${Math.floor(daysOld)} days old): "${title.substring(0, 50)}..."`);
+            result.skipped++;
+            continue;
+          }
+          
           const { data: existingByTitle } = await supabase
             .from("content_queue")
             .select("id")
