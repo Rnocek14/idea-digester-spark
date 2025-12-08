@@ -105,12 +105,17 @@ export default function Incidents() {
             </CardContent>
           </Card>
         ) : !incidents?.length ? (
-          <Card>
+          <Card className="border-green-200 bg-green-50/50">
             <CardContent className="py-12 text-center">
-              <div className="text-4xl mb-4">🎉</div>
-              <h3 className="text-lg font-semibold mb-2">All Clear</h3>
-              <p className="text-muted-foreground">
-                No active incidents right now. Check back for updates.
+              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-green-600 text-2xl">✓</span>
+              </div>
+              <h3 className="text-lg font-semibold text-green-800 mb-2">All Clear in Lake Geneva</h3>
+              <p className="text-green-700 mb-4">
+                No active incidents to report. That's good news for the community.
+              </p>
+              <p className="text-sm text-slate-500">
+                This page updates automatically when incidents are reported.
               </p>
             </CardContent>
           </Card>

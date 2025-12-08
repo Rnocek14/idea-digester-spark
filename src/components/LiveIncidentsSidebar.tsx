@@ -106,13 +106,24 @@ export default function LiveIncidentsSidebar({ onHide, showCloseButton = false }
     return `${diffHours}h ago`;
   };
 
+  // Calculate incident-free streak
+  const getIncidentFreeMessage = () => {
+    // In a real implementation, we'd check the last resolved incident date
+    // For now, show encouraging "all clear" message
+    return "✓ No active incidents in Lake Geneva";
+  };
+
   return (
-    <Card className={hasActive ? "border-red-200 bg-red-50/50 dark:border-red-900 dark:bg-red-950/20" : ""}>
+    <Card className={hasActive ? "border-red-200 bg-red-50/50 dark:border-red-900 dark:bg-red-950/20" : "border-green-200 bg-green-50/30"}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-semibold flex items-center gap-2">
-            {hasActive && <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />}
-            Live Incidents
+            {hasActive ? (
+              <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+            ) : (
+              <span className="w-2 h-2 bg-green-500 rounded-full" />
+            )}
+            {hasActive ? "Live Incidents" : "Community Status"}
           </CardTitle>
           {showCloseButton && onHide && (
             <button
@@ -127,8 +138,8 @@ export default function LiveIncidentsSidebar({ onHide, showCloseButton = false }
       </CardHeader>
       <CardContent className="pt-0">
         {!hasIncidents ? (
-          <div className="text-xs text-muted-foreground mb-2">
-            🎉 All clear right now in Lake Geneva.
+          <div className="text-sm text-green-700 dark:text-green-400 mb-3 font-medium">
+            {getIncidentFreeMessage()}
           </div>
         ) : (
           <div className="space-y-2 mb-2">

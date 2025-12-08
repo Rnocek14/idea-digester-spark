@@ -802,8 +802,9 @@ const LakeGeneva = () => {
                 Loading today's stories...
               </div>
             ) : stories.length === 0 ? (
-              <div className="text-center py-16 text-slate-500">
-                No stories published yet. Check back soon!
+              <div className="text-center py-16">
+                <p className="text-slate-600 font-medium mb-2">No new stories today</p>
+                <p className="text-slate-500 text-sm">It's a quiet day in Lake Geneva — and that's usually a good thing.</p>
               </div>
             ) : (
               <>
@@ -990,8 +991,9 @@ const LakeGeneva = () => {
                             </div>
                           ))}
                           {displayFeed.length === 0 && (
-                            <div className="text-center py-8 text-slate-500">
-                              No recent updates. Check back soon!
+                            <div className="text-center py-8">
+                              <p className="text-slate-600 font-medium mb-1">All caught up!</p>
+                              <p className="text-slate-500 text-sm">No recent updates — check back later or browse by topic.</p>
                             </div>
                           )}
                         </div>

@@ -1,5 +1,3 @@
-import { Link } from "react-router-dom";
-
 type Story = {
   id: string;
   title: string;
@@ -16,6 +14,7 @@ const getCategoryEmoji = (category: string | null) => {
     case "real_estate": return "🏡";
     case "community": return "🤝";
     case "schools": return "🏫";
+    case "civic": return "🏛️";
     default: return "📍";
   }
 };
@@ -32,6 +31,19 @@ const getRelativeTime = (dateString?: string | null) => {
   return `${diffDays} days ago`;
 };
 
+// Get smart section title based on content freshness
+const getSectionTitle = (stories: Story[]) => {
+  if (stories.length === 0) return "Recent Stories";
+  
+  const now = Date.now();
+  const newestDate = new Date(stories[0]?.publish_date || stories[0]?.created_at).getTime();
+  const hoursSinceNewest = (now - newestDate) / (1000 * 60 * 60);
+  
+  if (hoursSinceNewest < 6) return "Also Today";
+  if (hoursSinceNewest < 24) return "Recent Stories";
+  return "This Week";
+};
+
 interface AlsoTodayCardProps {
   stories: Story[];
 }
@@ -39,10 +51,12 @@ interface AlsoTodayCardProps {
 export default function AlsoTodayCard({ stories }: AlsoTodayCardProps) {
   if (stories.length === 0) return null;
 
+  const sectionTitle = getSectionTitle(stories);
+
   return (
     <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-        Also today
+        {sectionTitle}
       </p>
       <ul className="mt-3 space-y-3">
         {stories.slice(0, 5).map((story) => (
