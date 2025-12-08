@@ -335,6 +335,77 @@ function isFreshEnoughForBreaking(publishedAt: string | null): boolean {
   }
 }
 
+// EXCLUSION PATTERNS - stories that sound like incidents but aren't
+const NON_INCIDENT_PATTERNS = [
+  // Policy/administrative news
+  'expands support', 'new policy', 'policy change', 'announces plan',
+  'study finds', 'study shows', 'study flags', 'report finds', 'analysis shows',
+  'department announces', 'city announces', 'council approves', 'board approves',
+  
+  // Historical/memorial content
+  'grieves', 'mourns', 'memorial', 'anniversary', 'remembering',
+  'years ago', 'looking back', 'in memoriam', 'funeral', 'obituary',
+  'tribute to', 'honoring', 'in memory of',
+  
+  // Prevention/safety education
+  'fire prevention', 'fire safety', 'safety tips', 'how to prevent',
+  'awareness week', 'awareness month', 'training exercise', 'drill',
+  'fire department hosts', 'fire department open house',
+  
+  // Department operations (not incidents)
+  'new hire', 'retires', 'promoted', 'budget', 'equipment purchase',
+  'station renovation', 'open house', 'recruitment', 'staffing',
+  'department expands', 'fire chief', 'police chief', 'department celebrates',
+  
+  // Legal/court proceedings (not active incidents)
+  'sentenced', 'pleads guilty', 'convicted', 'trial begins', 'charges filed',
+  'arraignment', 'court date', 'verdict', 'indicted', 'lawsuit filed',
+  
+  // Events/entertainment (not incidents)
+  'dj ', 'ladies night', 'live music', 'karaoke', 'trivia', 'concert',
+  'festival', 'parade', 'fundraiser', 'gala', 'celebration'
+];
+
+// STRICT LOCALITY - areas that MUST be mentioned for incident creation
+const INCIDENT_LOCAL_KEYWORDS = [
+  // Tier 1: Core Lake Geneva
+  'lake geneva', 'williams bay', 'fontana', 'geneva lake', 'town of linn',
+  
+  // Tier 2: Immediate Walworth County
+  'walworth county', 'elkhorn', 'delavan', 'como', 'darien',
+  
+  // Local roads (incidents often mention roads)
+  'highway 50', 'hwy 50', 'highway 12', 'hwy 12', 'us-12', 'us 12',
+  'county road h', 'state road 67', 'highway 120', 'hwy 120',
+  'county road o', 'county road b', 'highway 67', 'hwy 67'
+];
+
+// EXPLICITLY EXCLUDE non-local areas - if these appear, it's NOT our incident
+const NON_LOCAL_AREAS = [
+  'kenosha', 'racine', 'milwaukee', 'madison', 'waukesha',
+  'janesville', 'beloit', 'chicago', 'rockford', 'green bay',
+  'appleton', 'oshkosh', 'fond du lac', 'sheboygan', 'la crosse',
+  'eau claire', 'wausau', 'superior', 'brookfield', 'wauwatosa'
+];
+
+// Check if story is local enough to create an incident (stricter than general content filtering)
+function isLocalEnoughForIncident(story: { title?: string; summary?: string }): boolean {
+  const text = `${story.title || ''} ${story.summary || ''}`.toLowerCase();
+  
+  // REJECT if it mentions a non-local area prominently
+  if (NON_LOCAL_AREAS.some(area => text.includes(area))) {
+    return false;
+  }
+  
+  // REQUIRE explicit mention of local area for incident creation
+  return INCIDENT_LOCAL_KEYWORDS.some(keyword => text.includes(keyword));
+}
+
+// Check if story matches exclusion patterns (false positive incidents)
+function matchesExclusionPattern(text: string): boolean {
+  return NON_INCIDENT_PATTERNS.some(pattern => text.includes(pattern));
+}
+
 // Classify breaking news based on keywords with smart severity detection
 function classifyBreaking(story: {
   title?: string | null;
@@ -345,11 +416,18 @@ function classifyBreaking(story: {
 }): { isBreaking: boolean; priorityScore: number } {
   // GUARD: Events should never be classified as breaking news or create incidents
   const category = (story.category || '').toLowerCase();
-  if (category === 'events' || category === 'event' || category === 'community') {
+  if (category === 'events' || category === 'event' || category === 'community' || category === 'nightlife') {
     return { isBreaking: false, priorityScore: 0 };
   }
   
   const text = `${story.title || ''} ${story.summary || ''}`.toLowerCase();
+  
+  // EXCLUSION CHECK: Reject stories that match false-incident patterns
+  if (matchesExclusionPattern(text)) {
+    console.log(`[incidents] ⛔ Excluded by pattern: "${(story.title || '').substring(0, 50)}..."`);
+    return { isBreaking: false, priorityScore: 0 };
+  }
+  
   let score = 0;
 
   // Strong signals (+5) - truly severe language
@@ -371,9 +449,9 @@ function classifyBreaking(story: {
     }
   }
 
-  // Public safety signals (+3)
+  // Public safety signals (+3) - refined to avoid department news
   const publicSafetyKeywords = [
-    'road closed', 'closure', 'crash', 'accident', 'fire', 'shooting',
+    'road closed', 'closure', 'crash', 'accident', 'shooting',
     'police activity', 'missing person', 'water main break', 'power outage',
     'multi-vehicle', 'rollover', 'structure fire', 'house fire', 'barn fire',
     'road blocked', 'highway closed', 'detour', 'rescue', 'serious injury'
@@ -381,9 +459,20 @@ function classifyBreaking(story: {
   if (publicSafetyKeywords.some(k => text.includes(k))) {
     score += 3;
   }
+  
+  // Fire keyword - only count if it's an active fire, not department news
+  if (text.includes('fire') && !text.includes('fire department') && !text.includes('fire chief') && 
+      !text.includes('fire station') && !text.includes('fire prevention')) {
+    // Look for action verbs that indicate active fire
+    if (/fire\s+(breaks|broke|destroys|destroyed|damages|damaged|engulfs|engulfed|spreads|spreading|burns|burning)/i.test(text) ||
+        text.includes('on fire') || text.includes('caught fire') || text.includes('fire at ')) {
+      score += 3;
+    }
+  }
 
   // Combo bumps (+1) - certain combinations indicate severity
-  if (text.includes('fire') && (text.includes('apartment') || text.includes('home') || text.includes('house'))) {
+  if ((text.includes('apartment') || text.includes('home') || text.includes('house')) &&
+      (text.includes('on fire') || text.includes('caught fire') || text.includes('structure fire'))) {
     score += 1;
   }
   if (text.includes('crash') && (text.includes('injur') || text.includes('hospital'))) {
@@ -401,7 +490,23 @@ function classifyBreaking(story: {
 
   // Threshold check + freshness guard
   const rawIsBreaking = score >= 4;
-  const isBreaking = rawIsBreaking && isFreshEnoughForBreaking(story.published_at || null);
+  const isFresh = isFreshEnoughForBreaking(story.published_at || null);
+  
+  // GEO-FILTER: Require local mention for incident creation
+  const isLocal = isLocalEnoughForIncident({ 
+    title: story.title || '', 
+    summary: story.summary || '' 
+  });
+  
+  // Log when geo-filter or freshness blocks
+  if (rawIsBreaking && isFresh && !isLocal) {
+    console.log(`[incidents] ⛔ Geo-filtered: "${(story.title || '').substring(0, 50)}..." - no local keywords found`);
+  }
+  if (rawIsBreaking && !isFresh) {
+    console.log(`[incidents] ⛔ Stale story blocked: "${(story.title || '').substring(0, 50)}..."`);
+  }
+  
+  const isBreaking = rawIsBreaking && isFresh && isLocal;
   
   return { isBreaking, priorityScore: score };
 }
