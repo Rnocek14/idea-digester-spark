@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertTriangle, Flame, Car, CloudLightning, Shield, Zap, ChevronRight } from "lucide-react";
+import { AlertTriangle, Flame, Car, CloudLightning, Shield, Zap, ChevronRight, Construction, TrafficCone, Cone } from "lucide-react";
 import QuickReportIncident from "./QuickReportIncident";
 
 type IncidentUpdate = {
@@ -35,6 +35,10 @@ const typeIcons: Record<string, React.ReactNode> = {
   weather: <CloudLightning className="h-3.5 w-3.5" />,
   police: <Shield className="h-3.5 w-3.5" />,
   utility: <Zap className="h-3.5 w-3.5" />,
+  road_closure: <Construction className="h-3.5 w-3.5" />,
+  construction: <Construction className="h-3.5 w-3.5" />,
+  hazard: <TrafficCone className="h-3.5 w-3.5" />,
+  traffic: <Car className="h-3.5 w-3.5" />,
   other: <AlertTriangle className="h-3.5 w-3.5" />,
 };
 
