@@ -109,20 +109,52 @@ serve(async (req) => {
 
     console.log('[sync-511-traffic] Fetching Wisconsin 511 traffic events...');
 
-    // Fetch events from Wisconsin 511 API
-    const eventsResponse = await fetch(
-      `${WI_511_API_BASE}/get/event?key=${apiKey}&format=json`,
-      { headers: { 'Accept': 'application/json' } }
-    );
-
-    if (!eventsResponse.ok) {
-      const errorText = await eventsResponse.text();
-      console.error('[sync-511-traffic] API Error:', eventsResponse.status, errorText);
-      throw new Error(`Wisconsin 511 API error: ${eventsResponse.status}`);
+    // Try multiple API endpoints - the 511 API has different endpoints for different data
+    let eventsData = [];
+    
+    // Try Events endpoint first
+    try {
+      const eventsResponse = await fetch(
+        `${WI_511_API_BASE}/get/event?key=${apiKey}&format=json`,
+        { headers: { 'Accept': 'application/json' } }
+      );
+      
+      console.log(`[sync-511-traffic] Events API response status: ${eventsResponse.status}`);
+      
+      if (eventsResponse.ok) {
+        eventsData = await eventsResponse.json();
+        console.log(`[sync-511-traffic] Events API returned ${eventsData?.length || 0} events`);
+      } else {
+        const errorText = await eventsResponse.text();
+        console.error('[sync-511-traffic] Events API Error:', eventsResponse.status, errorText.substring(0, 200));
+      }
+    } catch (fetchError: any) {
+      console.error('[sync-511-traffic] Events API fetch error:', fetchError.message);
+    }
+    
+    // If Events endpoint failed or empty, try Incidents endpoint
+    if (!eventsData || eventsData.length === 0) {
+      try {
+        const incidentsResponse = await fetch(
+          `${WI_511_API_BASE}/get/incident?key=${apiKey}&format=json`,
+          { headers: { 'Accept': 'application/json' } }
+        );
+        
+        console.log(`[sync-511-traffic] Incidents API response status: ${incidentsResponse.status}`);
+        
+        if (incidentsResponse.ok) {
+          eventsData = await incidentsResponse.json();
+          console.log(`[sync-511-traffic] Incidents API returned ${eventsData?.length || 0} incidents`);
+        } else {
+          const errorText = await incidentsResponse.text();
+          console.error('[sync-511-traffic] Incidents API Error:', incidentsResponse.status, errorText.substring(0, 200));
+        }
+      } catch (fetchError: any) {
+        console.error('[sync-511-traffic] Incidents API fetch error:', fetchError.message);
+      }
     }
 
-    const eventsData = await eventsResponse.json();
-    console.log(`[sync-511-traffic] Received ${eventsData?.length || 0} total events`);
+    console.log(`[sync-511-traffic] Total events/incidents received: ${eventsData?.length || 0}`);
 
     // Filter to Walworth County area
     const localEvents: TrafficEvent[] = [];

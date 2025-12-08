@@ -1016,16 +1016,46 @@ serve(async (req) => {
           const parsedDate = parseFlexibleDate(pubDate);
           const publishDateOnly = parsedDate.split('T')[0]; // Just the date part
           
-          // STALE CONTENT GATE: Reject stories with publish_date older than 14 days
+          // CONTENT AGE GATE: Reject stories with publish_date older than 14 days OR in the future
           // Exception: recurring events (they represent ongoing schedules, not dated news)
           const publishedAtDate = new Date(parsedDate);
-          const daysOld = (Date.now() - publishedAtDate.getTime()) / (1000 * 60 * 60 * 24);
+          const now = Date.now();
+          const daysOld = (now - publishedAtDate.getTime()) / (1000 * 60 * 60 * 24);
+          const daysInFuture = (publishedAtDate.getTime() - now) / (1000 * 60 * 60 * 24);
           const MAX_STORY_AGE_DAYS = 14;
+          const MAX_FUTURE_DAYS = 1; // Allow up to 1 day in future for timezone issues
+          
+          // Handle future-dated content (like Fire Dept RSS with July 2025 dates)
+          let adjustedPublishDate = parsedDate;
+          if (daysInFuture > MAX_FUTURE_DAYS && !isRecurringEvent(title)) {
+            console.log(`📅 Future-dated story (${Math.floor(daysInFuture)} days ahead): "${title.substring(0, 50)}..." - treating as today`);
+            adjustedPublishDate = new Date().toISOString();
+          }
           
           if (daysOld > MAX_STORY_AGE_DAYS && !isRecurringEvent(title)) {
             console.log(`⏭️ Skipping stale story (${Math.floor(daysOld)} days old): "${title.substring(0, 50)}..."`);
             result.skipped++;
             continue;
+          }
+          // ENHANCED EVENT DEDUPLICATION: Cross-source dedup ONLY for event sources
+          // This prevents the same event being ingested from multiple sources (e.g., same event on venue site AND event aggregator)
+          // News sources (like Fire Dept) should NOT be cross-deduped as they have unique content
+          const isEventSourceForDedup = source.category === 'events' || 
+                                        source.name.toLowerCase().includes('event') ||
+                                        source.name.toLowerCase().includes('venue');
+          
+          if (isEventSourceForDedup) {
+            const { data: existingEventByTitle } = await supabase
+              .from("content_queue")
+              .select("id")
+              .eq("title", title.trim())
+              .limit(1);
+            
+            if (existingEventByTitle?.length) {
+              console.log(`⏭️ Skipping duplicate event (cross-source): "${title.substring(0, 50)}..."`);
+              result.skipped++;
+              continue;
+            }
           }
           
           const { data: existingByTitle } = await supabase
@@ -1283,7 +1313,7 @@ When in doubt between safe and sensitive, choose sensitive. Only use blocked for
               original_url: originalUrl,
               image_url: imageUrl,
               image_source: imageSource,
-              publish_date: parseFlexibleDate(pubDate),
+              publish_date: adjustedPublishDate,
               event_date: eventDate,
               performer: performer,
               event_time: eventTime,
