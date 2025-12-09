@@ -94,7 +94,7 @@ const LakeGeneva = () => {
   const [isSubscribing, setIsSubscribing] = useState(false);
   const [activeCategory, setActiveCategory] = useState<'all' | string>('all');
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
-  const [viewMode, setViewMode] = useState<'topic' | 'recent'>('topic');
+  const [viewMode, setViewMode] = useState<'all' | 'topic' | 'recent'>('topic');
   const [newUpdatesCount, setNewUpdatesCount] = useState(0);
   const previousFeedIdsRef = useRef<Set<string>>(new Set());
   const isInitialLoadRef = useRef(true);
@@ -836,6 +836,16 @@ const LakeGeneva = () => {
                     {/* View Mode Toggle */}
                     <div className="flex items-center gap-1.5 bg-slate-100 rounded-full p-1">
                       <button
+                        onClick={() => setViewMode('all')}
+                        className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                          viewMode === 'all'
+                            ? "bg-white text-slate-900 shadow-sm"
+                            : "text-slate-500 hover:text-slate-700"
+                        }`}
+                      >
+                        All Stories
+                      </button>
+                      <button
                         onClick={() => setViewMode('topic')}
                         className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                           viewMode === 'topic'
@@ -857,7 +867,7 @@ const LakeGeneva = () => {
                         }`}
                       >
                         Most Recent
-                        {viewMode === 'topic' && newUpdatesCount > 0 ? (
+                        {viewMode !== 'recent' && newUpdatesCount > 0 ? (
                           <span className="flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold animate-pulse">
                             {newUpdatesCount > 9 ? '9+' : newUpdatesCount}
                           </span>
@@ -880,7 +890,7 @@ const LakeGeneva = () => {
                                 : "bg-slate-50 text-slate-600 border-slate-200 hover:border-blue-500 hover:text-blue-700"
                             }`}
                           >
-                            {cat === 'all' ? 'All stories' : `${getCategoryEmoji(cat)} ${cat.replace('_', ' ')}`}
+                            {cat === 'all' ? 'All topics' : `${getCategoryEmoji(cat)} ${cat.replace('_', ' ')}`}
                           </button>
                         ))}
                       </div>
@@ -888,8 +898,45 @@ const LakeGeneva = () => {
                   </div>
                 </section>
 
-                {/* Most Recent Feed */}
-                {viewMode === 'recent' ? (
+                {/* All Stories - Pure Chronological */}
+                {viewMode === 'all' ? (
+                  <section className="py-6">
+                    <div className="grid gap-4 sm:gap-5 sm:grid-cols-2">
+                      {[...stories]
+                        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                        .map((story, idx) => {
+                          const time = getRelativeTime(story.publish_date || story.created_at);
+                          let source: string | null = (story as any).source?.name || null;
+                          if (!source && story.original_url) {
+                            try {
+                              const url = new URL(story.original_url);
+                              source = url.hostname.replace(/^www\./, '');
+                            } catch {}
+                          }
+                          return (
+                            <div key={story.id}>
+                              <StoryCard
+                                title={story.title}
+                                summary={story.content_website || story.content_lg_base || story.summary}
+                                imageUrl={story.image_url}
+                                category={story.category}
+                                url={story.original_url}
+                                geoTier={(story as any).geo_tier}
+                                geoLabel={(story as any).geo_label}
+                                meta={{ time, source }}
+                              />
+                              {/* Insert inline subscribe CTA after every 6th story */}
+                              {(idx + 1) % 6 === 0 && idx < stories.length - 1 && (
+                                <div className="mt-4 sm:col-span-2">
+                                  <InlineSubscribeCTA />
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </section>
+                ) : viewMode === 'recent' ? (
                   <section className="py-6">
                     {/* Quiet day message */}
                     {isQuietDay ? (
