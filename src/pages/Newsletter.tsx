@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { NewsletterQAPanel } from "@/components/NewsletterQAPanel";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -712,6 +713,9 @@ const Newsletter = () => {
           </div>
         )}
       </Card>
+
+      {/* Newsletter QA Panel - Preview upcoming editions */}
+      <NewsletterQAPanel />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column: Story Picker */}
