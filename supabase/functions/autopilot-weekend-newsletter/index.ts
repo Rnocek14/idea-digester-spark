@@ -75,7 +75,6 @@ serve(async (req: Request) => {
     console.log(`[Weekend Guide] Looking for events from ${fridayStr} to ${sundayStr}`);
 
     // Check for existing weekend newsletter this week
-    const weekNumber = getWeekNumber(today);
     const { data: existingNewsletter } = await supabase
       .from("newsletters")
       .select("id, status, sent_at")
@@ -83,9 +82,10 @@ serve(async (req: Request) => {
       .gte("created_at", getWeekStart(today).toISOString())
       .maybeSingle();
 
-    if (existingNewsletter && !force) {
+    if (existingNewsletter) {
       console.log(`[Weekend Guide] Already have weekend newsletter for this week: ${existingNewsletter.id}`);
       
+      // If sendNow requested and newsletter is ready but not sent, send it
       if (sendNow && existingNewsletter.status === "ready" && !existingNewsletter.sent_at) {
         console.log("[Weekend Guide] Sending existing ready newsletter...");
         const result = await sendNewsletterEmail(supabase, existingNewsletter.id);
@@ -101,10 +101,16 @@ serve(async (req: Request) => {
         );
       }
       
-      return new Response(
-        JSON.stringify({ status: "exists", newsletter_id: existingNewsletter.id }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      // If force=true, delete existing and regenerate
+      if (force) {
+        console.log("[Weekend Guide] Force mode: deleting existing newsletter to regenerate");
+        await supabase.from("newsletters").delete().eq("id", existingNewsletter.id);
+      } else {
+        return new Response(
+          JSON.stringify({ status: "exists", newsletter_id: existingNewsletter.id }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     // Fetch weekend events
