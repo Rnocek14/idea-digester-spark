@@ -132,7 +132,7 @@ serve(async (req: Request) => {
 
     console.log(`[Weekend Guide] Found ${weekendEvents?.length || 0} weekend events`);
 
-    // Fetch top stories of the week (last 7 days, not events)
+    // Fetch top stories of the week (last 7 days, hyperlocal only, no weather/alerts)
     const weekAgo = new Date();
     weekAgo.setDate(weekAgo.getDate() - 7);
     
@@ -141,9 +141,11 @@ serve(async (req: Request) => {
       .select("*")
       .in("status", ["approved", "auto_published", "published"])
       .eq("safety_level", "safe")
-      .not("category", "in", "(events,entertainment)")
+      .not("category", "in", "(events,entertainment,weather,alerts)")
+      .gte("geo_tier", 1) // Only hyperlocal (Lake Geneva + Walworth County)
       .gte("publish_date", weekAgo.toISOString())
       .lte("publish_date", new Date().toISOString())
+      .order("geo_tier", { ascending: true }) // Tier 1 (Lake Geneva) first
       .order("publish_date", { ascending: false })
       .limit(10);
 
