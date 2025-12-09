@@ -22,6 +22,57 @@ function extractDateFromUrl(url: string): string | null {
   return null;
 }
 
+// Month name to number mapping
+const MONTH_NAMES: Record<string, number> = {
+  'january': 1, 'february': 2, 'march': 3, 'april': 4, 'may': 5, 'june': 6,
+  'july': 7, 'august': 8, 'september': 9, 'october': 10, 'november': 11, 'december': 12,
+  'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'jun': 6, 'jul': 7, 'aug': 8, 
+  'sep': 9, 'sept': 9, 'oct': 10, 'nov': 11, 'dec': 12
+};
+
+// Extract date from page content like "Dates: January 8, 2026" or "Date: 12/15/2025"
+function extractDateFromContent(text: string): string | null {
+  // Pattern 1: "Dates: Month DD, YYYY" or "Date: Month DD, YYYY"
+  const monthNamePattern = /(?:dates?|when|event date)[:\s]+([A-Z][a-z]+)\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})/i;
+  const monthMatch = text.match(monthNamePattern);
+  if (monthMatch) {
+    const monthName = monthMatch[1].toLowerCase();
+    const day = parseInt(monthMatch[2], 10);
+    const year = parseInt(monthMatch[3], 10);
+    const month = MONTH_NAMES[monthName];
+    if (month && day >= 1 && day <= 31 && year >= 2024 && year <= 2030) {
+      return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    }
+  }
+  
+  // Pattern 2: "MM/DD/YYYY" or "M/D/YYYY"
+  const slashPattern = /(?:dates?|when|event date)[:\s]+(\d{1,2})\/(\d{1,2})\/(\d{4})/i;
+  const slashMatch = text.match(slashPattern);
+  if (slashMatch) {
+    const month = parseInt(slashMatch[1], 10);
+    const day = parseInt(slashMatch[2], 10);
+    const year = parseInt(slashMatch[3], 10);
+    if (month >= 1 && month <= 12 && day >= 1 && day <= 31 && year >= 2024 && year <= 2030) {
+      return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    }
+  }
+  
+  // Pattern 3: Standalone "Month DD, YYYY" in first 1000 chars (likely event date)
+  const standalonePattern = /\b([A-Z][a-z]+)\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})\b/;
+  const standaloneMatch = text.substring(0, 1000).match(standalonePattern);
+  if (standaloneMatch) {
+    const monthName = standaloneMatch[1].toLowerCase();
+    const day = parseInt(standaloneMatch[2], 10);
+    const year = parseInt(standaloneMatch[3], 10);
+    const month = MONTH_NAMES[monthName];
+    if (month && day >= 1 && day <= 31 && year >= 2024 && year <= 2030) {
+      return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    }
+  }
+  
+  return null;
+}
+
 // Normalize time format to "X:XX PM" style
 function normalizeTime(time: string): string {
   if (!time) return time;
@@ -263,6 +314,15 @@ serve(async (req) => {
     const performer = extractPerformerFromText(markdown, title);
     const eventTime = extractTimeFromText(markdown);
     
+    // Try to extract date from content if not in URL
+    let eventDate = urlDate;
+    if (!eventDate) {
+      eventDate = extractDateFromContent(markdown);
+      if (eventDate) {
+        console.log(`📅 Found date in content: ${eventDate}`);
+      }
+    }
+    
     // Try to extract venue from metadata or markdown
     let venue = firecrawlData.data?.metadata?.ogSiteName || null;
     if (!venue) {
@@ -278,7 +338,7 @@ serve(async (req) => {
     const eventDetails: EventDetails = {
       performer,
       event_time: eventTime,
-      event_date: urlDate || null,
+      event_date: eventDate || null,
       venue,
       description,
     };

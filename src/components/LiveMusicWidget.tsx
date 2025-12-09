@@ -50,27 +50,15 @@ function isFreshEvent(event: MusicEvent): boolean {
 }
 
 // Check if event is generic recurring (no specific days)
-// CHANGED: No longer treats undated events as "show every day"
-// Now requires either: recurring_days set, title mentions day, or freshly published
+// STRICT: Events without explicit recurring_days or day in title are NOT shown
+// This prevents undated/stale events from appearing in widget
 function isGenericRecurring(event: MusicEvent): boolean {
-  const recurringDays = event.metadata?.recurring_days;
-  
-  // If has recurring_days, it's NOT generic - it's day-specific
-  if (recurringDays && Array.isArray(recurringDays) && recurringDays.length > 0) {
-    return false;
-  }
-  
-  // Check if title mentions specific days - if so, NOT generic
-  const t = event.title.toLowerCase();
-  const allDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-  if (allDays.some(day => t.includes(day))) {
-    return false;
-  }
-  
-  // For events without recurring_days and no day in title:
-  // Only show if freshly published (within 24 hours)
-  // This prevents old one-off events from showing indefinitely
-  return isFreshEvent(event);
+  // Never return true - require explicit date data to show events
+  // Events must have either:
+  // 1. event_date matching today/weekend (handled elsewhere)
+  // 2. recurring_days metadata (handled by eventMatchesDay)
+  // 3. Day name in title (handled by matchesRecurringDay via eventMatchesDay fallback)
+  return false;
 }
 
 // Keywords that indicate garbage performer data
