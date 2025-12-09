@@ -172,7 +172,7 @@ export function NewsletterQAPanel() {
     mutationFn: async () => {
       setTriggeringDaily(true);
       const { data, error } = await supabase.functions.invoke("autopilot-newsletter", {
-        body: { sendNow: true },
+        body: { sendNow: true, force: true },
       });
       if (error) throw error;
       return data;
