@@ -85,8 +85,9 @@ async function linkAlertToIncident(opts: {
   summary: string | null;
   priorityScore: number;
   event: string;
+  status?: string;
 }) {
-  const { supabase, storyId, title, summary, priorityScore, event } = opts;
+  const { supabase, storyId, title, summary, priorityScore, event, status = 'active' } = opts;
 
   // Try to find an existing active weather incident with similar event type
   const { data: existingIncidents, error: findError } = await supabase
@@ -116,7 +117,7 @@ async function linkAlertToIncident(opts: {
         slug,
         title,
         incident_type: 'weather',
-        status: 'active',
+        status, // Use passed status (active for severe, monitoring for minor)
         location: 'Walworth County / Lake Geneva area',
         source_story_id: storyId,
         priority_score: priorityScore,
@@ -389,8 +390,14 @@ Deno.serve(async (req) => {
       result.new_items++;
       console.log(`[sync-nws] Inserted alert: ${props.event} (${props.severity})`);
 
-      // Link breaking weather alerts to incidents
-      if (isBreaking && insertedAlert) {
+      // Link ALL weather alerts to incidents (not just breaking)
+      // Severity determines priority_score and status, not whether incident is created
+      if (insertedAlert) {
+        // Determine incident status based on severity
+        const incidentStatus = (props.severity === 'Extreme' || props.severity === 'Severe') 
+          ? 'active' 
+          : 'monitoring';
+        
         await linkAlertToIncident({
           supabase,
           storyId: insertedAlert.id,
@@ -398,6 +405,7 @@ Deno.serve(async (req) => {
           summary,
           priorityScore,
           event: props.event,
+          status: incidentStatus,
         });
       }
     }
