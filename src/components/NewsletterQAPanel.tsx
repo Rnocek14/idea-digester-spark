@@ -32,35 +32,39 @@ export function NewsletterQAPanel() {
   const [triggeringDaily, setTriggeringDaily] = useState(false);
   const [triggeringWeekend, setTriggeringWeekend] = useState(false);
 
-  // Fetch Daily Preview
+  // Fetch Daily Preview - matches autopilot-newsletter edge function logic
   const { data: dailyPreview, isLoading: dailyLoading, refetch: refetchDaily } = useQuery({
     queryKey: ["daily-preview"],
     queryFn: async (): Promise<DailyPreview> => {
-      const today = new Date();
-      const yesterday = new Date(today);
-      yesterday.setDate(today.getDate() - 1);
-      const todayStr = today.toISOString().slice(0, 10);
+      const now = new Date();
+      const freshCutoff = new Date();
+      freshCutoff.setHours(freshCutoff.getHours() - 24);
+      const todayStr = now.toISOString().slice(0, 10);
 
-      // Fetch fresh stories (published in last 24h)
+      // Fetch fresh stories (published in last 24h rolling window)
       const { data: stories, error } = await supabase
         .from("content_queue")
         .select("id, title, category")
         .in("status", ["approved", "auto_published", "published"])
         .eq("safety_level", "safe")
         .is("last_newsletter_id", null)
-        .gte("publish_date", yesterday.toISOString())
-        .lte("publish_date", today.toISOString())
+        .gte("publish_date", freshCutoff.toISOString())
+        .lte("publish_date", now.toISOString())
         .or(`event_date.is.null,event_date.gte.${todayStr}`)
         .order("publish_date", { ascending: false })
         .limit(20);
 
       if (error) throw error;
 
-      // Check active incidents
+      // Check active incidents updated in last 6 hours (matches edge function)
+      const sixHoursAgo = new Date();
+      sixHoursAgo.setHours(sixHoursAgo.getHours() - 6);
+      
       const { count: incidentCount } = await supabase
         .from("incidents")
         .select("*", { count: "exact", head: true })
-        .in("status", ["active", "monitoring"]);
+        .eq("status", "active")
+        .gte("updated_at", sixHoursAgo.toISOString());
 
       const storyCount = stories?.length || 0;
       const incidents = incidentCount || 0;
