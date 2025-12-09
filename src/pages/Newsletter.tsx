@@ -94,7 +94,7 @@ const Newsletter = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("newsletters")
-        .select("*")
+        .select("id, subject, status, created_at, edition_date, newsletter_type, story_count, html_body, text_body, sent_at")
         .order("edition_date", { ascending: false })
         .limit(10);
       if (error) throw error;
@@ -632,6 +632,7 @@ const Newsletter = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Date</TableHead>
+                    <TableHead>Type</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Stories</TableHead>
                     <TableHead>Subject</TableHead>
@@ -643,6 +644,17 @@ const Newsletter = () => {
                     <TableRow key={newsletter.id}>
                       <TableCell className="font-medium">
                         {format(new Date(newsletter.edition_date), 'MMM d, yyyy')}
+                      </TableCell>
+                      <TableCell>
+                        {newsletter.newsletter_type === "weekend" ? (
+                          <Badge variant="secondary" className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
+                            🌊 Weekend
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary" className="bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400">
+                            📬 Daily
+                          </Badge>
+                        )}
                       </TableCell>
                       <TableCell>
                         {getStatusBadge(newsletter.status)}
