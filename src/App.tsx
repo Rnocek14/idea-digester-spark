@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import HostnameRouter from "./components/HostnameRouter";
 import LakeGeneva from "./pages/LakeGeneva";
 import SellingLakeGeneva from "./pages/SellingLakeGeneva";
 import PublicDirectory from "./pages/PublicDirectory";
@@ -52,7 +53,8 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Suspense fallback={<LoadingFallback />}>
-          <Routes>
+          <HostnameRouter>
+            <Routes>
             <Route path="/" element={<LakeGeneva />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/lake-geneva" element={<Navigate to="/" replace />} />
@@ -75,7 +77,8 @@ const App = () => (
               <Route path="engagement" element={<EngagementMonitor />} />
             </Route>
             <Route path="*" element={<NotFound />} />
-          </Routes>
+            </Routes>
+          </HostnameRouter>
         </Suspense>
       </BrowserRouter>
     </TooltipProvider>
