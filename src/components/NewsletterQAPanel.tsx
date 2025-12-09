@@ -310,19 +310,35 @@ export function NewsletterQAPanel() {
                     setForceRegenerating(true);
                     try {
                       const today = new Date().toISOString().slice(0, 10);
-                      // Delete existing newsletter for today
-                      const { error: deleteError } = await supabase
+                      
+                      // Find existing newsletter for today
+                      const { data: existing } = await supabase
                         .from("newsletters")
-                        .delete()
+                        .select("id")
                         .eq("edition_date", today)
-                        .eq("newsletter_type", "daily");
+                        .eq("newsletter_type", "daily")
+                        .maybeSingle();
                       
-                      if (deleteError) {
-                        toast.error("Failed to delete existing newsletter", { description: deleteError.message });
-                        return;
+                      if (existing) {
+                        // Clear references from content_queue first
+                        await supabase
+                          .from("content_queue")
+                          .update({ last_newsletter_id: null })
+                          .eq("last_newsletter_id", existing.id);
+                        
+                        // Now delete the newsletter
+                        const { error: deleteError } = await supabase
+                          .from("newsletters")
+                          .delete()
+                          .eq("id", existing.id);
+                        
+                        if (deleteError) {
+                          toast.error("Failed to delete existing newsletter", { description: deleteError.message });
+                          return;
+                        }
+                        
+                        toast.info("Deleted existing newsletter, regenerating...");
                       }
-                      
-                      toast.info("Deleted existing newsletter, regenerating...");
                       
                       // Now trigger regeneration
                       const { data, error } = await supabase.functions.invoke("autopilot-newsletter", {
