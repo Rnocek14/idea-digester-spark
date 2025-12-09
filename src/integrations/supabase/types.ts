@@ -822,6 +822,7 @@ export type Database = {
           html_body: string
           id: string
           metadata: Json | null
+          newsletter_type: string | null
           preheader: string | null
           sent_at: string | null
           status: string
@@ -839,6 +840,7 @@ export type Database = {
           html_body: string
           id?: string
           metadata?: Json | null
+          newsletter_type?: string | null
           preheader?: string | null
           sent_at?: string | null
           status?: string
@@ -856,6 +858,7 @@ export type Database = {
           html_body?: string
           id?: string
           metadata?: Json | null
+          newsletter_type?: string | null
           preheader?: string | null
           sent_at?: string | null
           status?: string
