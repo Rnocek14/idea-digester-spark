@@ -42,19 +42,19 @@ export function NewsletterAnalyticsDrawer({ newsletter, open, onOpenChange }: Ne
 
       const totalSubscribers = subscribersData?.length || 0;
 
-      // Fetch opens
+      // Fetch opens with subscriber emails
       const { data: opens, error: opensError } = await supabase
         .from("newsletter_opens")
-        .select("*")
+        .select("*, subscribers(email)")
         .eq("newsletter_id", newsletter.id)
         .order("opened_at", { ascending: false });
 
       if (opensError) throw opensError;
 
-      // Fetch clicks
+      // Fetch clicks with subscriber emails
       const { data: clicks, error: clicksError } = await supabase
         .from("newsletter_clicks")
-        .select("*")
+        .select("*, subscribers(email)")
         .eq("newsletter_id", newsletter.id)
         .order("clicked_at", { ascending: false });
 
@@ -259,8 +259,8 @@ export function NewsletterAnalyticsDrawer({ newsletter, open, onOpenChange }: Ne
                       <div className="space-y-2 max-h-64 overflow-y-auto">
                         {analytics.opens.slice(0, 20).map((open: any) => (
                           <div key={open.id} className="flex justify-between items-center text-sm border-b pb-2">
-                            <span className="text-muted-foreground truncate max-w-xs">
-                              {open.subscriber_email || "Anonymous"}
+                            <span className="font-medium truncate max-w-xs">
+                              {open.subscribers?.email || open.subscriber_email || "Anonymous"}
                             </span>
                             <span className="text-xs text-muted-foreground">
                               {format(new Date(open.opened_at), "MMM d, h:mm a")}
@@ -280,8 +280,8 @@ export function NewsletterAnalyticsDrawer({ newsletter, open, onOpenChange }: Ne
                         {analytics.clicks.slice(0, 20).map((click: any) => (
                           <div key={click.id} className="border-b pb-2">
                             <div className="flex justify-between items-center text-sm mb-1">
-                              <span className="text-muted-foreground truncate max-w-xs">
-                                {click.subscriber_email || "Anonymous"}
+                              <span className="font-medium truncate max-w-xs">
+                                {click.subscribers?.email || click.subscriber_email || "Anonymous"}
                               </span>
                               <span className="text-xs text-muted-foreground">
                                 {format(new Date(click.clicked_at), "MMM d, h:mm a")}
