@@ -156,6 +156,17 @@ serve(async (req: Request) => {
 
     console.log(`[Weekend Guide] Found ${topStories?.length || 0} top stories from the week`);
 
+    // Fetch featured sponsor for the weekend
+    const { data: featuredSponsor } = await supabase
+      .from("sponsors")
+      .select("id, business_name, website, logo_url, metadata")
+      .eq("status", "active")
+      .order("tier", { ascending: false }) // premium first
+      .limit(1)
+      .maybeSingle();
+
+    console.log(`[Weekend Guide] Featured sponsor: ${featuredSponsor?.business_name || 'none'}`);
+
     const eventCount = weekendEvents?.length || 0;
     const storyCount = topStories?.length || 0;
 
@@ -201,7 +212,8 @@ serve(async (req: Request) => {
       weekendEvents || [],
       topStories || [],
       subject,
-      weekendRange
+      weekendRange,
+      featuredSponsor
     );
 
     const allStoryIds = [
@@ -225,6 +237,7 @@ serve(async (req: Request) => {
           event_count: eventCount,
           story_count: storyCount,
           weekend_range: weekendRange,
+          sponsor_id: featuredSponsor?.id || null,
         },
       })
       .select()
@@ -323,11 +336,20 @@ function getCategoryEmoji(category: string | null | undefined): string {
   }
 }
 
+interface Sponsor {
+  id: string;
+  business_name: string;
+  website?: string | null;
+  logo_url?: string | null;
+  metadata?: any;
+}
+
 function buildWeekendNewsletter(
   events: Story[],
   stories: Story[],
   subject: string,
-  weekendRange: string
+  weekendRange: string,
+  sponsor?: Sponsor | null
 ): { htmlBody: string; textBody: string } {
   const baseUrl = Deno.env.get("APP_BASE_URL") || "https://lakegeneva.citybrief.info";
 
@@ -399,6 +421,40 @@ function buildWeekendNewsletter(
     }
   }
 
+  // Build sponsor block if we have a featured sponsor
+  let sponsorHtml = "";
+  let sponsorText = "";
+  if (sponsor) {
+    const tagline = sponsor.metadata?.short_tagline || "";
+    const websiteUrl = sponsor.website || "";
+    
+    sponsorHtml = `
+      <tr>
+        <td style="padding: 24px 0; border-top: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb;">
+          <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; margin-bottom: 6px;">
+            Presented by
+          </div>
+          ${sponsor.logo_url ? `<img src="${sponsor.logo_url}" alt="${sponsor.business_name}" style="max-height: 48px; max-width: 200px; margin-bottom: 8px;" />` : ""}
+          <div style="font-size: 17px; font-weight: 600; color: #111827; margin-bottom: 4px;">
+            ${sponsor.business_name}
+          </div>
+          ${tagline ? `<div style="font-size: 14px; color: #6b7280; margin-bottom: 8px;">${tagline}</div>` : ""}
+          ${websiteUrl ? `<a href="${websiteUrl}?utm_source=newsletter&utm_medium=email&utm_campaign=weekend_guide" style="font-size: 14px; color: #2563eb; text-decoration: underline;">Learn more →</a>` : ""}
+        </td>
+      </tr>
+    `;
+
+    sponsorText = `
+────────────────────────
+PRESENTED BY
+
+${sponsor.business_name}
+${tagline}
+${websiteUrl}
+────────────────────────
+`;
+  }
+
   const htmlBody = `
 <!DOCTYPE html>
 <html>
@@ -445,6 +501,15 @@ function buildWeekendNewsletter(
             <td style="padding: 0 24px;">
               <table role="presentation" style="width: 100%;">
                 ${eventsHtml}
+              </table>
+            </td>
+          </tr>
+
+          <!-- Sponsor Block -->
+          <tr>
+            <td style="padding: 0 24px;">
+              <table role="presentation" style="width: 100%;">
+                ${sponsorHtml}
               </table>
             </td>
           </tr>
@@ -503,6 +568,11 @@ function buildWeekendNewsletter(
       textBody += `  • ${event.title}${performer}${time}\n`;
     }
     textBody += `\n`;
+  }
+
+  // Add sponsor to plain text
+  if (sponsorText) {
+    textBody += sponsorText;
   }
 
   if (stories.length > 0) {

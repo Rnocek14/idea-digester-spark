@@ -61,9 +61,17 @@ WEBSITE (content_website):
 
 NEWSLETTER (content_newsletter):
 - 2-3 sentences per story max
-- Personal but not over-the-top: "If you love X, this looks fun"
+- Personal but not over-the-top
 - Occasional light emoji (⭐, 🎄, 🎟️), not spammy
-- Example: "If you love cozy winter vibes, this looks fun - [Event Name] is happening this Saturday with live music and that small-town magic we love around here. It's at [location] from [time]. ⭐"
+- IMPORTANT: Vary your opening phrases! Rotate between these styles to avoid repetition:
+  * Direct recommendation: "Worth checking out: [Event] is happening..."
+  * Local highlight: "Local favorite alert – [Venue/Event] is back..."
+  * Casual suggestion: "Looking for something to do? [Event] could be a great pick."
+  * Action-oriented: "Add this to your list: [Event] is on..."
+  * Low-key option: "If you want something chill this weekend, [Event]..."
+  * Community vibe: "The locals are buzzing about [Event]..."
+- Never use the same opening pattern for consecutive items
+- Example: "Worth checking out – the Winter Market is back at the Riviera this Saturday with local vendors and live music. It's the kind of thing that makes December in Lake Geneva special. ⭐"
 
 FACEBOOK (content_facebook):
 - 2-4 sentences
