@@ -483,6 +483,13 @@ serve(async (req) => {
   }
 });
 
+// Convert category to Title Case (e.g., "real-estate" -> "Real Estate")
+function toTitleCase(str: string): string {
+  return str
+    .replace(/-/g, ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
 // Rank stories by priority: approved first, category diversity, then recency
 function rankStories(stories: Story[], limit: number): Story[] {
   // Priority scoring
@@ -619,7 +626,7 @@ function buildNewsletter(
         }).join("\n");
         return `
           <div style="margin-bottom: 12px;">
-            <p style="margin: 0 0 6px 0; font-size: 13px; font-weight: 600; color: #718096; text-transform: uppercase; letter-spacing: 0.5px;">${category}</p>
+            <p style="margin: 0 0 6px 0; font-size: 13px; font-weight: 600; color: #718096; letter-spacing: 0.5px;">${toTitleCase(category)}</p>
             <ul style="margin: 0; padding-left: 20px;">
               ${categoryItems}
             </ul>
@@ -650,7 +657,7 @@ function buildNewsletter(
     return `
       <div style="margin-bottom: 32px;">
         <h2 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 700; color: #2d3748; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">
-          ${emoji} ${category}
+          ${emoji} ${toTitleCase(category)}
         </h2>
         ${items}
       </div>
@@ -727,7 +734,7 @@ function buildNewsletter(
       const urlSuffix = s.original_url ? ` — ${s.original_url}` : '';
       return `• ${s.title}${urlSuffix}`;
     }).join("\n");
-    return `${category.toUpperCase()}\n${items}`;
+    return `${toTitleCase(category)}\n${items}`;
   }).join("\n\n");
 
   // Build plain text
@@ -739,7 +746,7 @@ function buildNewsletter(
       return `${s.title}\n${body}${urlSuffix}\n`;
     }).join("\n");
 
-    return `== ${category.toUpperCase()} ==\n\n${items}`;
+    return `== ${toTitleCase(category)} ==\n\n${items}`;
   }).join("\n\n");
 
   const textBody = `
