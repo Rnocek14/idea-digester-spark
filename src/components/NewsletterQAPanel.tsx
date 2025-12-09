@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Send, Calendar, AlertTriangle, CheckCircle, Clock, Eye, Sparkles, RefreshCw } from "lucide-react";
+import { Loader2, Send, Calendar, AlertTriangle, CheckCircle, Clock, Eye, Sparkles, RefreshCw, Trash2 } from "lucide-react";
 import { format, addDays } from "date-fns";
 import { toast } from "sonner";
 
@@ -31,6 +31,7 @@ export function NewsletterQAPanel() {
   const queryClient = useQueryClient();
   const [triggeringDaily, setTriggeringDaily] = useState(false);
   const [triggeringWeekend, setTriggeringWeekend] = useState(false);
+  const [forceRegenerating, setForceRegenerating] = useState(false);
 
   // Fetch Daily Preview - matches autopilot-newsletter edge function logic
   const { data: dailyPreview, isLoading: dailyLoading, refetch: refetchDaily } = useQuery({
@@ -288,19 +289,71 @@ export function NewsletterQAPanel() {
                 )}
               </div>
 
-              <Button
-                size="sm"
-                className="w-full"
-                onClick={() => triggerDailyMutation.mutate()}
-                disabled={triggeringDaily}
-              >
-                {triggeringDaily ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Send className="h-4 w-4 mr-2" />
-                )}
-                Generate & Send Now
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => triggerDailyMutation.mutate()}
+                  disabled={triggeringDaily || forceRegenerating}
+                >
+                  {triggeringDaily ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4 mr-2" />
+                  )}
+                  Generate & Send
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={async () => {
+                    setForceRegenerating(true);
+                    try {
+                      const today = new Date().toISOString().slice(0, 10);
+                      // Delete existing newsletter for today
+                      const { error: deleteError } = await supabase
+                        .from("newsletters")
+                        .delete()
+                        .eq("edition_date", today)
+                        .eq("newsletter_type", "daily");
+                      
+                      if (deleteError) {
+                        toast.error("Failed to delete existing newsletter", { description: deleteError.message });
+                        return;
+                      }
+                      
+                      toast.info("Deleted existing newsletter, regenerating...");
+                      
+                      // Now trigger regeneration
+                      const { data, error } = await supabase.functions.invoke("autopilot-newsletter", {
+                        body: { sendNow: true, force: true },
+                      });
+                      
+                      if (error) throw error;
+                      
+                      queryClient.invalidateQueries({ queryKey: ["recent-newsletters"] });
+                      queryClient.invalidateQueries({ queryKey: ["daily-preview"] });
+                      
+                      if (data.status === "sent") {
+                        toast.success(`Daily sent to ${data.sent} subscribers`);
+                      } else {
+                        toast.success("Daily newsletter regenerated");
+                      }
+                    } catch (err: any) {
+                      toast.error("Failed to regenerate", { description: err.message });
+                    } finally {
+                      setForceRegenerating(false);
+                    }
+                  }}
+                  disabled={triggeringDaily || forceRegenerating}
+                >
+                  {forceRegenerating ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
             </>
           ) : null}
         </CardContent>
