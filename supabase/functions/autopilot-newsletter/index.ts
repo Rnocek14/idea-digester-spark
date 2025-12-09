@@ -200,62 +200,92 @@ serve(async (req) => {
       console.log("✅ Existing newsletter deleted, proceeding with fresh generation");
     }
 
-    // Select eligible stories
-    // GUARDRAIL: Filter by last_newsletter_id IS NULL for dedupe
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(today.getDate() - 7);
+    // ========== FRESHNESS PIPELINE ==========
+    // Only include stories from the last 24 hours that have already been published
+    // This prevents stale content and future-dated stories from appearing
+    
+    const freshnessWindowHours = 24;
+    const freshCutoff = new Date();
+    freshCutoff.setHours(freshCutoff.getHours() - freshnessWindowHours);
+    
+    const todayDate = today.toISOString().split("T")[0]; // YYYY-MM-DD for event_date comparison
 
-    console.log(`🔍 Fetching eligible stories (strict: approved/auto_published/published + safe)...`);
+    console.log(`🔍 Fetching fresh stories (last ${freshnessWindowHours}h, approved/auto_published/published + safe)...`);
+    console.log(`   Freshness cutoff: ${freshCutoff.toISOString()}`);
+    console.log(`   Today's date for events: ${todayDate}`);
 
-    // STRICT: Try approved/auto_published/published first
-    const { data: strictCandidates, error: fetchError } = await supabase
+    // Fetch fresh stories with freshness filter on publish_date
+    const { data: freshStories, error: fetchError } = await supabase
       .from("content_queue")
-      .select("id, title, content, summary, category, content_newsletter, voice_generated_at, status, created_at, original_url")
+      .select("id, title, content, summary, category, content_newsletter, voice_generated_at, status, created_at, original_url, publish_date, event_date")
       .in("status", ["approved", "auto_published", "published"])
       .eq("safety_level", "safe")
-      .is("last_newsletter_id", null) // GUARDRAIL: Dedupe
-      .gte("created_at", sevenDaysAgo.toISOString())
-      .order("created_at", { ascending: false });
+      .is("last_newsletter_id", null) // GUARDRAIL: Dedupe - never reuse stories
+      .gte("publish_date", freshCutoff.toISOString()) // Only stories from last 24h
+      .lte("publish_date", today.toISOString()) // No future-dated stories
+      .order("publish_date", { ascending: false });
 
     if (fetchError) throw fetchError;
 
-    let candidates = strictCandidates || [];
-    console.log(`✅ Found ${candidates.length} strict candidates`);
+    // Filter out past events (event_date < today)
+    let candidates = (freshStories || []).filter(story => {
+      // If it has an event_date, it must be today or in the future
+      if (story.event_date) {
+        return story.event_date >= todayDate;
+      }
+      // Non-events pass through
+      return true;
+    });
 
-    // FALLBACK: If fewer than 5 strict candidates, include pending+safe stories
-    if (candidates.length < 5) {
-      console.log(`⚠️ Only ${candidates.length} strict candidates, adding pending+safe stories as fallback...`);
+    console.log(`✅ Found ${candidates.length} fresh candidates (${freshStories?.length || 0} before event filter)`);
+
+    // Also fetch active incidents for content threshold check
+    const sixHoursAgo = new Date();
+    sixHoursAgo.setHours(sixHoursAgo.getHours() - 6);
+    
+    const { data: activeIncidents } = await supabase
+      .from("incidents")
+      .select("id")
+      .eq("status", "active")
+      .gte("updated_at", sixHoursAgo.toISOString());
+
+    const incidentCount = activeIncidents?.length || 0;
+    console.log(`📢 Active incidents in last 6h: ${incidentCount}`);
+
+    // ========== MINIMUM CONTENT THRESHOLD ==========
+    // Skip newsletter if not enough fresh content
+    // Rules: 
+    //   - At least 3 fresh stories, OR
+    //   - At least 2 fresh stories + 1 active incident
+    const storyCount = candidates.length;
+    const hasEnoughContent = 
+      storyCount >= 3 || 
+      (storyCount >= 2 && incidentCount >= 1);
+
+    if (!hasEnoughContent) {
+      const skipReason = storyCount === 0 
+        ? "no_fresh_content" 
+        : "not_enough_fresh_content";
       
-      const { data: relaxedCandidates, error: relaxedError } = await supabase
-        .from("content_queue")
-        .select("id, title, content, summary, category, content_newsletter, voice_generated_at, status, created_at, original_url")
-        .in("status", ["approved", "auto_published", "published", "pending"])
-        .eq("safety_level", "safe")
-        .is("last_newsletter_id", null)
-        .gte("created_at", sevenDaysAgo.toISOString())
-        .order("created_at", { ascending: false });
-
-      if (relaxedError) throw relaxedError;
-      
-      candidates = relaxedCandidates || [];
-      console.log(`✅ Found ${candidates.length} total candidates (including pending+safe)`);
-    }
-
-    if (!candidates || candidates.length === 0) {
-      console.log("⚠️ No eligible stories found, creating skipped newsletter");
+      console.log(`⚠️ Not enough fresh content (stories=${storyCount}, incidents=${incidentCount}), skipping newsletter`);
       
       const { data: skippedNewsletter, error: skipError } = await supabase
         .from("newsletters")
         .insert({
           edition_date: editionDate,
           status: "skipped",
-          subject: `Lake Geneva Local - ${editionDate} (No stories)`,
-          preheader: "No new stories available today",
-          html_body: "<p>No newsletter generated – no eligible stories available.</p>",
-          text_body: "No newsletter generated – no eligible stories available.",
+          subject: `Lake Geneva Local - ${editionDate} (Skipped)`,
+          preheader: "Not enough fresh content today",
+          html_body: "<p>No newsletter generated – not enough fresh content available.</p>",
+          text_body: "No newsletter generated – not enough fresh content available.",
           story_ids: [],
           story_count: 0,
-          metadata: { reason: "no_eligible_stories" }
+          metadata: { 
+            skipped_reason: skipReason,
+            story_count: storyCount,
+            incident_count: incidentCount,
+            freshness_window_hours: freshnessWindowHours
+          }
         })
         .select()
         .single();
@@ -264,9 +294,13 @@ serve(async (req) => {
 
       return new Response(
         JSON.stringify({ 
-          message: "No eligible stories, newsletter skipped",
+          success: true,
+          message: `Newsletter skipped: ${skipReason}`,
           newsletter_id: skippedNewsletter.id,
-          status: "skipped"
+          status: "skipped",
+          story_count: storyCount,
+          incident_count: incidentCount,
+          freshness_window_hours: freshnessWindowHours
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
       );
