@@ -110,3 +110,9 @@ verify_jwt = false
 
 [functions.sync-facebook-incidents]
 verify_jwt = false
+
+[functions.sync-spotcrime-incidents]
+verify_jwt = false
+
+[functions.sync-power-outages]
+verify_jwt = false
