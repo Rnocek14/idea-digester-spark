@@ -110,12 +110,13 @@ serve(async (req) => {
     console.log(`[backfill-incidents] Starting with dry_run=${dry_run}, min_priority=${min_priority}, days_back=${days_back}`);
 
     // Find high-priority stories that don't have incidents linked
-    // CRITICAL: Only geo_tier 1 or 2 stories can become incidents (hyperlocal/county)
+    // CRITICAL: Only geo_tier 1 (Lake Geneva/hyperlocal) stories become incidents
+    // geo_tier 2 (county/regional) should NOT pollute the incident feed
     const { data: stories, error: storiesError } = await supabase
       .from("content_queue")
       .select("id, title, summary, category, priority_score, publish_date, created_at, geo_tier, geo_label")
       .gte("priority_score", min_priority)
-      .gte("geo_tier", 1) // Only hyperlocal (1) or county (2) - never regional (0)
+      .eq("geo_tier", 1) // ONLY hyperlocal Lake Geneva stories - not regional (0) or county (2)
       .eq("is_breaking", false)
       .gte("created_at", new Date(Date.now() - days_back * 24 * 60 * 60 * 1000).toISOString())
       .order("priority_score", { ascending: false })
