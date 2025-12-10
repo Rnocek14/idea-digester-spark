@@ -6,6 +6,12 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Known good article URLs from Patch Lake Geneva - scrape these directly
+const KNOWN_SECTIONS = [
+  "https://patch.com/wisconsin/lake-geneva-wi/police-fire",
+  "https://patch.com/wisconsin/lake-geneva-wi/around-town",
+];
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -42,65 +48,72 @@ serve(async (req) => {
       );
     }
 
-    console.log(`[sync-patch] Mapping Patch Lake Geneva via Firecrawl...`);
+    console.log(`[sync-patch] Starting Patch scrape with waitFor...`);
 
-    // Use Firecrawl's map feature to discover article URLs
-    const firecrawlResponse = await fetch("https://api.firecrawl.dev/v1/map", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${firecrawlKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        url: source.url,
-        limit: 100,
-        includeSubdomains: false,
-      }),
-    });
+    // Collect article links from multiple section pages
+    const allLinks: string[] = [];
 
-    if (!firecrawlResponse.ok) {
-      const errText = await firecrawlResponse.text();
-      console.error("Firecrawl map error:", errText);
-      return new Response(
-        JSON.stringify({ success: false, error: `Firecrawl map failed: ${firecrawlResponse.status}` }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    for (const sectionUrl of KNOWN_SECTIONS) {
+      console.log(`[sync-patch] Scraping section: ${sectionUrl}`);
+      
+      try {
+        const firecrawlResponse = await fetch("https://api.firecrawl.dev/v1/scrape", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${firecrawlKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            url: sectionUrl,
+            formats: ["links"],
+            waitFor: 3000, // Wait 3 seconds for JS to render
+          }),
+        });
+
+        if (firecrawlResponse.ok) {
+          const data = await firecrawlResponse.json();
+          const links = data.data?.links || [];
+          console.log(`[sync-patch] Found ${links.length} links from ${sectionUrl}`);
+          allLinks.push(...links);
+        }
+      } catch (err) {
+        console.warn(`[sync-patch] Failed to scrape ${sectionUrl}`);
+      }
     }
 
-    const firecrawlData = await firecrawlResponse.json();
-    const links: string[] = firecrawlData.links || [];
-
-    console.log(`[sync-patch] Firecrawl map found ${links.length} URLs`);
+    console.log(`[sync-patch] Total links collected: ${allLinks.length}`);
     
-    // Log sample links for debugging
-    console.log(`[sync-patch] Sample URLs:`, links.slice(0, 10));
+    // Dedupe and filter to article links
+    const uniqueLinks = [...new Set(allLinks)];
+    console.log(`[sync-patch] Sample links:`, uniqueLinks.slice(0, 10));
 
-    // Filter to article links - Patch articles have slugs that look like news titles
-    const articleLinks = links.filter(link => {
-      // Must be Lake Geneva
+    const articleLinks = uniqueLinks.filter(link => {
+      // Must be Lake Geneva article
       if (!link.includes("patch.com/wisconsin/lake-geneva-wi/")) return false;
       
-      // Skip section pages
+      // Skip section/category pages
+      if (link.endsWith("/lake-geneva-wi") || link.endsWith("/lake-geneva-wi/")) return false;
       if (link.includes("/calendar")) return false;
       if (link.includes("/events")) return false;
+      if (link.includes("/police-fire") && !link.includes("/police-fire/")) return false;
+      if (link.includes("/around-town") && !link.includes("/around-town/")) return false;
       if (link.includes("/search")) return false;
       if (link.includes("/weather")) return false;
-      if (link.includes("/police-fire")) return false;
       if (link.includes("/classifieds")) return false;
       if (link.includes("/post")) return false;
       if (link.includes("/users/")) return false;
       if (link.includes("/patch-pm")) return false;
       if (link.includes("/announcements")) return false;
-      if (link.endsWith("/lake-geneva-wi") || link.endsWith("/lake-geneva-wi/")) return false;
+      if (link.includes("/obituaries") && !link.includes("/obituaries/")) return false;
       
-      // Article URLs have a meaningful slug after /lake-geneva-wi/
-      const pathMatch = link.match(/\/lake-geneva-wi\/([a-z0-9-]+)/i);
-      if (!pathMatch) return false;
+      // Article URLs typically have a descriptive slug
+      const pathParts = link.split("/lake-geneva-wi/");
+      if (pathParts.length < 2) return false;
       
-      const slug = pathMatch[1];
-      // Real articles have descriptive slugs (multiple words with hyphens)
-      return slug.includes("-") && slug.length > 10;
-    }).slice(0, 10); // Limit to 10 newest articles
+      const slug = pathParts[1].split("/")[0];
+      // Real articles have multi-word slugs with hyphens
+      return slug.includes("-") && slug.length > 15;
+    }).slice(0, 8); // Limit to 8 articles per run
 
     console.log(`[sync-patch] Found ${articleLinks.length} article links to process`);
     if (articleLinks.length > 0) {
@@ -119,20 +132,20 @@ serve(async (req) => {
       results.processed++;
       
       try {
-        // Check for duplicates
-        const normalizedUrl = articleUrl.toLowerCase().replace(/\/+$/, '');
+        // Check for duplicates by URL slug
+        const urlSlug = articleUrl.split("/lake-geneva-wi/")[1]?.split("?")[0] || "";
         const { count: existingCount } = await supabase
           .from("content_queue")
           .select("*", { count: "exact", head: true })
-          .ilike("original_url", `%${normalizedUrl.split("/p/")[1]}%`);
+          .ilike("original_url", `%${urlSlug}%`);
 
         if (existingCount && existingCount > 0) {
-          console.log(`[sync-patch] Skipping duplicate: ${articleUrl}`);
+          console.log(`[sync-patch] Skipping duplicate: ${urlSlug}`);
           results.skipped++;
           continue;
         }
 
-        // Scrape the article
+        // Scrape the article with waitFor
         const articleResponse = await fetch("https://api.firecrawl.dev/v1/scrape", {
           method: "POST",
           headers: {
@@ -143,6 +156,7 @@ serve(async (req) => {
             url: articleUrl,
             formats: ["markdown"],
             onlyMainContent: true,
+            waitFor: 2000,
           }),
         });
 
@@ -169,7 +183,7 @@ serve(async (req) => {
           title = titleMatch ? titleMatch[1] : "";
         }
         // Clean Patch title suffix
-        title = title.replace(/\s*\|\s*Patch$/, "").replace(/\s*-\s*Lake Geneva.*$/, "").trim();
+        title = title.replace(/\s*\|\s*Patch$/, "").replace(/\s*-\s*Lake Geneva.*$/i, "").trim();
 
         if (!title) {
           console.warn(`[sync-patch] No title found: ${articleUrl}`);
@@ -180,6 +194,7 @@ serve(async (req) => {
         // Generate summary with OpenAI if available
         let summary = metadata.description || "";
         let category = "news";
+        let safetyLevel = "safe";
 
         if (openaiKey && articleMarkdown.length > 200) {
           try {
@@ -218,17 +233,13 @@ Return only valid JSON.`
                 const parsed = JSON.parse(jsonMatch[0]);
                 summary = parsed.summary || summary;
                 category = parsed.category || category;
+                safetyLevel = parsed.safety_level || safetyLevel;
               }
             }
           } catch (aiError) {
             console.warn(`[sync-patch] AI enrichment failed for ${title}`);
           }
         }
-
-        // Determine geo tier
-        const text = `${title} ${summary}`.toLowerCase();
-        let geoTier = 1; // Patch Lake Geneva is hyperlocal by definition
-        let geoLabel = "Lake Geneva";
 
         // Extract image from og:image
         const imageUrl = metadata.ogImage || metadata.image || null;
@@ -243,10 +254,10 @@ Return only valid JSON.`
             summary: summary.substring(0, 500),
             original_url: articleUrl,
             category,
-            status: "pending",
-            safety_level: "safe",
-            geo_tier: geoTier,
-            geo_label: geoLabel,
+            status: safetyLevel === "safe" ? "pending" : "pending",
+            safety_level: safetyLevel,
+            geo_tier: 1, // Patch Lake Geneva is hyperlocal
+            geo_label: "Lake Geneva",
             image_url: imageUrl,
             publish_date: new Date().toISOString(),
             metadata: {
