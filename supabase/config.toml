@@ -107,3 +107,6 @@ verify_jwt = false
 
 [functions.sync-patch]
 verify_jwt = false
+
+[functions.sync-facebook-incidents]
+verify_jwt = false
