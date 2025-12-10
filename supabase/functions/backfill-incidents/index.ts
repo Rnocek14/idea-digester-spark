@@ -7,7 +7,18 @@ const corsHeaders = {
 };
 
 // Infer incident type from story content
-type IncidentType = 'accident' | 'fire' | 'weather' | 'police' | 'utility' | 'other';
+type IncidentType = 'accident' | 'fire' | 'weather' | 'police' | 'utility' | 'crime' | 'road_closure' | 'other';
+
+// Keywords that should ALWAYS create incidents (regardless of priority score threshold)
+const INCIDENT_KEYWORDS = {
+  accident: ['crash', 'accident', 'collision', 'rollover', 'hit and run', 'pedestrian struck', 'fatality'],
+  fire: ['structure fire', 'house fire', 'building fire', 'fire department responds', 'fire call', 'flames'],
+  police: ['police respond', 'shots fired', 'shooting', 'standoff', 'swat', 'armed', 'hostage', 'manhunt'],
+  crime: ['arrest', 'arrested', 'robbery', 'burglary', 'assault', 'homicide', 'stabbing', 'carjacking'],
+  utility: ['power outage', 'water main break', 'gas leak', 'boil water', 'utility emergency'],
+  road_closure: ['road closed', 'closure', 'detour', 'bridge closed', 'highway closed'],
+  weather: ['tornado', 'severe storm', 'flooding', 'blizzard', 'winter storm warning'],
+};
 
 function inferIncidentType(story: {
   category?: string | null;
@@ -17,19 +28,18 @@ function inferIncidentType(story: {
   const category = (story.category || '').toLowerCase();
   const text = `${story.title || ''} ${story.summary || ''}`.toLowerCase();
 
+  // Check each incident type's keywords
+  for (const [type, keywords] of Object.entries(INCIDENT_KEYWORDS)) {
+    if (keywords.some(kw => text.includes(kw))) {
+      return type as IncidentType;
+    }
+  }
+
+  // Fallback checks
   if (category.includes('weather')) return 'weather';
-  if (category.includes('traffic') || text.includes('crash') || text.includes('accident') || text.includes('collision')) {
-    return 'accident';
-  }
-  if (text.includes('fire') || text.includes('structure fire') || text.includes('house fire')) {
-    return 'fire';
-  }
-  if (text.includes('police') || text.includes('arrest') || text.includes('shooting') || text.includes('shots fired')) {
-    return 'police';
-  }
-  if (text.includes('power outage') || text.includes('utility') || text.includes('water main')) {
-    return 'utility';
-  }
+  if (category.includes('traffic')) return 'accident';
+  if (category === 'safety' || category === 'crime') return 'police';
+  
   return 'other';
 }
 
@@ -100,10 +110,12 @@ serve(async (req) => {
     console.log(`[backfill-incidents] Starting with dry_run=${dry_run}, min_priority=${min_priority}, days_back=${days_back}`);
 
     // Find high-priority stories that don't have incidents linked
+    // CRITICAL: Only geo_tier 1 or 2 stories can become incidents (hyperlocal/county)
     const { data: stories, error: storiesError } = await supabase
       .from("content_queue")
-      .select("id, title, summary, category, priority_score, publish_date, created_at")
+      .select("id, title, summary, category, priority_score, publish_date, created_at, geo_tier, geo_label")
       .gte("priority_score", min_priority)
+      .gte("geo_tier", 1) // Only hyperlocal (1) or county (2) - never regional (0)
       .eq("is_breaking", false)
       .gte("created_at", new Date(Date.now() - days_back * 24 * 60 * 60 * 1000).toISOString())
       .order("priority_score", { ascending: false })
@@ -144,6 +156,17 @@ serve(async (req) => {
       }
 
       const incidentType = inferIncidentType(story);
+      
+      // Skip "other" type - only create incidents for recognizable types
+      if (incidentType === 'other') {
+        results.push({
+          title: story.title.substring(0, 50),
+          priority: story.priority_score,
+          action: 'EXCLUDED - incident type is "other"',
+        });
+        continue;
+      }
+      
       const slug = slugifyTitle(story.title);
 
       // Check if incident already exists for this story
