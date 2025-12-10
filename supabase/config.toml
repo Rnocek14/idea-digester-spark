@@ -104,3 +104,6 @@ verify_jwt = false
 
 [functions.autopilot-weekend-newsletter]
 verify_jwt = false
+
+[functions.sync-patch]
+verify_jwt = false
