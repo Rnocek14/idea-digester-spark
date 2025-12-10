@@ -42,10 +42,10 @@ serve(async (req) => {
       );
     }
 
-    console.log(`[sync-patch] Scraping Patch Lake Geneva via Firecrawl...`);
+    console.log(`[sync-patch] Mapping Patch Lake Geneva via Firecrawl...`);
 
-    // Use Firecrawl to scrape the main page with links
-    const firecrawlResponse = await fetch("https://api.firecrawl.dev/v1/scrape", {
+    // Use Firecrawl's map feature to discover article URLs
+    const firecrawlResponse = await fetch("https://api.firecrawl.dev/v1/map", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${firecrawlKey}`,
@@ -53,35 +53,59 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         url: source.url,
-        formats: ["markdown", "links"],
-        onlyMainContent: true,
+        limit: 100,
+        includeSubdomains: false,
       }),
     });
 
     if (!firecrawlResponse.ok) {
       const errText = await firecrawlResponse.text();
-      console.error("Firecrawl error:", errText);
+      console.error("Firecrawl map error:", errText);
       return new Response(
-        JSON.stringify({ success: false, error: `Firecrawl failed: ${firecrawlResponse.status}` }),
+        JSON.stringify({ success: false, error: `Firecrawl map failed: ${firecrawlResponse.status}` }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     const firecrawlData = await firecrawlResponse.json();
-    const links: string[] = firecrawlData.data?.links || [];
-    const markdown = firecrawlData.data?.markdown || "";
+    const links: string[] = firecrawlData.links || [];
 
-    console.log(`[sync-patch] Found ${links.length} links on Patch page`);
+    console.log(`[sync-patch] Firecrawl map found ${links.length} URLs`);
+    
+    // Log sample links for debugging
+    console.log(`[sync-patch] Sample URLs:`, links.slice(0, 10));
 
-    // Filter to article links only (Patch article URLs have /p/ path)
-    const articleLinks = links.filter(link => 
-      link.includes("patch.com/wisconsin/lake-geneva") && 
-      link.includes("/p/") &&
-      !link.includes("/calendar") &&
-      !link.includes("/events")
-    ).slice(0, 10); // Limit to 10 newest articles
+    // Filter to article links - Patch articles have slugs that look like news titles
+    const articleLinks = links.filter(link => {
+      // Must be Lake Geneva
+      if (!link.includes("patch.com/wisconsin/lake-geneva-wi/")) return false;
+      
+      // Skip section pages
+      if (link.includes("/calendar")) return false;
+      if (link.includes("/events")) return false;
+      if (link.includes("/search")) return false;
+      if (link.includes("/weather")) return false;
+      if (link.includes("/police-fire")) return false;
+      if (link.includes("/classifieds")) return false;
+      if (link.includes("/post")) return false;
+      if (link.includes("/users/")) return false;
+      if (link.includes("/patch-pm")) return false;
+      if (link.includes("/announcements")) return false;
+      if (link.endsWith("/lake-geneva-wi") || link.endsWith("/lake-geneva-wi/")) return false;
+      
+      // Article URLs have a meaningful slug after /lake-geneva-wi/
+      const pathMatch = link.match(/\/lake-geneva-wi\/([a-z0-9-]+)/i);
+      if (!pathMatch) return false;
+      
+      const slug = pathMatch[1];
+      // Real articles have descriptive slugs (multiple words with hyphens)
+      return slug.includes("-") && slug.length > 10;
+    }).slice(0, 10); // Limit to 10 newest articles
 
     console.log(`[sync-patch] Found ${articleLinks.length} article links to process`);
+    if (articleLinks.length > 0) {
+      console.log(`[sync-patch] Article URLs:`, articleLinks);
+    }
 
     const results = {
       processed: 0,
