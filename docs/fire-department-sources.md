@@ -1,84 +1,153 @@
-# Fire Department & EMS Incident Sources
+# Fire Department & EMS Incident Sources - Research Findings
 
 ## Overview
 
-This document tracks potential Fire Department and EMS sources for Lake Geneva area incident ingestion.
+Research conducted December 2025 to identify scrapeable Fire Department and EMS sources for Lake Geneva area incident ingestion.
 
-## Target Sources (Walworth County Area)
+## Key Finding
+
+**Most local FD websites are static info pages WITHOUT news/incident feeds.**
+
+The best opportunities for FD/EMS incident data are:
+1. **Walworth County Alert Center** (CivicEngage) - Official county alerts
+2. **Sheriff News Releases** - ✅ Already implemented and working!
+3. **Facebook public pages** - Phase 3, requires careful implementation
+
+---
+
+## Source Research Results
 
 ### 1. Lake Geneva Fire Department
-- **Website**: https://www.cityoflakegeneva.com/departments/fire/
-- **Status**: Research needed
-- **Type**: City department
-- **Coverage**: Lake Geneva city proper
-- **Scrapeable**: TBD (check for news/alerts page)
+- **URL**: https://www.cityoflakegeneva.com/departments/fire/
+- **Scrapeable**: ❌ NO - Site blocked scraping
+- **Has News/Calls Page**: Unknown (blocked)
+- **Tech Stack**: Unknown
+- **Recommendation**: Manual check needed, likely static info only
+- **Status**: SKIP for now
 
 ### 2. Town of Linn Fire Department
-- **Website**: https://www.townoflinn.com/fire-department
-- **Status**: Research needed
-- **Type**: Town department
-- **Coverage**: Town of Linn (Lake Geneva adjacent)
-- **Note**: Already mentioned in content - "Lake Geneva fire department expands support for Town of Linn"
+- **URL**: https://www.townoflinn.com/fire-department
+- **Scrapeable**: ✅ YES (Juniper CMS)
+- **Has News/Calls Page**: ❌ NO - Static info page only
+- **Content Found**: General FD info, contact details
+- **Recommendation**: No incident data available
+- **Status**: SKIP - no incident content
 
-### 3. Williams Bay Fire Department
-- **Website**: TBD
-- **Status**: Research needed
-- **Type**: Village department
-- **Coverage**: Williams Bay
+### 3. Walworth County Alert Center ⭐ PRIORITY
+- **URL**: https://www.co.walworth.wi.us/AlertCenter.aspx
+- **Scrapeable**: ⚠️ MAYBE - CivicEngage, JS-heavy, needs waitFor
+- **Has News/Calls Page**: ✅ YES - Active alerts system
+- **Tech Stack**: CivicEngage
+- **Content Type**: County-wide emergency alerts
+- **Recommendation**: HIGH PRIORITY - Try Firecrawl with waitFor:8000
+- **Status**: TEST REQUIRED
 
-### 4. Elkhorn Fire Department
-- **Website**: https://www.cityofelkhorn.org/fire
-- **Status**: Research needed
-- **Type**: City department
-- **Coverage**: Elkhorn (county seat)
+### 4. Walworth County Emergency Management
+- **URL**: https://www.co.walworth.wi.us/268/Emergency-Management
+- **Scrapeable**: ❌ NO - Site blocked scraping
+- **Has News/Calls Page**: Unknown
+- **Recommendation**: May link to Alert Center
+- **Status**: SKIP - use Alert Center instead
 
-### 5. Delavan Fire Department
-- **Website**: TBD
-- **Status**: Research needed
-- **Type**: City department
-- **Coverage**: Delavan
+### 5. Elkhorn Area Fire Department
+- **URL**: https://www.cityofelkhorn.org/fire (redirects to .gov)
+- **Scrapeable**: ✅ YES
+- **Has News/Calls Page**: ❌ NO - Static info only
+- **Content Found**: Department info, board info, contact
+- **Tech Stack**: Drupal/Granicus
+- **Recommendation**: No incident data available
+- **Status**: SKIP - no incident content
 
-### 6. Walworth County Emergency Management
-- **Website**: https://www.co.walworth.wi.us/692/Emergency-Management
-- **Status**: Research needed
-- **Type**: County-level coordination
-- **Coverage**: All Walworth County
-- **Note**: May have county-wide alerts, severe weather, major incidents
+### 6. Fontana Fire & Rescue
+- **URL**: https://vi.fontana.wi.gov/departments/fire-ems/
+- **Coverage**: Fontana AND Williams Bay
+- **Scrapeable**: ✅ YES (WordPress)
+- **Has News/Calls Page**: ❌ NO - Basic contact info only
+- **Recommendation**: Check for News section elsewhere on site
+- **Status**: SKIP for now - no incident content visible
 
-### 7. Fontana Fire Department
-- **Website**: TBD
-- **Status**: Research needed
-- **Type**: Village department
-- **Coverage**: Fontana-on-Geneva-Lake
+### 7. Williams Bay
+- **URL**: https://www.williamsbay.org/
+- **Fire Coverage**: Served by Fontana Fire & Rescue
+- **Has FD Page**: ❌ NO dedicated FD section
+- **Recommendation**: See Fontana above
+- **Status**: SKIP - no FD page
 
-## Source Research Checklist
+### 8. Delavan Fire Department
+- **URL**: Not researched yet
+- **Status**: FUTURE RESEARCH
 
-For each source, determine:
-- [ ] Has news/alerts section?
-- [ ] Has RSS feed?
-- [ ] Uses WordPress/CivicEngage/Revize?
-- [ ] Facebook public page (backup)?
-- [ ] Update frequency?
-- [ ] Content type (calls, incidents, announcements)?
+---
 
-## Implementation Priority
+## Summary: Best Incident Sources for Lake Geneva
 
-1. **Walworth County Emergency Management** - County-wide, official, likely structured
-2. **Lake Geneva Fire Department** - Primary city
-3. **Elkhorn Fire Department** - County seat, may have more formal reporting
-4. **Town of Linn** - Already mentioned in coverage
+### Already Working ✅
+| Source | Type | Status | Frequency |
+|--------|------|--------|-----------|
+| NWS Weather Alerts | Weather | Operational | Every 15 min |
+| WI 511 Traffic | Traffic | Operational | Every 15 min |
+| WE Energies Outages | Utility | Operational | Every 15 min |
+| Sheriff News Releases | Crime/Crashes | Operational | 2x daily |
+| Geo-tier 1 Backfill | News | Operational | 2x daily |
 
-## Edge Function Pattern
+### High Priority to Test 🔶
+| Source | Type | Challenge | Next Step |
+|--------|------|-----------|-----------|
+| Walworth County Alert Center | Emergency | JS/CivicEngage | Test with waitFor:8000 |
 
-Similar to `sync-sheriff-releases`:
-- Use Firecrawl to scrape news/alerts pages
-- Extract incident-like content via AI classification
-- Dedupe via external_id (hash of date + type + location)
-- Insert with `source = 'fire_dept'`
-- Status = 'resolved' (post-fact reports)
+### Not Viable ❌
+| Source | Reason |
+|--------|--------|
+| Lake Geneva FD | Static info only, blocked scraping |
+| Town of Linn FD | No incident feed |
+| Elkhorn FD | Static info only |
+| Fontana FD | No incident feed |
+| Williams Bay | No FD page (uses Fontana) |
 
-## Cron Schedule
+---
 
-Recommended: 2x daily (same as sheriff releases)
-- 7am CT (13:00 UTC)
-- 5pm CT (23:00 UTC)
+## Recommended Next Steps
+
+### Step 1: Test Walworth County Alert Center
+Create a test scrape with Firecrawl + waitFor:8000 to see if Alert Center content loads.
+
+```bash
+# Test via edge function or manual Firecrawl call
+url: https://www.co.walworth.wi.us/AlertCenter.aspx
+formats: ['markdown', 'html']
+waitFor: 8000
+```
+
+### Step 2: If Alert Center Works
+Create `sync-county-alerts` edge function:
+- Scrape Alert Center page
+- Extract active alerts (structure TBD based on scrape results)
+- Insert as `source = 'county_alerts'`
+- Schedule 2x daily or more frequent
+
+### Step 3: Phase 3 - Facebook Public Pages
+Consider monitoring public FB pages for:
+- Lake Geneva Fire Department (if they have one)
+- Fontana Fire & Rescue
+- Walworth County Sheriff
+
+This requires careful implementation with "unconfirmed" status labels.
+
+---
+
+## Architecture Notes
+
+### Existing `sync-sheriff-releases` Pattern
+The sheriff scraper is the template for any new FD/EMS scrapers:
+- Use Firecrawl with waitFor for JS sites
+- Extract structured data from markdown
+- Dedupe via external_id hash
+- Insert with appropriate source tag
+- Status = 'resolved' for post-fact reports
+
+### Multi-City Scalability
+Each city will need similar research:
+- Identify county alert systems
+- Find sheriff/PD press release pages
+- Check if FD sites have incident feeds (usually don't)
+- Facebook public pages as Phase 3 backup
