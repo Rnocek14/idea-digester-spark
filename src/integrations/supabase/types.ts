@@ -640,6 +640,7 @@ export type Database = {
       }
       incidents: {
         Row: {
+          external_id: string | null
           id: string
           incident_type: string
           location: string | null
@@ -647,13 +648,16 @@ export type Database = {
           resolution_reason: string | null
           resolved_at: string | null
           slug: string
+          source: string | null
           source_story_id: string | null
           started_at: string
           status: string
+          sub_type: string | null
           title: string
           updated_at: string
         }
         Insert: {
+          external_id?: string | null
           id?: string
           incident_type: string
           location?: string | null
@@ -661,13 +665,16 @@ export type Database = {
           resolution_reason?: string | null
           resolved_at?: string | null
           slug: string
+          source?: string | null
           source_story_id?: string | null
           started_at?: string
           status?: string
+          sub_type?: string | null
           title: string
           updated_at?: string
         }
         Update: {
+          external_id?: string | null
           id?: string
           incident_type?: string
           location?: string | null
@@ -675,9 +682,11 @@ export type Database = {
           resolution_reason?: string | null
           resolved_at?: string | null
           slug?: string
+          source?: string | null
           source_story_id?: string | null
           started_at?: string
           status?: string
+          sub_type?: string | null
           title?: string
           updated_at?: string
         }

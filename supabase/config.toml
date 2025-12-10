@@ -116,3 +116,6 @@ verify_jwt = false
 
 [functions.sync-power-outages]
 verify_jwt = false
+
+[functions.sync-sheriff-releases]
+verify_jwt = false
