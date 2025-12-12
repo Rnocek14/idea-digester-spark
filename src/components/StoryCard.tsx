@@ -1,6 +1,6 @@
+import { useState } from "react";
 import { ExternalLink } from "lucide-react";
 import { ShareButtons } from "@/components/ShareButtons";
-
 type StoryCardProps = {
   id?: string;
   title: string;
@@ -68,7 +68,14 @@ export const StoryCard = ({
   meta,
 }: StoryCardProps) => {
   const geoIcon = getGeoIcon(geoTier);
-  const displayImage = imageUrl || getFallbackImage(category);
+  const fallbackImage = getFallbackImage(category);
+  const [imgSrc, setImgSrc] = useState(imageUrl || fallbackImage);
+  
+  const handleImageError = () => {
+    if (imgSrc !== fallbackImage) {
+      setImgSrc(fallbackImage);
+    }
+  };
   
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow">
@@ -76,18 +83,20 @@ export const StoryCard = ({
         {url ? (
           <a href={url} target="_blank" rel="noopener noreferrer" className="block h-full w-full">
             <img
-              src={displayImage}
+              src={imgSrc}
               alt={title}
               className="h-full w-full object-cover object-top transition-transform duration-300 group-hover:scale-[1.03]"
               loading="lazy"
+              onError={handleImageError}
             />
           </a>
         ) : (
           <img
-            src={displayImage}
+            src={imgSrc}
             alt={title}
             className="h-full w-full object-cover object-top transition-transform duration-300 group-hover:scale-[1.03]"
             loading="lazy"
+            onError={handleImageError}
           />
         )}
         {category && (
