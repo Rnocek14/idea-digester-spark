@@ -33,6 +33,7 @@ type AutoPublishRule = {
   category: string | null;
   action: "auto_publish" | "needs_review" | "flag";
   enabled: boolean;
+  requires_hyperlocal: boolean;
 };
 
 // Normalize URL for deduplication (handles trailing slashes, encoding, case)
@@ -704,7 +705,8 @@ function decideStatusForStory(
   rules: AutoPublishRule[] | null,
   sourceId: string,
   category: string | null,
-  safetyLevel: string
+  safetyLevel: string,
+  geoTier: number = 0
 ): string {
   // SAFETY GATE: Check safety level FIRST before applying auto-publish rules
   // This ensures unsafe content never auto-publishes regardless of rules
@@ -740,6 +742,12 @@ function decideStatusForStory(
   
   const rule = specific || global;
   if (!rule) return "pending";
+  
+  // HYPERLOCAL GATE: If rule requires hyperlocal, content must have geo_tier >= 1
+  if (rule.requires_hyperlocal && geoTier < 1) {
+    console.log(`⚠️ Rule requires hyperlocal but geo_tier=${geoTier}, keeping pending`);
+    return "pending";
+  }
   
   switch (rule.action) {
     case "auto_publish": return "auto_published";
@@ -1249,7 +1257,15 @@ When in doubt between safe and sensitive, choose sensitive. Only use blocked for
           }
           
           const safetyLevel = aiResult.safety_level || "safe";
-          const status = decideStatusForStory(rules as AutoPublishRule[], source.id, aiCategory, safetyLevel);
+          
+          // Detect locality tier for hyperlocal filtering BEFORE status decision
+          const locality = detectLocality(title, aiResult.summary);
+          // Use source default_geo_tier as fallback if no keywords matched
+          const geoTier = locality.tier > 0 ? locality.tier : (source.default_geo_tier || 0);
+          const geoLabel = locality.label || (source.default_geo_tier === 1 ? 'Lake Geneva' : source.default_geo_tier === 2 ? 'Walworth County' : null);
+          
+          // Now decide status with geoTier for hyperlocal gate
+          const status = decideStatusForStory(rules as AutoPublishRule[], source.id, aiCategory, safetyLevel, geoTier);
 
           // Classify breaking news priority (with freshness check)
           // Check if source is trusted for locality (e.g., TMJ4 Walworth, Walworth Sheriff)
@@ -1265,12 +1281,6 @@ When in doubt between safe and sensitive, choose sensitive. Only use blocked for
           if (isBreaking) {
             console.log(`🔴 BREAKING: "${title.substring(0, 40)}..." (score: ${priorityScore})`);
           }
-          
-          // Detect locality tier for hyperlocal filtering
-          const locality = detectLocality(title, aiResult.summary);
-          // Use source default_geo_tier as fallback if no keywords matched
-          const geoTier = locality.tier > 0 ? locality.tier : (source.default_geo_tier || 0);
-          const geoLabel = locality.label || (source.default_geo_tier === 1 ? 'Lake Geneva' : source.default_geo_tier === 2 ? 'Walworth County' : null);
           
           console.log(`📋 Story "${title.substring(0, 40)}..." → category: ${aiCategory}, safety: ${safetyLevel}, status: ${status}, priority: ${priorityScore}, geo: tier${geoTier}`);
 
