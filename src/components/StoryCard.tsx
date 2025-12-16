@@ -40,9 +40,13 @@ const getGeoIcon = (tier: number | null | undefined) => {
 // Category-specific fallback images - multiple options per category for variety
 const CATEGORY_FALLBACKS: Record<string, string[]> = {
   weather: [
-    "https://images.unsplash.com/photo-1491002052546-bf38f186af56?w=800&q=80",
-    "https://images.unsplash.com/photo-1534088568595-a066f410bcda?w=800&q=80",
-    "https://images.unsplash.com/photo-1504608524841-42fe6f032b4b?w=800&q=80",
+    "https://images.unsplash.com/photo-1491002052546-bf38f186af56?w=800&q=80", // stormy sky
+    "https://images.unsplash.com/photo-1534088568595-a066f410bcda?w=800&q=80", // dramatic clouds
+    "https://images.unsplash.com/photo-1504608524841-42fe6f032b4b?w=800&q=80", // fog
+    "https://images.unsplash.com/photo-1428592953211-077101b2021b?w=800&q=80", // lightning
+    "https://images.unsplash.com/photo-1527482797697-8795b05a13fe?w=800&q=80", // winter snow
+    "https://images.unsplash.com/photo-1516912481808-3406841bd33c?w=800&q=80", // snowy trees
+    "https://images.unsplash.com/photo-1445966275305-9806327ea2b5?w=800&q=80", // rain drops
   ],
   news: [
     "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&q=80",
@@ -91,15 +95,21 @@ const CATEGORY_FALLBACKS: Record<string, string[]> = {
   ],
 };
 
-// Simple hash function for consistent fingerprint-based selection
+// Better hash function using djb2 algorithm for more uniform distribution
 const hashString = (str: string): number => {
-  return str.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) + hash) ^ str.charCodeAt(i);
+  }
+  return Math.abs(hash);
 };
 
-const getFallbackImage = (category: string | null, title: string): string => {
+const getFallbackImage = (category: string | null, title: string, id?: string): string => {
   const cat = category?.toLowerCase() || 'default';
   const images = CATEGORY_FALLBACKS[cat] || CATEGORY_FALLBACKS.default;
-  const hash = hashString(title);
+  // Use ID if available (more unique), otherwise fall back to title
+  const hashInput = id || title;
+  const hash = hashString(hashInput);
   return images[hash % images.length];
 };
 
@@ -116,7 +126,7 @@ export const StoryCard = ({
   meta,
 }: StoryCardProps) => {
   const geoIcon = getGeoIcon(geoTier);
-  const fallbackImage = getFallbackImage(category, title);
+  const fallbackImage = getFallbackImage(category, title, id);
   const [imgSrc, setImgSrc] = useState(imageUrl || fallbackImage);
   
   const handleImageError = () => {
