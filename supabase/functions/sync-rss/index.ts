@@ -1120,11 +1120,14 @@ serve(async (req) => {
           const urlCore = getUrlCore(originalUrl);
           
           // CROSS-SOURCE URL DEDUPLICATION: Use URL core (no query params) for robust matching
-          // This catches same article with different tracking params from different sources
+          // Also check both http/https variants to catch protocol differences
+          const urlCoreHttps = urlCore.replace(/^http:/, 'https:');
+          const urlCoreHttp = urlCore.replace(/^https:/, 'http:');
+          
           const { data: existingByUrlCore } = await supabase
             .from("content_queue")
             .select("id")
-            .ilike("original_url", `${urlCore}%`)
+            .or(`original_url.ilike.${urlCore}%,original_url.ilike.${urlCoreHttps}%,original_url.ilike.${urlCoreHttp}%`)
             .limit(1);
           
           if (existingByUrlCore?.length) {
@@ -1175,10 +1178,18 @@ serve(async (req) => {
             continue;
           }
           
-          // CROSS-SOURCE TITLE DEDUPLICATION: Safe mode - only for substantial titles within 48h
-          // Avoids false positives on generic titles like "Board Meeting", "Weather Update"
+          // CROSS-SOURCE TITLE DEDUPLICATION: Safe mode - only for news/community, not events/civic/weather
+          // Avoids false positives on recurring events, meeting agendas, and weather alerts
           const trimmedTitle = title.trim();
-          if (trimmedTitle.length >= 25) {
+          const sourceCategory = source.category?.toLowerCase() || '';
+          const titleDedupCategories = ['news', 'community']; // Only apply title dedup for these
+          const skipTitleDedupCategories = ['events', 'civic', 'weather', 'dining'];
+          
+          const shouldApplyTitleDedup = trimmedTitle.length >= 25 && 
+            (titleDedupCategories.includes(sourceCategory) || isRegionalSource) &&
+            !skipTitleDedupCategories.includes(sourceCategory);
+          
+          if (shouldApplyTitleDedup) {
             const { data: existingByExactTitle } = await supabase
               .from("content_queue")
               .select("id")
