@@ -6,15 +6,15 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface RSSItem {
-  title: string;
-  link: string;
-  pubDate?: string;
+interface ICalEvent {
+  uid: string;
+  summary: string;
   description?: string;
-  guid?: string;
-  mecStartDate?: string;
-  mecStartHour?: string;
-  contentEncoded?: string;
+  url?: string;
+  dtstart?: string;
+  dtend?: string;
+  location?: string;
+  imageUrl?: string;
 }
 
 serve(async (req) => {
@@ -23,29 +23,20 @@ serve(async (req) => {
   }
 
   const startTime = Date.now();
-  console.log("🏛️ Starting Geneva Lake West Chamber Events sync...");
+  console.log("🏛️ Starting Geneva Lake West Chamber Events sync (iCal)...");
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const feedUrl = "https://genevalakewest.com/events/feed/";
+    // Use the MEC iCal feed endpoint (not blocked like RSS)
+    const feedUrl = "https://genevalakewest.com/?mec-ical-feed=1";
     
-    // Fetch RSS feed with comprehensive browser-like headers
     const response = await fetch(feedUrl, {
       headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.9",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Connection": "keep-alive",
-        "Upgrade-Insecure-Requests": "1",
-        "Sec-Fetch-Dest": "document",
-        "Sec-Fetch-Mode": "navigate",
-        "Sec-Fetch-Site": "none",
-        "Sec-Fetch-User": "?1",
-        "Cache-Control": "max-age=0",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "Accept": "text/calendar, */*",
       },
     });
 
@@ -53,118 +44,69 @@ serve(async (req) => {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
 
-    const xmlText = await response.text();
-    console.log(`📥 Fetched RSS feed (${xmlText.length} bytes)`);
+    const icalText = await response.text();
+    console.log(`📥 Fetched iCal feed (${icalText.length} bytes)`);
 
-    // Parse RSS items manually (Deno doesn't have DOMParser for XML easily)
-    const items: RSSItem[] = [];
-    const itemRegex = /<item>([\s\S]*?)<\/item>/g;
-    let match;
-
-    while ((match = itemRegex.exec(xmlText)) !== null) {
-      const itemXml = match[1];
-      
-      const getTagContent = (xml: string, tag: string): string | undefined => {
-        // Handle CDATA content
-        const cdataMatch = xml.match(new RegExp(`<${tag}[^>]*><!\\[CDATA\\[([\\s\\S]*?)\\]\\]><\\/${tag}>`, 'i'));
-        if (cdataMatch) return cdataMatch[1].trim();
-        
-        // Handle regular content
-        const regularMatch = xml.match(new RegExp(`<${tag}[^>]*>([^<]*)<\\/${tag}>`, 'i'));
-        if (regularMatch) return regularMatch[1].trim();
-        
-        return undefined;
-      };
-
-      const title = getTagContent(itemXml, 'title');
-      const link = getTagContent(itemXml, 'link');
-      const pubDate = getTagContent(itemXml, 'pubDate');
-      const description = getTagContent(itemXml, 'description');
-      const guid = getTagContent(itemXml, 'guid');
-      const mecStartDate = getTagContent(itemXml, 'mec:startDate');
-      const mecStartHour = getTagContent(itemXml, 'mec:startHour');
-      const contentEncoded = getTagContent(itemXml, 'content:encoded');
-
-      if (title && link) {
-        items.push({
-          title: decodeHtmlEntities(title),
-          link,
-          pubDate,
-          description: description ? decodeHtmlEntities(description) : undefined,
-          guid,
-          mecStartDate,
-          mecStartHour,
-          contentEncoded,
-        });
-      }
-    }
-
-    console.log(`📋 Parsed ${items.length} items from RSS feed`);
+    // Parse iCal events
+    const events = parseICalEvents(icalText);
+    console.log(`📋 Parsed ${events.length} events from iCal feed`);
 
     let inserted = 0;
     let skipped = 0;
+    const today = new Date().toISOString().split('T')[0];
 
-    for (const item of items) {
-      // Determine event date - prefer MEC start date, fallback to pubDate
+    for (const event of events) {
+      // Extract event date from DTSTART
       let eventDate: string | null = null;
+      let eventTime: string | null = null;
       
-      if (item.mecStartDate) {
-        eventDate = item.mecStartDate; // Already in YYYY-MM-DD format
-      } else if (item.pubDate) {
-        const parsed = new Date(item.pubDate);
-        if (!isNaN(parsed.getTime())) {
-          eventDate = parsed.toISOString().split('T')[0];
+      if (event.dtstart) {
+        const parsed = parseICalDateTime(event.dtstart);
+        if (parsed) {
+          eventDate = parsed.date;
+          eventTime = parsed.time;
         }
       }
-
-      // Extract event time from MEC data
-      let eventTime: string | null = item.mecStartHour || null;
 
       // Skip past events
-      if (eventDate) {
-        const today = new Date().toISOString().split('T')[0];
-        if (eventDate < today) {
-          console.log(`⏭️ Skipping past event: "${item.title}" (${eventDate})`);
-          skipped++;
-          continue;
-        }
-      }
-
-      // Create dedupe key from guid or hash of title+link+date
-      const dedupeKey = item.guid || `${item.title}-${item.link}-${eventDate || ''}`;
-      
-      // Check for existing entry
-      const { data: existing } = await supabase
-        .from("content_queue")
-        .select("id")
-        .or(`original_url.eq.${item.link},title.eq.${item.title}`)
-        .maybeSingle();
-
-      if (existing) {
-        console.log(`⏭️ Skipping duplicate: "${item.title}"`);
+      if (eventDate && eventDate < today) {
+        console.log(`⏭️ Skipping past event: "${event.summary}" (${eventDate})`);
         skipped++;
         continue;
       }
 
-      // Extract a clean summary from description or content
-      let summary = item.description || '';
-      // Strip HTML tags for plain text summary
-      summary = summary.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+      // Check for existing entry by URL or title
+      const { data: existing } = await supabase
+        .from("content_queue")
+        .select("id")
+        .or(`original_url.eq.${event.url || ''},title.eq.${event.summary}`)
+        .maybeSingle();
+
+      if (existing) {
+        console.log(`⏭️ Skipping duplicate: "${event.summary}"`);
+        skipped++;
+        continue;
+      }
+
+      // Clean description
+      let summary = event.description || '';
+      summary = summary.replace(/\\n/g, ' ').replace(/\s+/g, ' ').trim();
       if (summary.length > 300) {
         summary = summary.substring(0, 297) + '...';
       }
 
       // Build content
-      const content = `Geneva Lake West Chamber Event: ${item.title}${eventDate ? ` on ${eventDate}` : ''}${eventTime ? ` at ${eventTime}` : ''}. ${summary}`;
+      const content = `Geneva Lake West Chamber Event: ${event.summary}${eventDate ? ` on ${eventDate}` : ''}${eventTime ? ` at ${eventTime}` : ''}. ${summary}`;
 
       // Insert new event
       const { error: insertError } = await supabase
         .from("content_queue")
         .insert({
-          title: item.title,
+          title: decodeHtmlEntities(event.summary),
           content,
-          summary: summary || `Geneva Lake West Chamber event: ${item.title}`,
-          original_url: item.link,
+          summary: summary || `Geneva Lake West Chamber event: ${event.summary}`,
+          original_url: event.url,
+          image_url: event.imageUrl,
           category: "events",
           status: "auto_published",
           safety_level: "safe",
@@ -174,17 +116,15 @@ serve(async (req) => {
           event_time: eventTime,
           source_id: await getSourceId(supabase),
           metadata: {
-            feed_guid: item.guid,
-            mec_start_date: item.mecStartDate,
-            mec_start_hour: item.mecStartHour,
+            ical_uid: event.uid,
             synced_at: new Date().toISOString(),
           },
         });
 
       if (insertError) {
-        console.error(`❌ Failed to insert "${item.title}":`, insertError.message);
+        console.error(`❌ Failed to insert "${event.summary}":`, insertError.message);
       } else {
-        console.log(`✅ Inserted: "${item.title}" (${eventDate || 'no date'})`);
+        console.log(`✅ Inserted: "${event.summary}" (${eventDate || 'no date'})`);
         inserted++;
       }
     }
@@ -204,7 +144,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        itemsFound: items.length,
+        eventsFound: events.length,
         inserted,
         skipped,
         durationMs: duration,
@@ -220,6 +160,75 @@ serve(async (req) => {
     );
   }
 });
+
+function parseICalEvents(icalText: string): ICalEvent[] {
+  const events: ICalEvent[] = [];
+  
+  // Split by VEVENT blocks
+  const eventBlocks = icalText.split('BEGIN:VEVENT');
+  
+  for (let i = 1; i < eventBlocks.length; i++) {
+    const block = eventBlocks[i].split('END:VEVENT')[0];
+    
+    const event: ICalEvent = {
+      uid: extractICalProperty(block, 'UID') || `event-${i}`,
+      summary: extractICalProperty(block, 'SUMMARY') || '',
+      description: extractICalProperty(block, 'DESCRIPTION'),
+      url: extractICalProperty(block, 'URL'),
+      dtstart: extractICalProperty(block, 'DTSTART') || extractICalPropertyWithParams(block, 'DTSTART'),
+      dtend: extractICalProperty(block, 'DTEND') || extractICalPropertyWithParams(block, 'DTEND'),
+      location: extractICalProperty(block, 'LOCATION'),
+      imageUrl: extractAttachment(block),
+    };
+    
+    if (event.summary) {
+      events.push(event);
+    }
+  }
+  
+  return events;
+}
+
+function extractICalProperty(block: string, property: string): string | undefined {
+  // Match property:value format
+  const regex = new RegExp(`^${property}:(.*)$`, 'mi');
+  const match = block.match(regex);
+  return match ? match[1].trim() : undefined;
+}
+
+function extractICalPropertyWithParams(block: string, property: string): string | undefined {
+  // Match property;params:value format (e.g., DTSTART;TZID=America/Chicago:20251218T173000)
+  const regex = new RegExp(`^${property}[^:]*:(.*)$`, 'mi');
+  const match = block.match(regex);
+  return match ? match[1].trim() : undefined;
+}
+
+function extractAttachment(block: string): string | undefined {
+  // Look for ATTACH;FMTTYPE=image/...:url
+  const regex = /ATTACH;FMTTYPE=image\/[^:]+:(.*)$/mi;
+  const match = block.match(regex);
+  return match ? match[1].trim() : undefined;
+}
+
+function parseICalDateTime(dtstring: string): { date: string; time: string | null } | null {
+  // Format: 20251218T173000 or 20251218
+  const match = dtstring.match(/^(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2}))?/);
+  if (!match) return null;
+  
+  const [, year, month, day, hour, minute] = match;
+  const date = `${year}-${month}-${day}`;
+  
+  let time: string | null = null;
+  if (hour && minute) {
+    const h = parseInt(hour);
+    const m = minute;
+    const period = h >= 12 ? 'PM' : 'AM';
+    const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+    time = `${hour12}:${m} ${period}`;
+  }
+  
+  return { date, time };
+}
 
 async function getSourceId(supabase: any): Promise<string | null> {
   const { data } = await supabase
