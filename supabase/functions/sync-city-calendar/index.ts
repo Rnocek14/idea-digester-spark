@@ -70,11 +70,14 @@ serve(async (req) => {
       );
     }
 
-    // Fetch the calendar page
+    // Fetch the calendar page with browser-like headers to avoid 403
     console.log(`[sync-city-calendar] Fetching: ${source.url}`);
     const response = await fetch(source.url, {
       headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; LakeGenevaBot/1.0)"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.5",
+        "Cache-Control": "no-cache",
       }
     });
 
@@ -86,7 +89,7 @@ serve(async (req) => {
     console.log(`[sync-city-calendar] Fetched ${html.length} bytes`);
 
     // Parse events from CivicEngage HTML structure
-    // Events are typically in divs with class "calitem" or similar
+    // The page has schema.org Event markup with itemprop="startDate" containing ISO dates
     const events: Array<{
       title: string;
       date: string;
@@ -95,51 +98,63 @@ serve(async (req) => {
       description: string;
     }> = [];
 
-    // Pattern for CivicEngage calendar items
-    // Look for calendar item links with dates
-    const eventPattern = /<a[^>]+href="([^"]*Calendar\.aspx[^"]*eventID=\d+[^"]*)"[^>]*>([^<]+)<\/a>/gi;
-    const datePattern = /<span[^>]*class="[^"]*date[^"]*"[^>]*>([^<]+)<\/span>/gi;
-    
-    // More robust parsing - look for calendar event blocks
-    const calItemPattern = /<div[^>]*class="[^"]*calitem[^"]*"[^>]*>([\s\S]*?)<\/div>/gi;
+    // Pattern 1: Parse from schema.org Event markup (most reliable)
+    // <li>...<a href="...EID=2305..."><span>Title</span></a>...<span itemprop="startDate">2025-12-24T00:00:00</span>...
+    const schemaEventPattern = /<li>[\s\S]*?<a[^>]*href="[^"]*EID=(\d+)[^"]*"[^>]*><span>([^<]+)<\/span><\/a>[\s\S]*?<span itemprop="startDate"[^>]*>([^<]+)<\/span>/g;
     
     let match;
-    
-    // Try to find event links with their titles
-    const linkMatches = [...html.matchAll(/<a[^>]+href="(\/Calendar\.aspx\?[^"]*eventID=(\d+)[^"]*)"[^>]*>([^<]+)<\/a>/gi)];
-    
-    for (const linkMatch of linkMatches) {
-      const eventUrl = `https://www.cityoflakegeneva.gov${linkMatch[1]}`;
-      const eventId = linkMatch[2];
-      const title = linkMatch[3].trim();
+    while ((match = schemaEventPattern.exec(html)) !== null) {
+      const [, eventId, title, startDateRaw] = match;
+      const cleanTitle = title.trim();
       
-      // Skip empty titles or navigation links
-      if (!title || title.length < 3 || title.toLowerCase().includes('more')) continue;
+      // Skip empty or short titles
+      if (!cleanTitle || cleanTitle.length < 3) continue;
       
-      // Try to find the date near this event
-      // Look for date patterns in surrounding context
-      const eventIndex = linkMatch.index || 0;
-      const contextBefore = html.substring(Math.max(0, eventIndex - 500), eventIndex);
-      const contextAfter = html.substring(eventIndex, Math.min(html.length, eventIndex + 500));
-      const context = contextBefore + contextAfter;
+      // Parse ISO date (format: 2025-12-24T00:00:00)
+      const datePart = startDateRaw.split('T')[0];
+      const timePart = startDateRaw.includes('T') && !startDateRaw.includes('T00:00:00') 
+        ? startDateRaw.split('T')[1]?.substring(0, 5) 
+        : null;
       
-      // Look for date like "December 17, 2025" or "Jan 5, 2025"
-      const dateMatch = context.match(/([A-Z][a-z]+\s+\d{1,2},?\s+\d{4})/);
-      if (dateMatch) {
-        const eventDate = parseCivicEngageDate(dateMatch[1]);
+      // Check if date is in the future
+      const today = new Date().toISOString().split('T')[0];
+      if (datePart >= today) {
+        events.push({
+          title: cleanTitle,
+          date: datePart,
+          time: timePart,
+          url: `https://www.cityoflakegeneva.gov/Calendar.aspx?EID=${eventId}`,
+          description: `City of Lake Geneva: ${cleanTitle}`
+        });
+      }
+    }
+
+    // Fallback Pattern 2: Parse from date divs if schema.org didn't work
+    if (events.length === 0) {
+      console.log("[sync-city-calendar] Schema.org parsing found nothing, trying fallback...");
+      
+      // Look for: <h3><a href="...EID=X..."><span>Title</span></a></h3>...<div class="date">December 24, 2025</div>
+      const fallbackPattern = /<h3>[\s\S]*?<a[^>]*href="[^"]*EID=(\d+)[^"]*"[^>]*><span>([^<]+)<\/span><\/a>[\s\S]*?<div class="date">([^<]+)<\/div>/g;
+      
+      while ((match = fallbackPattern.exec(html)) !== null) {
+        const [, eventId, title, dateStr] = match;
+        const cleanTitle = title.trim();
+        
+        if (!cleanTitle || cleanTitle.length < 3) continue;
+        
+        // Parse date like "December&nbsp;24,&nbsp;2025,&nbsp;All Day"
+        const cleanDateStr = dateStr.replace(/&nbsp;/g, ' ').replace(/,?\s*All Day/i, '').trim();
+        const eventDate = parseCivicEngageDate(cleanDateStr);
+        
         if (eventDate) {
-          // Check if date is in the future
           const today = new Date().toISOString().split('T')[0];
           if (eventDate >= today) {
-            // Look for time
-            const timeMatch = context.match(/(\d{1,2}:\d{2}\s*(?:AM|PM))/i);
-            
             events.push({
-              title,
+              title: cleanTitle,
               date: eventDate,
-              time: timeMatch ? timeMatch[1].toUpperCase() : null,
-              url: eventUrl,
-              description: `City of Lake Geneva event: ${title}`
+              time: null,
+              url: `https://www.cityoflakegeneva.gov/Calendar.aspx?EID=${eventId}`,
+              description: `City of Lake Geneva: ${cleanTitle}`
             });
           }
         }
