@@ -281,6 +281,9 @@ serve(async (req: Request) => {
           story_count: storyCount,
           weekend_range: weekendRange,
           sponsor_id: featuredSponsor?.id || null,
+          evergreen_count: evergreenItems.length,
+          evergreen_ids: evergreenItems.map(e => e.id),
+          evergreen_titles: evergreenItems.map(e => e.title)
         },
       })
       .select()

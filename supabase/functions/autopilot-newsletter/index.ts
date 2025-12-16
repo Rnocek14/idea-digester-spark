@@ -416,7 +416,10 @@ serve(async (req) => {
         auto_send_enabled: sendNow,
         metadata: { 
           categories: getCategoryCounts(selectedStories),
-          generated_at: new Date().toISOString()
+          generated_at: new Date().toISOString(),
+          evergreen_count: evergreenItems.length,
+          evergreen_ids: evergreenItems.map(e => e.id),
+          evergreen_titles: evergreenItems.map(e => e.title)
         }
       })
       .select()
