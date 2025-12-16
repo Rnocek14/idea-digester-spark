@@ -170,11 +170,52 @@ serve(async (req: Request) => {
     const eventCount = weekendEvents?.length || 0;
     const storyCount = topStories?.length || 0;
 
+    // ========== EVERGREEN FALLBACK ==========
+    // If weekend events are thin, inject evergreen content
+    const MIN_WEEKEND_EVENTS = 5;
+    let evergreenItems: any[] = [];
+    
+    if (eventCount < MIN_WEEKEND_EVENTS) {
+      console.log(`[Weekend Guide] Low event count (${eventCount} < ${MIN_WEEKEND_EVENTS}), fetching evergreen content...`);
+      
+      // Determine current season
+      const month = today.getMonth() + 1;
+      let currentSeason = "all";
+      if (month >= 12 || month <= 2) currentSeason = "winter";
+      else if (month >= 3 && month <= 5) currentSeason = "spring";
+      else if (month >= 6 && month <= 8) currentSeason = "summer";
+      else currentSeason = "fall";
+      
+      const evergreenNeeded = Math.min(3, MIN_WEEKEND_EVENTS - eventCount);
+      
+      const { data: evergreen } = await supabase
+        .from("evergreen_content")
+        .select("id, title, content, category")
+        .eq("is_active", true)
+        .or(`season.eq.all,season.eq.${currentSeason}`)
+        .order("last_used_at", { ascending: true, nullsFirst: true })
+        .order("priority", { ascending: false })
+        .limit(evergreenNeeded);
+      
+      if (evergreen && evergreen.length > 0) {
+        evergreenItems = evergreen;
+        console.log(`[Weekend Guide] Adding ${evergreenItems.length} evergreen items: ${evergreenItems.map(e => e.title).join(", ")}`);
+        
+        // Update usage tracking
+        for (const evItem of evergreenItems) {
+          await supabase
+            .from("evergreen_content")
+            .update({ last_used_at: new Date().toISOString() })
+            .eq("id", evItem.id);
+        }
+      }
+    }
+
     // Minimum content threshold for Weekend Guide
-    const hasEnough = eventCount >= 3 || (eventCount >= 1 && storyCount >= 3);
+    const hasEnough = eventCount >= 3 || (eventCount >= 1 && storyCount >= 3) || (eventCount + evergreenItems.length >= 3);
 
     if (!hasEnough) {
-      console.log(`[Weekend Guide] Not enough content: ${eventCount} events, ${storyCount} stories`);
+      console.log(`[Weekend Guide] Not enough content: ${eventCount} events, ${storyCount} stories, ${evergreenItems.length} evergreen`);
       
       const { data: skipped } = await supabase
         .from("newsletters")
@@ -192,6 +233,7 @@ serve(async (req: Request) => {
             skipped_reason: "not_enough_weekend_content",
             event_count: eventCount,
             story_count: storyCount,
+            evergreen_count: evergreenItems.length,
           },
         })
         .select()
@@ -213,7 +255,8 @@ serve(async (req: Request) => {
       topStories || [],
       subject,
       weekendRange,
-      featuredSponsor
+      featuredSponsor,
+      evergreenItems
     );
 
     const allStoryIds = [
@@ -349,7 +392,8 @@ function buildWeekendNewsletter(
   stories: Story[],
   subject: string,
   weekendRange: string,
-  sponsor?: Sponsor | null
+  sponsor?: Sponsor | null,
+  evergreen?: { id: string; title: string; content: string; category: string }[]
 ): { htmlBody: string; textBody: string } {
   const baseUrl = Deno.env.get("APP_BASE_URL") || "https://lakegeneva.citybrief.info";
 
@@ -523,6 +567,25 @@ ${websiteUrl}
             </td>
           </tr>
 
+          ${evergreen && evergreen.length > 0 ? `
+          <!-- Evergreen Local Favorites -->
+          <tr>
+            <td style="padding: 0 24px;">
+              <div style="background-color: #fef3c7; border-radius: 8px; padding: 20px; margin-top: 16px;">
+                <h2 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 700; color: #92400e;">
+                  ✨ Local Favorites
+                </h2>
+                ${evergreen.map(item => `
+                  <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #fcd34d;">
+                    <h3 style="margin: 0 0 6px 0; font-size: 15px; font-weight: 600; color: #78350f;">${item.title}</h3>
+                    <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #92400e;">${item.content.slice(0, 150)}${item.content.length > 150 ? '...' : ''}</p>
+                  </div>
+                `).join('')}
+              </div>
+            </td>
+          </tr>
+          ` : ''}
+
           <!-- CTA -->
           <tr>
             <td style="padding: 24px; text-align: center;">
@@ -582,6 +645,17 @@ ${websiteUrl}
     for (const story of stories.slice(0, 5)) {
       textBody += `• ${story.title}\n`;
       textBody += `  ${(story.content_newsletter || story.content).slice(0, 100)}...\n\n`;
+    }
+  }
+
+  // Add evergreen content to plain text
+  if (evergreen && evergreen.length > 0) {
+    textBody += `═══════════════════════════════════════\n`;
+    textBody += `✨ LOCAL FAVORITES\n`;
+    textBody += `═══════════════════════════════════════\n\n`;
+    for (const item of evergreen) {
+      textBody += `• ${item.title}\n`;
+      textBody += `  ${item.content.slice(0, 100)}...\n\n`;
     }
   }
 
