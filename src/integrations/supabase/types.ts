@@ -330,6 +330,7 @@ export type Database = {
           is_sponsored: boolean | null
           last_newsletter_id: string | null
           metadata: Json | null
+          normalized_url: string | null
           original_url: string | null
           performer: string | null
           priority_score: number | null
@@ -370,6 +371,7 @@ export type Database = {
           is_sponsored?: boolean | null
           last_newsletter_id?: string | null
           metadata?: Json | null
+          normalized_url?: string | null
           original_url?: string | null
           performer?: string | null
           priority_score?: number | null
@@ -410,6 +412,7 @@ export type Database = {
           is_sponsored?: boolean | null
           last_newsletter_id?: string | null
           metadata?: Json | null
+          normalized_url?: string | null
           original_url?: string | null
           performer?: string | null
           priority_score?: number | null

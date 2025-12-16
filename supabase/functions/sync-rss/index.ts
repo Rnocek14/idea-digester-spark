@@ -1451,6 +1451,7 @@ When in doubt between safe and sensitive, choose sensitive. Only use blocked for
           }
 
           // Insert into content_queue
+          const normalizedUrlValue = originalUrl ? normalizeUrl(originalUrl) : null;
           const { error: insertError } = await supabase
             .from("content_queue")
             .insert({
@@ -1460,6 +1461,7 @@ When in doubt between safe and sensitive, choose sensitive. Only use blocked for
               summary: aiResult.summary || "",
               category: aiCategory,
               original_url: originalUrl,
+              normalized_url: normalizedUrlValue,
               image_url: imageUrl,
               image_source: imageSource,
               publish_date: adjustedPublishDate,
