@@ -119,3 +119,6 @@ verify_jwt = false
 
 [functions.sync-sheriff-releases]
 verify_jwt = false
+
+[functions.sync-library-events]
+verify_jwt = false
