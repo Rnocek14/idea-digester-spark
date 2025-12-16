@@ -781,12 +781,14 @@ serve(async (req) => {
       console.log(`Loaded ${rules?.length || 0} active auto-publish rules`);
     }
 
-    // Fetch active RSS and scrape sources
+    // Fetch active RSS and scrape sources - order by last_fetched_at to prevent starvation
+    // Sources that haven't been fetched yet (NULL) come first, then oldest fetched
     const { data: sources, error: sourcesError } = await supabase
       .from("sources")
       .select("*")
       .eq("status", "active")
-      .in("type", ["rss", "scrape"]);
+      .in("type", ["rss", "scrape"])
+      .order("last_fetched_at", { ascending: true, nullsFirst: true });
 
     if (sourcesError) throw sourcesError;
 

@@ -128,3 +128,6 @@ verify_jwt = false
 
 [functions.sync-downtown-events]
 verify_jwt = false
+
+[functions.sync-geneva-lake-west-chamber]
+verify_jwt = false
