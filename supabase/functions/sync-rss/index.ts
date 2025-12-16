@@ -36,15 +36,46 @@ type AutoPublishRule = {
   requires_hyperlocal: boolean;
 };
 
-// Normalize URL for deduplication (handles trailing slashes, encoding, case)
+// Normalize URL for deduplication (handles trailing slashes, encoding, case, tracking params)
 function normalizeUrl(url: string): string {
   try {
-    return decodeURIComponent(url)
+    const decoded = decodeURIComponent(url);
+    const urlObj = new URL(decoded);
+    
+    // Remove common tracking parameters
+    const trackingParams = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 
+                           'fbclid', 'gclid', 'ref', 'source', 'mc_cid', 'mc_eid'];
+    trackingParams.forEach(param => urlObj.searchParams.delete(param));
+    
+    // Normalize: lowercase host, remove trailing slash, keep remaining query params sorted
+    urlObj.searchParams.sort();
+    let normalized = urlObj.toString()
       .replace(/\/+$/, '')  // Remove trailing slashes
       .toLowerCase()
       .trim();
+    
+    // Remove empty query string
+    if (normalized.endsWith('?')) {
+      normalized = normalized.slice(0, -1);
+    }
+    
+    return normalized;
   } catch {
-    return url.toLowerCase().trim();
+    // Fallback for malformed URLs
+    return url
+      .replace(/\/+$/, '')
+      .toLowerCase()
+      .trim();
+  }
+}
+
+// Extract URL core for fuzzy matching (strips all query params)
+function getUrlCore(url: string): string {
+  try {
+    const urlObj = new URL(url);
+    return `${urlObj.protocol}//${urlObj.host}${urlObj.pathname}`.replace(/\/+$/, '').toLowerCase();
+  } catch {
+    return url.split('?')[0].replace(/\/+$/, '').toLowerCase();
   }
 }
 
@@ -1084,37 +1115,20 @@ serve(async (req) => {
             console.log(`✅ Local match from regional source: "${title.substring(0, 50)}..."`);
           }
 
-          // Check for duplicates by normalized URL (handles trailing slashes, encoding)
+          // Check for duplicates by normalized URL (handles trailing slashes, encoding, tracking params)
           const normalizedUrl = normalizeUrl(originalUrl);
+          const urlCore = getUrlCore(originalUrl);
           
-          // CROSS-SOURCE URL DEDUPLICATION: Check if URL already exists from ANY source
-          // This prevents the same article from being ingested from multiple sources with same/similar feeds
-          const urlSlug = normalizedUrl.split('/').pop() || '';
-          
-          const { data: existingByUrl } = await supabase
+          // CROSS-SOURCE URL DEDUPLICATION: Use URL core (no query params) for robust matching
+          // This catches same article with different tracking params from different sources
+          const { data: existingByUrlCore } = await supabase
             .from("content_queue")
-            .select("id, source_id")
-            .eq("original_url", originalUrl)
+            .select("id")
+            .ilike("original_url", `${urlCore}%`)
             .limit(1);
           
-          if (existingByUrl?.length) {
+          if (existingByUrlCore?.length) {
             console.log(`⏭️ Skipping duplicate URL (cross-source): "${title.substring(0, 50)}..." - URL already exists`);
-            result.skipped++;
-            continue;
-          }
-          
-          // Also check normalized URL against same source (legacy check)
-          const { data: existingUrls } = await supabase
-            .from("content_queue")
-            .select("id, original_url")
-            .eq("source_id", source.id)
-            .limit(500);
-
-          const urlExists = existingUrls?.some(e => 
-            normalizeUrl(e.original_url || '') === normalizedUrl
-          );
-
-          if (urlExists) {
             result.skipped++;
             continue;
           }
@@ -1161,18 +1175,22 @@ serve(async (req) => {
             continue;
           }
           
-          // CROSS-SOURCE TITLE DEDUPLICATION: Check for exact title match from ANY source (within recent window)
-          const { data: existingByExactTitle } = await supabase
-            .from("content_queue")
-            .select("id")
-            .eq("title", title.trim())
-            .gte("created_at", new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()) // Within last 7 days
-            .limit(1);
-          
-          if (existingByExactTitle?.length) {
-            console.log(`⏭️ Skipping duplicate title (cross-source): "${title.substring(0, 50)}..."`);
-            result.skipped++;
-            continue;
+          // CROSS-SOURCE TITLE DEDUPLICATION: Safe mode - only for substantial titles within 48h
+          // Avoids false positives on generic titles like "Board Meeting", "Weather Update"
+          const trimmedTitle = title.trim();
+          if (trimmedTitle.length >= 25) {
+            const { data: existingByExactTitle } = await supabase
+              .from("content_queue")
+              .select("id")
+              .eq("title", trimmedTitle)
+              .gte("created_at", new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString()) // Within last 48h
+              .limit(1);
+            
+            if (existingByExactTitle?.length) {
+              console.log(`⏭️ Skipping duplicate title (cross-source): "${title.substring(0, 50)}..."`);
+              result.skipped++;
+              continue;
+            }
           }
           
           // SAME-SOURCE TITLE+DATE DEDUPLICATION: Check for same story from same source on same day
