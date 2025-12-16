@@ -308,11 +308,54 @@ serve(async (req) => {
 
     console.log(`✅ Found ${candidates.length} eligible stories`);
 
+    // ========== EVERGREEN FALLBACK ==========
+    // If we have fewer than MIN_EVENTS upcoming events, inject evergreen content
+    const MIN_EVENTS_THRESHOLD = 8;
+    const eventCandidates = candidates.filter(s => s.category === "events" && s.event_date);
+    let evergreenItems: any[] = [];
+    
+    if (eventCandidates.length < MIN_EVENTS_THRESHOLD) {
+      console.log(`📚 Low event count (${eventCandidates.length} < ${MIN_EVENTS_THRESHOLD}), fetching evergreen content...`);
+      
+      // Determine current season
+      const month = today.getMonth() + 1;
+      let currentSeason = "all";
+      if (month >= 12 || month <= 2) currentSeason = "winter";
+      else if (month >= 3 && month <= 5) currentSeason = "spring";
+      else if (month >= 6 && month <= 8) currentSeason = "summer";
+      else currentSeason = "fall";
+      
+      const evergreenNeeded = Math.min(3, MIN_EVENTS_THRESHOLD - eventCandidates.length);
+      
+      const { data: evergreen } = await supabase
+        .from("evergreen_content")
+        .select("id, title, content, category")
+        .eq("is_active", true)
+        .or(`season.eq.all,season.eq.${currentSeason}`)
+        .order("last_used_at", { ascending: true, nullsFirst: true })
+        .order("priority", { ascending: false })
+        .limit(evergreenNeeded);
+      
+      if (evergreen && evergreen.length > 0) {
+        evergreenItems = evergreen;
+        console.log(`✅ Adding ${evergreenItems.length} evergreen items: ${evergreenItems.map(e => e.title).join(", ")}`);
+        
+        // Update usage tracking - simple update without RPC
+        const evergreenIds = evergreenItems.map(e => e.id);
+        for (const evId of evergreenIds) {
+          await supabase
+            .from("evergreen_content")
+            .update({ last_used_at: new Date().toISOString() })
+            .eq("id", evId);
+        }
+      }
+    }
+
     // Rank and pick top stories
     const rankedStories = rankStories(candidates as Story[], 12);
     const selectedStories = rankedStories.slice(0, 12);
 
-    console.log(`📊 Selected ${selectedStories.length} stories for newsletter`);
+    console.log(`📊 Selected ${selectedStories.length} stories + ${evergreenItems.length} evergreen for newsletter`);
 
     // Ensure voice exists for all stories
     console.log("🎤 Ensuring voice generation for all stories...");
@@ -355,7 +398,7 @@ serve(async (req) => {
 
     // Build newsletter
     console.log("📝 Building newsletter content...");
-    const newsletter = buildNewsletter(selectedStories, optimizedStories, editionDate, headerSponsor);
+    const newsletter = buildNewsletter(selectedStories, optimizedStories, editionDate, headerSponsor, evergreenItems);
 
     // Save newsletter to database
     console.log("💾 Saving newsletter to database...");
@@ -565,7 +608,8 @@ function buildNewsletter(
   stories: Story[],
   optimized: { id: string; newsletter_voice: string }[],
   editionDate: string,
-  sponsor?: any
+  sponsor?: any,
+  evergreen?: { id: string; title: string; content: string; category: string }[]
 ) {
   const optimizedMap = new Map(optimized.map(o => [o.id, o.newsletter_voice]));
 
@@ -664,6 +708,21 @@ function buildNewsletter(
     `;
   }).join("\n");
 
+  // Build evergreen section if provided
+  const evergreenHtml = evergreen && evergreen.length > 0 ? `
+    <div style="margin-bottom: 32px; background-color: #fef3c7; border-radius: 8px; padding: 20px;">
+      <h2 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 700; color: #92400e;">
+        ✨ Local Favorites
+      </h2>
+      ${evergreen.map(item => `
+        <div style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid #fcd34d;">
+          <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #78350f;">${escapeHtml(item.title)}</h3>
+          <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #92400e;">${escapeHtml(item.content)}</p>
+        </div>
+      `).join("\n")}
+    </div>
+  ` : "";
+
   // Build sponsor block if present
   const sponsorBlock = sponsor ? `
     <div style="background-color: #f8f9fa; border-left: 4px solid #667eea; padding: 20px; margin: 20px 0; border-radius: 4px;">
@@ -716,6 +775,8 @@ function buildNewsletter(
       
       ${htmlSections}
       
+      ${evergreenHtml}
+      
       <div style="margin-top: 40px; padding-top: 24px; border-top: 1px solid #e2e8f0; text-align: center;">
         <p style="margin: 0; font-size: 13px; color: #718096;">
           You're receiving this because you subscribed to Lake Geneva Local.<br>
@@ -749,6 +810,13 @@ function buildNewsletter(
     return `== ${toTitleCase(category)} ==\n\n${items}`;
   }).join("\n\n");
 
+  // Build plain text evergreen
+  const evergreenText = evergreen && evergreen.length > 0 ? `
+== LOCAL FAVORITES ==
+
+${evergreen.map(item => `${item.title}\n${item.content}`).join("\n\n")}
+` : "";
+
   const textBody = `
 LAKE GENEVA LOCAL
 ${dateLabel}
@@ -761,7 +829,7 @@ Here's what's happening around town this week.
 ${atAGlanceText}
 
 ${textSections}
-
+${evergreenText}
 ---
 You're receiving this because you subscribed to Lake Geneva Local.
 Unsubscribe: [link]

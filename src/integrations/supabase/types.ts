@@ -593,6 +593,48 @@ export type Database = {
         }
         Relationships: []
       }
+      evergreen_content: {
+        Row: {
+          category: string
+          content: string
+          created_at: string
+          id: string
+          is_active: boolean
+          last_used_at: string | null
+          priority: number
+          season: string | null
+          title: string
+          updated_at: string
+          use_count: number
+        }
+        Insert: {
+          category?: string
+          content: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_used_at?: string | null
+          priority?: number
+          season?: string | null
+          title: string
+          updated_at?: string
+          use_count?: number
+        }
+        Update: {
+          category?: string
+          content?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_used_at?: string | null
+          priority?: number
+          season?: string | null
+          title?: string
+          updated_at?: string
+          use_count?: number
+        }
+        Relationships: []
+      }
       incident_updates: {
         Row: {
           created_at: string
