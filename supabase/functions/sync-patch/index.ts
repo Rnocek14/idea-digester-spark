@@ -70,14 +70,44 @@ serve(async (req) => {
           }),
         });
 
-        if (firecrawlResponse.ok) {
-          const data = await firecrawlResponse.json();
-          const links = data.data?.links || [];
-          console.log(`[sync-patch] Found ${links.length} links from ${sectionUrl}`);
-          allLinks.push(...links);
+        const responseData = await firecrawlResponse.json();
+        
+        // Check for Firecrawl credit exhaustion
+        if (!firecrawlResponse.ok) {
+          const errorMsg = responseData.error || responseData.message || "";
+          if (errorMsg.toLowerCase().includes("credit") || errorMsg.toLowerCase().includes("limit") || 
+              errorMsg.toLowerCase().includes("quota") || firecrawlResponse.status === 402) {
+            console.error(`[sync-patch] ❌ Firecrawl credits exhausted: ${errorMsg}`);
+            // Disable source and mark as needing credits
+            await supabase.from("sources").update({
+              status: "inactive",
+              metadata: {
+                ...source.metadata,
+                disabled_reason: "firecrawl_credits_exhausted",
+                disabled_at: new Date().toISOString(),
+                requires_firecrawl_credits: true
+              }
+            }).eq("id", source.id);
+            
+            return new Response(
+              JSON.stringify({ 
+                success: false, 
+                error: "Firecrawl credits exhausted", 
+                action: "source_disabled",
+                requires_firecrawl_credits: true 
+              }),
+              { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+          console.warn(`[sync-patch] Firecrawl error: ${errorMsg}`);
+          continue;
         }
+
+        const links = responseData.data?.links || [];
+        console.log(`[sync-patch] Found ${links.length} links from ${sectionUrl}`);
+        allLinks.push(...links);
       } catch (err) {
-        console.warn(`[sync-patch] Failed to scrape ${sectionUrl}`);
+        console.warn(`[sync-patch] Failed to scrape ${sectionUrl}:`, err);
       }
     }
 
@@ -160,13 +190,31 @@ serve(async (req) => {
           }),
         });
 
+        const articleResponseData = await articleResponse.json();
+        
+        // Check for Firecrawl credit exhaustion on article scrape
         if (!articleResponse.ok) {
-          console.warn(`[sync-patch] Failed to scrape article: ${articleUrl}`);
+          const errorMsg = articleResponseData.error || articleResponseData.message || "";
+          if (errorMsg.toLowerCase().includes("credit") || errorMsg.toLowerCase().includes("limit") || 
+              errorMsg.toLowerCase().includes("quota") || articleResponse.status === 402) {
+            console.error(`[sync-patch] ❌ Firecrawl credits exhausted during article scrape`);
+            await supabase.from("sources").update({
+              status: "inactive",
+              metadata: {
+                ...source.metadata,
+                disabled_reason: "firecrawl_credits_exhausted",
+                disabled_at: new Date().toISOString(),
+                requires_firecrawl_credits: true
+              }
+            }).eq("id", source.id);
+            break; // Stop processing, return partial results
+          }
+          console.warn(`[sync-patch] Failed to scrape article: ${articleUrl} - ${errorMsg}`);
           results.errors.push(`Failed: ${articleUrl}`);
           continue;
         }
 
-        const articleData = await articleResponse.json();
+        const articleData = articleResponseData;
         const articleMarkdown = articleData.data?.markdown || "";
         const metadata = articleData.data?.metadata || {};
 
