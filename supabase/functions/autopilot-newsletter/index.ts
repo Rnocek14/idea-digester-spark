@@ -310,7 +310,8 @@ serve(async (req) => {
 
     // ========== EVERGREEN FALLBACK ==========
     // If we have fewer than MIN_EVENTS upcoming events, inject evergreen content
-    const MIN_EVENTS_THRESHOLD = 8;
+    // Threshold set to 9 so evergreen fires when we have 8 or fewer events
+    const MIN_EVENTS_THRESHOLD = 9;
     const eventCandidates = candidates.filter(s => s.category === "events" && s.event_date);
     let evergreenItems: any[] = [];
     

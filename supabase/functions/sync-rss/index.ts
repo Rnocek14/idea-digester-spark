@@ -763,6 +763,20 @@ serve(async (req) => {
   }
 
   try {
+    // Parse request body for optional parameters
+    let sourceId: string | null = null;
+    let sourceName: string | null = null;
+    let limit: number | null = null;
+    
+    try {
+      const body = await req.json();
+      sourceId = body.source_id || null;
+      sourceName = body.source_name || null;
+      limit = body.limit || null;
+    } catch {
+      // No body or invalid JSON - that's fine, use defaults
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const openaiApiKey = Deno.env.get("OPENAI_API_KEY")!;
@@ -781,14 +795,32 @@ serve(async (req) => {
       console.log(`Loaded ${rules?.length || 0} active auto-publish rules`);
     }
 
-    // Fetch active RSS and scrape sources - order by last_fetched_at to prevent starvation
-    // Sources that haven't been fetched yet (NULL) come first, then oldest fetched
-    const { data: sources, error: sourcesError } = await supabase
+    // Build sources query with optional filters
+    let sourcesQuery = supabase
       .from("sources")
       .select("*")
       .eq("status", "active")
-      .in("type", ["rss", "scrape"])
-      .order("last_fetched_at", { ascending: true, nullsFirst: true });
+      .in("type", ["rss", "scrape"]);
+    
+    // Single-source mode: filter by source_id or source_name
+    if (sourceId) {
+      console.log(`🎯 Single-source mode: fetching source_id=${sourceId}`);
+      sourcesQuery = sourcesQuery.eq("id", sourceId);
+    } else if (sourceName) {
+      console.log(`🎯 Single-source mode: fetching source_name="${sourceName}"`);
+      sourcesQuery = sourcesQuery.ilike("name", `%${sourceName}%`);
+    } else {
+      // Normal mode: order by last_fetched_at to prevent starvation
+      sourcesQuery = sourcesQuery.order("last_fetched_at", { ascending: true, nullsFirst: true });
+    }
+    
+    // Apply limit if specified
+    if (limit && limit > 0) {
+      console.log(`🔢 Limiting to ${limit} sources`);
+      sourcesQuery = sourcesQuery.limit(limit);
+    }
+
+    const { data: sources, error: sourcesError } = await sourcesQuery;
 
     if (sourcesError) throw sourcesError;
 
@@ -803,6 +835,69 @@ serve(async (req) => {
     // Daily cap for events per source (prevents flood from high-volume event scrapers)
     const MAX_EVENTS_PER_SOURCE_PER_DAY = 15;
     const syncToday = new Date().toISOString().split('T')[0];
+
+    // Helper to handle blocked source alarm
+    async function handleSourceFailure(source: any, errorMessage: string) {
+      const currentFailures = source.metadata?.consecutive_failures || 0;
+      const newFailures = currentFailures + 1;
+      const MAX_CONSECUTIVE_FAILURES = 3;
+      
+      console.log(`⚠️ Source "${source.name}" failure #${newFailures}: ${errorMessage}`);
+      
+      if (newFailures >= MAX_CONSECUTIVE_FAILURES) {
+        // ALARM: Disable source after repeated failures
+        console.log(`🚨 BLOCKED-SOURCE ALARM: "${source.name}" disabled after ${newFailures} consecutive failures`);
+        
+        await supabase
+          .from("sources")
+          .update({ 
+            status: "error",
+            metadata: {
+              ...source.metadata,
+              consecutive_failures: newFailures,
+              last_error: errorMessage,
+              disabled_at: new Date().toISOString(),
+              disabled_reason: `Auto-disabled after ${newFailures} consecutive fetch failures`
+            }
+          })
+          .eq("id", source.id);
+          
+        return true; // Source was disabled
+      } else {
+        // Track failure but keep source active
+        await supabase
+          .from("sources")
+          .update({ 
+            metadata: {
+              ...source.metadata,
+              consecutive_failures: newFailures,
+              last_error: errorMessage,
+              last_error_at: new Date().toISOString()
+            }
+          })
+          .eq("id", source.id);
+          
+        return false; // Source still active
+      }
+    }
+    
+    // Helper to reset failure count on success
+    async function resetSourceFailures(source: any) {
+      if (source.metadata?.consecutive_failures > 0) {
+        console.log(`✅ Resetting failure count for "${source.name}"`);
+        await supabase
+          .from("sources")
+          .update({ 
+            metadata: {
+              ...source.metadata,
+              consecutive_failures: 0,
+              last_error: null,
+              last_error_at: null
+            }
+          })
+          .eq("id", source.id);
+      }
+    }
 
     // Process each source
     for (const source of sources || []) {
@@ -1411,15 +1506,24 @@ When in doubt between safe and sensitive, choose sensitive. Only use blocked for
           }
         }
 
-        // Update last_fetched_at
+        // Update last_fetched_at and reset failure count on success
         await supabase
           .from("sources")
           .update({ last_fetched_at: new Date().toISOString() })
           .eq("id", source.id);
+        
+        // Reset consecutive failures on successful sync
+        await resetSourceFailures(source);
 
       } catch (error: any) {
         console.error(`Error processing ${source.name}:`, error);
         result.errors.push(`${source.name}: ${error.message}`);
+        
+        // Track failure and potentially disable source
+        const wasDisabled = await handleSourceFailure(source, error.message);
+        if (wasDisabled) {
+          result.errors.push(`⚠️ ${source.name} has been auto-disabled after repeated failures`);
+        }
       }
     }
 
