@@ -122,3 +122,9 @@ verify_jwt = false
 
 [functions.sync-library-events]
 verify_jwt = false
+
+[functions.sync-city-calendar]
+verify_jwt = false
+
+[functions.sync-downtown-events]
+verify_jwt = false
