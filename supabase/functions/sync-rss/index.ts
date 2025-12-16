@@ -1086,6 +1086,24 @@ serve(async (req) => {
 
           // Check for duplicates by normalized URL (handles trailing slashes, encoding)
           const normalizedUrl = normalizeUrl(originalUrl);
+          
+          // CROSS-SOURCE URL DEDUPLICATION: Check if URL already exists from ANY source
+          // This prevents the same article from being ingested from multiple sources with same/similar feeds
+          const urlSlug = normalizedUrl.split('/').pop() || '';
+          
+          const { data: existingByUrl } = await supabase
+            .from("content_queue")
+            .select("id, source_id")
+            .eq("original_url", originalUrl)
+            .limit(1);
+          
+          if (existingByUrl?.length) {
+            console.log(`⏭️ Skipping duplicate URL (cross-source): "${title.substring(0, 50)}..." - URL already exists`);
+            result.skipped++;
+            continue;
+          }
+          
+          // Also check normalized URL against same source (legacy check)
           const { data: existingUrls } = await supabase
             .from("content_queue")
             .select("id, original_url")
@@ -1142,28 +1160,23 @@ serve(async (req) => {
             result.skipped++;
             continue;
           }
-          // ENHANCED EVENT DEDUPLICATION: Cross-source dedup ONLY for event sources
-          // This prevents the same event being ingested from multiple sources (e.g., same event on venue site AND event aggregator)
-          // News sources (like Fire Dept) should NOT be cross-deduped as they have unique content
-          const isEventSourceForDedup = source.category === 'events' || 
-                                        source.name.toLowerCase().includes('event') ||
-                                        source.name.toLowerCase().includes('venue');
           
-          if (isEventSourceForDedup) {
-            const { data: existingEventByTitle } = await supabase
-              .from("content_queue")
-              .select("id")
-              .eq("title", title.trim())
-              .limit(1);
-            
-            if (existingEventByTitle?.length) {
-              console.log(`⏭️ Skipping duplicate event (cross-source): "${title.substring(0, 50)}..."`);
-              result.skipped++;
-              continue;
-            }
+          // CROSS-SOURCE TITLE DEDUPLICATION: Check for exact title match from ANY source (within recent window)
+          const { data: existingByExactTitle } = await supabase
+            .from("content_queue")
+            .select("id")
+            .eq("title", title.trim())
+            .gte("created_at", new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()) // Within last 7 days
+            .limit(1);
+          
+          if (existingByExactTitle?.length) {
+            console.log(`⏭️ Skipping duplicate title (cross-source): "${title.substring(0, 50)}..."`);
+            result.skipped++;
+            continue;
           }
           
-          const { data: existingByTitle } = await supabase
+          // SAME-SOURCE TITLE+DATE DEDUPLICATION: Check for same story from same source on same day
+          const { data: existingBySourceTitleDate } = await supabase
             .from("content_queue")
             .select("id")
             .eq("title", title)
@@ -1172,7 +1185,7 @@ serve(async (req) => {
             .lte("publish_date", `${publishDateOnly}T23:59:59Z`)
             .maybeSingle();
 
-          if (existingByTitle) {
+          if (existingBySourceTitleDate) {
             console.log(`Skipping duplicate: "${title}" on ${publishDateOnly}`);
             result.skipped++;
             continue;
