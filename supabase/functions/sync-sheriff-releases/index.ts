@@ -98,7 +98,45 @@ serve(async (req) => {
 
     if (!fcRes.ok) {
       const errText = await fcRes.text();
-      console.error("[sync-sheriff] Firecrawl error:", errText);
+      console.error("[sync-sheriff] Firecrawl error:", fcRes.status, errText);
+      
+      // Check for credit exhaustion (402 or credit-related error)
+      const isCreditsExhausted = fcRes.status === 402 || 
+        errText.toLowerCase().includes('credit') || 
+        errText.toLowerCase().includes('limit') ||
+        errText.toLowerCase().includes('quota');
+      
+      if (isCreditsExhausted) {
+        console.warn("[sync-sheriff] Firecrawl credits exhausted - disabling source");
+        
+        // Get current metadata and merge with disabled flags
+        const { data: sourceData } = await supabase
+          .from("sources")
+          .select("metadata")
+          .eq("name", "Walworth County Sheriff News")
+          .single();
+        
+        const currentMetadata = (sourceData?.metadata as Record<string, unknown>) || {};
+        
+        await supabase
+          .from("sources")
+          .update({
+            status: 'inactive',
+            metadata: {
+              ...currentMetadata,
+              disabled_reason: 'firecrawl_credits_exhausted',
+              disabled_at: new Date().toISOString(),
+              requires_firecrawl_credits: true,
+            },
+          })
+          .eq("name", "Walworth County Sheriff News");
+        
+        return new Response(
+          JSON.stringify({ success: false, error: "Firecrawl credits exhausted", credits_exhausted: true }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      
       return new Response(
         JSON.stringify({ success: false, error: "Firecrawl request failed" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
