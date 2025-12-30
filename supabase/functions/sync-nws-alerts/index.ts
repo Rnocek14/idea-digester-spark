@@ -169,6 +169,27 @@ function getWeatherImage(event: string, alertId: string): string {
   return images[hash % images.length];
 }
 
+// Extract the core event type from NWS event name for superseding logic
+function extractEventType(event: string): string {
+  const eventLower = (event || '').toLowerCase();
+  
+  // Map to core event types for grouping
+  if (eventLower.includes('wind advisory') || eventLower.includes('wind warning')) return 'wind';
+  if (eventLower.includes('winter weather') || eventLower.includes('winter storm')) return 'winter';
+  if (eventLower.includes('dense fog')) return 'fog';
+  if (eventLower.includes('tornado')) return 'tornado';
+  if (eventLower.includes('flood')) return 'flood';
+  if (eventLower.includes('thunderstorm')) return 'thunderstorm';
+  if (eventLower.includes('heat')) return 'heat';
+  if (eventLower.includes('freeze') || eventLower.includes('frost')) return 'freeze';
+  if (eventLower.includes('blizzard')) return 'blizzard';
+  if (eventLower.includes('ice storm')) return 'ice';
+  if (eventLower.includes('snow')) return 'snow';
+  
+  // Fallback: use the full event as-is
+  return eventLower;
+}
+
 // Generate URL-friendly slug from title
 function slugifyIncidentTitle(title: string): string {
   return title
@@ -176,6 +197,94 @@ function slugifyIncidentTitle(title: string): string {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .substring(0, 80);
+}
+
+// Supersede older weather alerts of the same event type
+async function supersedeOlderAlerts(opts: {
+  supabase: any;
+  eventType: string;
+  sourceId: string;
+  newAlertId: string;
+}): Promise<number> {
+  const { supabase, eventType, sourceId, newAlertId } = opts;
+  
+  // Build pattern for matching this event type
+  const patterns: Record<string, string> = {
+    wind: '%Wind%',
+    winter: '%Winter%',
+    fog: '%Fog%',
+    tornado: '%Tornado%',
+    flood: '%Flood%',
+    thunderstorm: '%Thunderstorm%',
+    heat: '%Heat%',
+    freeze: '%Freeze%',
+    frost: '%Frost%',
+    blizzard: '%Blizzard%',
+    ice: '%Ice Storm%',
+    snow: '%Snow%',
+  };
+  
+  const pattern = patterns[eventType] || `%${eventType}%`;
+  
+  // Find older published alerts of same event type
+  const { data: oldAlerts, error: findError } = await supabase
+    .from('content_queue')
+    .select('id, title')
+    .eq('category', 'weather')
+    .eq('source_id', sourceId)
+    .in('status', ['auto_published', 'published'])
+    .ilike('title', pattern);
+  
+  if (findError) {
+    console.error('[supersede] Error finding old alerts:', findError);
+    return 0;
+  }
+  
+  if (!oldAlerts?.length) {
+    return 0;
+  }
+  
+  console.log(`[supersede] Found ${oldAlerts.length} older ${eventType} alerts to supersede`);
+  
+  // Mark old alerts as rejected with superseded reason
+  const { error: updateError } = await supabase
+    .from('content_queue')
+    .update({ 
+      status: 'rejected',
+      reviewed_at: new Date().toISOString(),
+      metadata: {
+        superseded_by: newAlertId,
+        superseded_at: new Date().toISOString(),
+        supersede_reason: 'New NWS alert of same type issued'
+      }
+    })
+    .in('id', oldAlerts.map((a: any) => a.id));
+  
+  if (updateError) {
+    console.error('[supersede] Error superseding alerts:', updateError);
+    return 0;
+  }
+  
+  // Also resolve old weather incidents of this type
+  const { data: resolvedIncidents, error: incidentError } = await supabase
+    .from('incidents')
+    .update({ 
+      status: 'resolved',
+      resolved_at: new Date().toISOString(),
+      resolution_reason: 'Superseded by new NWS alert'
+    })
+    .eq('incident_type', 'weather')
+    .in('status', ['active', 'monitoring'])
+    .ilike('title', pattern)
+    .select('id, title');
+  
+  if (incidentError) {
+    console.error('[supersede] Error resolving old incidents:', incidentError);
+  } else if (resolvedIncidents?.length) {
+    console.log(`[supersede] Resolved ${resolvedIncidents.length} old weather incidents`);
+  }
+  
+  return oldAlerts.length;
 }
 
 // Link weather alert to an incident (find or create)
@@ -399,6 +508,23 @@ Deno.serve(async (req) => {
         result.skipped_duplicates++;
         console.log(`[sync-nws] Skipping duplicate alert: ${props.event}`);
         continue;
+      }
+
+      // SUPERSEDE older alerts of the same event type before inserting
+      const eventType = extractEventType(props.event);
+      console.log(`[sync-nws] Event type extracted: "${eventType}" from "${props.event}"`);
+      
+      // Supersede older alerts of same type (e.g., old Wind Advisory when new one comes in)
+      if (nwsSource?.id) {
+        const supersededCount = await supersedeOlderAlerts({
+          supabase,
+          eventType,
+          sourceId: nwsSource.id,
+          newAlertId: alertId,
+        });
+        if (supersededCount > 0) {
+          console.log(`[sync-nws] Superseded ${supersededCount} older ${eventType} alerts`);
+        }
       }
 
       // Determine severity-based safety level and breaking news priority
