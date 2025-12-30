@@ -27,6 +27,9 @@ import Leads from "./pages/Leads";
 import ImageTest from "./pages/ImageTest";
 import EngagementMonitor from "./pages/EngagementMonitor";
 import Auth from "./pages/Auth";
+import Jobs from "./pages/Jobs";
+import PostJob from "./pages/PostJob";
+import AdminJobs from "./pages/AdminJobs";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -63,6 +66,8 @@ const App = () => (
             <Route path="/advertise" element={<Advertise />} />
             <Route path="/incidents" element={<Incidents />} />
             <Route path="/incidents/:slug" element={<IncidentDetail />} />
+            <Route path="/jobs" element={<Jobs />} />
+            <Route path="/jobs/post" element={<PostJob />} />
             <Route path="/dashboard" element={<DashboardLayout />}>
               <Route index element={<Dashboard />} />
               <Route path="content" element={<ContentQueue />} />
@@ -75,6 +80,7 @@ const App = () => (
               <Route path="sponsor-analytics" element={<SponsorAnalytics />} />
               <Route path="image-test" element={<ImageTest />} />
               <Route path="engagement" element={<EngagementMonitor />} />
+              <Route path="jobs" element={<AdminJobs />} />
             </Route>
             <Route path="*" element={<NotFound />} />
             </Routes>

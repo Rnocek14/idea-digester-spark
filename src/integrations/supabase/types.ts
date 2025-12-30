@@ -748,6 +748,95 @@ export type Database = {
           },
         ]
       }
+      job_listings: {
+        Row: {
+          amount_cents: number | null
+          apply_url: string | null
+          business_id: string | null
+          business_name: string
+          category: string
+          contact_email: string
+          contact_phone: string | null
+          created_at: string | null
+          description: string
+          expires_at: string
+          id: string
+          is_featured: boolean | null
+          job_type: string
+          location_text: string | null
+          paid_at: string | null
+          pay_display: string | null
+          pay_max: number | null
+          pay_min: number | null
+          pay_type: string | null
+          payment_status: string | null
+          pricing_tier: string | null
+          status: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount_cents?: number | null
+          apply_url?: string | null
+          business_id?: string | null
+          business_name: string
+          category: string
+          contact_email: string
+          contact_phone?: string | null
+          created_at?: string | null
+          description: string
+          expires_at: string
+          id?: string
+          is_featured?: boolean | null
+          job_type: string
+          location_text?: string | null
+          paid_at?: string | null
+          pay_display?: string | null
+          pay_max?: number | null
+          pay_min?: number | null
+          pay_type?: string | null
+          payment_status?: string | null
+          pricing_tier?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount_cents?: number | null
+          apply_url?: string | null
+          business_id?: string | null
+          business_name?: string
+          category?: string
+          contact_email?: string
+          contact_phone?: string | null
+          created_at?: string | null
+          description?: string
+          expires_at?: string
+          id?: string
+          is_featured?: boolean | null
+          job_type?: string
+          location_text?: string | null
+          paid_at?: string | null
+          pay_display?: string | null
+          pay_max?: number | null
+          pay_min?: number | null
+          pay_type?: string | null
+          payment_status?: string | null
+          pricing_tier?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_listings_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       newsletter_clicks: {
         Row: {
           ad_placement_id: string | null
