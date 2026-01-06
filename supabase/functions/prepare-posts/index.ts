@@ -332,6 +332,49 @@ serve(async (req) => {
       );
     }
 
+    // Filter out stories with past event dates and stale holiday content
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const currentMonth = today.getMonth();
+    const currentDay = today.getDate();
+    const isPostHoliday = currentMonth === 0 || (currentMonth === 11 && currentDay > 26);
+
+    const freshStories = eligibleStories.filter(story => {
+      // Check if event_date has passed
+      if (story.event_date) {
+        const eventDate = new Date(story.event_date);
+        eventDate.setHours(0, 0, 0, 0);
+        if (eventDate < today) {
+          console.log(`[prepare-posts] ⏭️ Skipping "${story.title.substring(0, 50)}..." - event_date ${story.event_date} has passed`);
+          return false;
+        }
+      }
+
+      // Skip Christmas/Santa/holiday content after Dec 26
+      const isHolidayContent = /santa|christmas|holiday.*party|ugly.*sweater|new\s*year/i.test(story.title);
+      if (isHolidayContent && isPostHoliday) {
+        console.log(`[prepare-posts] ⏭️ Skipping holiday content after season: "${story.title.substring(0, 50)}..."`);
+        return false;
+      }
+
+      return true;
+    });
+
+    console.log(`[prepare-posts] After freshness filter: ${freshStories.length} stories (filtered ${eligibleStories.length - freshStories.length} stale)`);
+
+    if (freshStories.length === 0) {
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: "No fresh stories found after filtering stale content",
+          prepared: 0,
+          total: eligibleStories.length,
+          filtered: eligibleStories.length,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const platformConfig: Record<string, { maxPerDay: number }> = {
       instagram: { maxPerDay: 3 },
       facebook: { maxPerDay: 2 },
@@ -343,7 +386,7 @@ serve(async (req) => {
     let civicSkippedIG = 0;
     let curatedCivicUsed = 0;
 
-    for (const story of eligibleStories) {
+    for (const story of freshStories) {
       const category = (story.category || '').toLowerCase();
       const isCivic = category === 'civic';
       
