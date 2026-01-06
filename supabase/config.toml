@@ -140,3 +140,12 @@ verify_jwt = false
 
 [functions.renew-job-listing]
 verify_jwt = false
+
+[functions.track-job-click]
+verify_jwt = false
+
+[functions.notify-expiring-jobs]
+verify_jwt = false
+
+[functions.send-employer-magic-link]
+verify_jwt = false
