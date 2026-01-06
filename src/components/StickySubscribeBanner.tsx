@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { X, Mail, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { getSubscribeSource } from "@/lib/referralTracking";
+import { getSubscribeSource, getReferralCode } from "@/lib/referralTracking";
 
 export const StickySubscribeBanner = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -50,10 +50,12 @@ export const StickySubscribeBanner = () => {
 
     setIsSubmitting(true);
     try {
+      const referralCode = getReferralCode();
       const { error } = await supabase.from("subscribers").insert({
         email: email.toLowerCase().trim(),
         source: getSubscribeSource(),
         status: "active",
+        referred_by_code: referralCode,
       });
 
       if (error) {

@@ -1362,6 +1362,9 @@ export type Database = {
           last_clicked_at: string | null
           last_opened_at: string | null
           metadata: Json | null
+          referral_code: string | null
+          referral_count: number | null
+          referred_by_code: string | null
           source: string | null
           status: string
           subscribed_at: string
@@ -1380,6 +1383,9 @@ export type Database = {
           last_clicked_at?: string | null
           last_opened_at?: string | null
           metadata?: Json | null
+          referral_code?: string | null
+          referral_count?: number | null
+          referred_by_code?: string | null
           source?: string | null
           status?: string
           subscribed_at?: string
@@ -1398,6 +1404,9 @@ export type Database = {
           last_clicked_at?: string | null
           last_opened_at?: string | null
           metadata?: Json | null
+          referral_code?: string | null
+          referral_count?: number | null
+          referred_by_code?: string | null
           source?: string | null
           status?: string
           subscribed_at?: string
@@ -1453,6 +1462,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_referral_code: { Args: { email_input: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
