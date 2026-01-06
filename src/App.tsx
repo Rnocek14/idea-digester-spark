@@ -32,6 +32,7 @@ import PostJob from "./pages/PostJob";
 import AdminJobs from "./pages/AdminJobs";
 import EmployerDashboard from "./pages/EmployerDashboard";
 import Deals from "./pages/Deals";
+import AdminDeals from "./pages/AdminDeals";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -85,6 +86,7 @@ const App = () => (
               <Route path="image-test" element={<ImageTest />} />
               <Route path="engagement" element={<EngagementMonitor />} />
               <Route path="jobs" element={<AdminJobs />} />
+              <Route path="deals" element={<AdminDeals />} />
             </Route>
             <Route path="*" element={<NotFound />} />
             </Routes>

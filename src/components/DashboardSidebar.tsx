@@ -1,4 +1,4 @@
-import { FileText, Radio, Megaphone, LayoutDashboard, Mail, CalendarDays, Building2, BarChart3, Users, Image, Heart, Briefcase } from "lucide-react";
+import { FileText, Radio, Megaphone, LayoutDashboard, Mail, CalendarDays, Building2, BarChart3, Users, Image, Heart, Briefcase, Gift } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import {
@@ -26,6 +26,7 @@ const menuItems = [
   { title: "Analytics", url: "/dashboard/sponsor-analytics", icon: BarChart3 },
   { title: "Engagement", url: "/dashboard/engagement", icon: Heart },
   { title: "Jobs", url: "/dashboard/jobs", icon: Briefcase },
+  { title: "Deals", url: "/dashboard/deals", icon: Gift },
   { title: "Image Test", url: "/dashboard/image-test", icon: Image },
 ];
 
