@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Briefcase, Mail, Clock, CheckCircle, XCircle, AlertCircle, Loader2, MousePointerClick, Globe, Newspaper, RefreshCw, CalendarClock, Pencil } from "lucide-react";
 import JobClickTrendsChart from "@/components/JobClickTrendsChart";
 import EditJobDialog from "@/components/EditJobDialog";
+import EmailPreferencesCard from "@/components/EmailPreferencesCard";
 
 interface ClickBreakdown {
   total: number;
@@ -496,6 +497,13 @@ export default function EmployerDashboard() {
               </Button>
             </CardContent>
           </Card>
+        )}
+
+        {/* Email Preferences */}
+        {validatedEmail && (
+          <div className="mt-8">
+            <EmailPreferencesCard email={validatedEmail} />
+          </div>
         )}
 
         {/* Post New Job CTA */}
