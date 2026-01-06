@@ -149,3 +149,6 @@ verify_jwt = false
 
 [functions.send-employer-magic-link]
 verify_jwt = false
+
+[functions.notify-job-approved]
+verify_jwt = false
