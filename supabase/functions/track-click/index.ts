@@ -20,6 +20,7 @@ serve(async (req) => {
     const businessId = url.searchParams.get("bid");
     const placementId = url.searchParams.get("pid");
     const clickSource = url.searchParams.get("source");
+    const jobId = url.searchParams.get("jid"); // Job ID for job click tracking
     const trackOnly = url.searchParams.get("track_only") === "true";
 
     // Must have target URL
@@ -36,7 +37,7 @@ serve(async (req) => {
     }
 
     // Log click (newsletter or web)
-    const shouldLog = newsletterId || (businessId && clickSource);
+    const shouldLog = newsletterId || (businessId && clickSource) || jobId;
     if (shouldLog) {
       const supabaseUrl = Deno.env.get("SUPABASE_URL");
       const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -44,22 +45,42 @@ serve(async (req) => {
       if (supabaseUrl && supabaseServiceKey) {
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-        const { error } = await supabase.from("newsletter_clicks").insert({
-          newsletter_id: newsletterId || null,
-          subscriber_id: subscriberId || null,
-          subscriber_email: email || null,
-          link_url: decodedUrl,
-          business_id: businessId || null,
-          ad_placement_id: placementId || null,
-          click_source: clickSource || (newsletterId ? 'newsletter_sponsor' : null),
-          user_agent: req.headers.get("user-agent") || null,
-          ip_address: req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || null,
-        });
+        // Track newsletter click
+        if (newsletterId || (businessId && clickSource)) {
+          const { error } = await supabase.from("newsletter_clicks").insert({
+            newsletter_id: newsletterId || null,
+            subscriber_id: subscriberId || null,
+            subscriber_email: email || null,
+            link_url: decodedUrl,
+            business_id: businessId || null,
+            ad_placement_id: placementId || null,
+            click_source: clickSource || (newsletterId ? 'newsletter_sponsor' : null),
+            user_agent: req.headers.get("user-agent") || null,
+            ip_address: req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || null,
+          });
 
-        if (error) {
-          console.error("Failed to log click:", error);
-        } else {
-          console.log(`🔗 Click tracked: source=${clickSource || 'newsletter'}, business=${businessId}, url=${decodedUrl}`);
+          if (error) {
+            console.error("Failed to log newsletter click:", error);
+          } else {
+            console.log(`🔗 Click tracked: source=${clickSource || 'newsletter'}, business=${businessId}, url=${decodedUrl}`);
+          }
+        }
+
+        // Track job click if job ID provided
+        if (jobId) {
+          const { error: jobError } = await supabase.from("job_clicks").insert({
+            job_id: jobId,
+            source: newsletterId ? "newsletter" : (clickSource || "website"),
+            newsletter_id: newsletterId || null,
+            user_agent: req.headers.get("user-agent") || null,
+            ip_address: req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || null,
+          });
+
+          if (jobError) {
+            console.error("Failed to log job click:", jobError);
+          } else {
+            console.log(`💼 Job click tracked: job_id=${jobId}, source=${newsletterId ? 'newsletter' : 'website'}`);
+          }
         }
       }
     }

@@ -773,7 +773,7 @@ function buildNewsletter(
             </p>
             <p style="margin: 0; font-size: 13px; color: #0284c7;">
               ${escapeHtml(job.job_type)}${payInfo ? ` • ${payInfo}` : ''}
-              <a href="${escapeHtml(applyUrl)}" target="_blank" rel="noopener noreferrer" style="color: #0369a1; text-decoration: none; font-weight: 500; margin-left: 8px;">Apply →</a>
+              <a href="${escapeHtml(applyUrl)}" data-job-id="${job.id}" target="_blank" rel="noopener noreferrer" style="color: #0369a1; text-decoration: none; font-weight: 500; margin-left: 8px;">Apply →</a>
             </p>
           </div>
         `;
@@ -956,10 +956,10 @@ function addTrackingPixel(htmlBody: string, newsletterId: string, subscriberId: 
 
 // Rewrite all links to use click tracking
 function rewriteLinksForTracking(htmlBody: string, newsletterId: string, subscriberId: string, baseUrl: string): string {
-  // Match href="..." or href='...'
-  const linkRegex = /href=["']([^"']+)["']/gi;
+  // Match <a> tags with href and optional data-job-id attributes
+  const linkRegex = /<a\s+([^>]*?)href=["']([^"']+)["']([^>]*?)>/gi;
   
-  return htmlBody.replace(linkRegex, (match, url) => {
+  return htmlBody.replace(linkRegex, (match, before, url, after) => {
     // Skip tracking for unsubscribe links, anchors, mailto, tel, and links already using track-click
     if (url.includes('unsubscribe') || 
         url.startsWith('#') || 
@@ -969,11 +969,24 @@ function rewriteLinksForTracking(htmlBody: string, newsletterId: string, subscri
       return match;
     }
     
+    // Check for job ID in the data attribute
+    const jobIdMatch = (before + after).match(/data-job-id=["']([^"']+)["']/);
+    const jobId = jobIdMatch ? jobIdMatch[1] : null;
+    
     // Build tracking URL
     const encodedUrl = encodeURIComponent(url);
-    const trackingUrl = `${baseUrl}/functions/v1/track-click?nid=${newsletterId}&sid=${subscriberId}&url=${encodedUrl}`;
+    let trackingUrl = `${baseUrl}/functions/v1/track-click?nid=${newsletterId}&sid=${subscriberId}&url=${encodedUrl}`;
     
-    return `href="${trackingUrl}"`;
+    // Add job ID if present
+    if (jobId) {
+      trackingUrl += `&jid=${jobId}`;
+    }
+    
+    // Remove data-job-id from output (it was only for tracking purposes)
+    const cleanedBefore = before.replace(/data-job-id=["'][^"']*["']\s*/gi, '');
+    const cleanedAfter = after.replace(/data-job-id=["'][^"']*["']\s*/gi, '');
+    
+    return `<a ${cleanedBefore}href="${trackingUrl}"${cleanedAfter}>`;
   });
 }
 
