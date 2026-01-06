@@ -397,9 +397,22 @@ serve(async (req) => {
 
     const headerSponsor = activePlacements?.find(p => p.slot_id === "newsletter_header");
 
+    // Fetch approved job listings for "Now Hiring" section
+    console.log("💼 Fetching approved job listings...");
+    const { data: jobListings } = await supabase
+      .from("job_listings")
+      .select("id, title, business_name, category, job_type, pay_display, location_text, apply_url, contact_email, is_featured")
+      .eq("status", "approved")
+      .gt("expires_at", today.toISOString())
+      .order("is_featured", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(3);
+
+    console.log(`✅ Found ${jobListings?.length || 0} job listings for newsletter`);
+
     // Build newsletter
     console.log("📝 Building newsletter content...");
-    const newsletter = buildNewsletter(selectedStories, optimizedStories, editionDate, headerSponsor, evergreenItems);
+    const newsletter = buildNewsletter(selectedStories, optimizedStories, editionDate, headerSponsor, evergreenItems, jobListings || []);
 
     // Save newsletter to database
     console.log("💾 Saving newsletter to database...");
@@ -613,7 +626,8 @@ function buildNewsletter(
   optimized: { id: string; newsletter_voice: string }[],
   editionDate: string,
   sponsor?: any,
-  evergreen?: { id: string; title: string; content: string; category: string }[]
+  evergreen?: { id: string; title: string; content: string; category: string }[],
+  jobs?: { id: string; title: string; business_name: string; category: string; job_type: string; pay_display: string | null; location_text: string | null; apply_url: string | null; contact_email: string; is_featured: boolean | null }[]
 ) {
   const optimizedMap = new Map(optimized.map(o => [o.id, o.newsletter_voice]));
 
@@ -727,6 +741,51 @@ function buildNewsletter(
     </div>
   ` : "";
 
+  // Build "Now Hiring" jobs section
+  const jobCategoryEmoji: Record<string, string> = {
+    hospitality: "🍽️",
+    retail: "🛍️",
+    trades: "🔧",
+    services: "✂️",
+    healthcare: "🏥",
+    office: "💼",
+    other: "💼"
+  };
+
+  const jobsHtml = jobs && jobs.length > 0 ? `
+    <div style="margin-bottom: 32px; background-color: #e0f2fe; border-radius: 8px; padding: 20px;">
+      <h2 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 700; color: #0369a1;">
+        💼 Now Hiring in Lake Geneva
+      </h2>
+      ${jobs.map(job => {
+        const emoji = jobCategoryEmoji[job.category?.toLowerCase()] || "💼";
+        const payInfo = job.pay_display ? `<span style="color: #0284c7; font-weight: 500;">${escapeHtml(job.pay_display)}</span>` : '';
+        const locationInfo = job.location_text ? ` • ${escapeHtml(job.location_text)}` : '';
+        const applyUrl = job.apply_url || `mailto:${job.contact_email}`;
+        const featuredBadge = job.is_featured ? '<span style="background-color: #fbbf24; color: #78350f; font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-left: 8px;">FEATURED</span>' : '';
+        return `
+          <div style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid #7dd3fc;">
+            <h3 style="margin: 0 0 4px 0; font-size: 16px; font-weight: 600; color: #0c4a6e;">
+              ${emoji} ${escapeHtml(job.title)}${featuredBadge}
+            </h3>
+            <p style="margin: 0 0 8px 0; font-size: 14px; color: #0369a1;">
+              <strong>${escapeHtml(job.business_name)}</strong>${locationInfo}
+            </p>
+            <p style="margin: 0; font-size: 13px; color: #0284c7;">
+              ${escapeHtml(job.job_type)}${payInfo ? ` • ${payInfo}` : ''}
+              <a href="${escapeHtml(applyUrl)}" target="_blank" rel="noopener noreferrer" style="color: #0369a1; text-decoration: none; font-weight: 500; margin-left: 8px;">Apply →</a>
+            </p>
+          </div>
+        `;
+      }).join("")}
+      <p style="margin: 16px 0 0 0; font-size: 13px; text-align: center;">
+        <a href="https://lakegeneva.news/jobs" target="_blank" rel="noopener noreferrer" style="color: #0369a1; text-decoration: none; font-weight: 600;">
+          View all local job openings →
+        </a>
+      </p>
+    </div>
+  ` : "";
+
   // Build sponsor block if present
   const sponsorBlock = sponsor ? `
     <div style="background-color: #f8f9fa; border-left: 4px solid #667eea; padding: 20px; margin: 20px 0; border-radius: 4px;">
@@ -781,6 +840,8 @@ function buildNewsletter(
       
       ${evergreenHtml}
       
+      ${jobsHtml}
+      
       <div style="margin-top: 40px; padding-top: 24px; border-top: 1px solid #e2e8f0; text-align: center;">
         <p style="margin: 0; font-size: 13px; color: #718096;">
           You're receiving this because you subscribed to Lake Geneva Local.<br>
@@ -821,6 +882,22 @@ function buildNewsletter(
 ${evergreen.map(item => `${item.title}\n${item.content}`).join("\n\n")}
 ` : "";
 
+  // Build plain text jobs
+  const jobsText = jobs && jobs.length > 0 ? `
+== NOW HIRING IN LAKE GENEVA ==
+
+${jobs.map(job => {
+  const payInfo = job.pay_display ? ` | ${job.pay_display}` : '';
+  const locationInfo = job.location_text ? ` | ${job.location_text}` : '';
+  const applyUrl = job.apply_url || `mailto:${job.contact_email}`;
+  return `• ${job.title} at ${job.business_name}
+  ${job.job_type}${payInfo}${locationInfo}
+  Apply: ${applyUrl}`;
+}).join("\n\n")}
+
+View all jobs: https://lakegeneva.news/jobs
+` : "";
+
   const textBody = `
 LAKE GENEVA LOCAL
 ${dateLabel}
@@ -834,6 +911,7 @@ ${atAGlanceText}
 
 ${textSections}
 ${evergreenText}
+${jobsText}
 ---
 You're receiving this because you subscribed to Lake Geneva Local.
 Unsubscribe: [link]
