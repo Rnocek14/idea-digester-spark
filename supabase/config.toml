@@ -167,3 +167,6 @@ verify_jwt = false
 
 [functions.send-breaking-alert]
 verify_jwt = false
+
+[functions.notify-tier-up]
+verify_jwt = false
