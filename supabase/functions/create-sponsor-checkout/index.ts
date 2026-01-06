@@ -27,6 +27,36 @@ const PRICE_MAPPING: Record<string, { price_id: string; amount_cents: number; de
     description: "Newsletter Banner Ad - 3 Months",
     months: 3,
   },
+  "sidebar_1mo": {
+    price_id: "price_1SmbhtLyeUr9eYfB1IMVmyQu",
+    amount_cents: 29900,
+    description: "Website Sidebar Ad - 1 Month",
+    months: 1,
+  },
+  "sidebar_3mo": {
+    price_id: "price_1SmbsQLyeUr9eYfBr3DdqHhk",
+    amount_cents: 69900,
+    description: "Website Sidebar Ad - 3 Months",
+    months: 3,
+  },
+  "social_post": {
+    price_id: "price_1SmbsYLyeUr9eYfBhs1afXoA",
+    amount_cents: 19900,
+    description: "Social Media Sponsored Post",
+    months: 1,
+  },
+  "premium_1mo": {
+    price_id: "price_1SmbsaLyeUr9eYfBdKps4VQu",
+    amount_cents: 149900,
+    description: "Premium Bundle - 1 Month",
+    months: 1,
+  },
+  "premium_3mo": {
+    price_id: "price_1SmbscLyeUr9eYfBS553GQhv",
+    amount_cents: 399900,
+    description: "Premium Bundle - 3 Months",
+    months: 3,
+  },
 };
 
 const formatCurrency = (cents: number) => {

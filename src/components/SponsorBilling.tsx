@@ -65,8 +65,13 @@ interface BusinessProfile {
 }
 
 const AD_PACKAGES = [
-  { id: "newsletter_1mo", name: "Newsletter Banner - 1 Month", price: "$299" },
-  { id: "newsletter_3mo", name: "Newsletter Banner - 3 Months", price: "$799" },
+  { id: "newsletter_1mo", name: "Newsletter Banner - 1 Month", price: "$299", category: "Newsletter" },
+  { id: "newsletter_3mo", name: "Newsletter Banner - 3 Months", price: "$799", category: "Newsletter" },
+  { id: "sidebar_1mo", name: "Website Sidebar Ad - 1 Month", price: "$299", category: "Website" },
+  { id: "sidebar_3mo", name: "Website Sidebar Ad - 3 Months", price: "$699", category: "Website" },
+  { id: "social_post", name: "Social Media Sponsored Post", price: "$199", category: "Social" },
+  { id: "premium_1mo", name: "Premium Bundle - 1 Month", price: "$1,499", category: "Premium" },
+  { id: "premium_3mo", name: "Premium Bundle - 3 Months", price: "$3,999", category: "Premium" },
 ];
 
 const getStatusBadge = (status: string) => {
