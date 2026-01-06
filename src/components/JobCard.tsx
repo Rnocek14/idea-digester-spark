@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MapPin, Clock, Star, ExternalLink } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 type JobListing = {
   id: string;
@@ -65,7 +66,12 @@ const categoryColors: Record<string, string> = {
 export function JobCard({ job, onApply }: JobCardProps) {
   const pay = formatPay(job);
   
-  const handleApply = () => {
+  const handleApply = async () => {
+    // Track the click (fire and forget)
+    supabase.functions.invoke("track-job-click", {
+      body: { job_id: job.id, source: "website" },
+    }).catch(() => {});
+
     if (job.apply_url) {
       window.open(job.apply_url, '_blank', 'noopener,noreferrer');
     } else {

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Briefcase, Mail, Clock, CheckCircle, XCircle, AlertCircle, Eye, Loader2 } from "lucide-react";
+import { Briefcase, Mail, Clock, CheckCircle, XCircle, AlertCircle, Loader2, MousePointerClick } from "lucide-react";
 
 interface JobListing {
   id: string;
@@ -93,6 +93,30 @@ export default function EmployerDashboard() {
       return data as JobListing[];
     },
     enabled: !!validatedEmail,
+  });
+
+  // Fetch click counts for all jobs
+  const { data: clickCounts } = useQuery({
+    queryKey: ["employer-job-clicks", jobs?.map(j => j.id)],
+    queryFn: async () => {
+      if (!jobs || jobs.length === 0) return {};
+      
+      const jobIds = jobs.map(j => j.id);
+      const { data, error } = await supabase
+        .from("job_clicks")
+        .select("job_id")
+        .in("job_id", jobIds);
+
+      if (error) throw error;
+      
+      // Count clicks per job
+      const counts: Record<string, number> = {};
+      data.forEach(click => {
+        counts[click.job_id] = (counts[click.job_id] || 0) + 1;
+      });
+      return counts;
+    },
+    enabled: !!jobs && jobs.length > 0,
   });
 
   // Request magic link mutation
@@ -225,7 +249,7 @@ export default function EmployerDashboard() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
           <Card>
             <CardContent className="pt-6">
               <div className="text-2xl font-bold">{jobs?.length || 0}</div>
@@ -254,6 +278,15 @@ export default function EmployerDashboard() {
                 {jobs?.filter(j => j.is_featured).length || 0}
               </div>
               <p className="text-xs text-muted-foreground">Featured</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-2xl font-bold text-purple-600 flex items-center gap-1">
+                <MousePointerClick className="h-5 w-5" />
+                {clickCounts ? Object.values(clickCounts).reduce((a, b) => a + b, 0) : 0}
+              </div>
+              <p className="text-xs text-muted-foreground">Total Clicks</p>
             </CardContent>
           </Card>
         </div>
@@ -298,6 +331,10 @@ export default function EmployerDashboard() {
                           <StatusIcon className="h-3 w-3 mr-1" />
                           {isExpired ? "Expired" : config.label}
                         </Badge>
+                        <div className="flex items-center gap-1 text-xs text-purple-600 font-medium">
+                          <MousePointerClick className="h-3 w-3" />
+                          {clickCounts?.[job.id] || 0} clicks
+                        </div>
                         <p className="text-xs text-muted-foreground">
                           Posted {getRelativeTime(job.created_at)}
                         </p>

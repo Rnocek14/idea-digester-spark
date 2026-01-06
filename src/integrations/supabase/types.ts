@@ -775,6 +775,51 @@ export type Database = {
           },
         ]
       }
+      job_clicks: {
+        Row: {
+          clicked_at: string
+          id: string
+          ip_address: string | null
+          job_id: string
+          newsletter_id: string | null
+          source: string
+          user_agent: string | null
+        }
+        Insert: {
+          clicked_at?: string
+          id?: string
+          ip_address?: string | null
+          job_id: string
+          newsletter_id?: string | null
+          source?: string
+          user_agent?: string | null
+        }
+        Update: {
+          clicked_at?: string
+          id?: string
+          ip_address?: string | null
+          job_id?: string
+          newsletter_id?: string | null
+          source?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_clicks_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "job_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_clicks_newsletter_id_fkey"
+            columns: ["newsletter_id"]
+            isOneToOne: false
+            referencedRelation: "newsletters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       job_listings: {
         Row: {
           amount_cents: number | null
