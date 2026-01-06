@@ -235,6 +235,15 @@ serve(async (req) => {
         .select()
         .single();
 
+      // If there's a placement, update it with the package_type
+      if (placement_id) {
+        await supabase
+          .from("ad_placements")
+          .update({ package_type: package_id })
+          .eq("id", placement_id);
+        logStep("Updated placement with package_type", { placement_id, package_type: package_id });
+      }
+
       if (invError) {
         throw new Error(`Failed to create invoice: ${invError.message}`);
       }

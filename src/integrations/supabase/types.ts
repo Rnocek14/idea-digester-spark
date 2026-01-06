@@ -60,6 +60,7 @@ export type Database = {
           label: string | null
           metadata: Json | null
           notes: string | null
+          package_type: string | null
           slot_id: string | null
           start_date: string
           status: string | null
@@ -73,6 +74,7 @@ export type Database = {
           label?: string | null
           metadata?: Json | null
           notes?: string | null
+          package_type?: string | null
           slot_id?: string | null
           start_date: string
           status?: string | null
@@ -86,6 +88,7 @@ export type Database = {
           label?: string | null
           metadata?: Json | null
           notes?: string | null
+          package_type?: string | null
           slot_id?: string | null
           start_date?: string
           status?: string | null
