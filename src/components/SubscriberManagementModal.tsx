@@ -56,6 +56,7 @@ import {
   CheckCircle,
   XCircle,
   Loader2,
+  Crown,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -596,6 +597,7 @@ export function SubscriberManagementModal({ open, onOpenChange }: SubscriberMana
                       </TableHead>
                       <TableHead>Email</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead>Tier</TableHead>
                       <TableHead>Tags</TableHead>
                       <TableHead>Engagement</TableHead>
                       <TableHead>Subscribed</TableHead>
@@ -618,6 +620,16 @@ export function SubscriberManagementModal({ open, onOpenChange }: SubscriberMana
                           ) : (
                             <Badge variant="destructive">Unsubscribed</Badge>
                           )}
+                        </TableCell>
+                        <TableCell>
+                          {(() => {
+                            const count = sub.referral_count || 0;
+                            if (count >= 10) return <Badge className="bg-gradient-to-r from-yellow-500 to-amber-500"><Crown className="h-3 w-3 mr-1" />VIP</Badge>;
+                            if (count >= 5) return <Badge className="bg-gradient-to-r from-purple-500 to-pink-500">💫 Ambassador</Badge>;
+                            if (count >= 3) return <Badge variant="secondary">🌟 Advocate</Badge>;
+                            if (count >= 1) return <Badge variant="outline">⭐ Supporter</Badge>;
+                            return <span className="text-muted-foreground text-xs">—</span>;
+                          })()}
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-1 flex-wrap">
