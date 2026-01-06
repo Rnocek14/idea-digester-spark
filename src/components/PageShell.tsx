@@ -4,6 +4,7 @@ import { format } from "date-fns";
 
 const navItems = [
   { label: "Today", to: "/" },
+  { label: "Jobs", to: "/jobs" },
   { label: "Directory", to: "/directory" },
   { label: "Advertise", to: "/advertise" },
 ];
