@@ -316,13 +316,48 @@ function isLocalToCoverageArea(
   return coverageKeywords.some(keyword => text.includes(keyword.toLowerCase()));
 }
 
-// Default coverage keywords for Lake Geneva area
-const DEFAULT_COVERAGE_KEYWORDS = [
-  'lake geneva', 'walworth county', 'walworth', 'fontana', 'williams bay',
-  'elkhorn', 'delavan', 'town of linn', 'highway 50', 'hwy 50', 'us-12',
-  'big foot', 'badger high school', 'geneva lake', 'como', 'geneva',
-  'lakewood', 'lyons', 'sugar creek', 'east troy', 'whitewater'
+// STRONG coverage keywords - must match at least one of these for regional sources
+const STRONG_COVERAGE_KEYWORDS = [
+  'lake geneva', 'walworth county', 'fontana', 'williams bay',
+  'elkhorn', 'delavan', 'geneva lake', 'town of linn', 'big foot high school'
 ];
+
+// WEAK coverage keywords - only valid if no exclusion cities present
+const WEAK_COVERAGE_KEYWORDS = [
+  'walworth', 'como', 'east troy', 'whitewater', 'lyons', 'sugar creek',
+  'highway 50', 'hwy 50', 'us-12', 'lakewood', 'badger high school', 'geneva'
+];
+
+// Default coverage keywords for Lake Geneva area (combined for backward compat)
+const DEFAULT_COVERAGE_KEYWORDS = [...STRONG_COVERAGE_KEYWORDS, ...WEAK_COVERAGE_KEYWORDS];
+
+// NON-LOCAL CITY EXCLUSIONS - stories about these cities should not appear prominently
+const NON_LOCAL_TITLE_CITIES = [
+  'milwaukee', 'madison', 'chicago', 'racine', 'kenosha',
+  'waukesha', 'green bay', 'appleton', 'oshkosh', 'janesville',
+  'beloit', 'rockford', 'brookfield', 'wauwatosa', 'fond du lac'
+];
+
+// Check if story title prominently features a non-local city (should be excluded from feed)
+function isNonLocalStory(title: string, summary?: string | null): boolean {
+  const titleLower = (title || '').toLowerCase();
+  const summaryLower = (summary || '').toLowerCase();
+  const text = `${titleLower} ${summaryLower}`;
+  
+  // Check if a local keyword is present (takes priority)
+  const hasLocalKeyword = STRONG_COVERAGE_KEYWORDS.some(k => text.includes(k));
+  if (hasLocalKeyword) {
+    return false; // Has local keyword, not non-local
+  }
+  
+  // Check if a non-local city appears in the title (strong signal of non-local story)
+  for (const city of NON_LOCAL_TITLE_CITIES) {
+    if (titleLower.includes(city)) {
+      return true; // City in title = definitely not local
+    }
+  }
+  return false;
+}
 
 // Hyperlocal tier detection for geo-filtering
 const HYPERLOCAL_TIER_1 = [
@@ -1403,9 +1438,31 @@ When in doubt between safe and sensitive, choose sensitive. Only use blocked for
           
           // Detect locality tier for hyperlocal filtering BEFORE status decision
           const locality = detectLocality(title, aiResult.summary);
-          // Use source default_geo_tier as fallback if no keywords matched
-          const geoTier = locality.tier > 0 ? locality.tier : (source.default_geo_tier || 0);
-          const geoLabel = locality.label || (source.default_geo_tier === 1 ? 'Lake Geneva' : source.default_geo_tier === 2 ? 'Walworth County' : null);
+          
+          // FIXED: Only use source default_geo_tier if source is hyperlocal (tier 1 or 2)
+          // Regional sources (tier 0) should ONLY get elevated if keywords explicitly match
+          // This prevents Milwaukee stories from regional sources getting tier 2
+          let geoTier: number;
+          let geoLabel: string | null;
+          
+          if (locality.tier > 0) {
+            // Keyword match found - use detected tier
+            geoTier = locality.tier;
+            geoLabel = locality.label;
+          } else if (isNonLocalStory(title, aiResult.summary)) {
+            // Non-local city in title without local keywords - force tier 0
+            geoTier = 0;
+            geoLabel = null;
+            console.log(`🚫 Non-local story detected, forcing tier 0: "${title.substring(0, 50)}..."`);
+          } else if (source.default_geo_tier && source.default_geo_tier >= 1) {
+            // Hyperlocal source (tier 1 or 2) - trust the source default
+            geoTier = source.default_geo_tier;
+            geoLabel = source.default_geo_tier === 1 ? 'Lake Geneva' : 'Walworth County';
+          } else {
+            // Regional source with no keyword match - stays tier 0
+            geoTier = 0;
+            geoLabel = null;
+          }
           
           // Now decide status with geoTier for hyperlocal gate
           const status = decideStatusForStory(rules as AutoPublishRule[], source.id, aiCategory, safetyLevel, geoTier);
