@@ -23,6 +23,30 @@ import { Briefcase, Clock, CheckCircle2, XCircle, Star, DollarSign } from "lucid
 import { toast } from "sonner";
 import { format } from "date-fns";
 
+// Send approval notification to employer
+const sendApprovalNotification = async (job: JobListing) => {
+  try {
+    const { error } = await supabase.functions.invoke('notify-job-approved', {
+      body: {
+        job: {
+          id: job.id,
+          business_name: job.business_name,
+          title: job.title,
+          contact_email: job.contact_email,
+          expires_at: job.expires_at,
+        }
+      }
+    });
+    if (error) {
+      console.error('Failed to send approval notification:', error);
+    } else {
+      console.log('Approval notification sent to:', job.contact_email);
+    }
+  } catch (err) {
+    console.error('Error sending approval notification:', err);
+  }
+};
+
 type JobListing = {
   id: string;
   business_id: string | null;
@@ -131,8 +155,13 @@ const AdminJobs = () => {
 
   const categories = [...new Set(jobs.map(j => j.category))].sort();
 
-  const handleApprove = (job: JobListing) => {
-    updateJobMutation.mutate({ id: job.id, status: 'approved' });
+  const handleApprove = async (job: JobListing) => {
+    updateJobMutation.mutate({ id: job.id, status: 'approved' }, {
+      onSuccess: () => {
+        // Send email notification to employer
+        sendApprovalNotification(job);
+      }
+    });
   };
 
   const handleReject = (job: JobListing) => {
