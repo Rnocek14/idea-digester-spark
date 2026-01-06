@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Gift, Copy, Check, Users, Share2 } from "lucide-react";
+import { Gift, Copy, Check, Users, Share2, Trophy } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { getCurrentTier, getNextTier, REFERRAL_TIERS } from "@/lib/referralTracking";
 
 interface ReferralProgramProps {
   subscriberEmail?: string;
@@ -10,13 +12,42 @@ interface ReferralProgramProps {
 
 export const ReferralProgram = ({ subscriberEmail }: ReferralProgramProps) => {
   const [copied, setCopied] = useState(false);
+  const [referralCode, setReferralCode] = useState<string | null>(null);
+  const [referralCount, setReferralCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchReferralData = async () => {
+      if (!subscriberEmail) {
+        setLoading(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("subscribers")
+        .select("referral_code, referral_count")
+        .eq("email", subscriberEmail.toLowerCase().trim())
+        .single();
+
+      if (!error && data) {
+        setReferralCode(data.referral_code);
+        setReferralCount(data.referral_count || 0);
+      }
+      setLoading(false);
+    };
+
+    fetchReferralData();
+  }, [subscriberEmail]);
+
+  // Generate a display code if we don't have a real one yet
+  const displayCode = referralCode || (subscriberEmail 
+    ? subscriberEmail.split('@')[0].slice(0, 6).toUpperCase()
+    : Math.random().toString(36).substring(2, 8).toUpperCase());
   
-  // Generate a simple referral code from email or random
-  const referralCode = subscriberEmail 
-    ? btoa(subscriberEmail).slice(0, 8).toUpperCase()
-    : Math.random().toString(36).substring(2, 10).toUpperCase();
-  
-  const referralLink = `${window.location.origin}/?ref=${referralCode}`;
+  const referralLink = `${window.location.origin}/?ref=${displayCode}`;
+
+  const currentTier = getCurrentTier(referralCount);
+  const nextTier = getNextTier(referralCount);
 
   const handleCopy = async () => {
     try {
@@ -45,6 +76,19 @@ export const ReferralProgram = ({ subscriberEmail }: ReferralProgramProps) => {
     }
   };
 
+  if (loading) {
+    return (
+      <Card className="border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 animate-pulse">
+        <CardHeader className="pb-3">
+          <div className="h-5 bg-amber-200 rounded w-32" />
+        </CardHeader>
+        <CardContent>
+          <div className="h-20 bg-amber-100 rounded" />
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50">
       <CardHeader className="pb-3">
@@ -54,9 +98,44 @@ export const ReferralProgram = ({ subscriberEmail }: ReferralProgramProps) => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <p className="text-sm text-slate-600">
-          Know someone who'd love Lake Geneva news? Share your link and help grow our community.
-        </p>
+        {/* Referral Stats */}
+        {referralCount > 0 && (
+          <div className="bg-white/80 rounded-lg p-3 border border-amber-200">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-slate-700">Your Referrals</span>
+              <span className="text-lg font-bold text-amber-600">{referralCount}</span>
+            </div>
+            {currentTier && (
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-lg">{currentTier.badge}</span>
+                <span className="font-medium text-slate-800">{currentTier.name}</span>
+                <span className="text-slate-500">• {currentTier.benefit}</span>
+              </div>
+            )}
+            {nextTier && (
+              <div className="mt-2 text-xs text-slate-500">
+                {nextTier.count - referralCount} more to unlock {nextTier.badge} {nextTier.name}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Rewards Preview */}
+        {referralCount === 0 && (
+          <div className="space-y-2">
+            <p className="text-sm text-slate-600">
+              Share your link and earn rewards as friends subscribe!
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {REFERRAL_TIERS.slice(0, 2).map((tier) => (
+                <div key={tier.name} className="bg-white/60 rounded p-2 text-center">
+                  <span className="text-lg">{tier.badge}</span>
+                  <div className="text-xs font-medium text-slate-700">{tier.count}+ = {tier.name}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         
         <div className="flex items-center gap-2">
           <div className="flex-1 bg-white rounded-lg border border-amber-200 px-3 py-2 text-xs text-slate-600 font-mono truncate">
