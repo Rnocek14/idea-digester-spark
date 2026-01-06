@@ -176,3 +176,6 @@ verify_jwt = false
 
 [functions.verify-sponsor-payment]
 verify_jwt = false
+
+[functions.send-invoice-reminders]
+verify_jwt = false
