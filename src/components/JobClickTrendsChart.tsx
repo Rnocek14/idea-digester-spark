@@ -1,10 +1,11 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { format, subDays, eachDayOfInterval, parseISO } from "date-fns";
 import { Loader2, TrendingUp } from "lucide-react";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 interface JobClickTrendsChartProps {
   jobIds: string[];
@@ -24,18 +25,23 @@ const COLORS = [
   "hsl(339, 90%, 51%)", // pink
 ];
 
+type DateRange = "7" | "14" | "30";
+
 export default function JobClickTrendsChart({ jobIds, jobTitles }: JobClickTrendsChartProps) {
-  // Fetch click data for the last 14 days
+  const [dateRange, setDateRange] = useState<DateRange>("14");
+  const days = parseInt(dateRange);
+
+  // Fetch click data for the selected date range
   const { data: clicks, isLoading } = useQuery({
-    queryKey: ["job-click-trends", jobIds],
+    queryKey: ["job-click-trends", jobIds, dateRange],
     queryFn: async () => {
-      const fourteenDaysAgo = subDays(new Date(), 14).toISOString();
+      const startDate = subDays(new Date(), days).toISOString();
       
       const { data, error } = await supabase
         .from("job_clicks")
         .select("job_id, clicked_at")
         .in("job_id", jobIds)
-        .gte("clicked_at", fourteenDaysAgo)
+        .gte("clicked_at", startDate)
         .order("clicked_at", { ascending: true });
 
       if (error) throw error;
@@ -49,13 +55,13 @@ export default function JobClickTrendsChart({ jobIds, jobTitles }: JobClickTrend
     if (!clicks || clicks.length === 0) return [];
 
     const today = new Date();
-    const fourteenDaysAgo = subDays(today, 13);
-    const days = eachDayOfInterval({ start: fourteenDaysAgo, end: today });
+    const startDate = subDays(today, days - 1);
+    const intervalDays = eachDayOfInterval({ start: startDate, end: today });
 
     // Create a map for quick lookup: date -> jobId -> count
     const clicksByDay: Record<string, Record<string, number>> = {};
     
-    days.forEach(day => {
+    intervalDays.forEach(day => {
       const dateKey = format(day, "yyyy-MM-dd");
       clicksByDay[dateKey] = {};
       jobIds.forEach(id => {
@@ -72,7 +78,7 @@ export default function JobClickTrendsChart({ jobIds, jobTitles }: JobClickTrend
     });
 
     // Convert to array format for Recharts
-    return days.map(day => {
+    return intervalDays.map(day => {
       const dateKey = format(day, "yyyy-MM-dd");
       const entry: Record<string, string | number> = {
         date: format(day, "MMM d"),
@@ -85,7 +91,7 @@ export default function JobClickTrendsChart({ jobIds, jobTitles }: JobClickTrend
       
       return entry;
     });
-  }, [clicks, jobIds]);
+  }, [clicks, jobIds, days]);
 
   // Calculate total clicks for the period
   const totalClicks = clicks?.length || 0;
@@ -106,11 +112,20 @@ export default function JobClickTrendsChart({ jobIds, jobTitles }: JobClickTrend
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <TrendingUp className="h-5 w-5" />
-            Click Trends
-          </CardTitle>
-          <CardDescription>Last 14 days</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" />
+                Click Trends
+              </CardTitle>
+              <CardDescription>Last {days} days</CardDescription>
+            </div>
+            <ToggleGroup type="single" value={dateRange} onValueChange={(v) => v && setDateRange(v as DateRange)} size="sm">
+              <ToggleGroupItem value="7" className="text-xs px-3">7d</ToggleGroupItem>
+              <ToggleGroupItem value="14" className="text-xs px-3">14d</ToggleGroupItem>
+              <ToggleGroupItem value="30" className="text-xs px-3">30d</ToggleGroupItem>
+            </ToggleGroup>
+          </div>
         </CardHeader>
         <CardContent className="py-8 text-center text-muted-foreground">
           <p>No click data yet. Clicks will appear here as they happen.</p>
@@ -122,13 +137,22 @@ export default function JobClickTrendsChart({ jobIds, jobTitles }: JobClickTrend
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg flex items-center gap-2">
-          <TrendingUp className="h-5 w-5" />
-          Click Trends
-        </CardTitle>
-        <CardDescription>
-          {totalClicks} total clicks in the last 14 days
-        </CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Click Trends
+            </CardTitle>
+            <CardDescription>
+              {totalClicks} total clicks in the last {days} days
+            </CardDescription>
+          </div>
+          <ToggleGroup type="single" value={dateRange} onValueChange={(v) => v && setDateRange(v as DateRange)} size="sm">
+            <ToggleGroupItem value="7" className="text-xs px-3">7d</ToggleGroupItem>
+            <ToggleGroupItem value="14" className="text-xs px-3">14d</ToggleGroupItem>
+            <ToggleGroupItem value="30" className="text-xs px-3">30d</ToggleGroupItem>
+          </ToggleGroup>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="h-[280px] w-full">
@@ -141,6 +165,7 @@ export default function JobClickTrendsChart({ jobIds, jobTitles }: JobClickTrend
                 tickLine={false}
                 axisLine={false}
                 className="text-muted-foreground"
+                interval={days > 14 ? 2 : 0}
               />
               <YAxis 
                 allowDecimals={false}
