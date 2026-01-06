@@ -11,6 +11,7 @@ import { StoryCard } from "@/components/StoryCard";
 import WeatherWidget from "@/components/WeatherWidget";
 import LiveIncidentsSidebar from "@/components/LiveIncidentsSidebar";
 import WeekendSidebarWidget from "@/components/WeekendSidebarWidget";
+import NowHiringWidget from "@/components/NowHiringWidget";
 import LiveMusicWidget from "@/components/LiveMusicWidget";
 import AlsoTodayCard from "@/components/AlsoTodayCard";
 import { InlineSubscribeCTA } from "@/components/InlineSubscribeCTA";
@@ -1172,6 +1173,7 @@ const LakeGeneva = () => {
             {/* Mobile/Tablet: Incidents + Weekend + Live Music stacked below main content */}
             <div className="xl:hidden mt-6 space-y-4 px-1">
               <LiveIncidentsSidebar />
+              <NowHiringWidget />
               <WeekendSidebarWidget />
               <LiveMusicWidget />
             </div>
@@ -1197,6 +1199,7 @@ const LakeGeneva = () => {
           >
             <div className="space-y-4 max-h-[calc(100vh-8rem)] overflow-y-auto">
               <LiveIncidentsSidebar onHide={() => setIsSidebarVisible(false)} showCloseButton />
+              <NowHiringWidget />
               <WeekendSidebarWidget />
             </div>
           </aside>
