@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Briefcase, Mail, Clock, CheckCircle, XCircle, AlertCircle, Loader2, MousePointerClick, Globe, Newspaper, RefreshCw, CalendarClock } from "lucide-react";
+import JobClickTrendsChart from "@/components/JobClickTrendsChart";
 
 interface ClickBreakdown {
   total: number;
@@ -359,6 +360,16 @@ export default function EmployerDashboard() {
               </div>
             </CardContent>
           </Card>
+        )}
+
+        {/* Click Trends Chart */}
+        {jobs && jobs.length > 0 && (
+          <div className="mb-8">
+            <JobClickTrendsChart 
+              jobIds={jobs.filter(j => j.status === "approved").map(j => j.id)}
+              jobTitles={Object.fromEntries(jobs.map(j => [j.id, j.title]))}
+            />
+          </div>
         )}
 
         {/* Jobs List */}
