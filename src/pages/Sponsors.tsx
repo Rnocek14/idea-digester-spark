@@ -12,9 +12,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
-import { Plus, Edit, Power, AlertCircle, RefreshCw } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Plus, Edit, Power, AlertCircle, RefreshCw, Megaphone, LayoutGrid } from "lucide-react";
 import { toast } from "sonner";
 import { SponsorDialog } from "@/components/SponsorDialog";
+import { PlacementManagement } from "@/components/PlacementManagement";
 import { format } from "date-fns";
 
 const getStatusColor = (status: string) => {
@@ -43,7 +45,7 @@ const getTierColor = (tier: string) => {
   }
 };
 
-const Sponsors = () => {
+const SponsorsTable = () => {
   const [selectedSponsorId, setSelectedSponsorId] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const queryClient = useQueryClient();
@@ -63,34 +65,6 @@ const Sponsors = () => {
     staleTime: 30000,
     refetchOnWindowFocus: false,
   });
-
-  if (error) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Sponsors</h1>
-            <p className="text-muted-foreground mt-2">
-              Manage local business sponsors and advertising campaigns
-            </p>
-          </div>
-        </div>
-        <Card className="p-6">
-          <div className="flex flex-col items-center gap-3 py-12 text-center">
-            <AlertCircle className="h-12 w-12 text-destructive" />
-            <h3 className="text-lg font-semibold">Failed to load sponsors</h3>
-            <p className="text-muted-foreground max-w-md">
-              {error.message || "An error occurred while loading sponsors"}
-            </p>
-            <Button onClick={() => refetch()} variant="outline">
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Try Again
-            </Button>
-          </div>
-        </Card>
-      </div>
-    );
-  }
 
   const toggleStatusMutation = useMutation({
     mutationFn: async ({ id, currentStatus }: { id: string; currentStatus: string }) => {
@@ -120,16 +94,34 @@ const Sponsors = () => {
     setIsDialogOpen(true);
   };
 
+  if (error) {
+    return (
+      <Card className="p-6">
+        <div className="flex flex-col items-center gap-3 py-12 text-center">
+          <AlertCircle className="h-12 w-12 text-destructive" />
+          <h3 className="text-lg font-semibold">Failed to load sponsors</h3>
+          <p className="text-muted-foreground max-w-md">
+            {error.message || "An error occurred while loading sponsors"}
+          </p>
+          <Button onClick={() => refetch()} variant="outline">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Try Again
+          </Button>
+        </div>
+      </Card>
+    );
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Sponsors</h1>
-          <p className="text-muted-foreground mt-2">
-            Manage local business sponsors and advertising campaigns
+          <h2 className="text-xl font-semibold">Sponsor Accounts</h2>
+          <p className="text-sm text-muted-foreground">
+            {sponsors?.length || 0} sponsors registered
           </p>
         </div>
-        <Button onClick={handleAdd}>
+        <Button onClick={handleAdd} size="sm">
           <Plus className="mr-2 h-4 w-4" />
           Add Sponsor
         </Button>
@@ -139,14 +131,6 @@ const Sponsors = () => {
         <div className="flex flex-col items-center gap-3 py-16">
           <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
           <span className="text-muted-foreground">Loading sponsors...</span>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => refetch()}
-            className="mt-2"
-          >
-            Taking too long? Click to retry
-          </Button>
         </div>
       ) : sponsors && sponsors.length > 0 ? (
         <div className="border rounded-lg">
@@ -215,7 +199,7 @@ const Sponsors = () => {
           </Table>
         </div>
       ) : (
-        <div className="text-center py-12 text-muted-foreground">
+        <div className="text-center py-12 text-muted-foreground border rounded-lg">
           No sponsors yet. Add your first sponsor to get started.
         </div>
       )}
@@ -225,6 +209,38 @@ const Sponsors = () => {
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
       />
+    </div>
+  );
+};
+
+const Sponsors = () => {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold">Sponsors</h1>
+        <p className="text-muted-foreground mt-2">
+          Manage sponsors and their ad placements across the platform
+        </p>
+      </div>
+
+      <Tabs defaultValue="placements" className="w-full">
+        <TabsList>
+          <TabsTrigger value="placements" className="gap-2">
+            <LayoutGrid className="h-4 w-4" />
+            Ad Placements
+          </TabsTrigger>
+          <TabsTrigger value="sponsors" className="gap-2">
+            <Megaphone className="h-4 w-4" />
+            Sponsor Accounts
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="placements" className="mt-6">
+          <PlacementManagement />
+        </TabsContent>
+        <TabsContent value="sponsors" className="mt-6">
+          <SponsorsTable />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
