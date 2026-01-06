@@ -1,10 +1,51 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Mail } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Mail, ArrowRight } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { getSubscribeSource } from "@/lib/referralTracking";
+
+// Rotating headlines to keep it fresh
+const HEADLINES = [
+  "Stay in the loop",
+  "Don't miss a thing",
+  "Your weekly local update",
+  "Lake Geneva, delivered",
+];
 
 export const InlineSubscribeCTA = () => {
-  const scrollToSubscribe = () => {
-    const el = document.getElementById('subscribe');
-    if (el) el.scrollIntoView({ behavior: 'smooth' });
+  const [email, setEmail] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [headline] = useState(() => HEADLINES[Math.floor(Math.random() * HEADLINES.length)]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+
+    setIsSubmitting(true);
+    try {
+      const { error } = await supabase.from("subscribers").insert({
+        email: email.toLowerCase().trim(),
+        source: getSubscribeSource(),
+        status: "active",
+      });
+
+      if (error) {
+        if (error.code === "23505") {
+          toast.info("You're already subscribed!");
+        } else {
+          throw error;
+        }
+      } else {
+        toast.success("Welcome to the Lake Geneva Brief!");
+        setEmail("");
+      }
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -15,17 +56,29 @@ export const InlineSubscribeCTA = () => {
             <Mail className="h-5 w-5 text-blue-600" />
           </div>
           <div>
-            <p className="font-medium text-slate-900">Stay in the loop</p>
-            <p className="text-sm text-slate-500">Get Lake Geneva news in your inbox every week.</p>
+            <p className="font-medium text-slate-900">{headline}</p>
+            <p className="text-sm text-slate-500">Free Lake Geneva news, weekly.</p>
           </div>
         </div>
-        <Button 
-          onClick={scrollToSubscribe}
-          className="rounded-full bg-blue-600 hover:bg-blue-700 text-white px-5 shrink-0"
-        >
-          Subscribe Free
-        </Button>
+        <form onSubmit={handleSubmit} className="flex items-center gap-2 w-full sm:w-auto">
+          <Input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@email.com"
+            className="h-9 text-sm rounded-full border-slate-300 px-4 w-full sm:w-44"
+            disabled={isSubmitting}
+          />
+          <Button 
+            type="submit"
+            disabled={isSubmitting}
+            className="rounded-full bg-blue-600 hover:bg-blue-700 text-white px-4 h-9 shrink-0"
+          >
+            {isSubmitting ? '...' : <ArrowRight className="h-4 w-4" />}
+          </Button>
+        </form>
       </div>
     </div>
   );
 };
+

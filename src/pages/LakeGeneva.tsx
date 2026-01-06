@@ -16,6 +16,8 @@ import NowHiringWidget from "@/components/NowHiringWidget";
 import LiveMusicWidget from "@/components/LiveMusicWidget";
 import AlsoTodayCard from "@/components/AlsoTodayCard";
 import { InlineSubscribeCTA } from "@/components/InlineSubscribeCTA";
+import { StickySubscribeBanner } from "@/components/StickySubscribeBanner";
+import { ReferralProgram } from "@/components/ReferralProgram";
 import { WelcomeModal } from "@/components/WelcomeModal";
 import { PresentedBySection } from "@/components/PresentedBySection";
 import { getSubscribeSource, getReferralSource } from "@/lib/referralTracking";
@@ -695,6 +697,7 @@ const LakeGeneva = () => {
       description="Fast, trustworthy updates on Lake Geneva city hall, schools, events, and real estate."
     >
       <WelcomeModal />
+      <StickySubscribeBanner />
       {/* Centered layout with floating margin sidebar */}
       <div className="relative">
         {/* Centered main content */}
@@ -1203,6 +1206,7 @@ const LakeGeneva = () => {
               <LiveIncidentsSidebar onHide={() => setIsSidebarVisible(false)} showCloseButton />
               <NowHiringWidget />
               <WeekendSidebarWidget />
+              <ReferralProgram />
             </div>
           </aside>
         ) : hasActiveIncidents ? (
