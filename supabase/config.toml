@@ -137,3 +137,6 @@ verify_jwt = false
 
 [functions.backfill-normalized-url]
 verify_jwt = false
+
+[functions.renew-job-listing]
+verify_jwt = false

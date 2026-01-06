@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Briefcase, Mail, Clock, CheckCircle, XCircle, AlertCircle, Loader2, MousePointerClick, Globe, Newspaper } from "lucide-react";
+import { Briefcase, Mail, Clock, CheckCircle, XCircle, AlertCircle, Loader2, MousePointerClick, Globe, Newspaper, RefreshCw } from "lucide-react";
 
 interface ClickBreakdown {
   total: number;
@@ -165,6 +165,25 @@ export default function EmployerDashboard() {
     await requestLinkMutation.mutateAsync(email);
     setIsRequestingLink(false);
   };
+
+  // Renew job mutation
+  const renewJobMutation = useMutation({
+    mutationFn: async (jobId: string) => {
+      const response = await supabase.functions.invoke("renew-job-listing", {
+        body: { job_id: jobId, token, days: 30 },
+      });
+      if (response.error) throw new Error(response.error.message);
+      if (response.data?.error) throw new Error(response.data.error);
+      return response.data;
+    },
+    onSuccess: (data) => {
+      toast.success(data.message || "Job listing renewed successfully!");
+      queryClient.invalidateQueries({ queryKey: ["employer-jobs", validatedEmail] });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to renew job listing");
+    },
+  });
 
   const getRelativeTime = (dateString: string) => {
     const date = new Date(dateString);
@@ -401,6 +420,22 @@ export default function EmployerDashboard() {
                           <p className="text-xs text-muted-foreground">
                             {daysLeft} days remaining
                           </p>
+                        )}
+                        {(isExpired || (daysLeft <= 7 && daysLeft > 0)) && (
+                          <Button
+                            size="sm"
+                            variant={isExpired ? "default" : "outline"}
+                            onClick={() => renewJobMutation.mutate(job.id)}
+                            disabled={renewJobMutation.isPending}
+                            className="mt-2"
+                          >
+                            {renewJobMutation.isPending ? (
+                              <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                            ) : (
+                              <RefreshCw className="h-3 w-3 mr-1" />
+                            )}
+                            {isExpired ? "Renew Listing" : "Extend 30 Days"}
+                          </Button>
                         )}
                       </div>
                     </div>
