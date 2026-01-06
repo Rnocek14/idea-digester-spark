@@ -293,7 +293,8 @@ serve(async (req) => {
           id,
           title,
           safety_level,
-          status
+          status,
+          event_date
         )
       `)
       .eq("status", "pending")
@@ -329,11 +330,54 @@ serve(async (req) => {
       const storyTitle = story?.title || "Unknown";
       const safetyLevel = story?.safety_level;
       const storyStatus = story?.status;
+      const eventDate = story?.event_date;
 
       console.log(`\n[process-post-queue] ========================================`);
       console.log(`[process-post-queue] Processing: "${storyTitle.substring(0, 50)}..."`);
       console.log(`[process-post-queue] Platform: ${post.platform.toUpperCase()}`);
-      console.log(`[process-post-queue] Safety: ${safetyLevel}, Story Status: ${storyStatus}`);
+      console.log(`[process-post-queue] Safety: ${safetyLevel}, Story Status: ${storyStatus}, Event Date: ${eventDate || 'N/A'}`);
+
+      // EVENT DATE CHECK: Block posts for past events
+      if (eventDate) {
+        const eventDateObj = new Date(eventDate);
+        const todayStart = new Date(now);
+        todayStart.setHours(0, 0, 0, 0);
+        eventDateObj.setHours(0, 0, 0, 0);
+        
+        if (eventDateObj < todayStart) {
+          console.log(`[process-post-queue] ⛔ EXPIRED: Event date ${eventDate} has passed`);
+          await supabaseClient
+            .from("post_queue")
+            .update({
+              status: "expired",
+              error_message: `Event date ${eventDate} has passed`,
+              metadata: { ...post.metadata, expired_at: now.toISOString(), expire_reason: "event_date_passed" }
+            })
+            .eq("id", post.id);
+          results.push({ post_id: post.id, platform: post.platform, success: false, expired: true, reason: "event_date_passed" });
+          continue;
+        }
+      }
+
+      // HOLIDAY CONTENT CHECK: Block stale holiday content after Dec 26
+      const currentMonth = now.getMonth();
+      const currentDay = now.getDate();
+      const isPostHoliday = currentMonth === 0 || (currentMonth === 11 && currentDay > 26);
+      const isHolidayContent = /santa|christmas|holiday.*party|ugly.*sweater|new\s*year/i.test(storyTitle);
+      
+      if (isHolidayContent && isPostHoliday) {
+        console.log(`[process-post-queue] ⛔ EXPIRED: Holiday content after season`);
+        await supabaseClient
+          .from("post_queue")
+          .update({
+            status: "expired",
+            error_message: `Holiday content expired - season has passed`,
+            metadata: { ...post.metadata, expired_at: now.toISOString(), expire_reason: "holiday_season_passed" }
+          })
+          .eq("id", post.id);
+        results.push({ post_id: post.id, platform: post.platform, success: false, expired: true, reason: "holiday_season_passed" });
+        continue;
+      }
 
       // SAFETY GATE: Check content safety and status
       const safeStatuses = ['approved', 'auto_published', 'published'];
