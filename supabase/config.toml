@@ -170,3 +170,9 @@ verify_jwt = false
 
 [functions.notify-tier-up]
 verify_jwt = false
+
+[functions.create-sponsor-checkout]
+verify_jwt = false
+
+[functions.verify-sponsor-payment]
+verify_jwt = false

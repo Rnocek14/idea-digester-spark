@@ -13,10 +13,11 @@ import {
 } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Edit, Power, AlertCircle, RefreshCw, Megaphone, LayoutGrid } from "lucide-react";
+import { Plus, Edit, Power, AlertCircle, RefreshCw, Megaphone, LayoutGrid, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import { SponsorDialog } from "@/components/SponsorDialog";
 import { PlacementManagement } from "@/components/PlacementManagement";
+import { SponsorBilling } from "@/components/SponsorBilling";
 import { format } from "date-fns";
 
 const getStatusColor = (status: string) => {
@@ -223,8 +224,12 @@ const Sponsors = () => {
         </p>
       </div>
 
-      <Tabs defaultValue="placements" className="w-full">
+      <Tabs defaultValue="billing" className="w-full">
         <TabsList>
+          <TabsTrigger value="billing" className="gap-2">
+            <CreditCard className="h-4 w-4" />
+            Billing
+          </TabsTrigger>
           <TabsTrigger value="placements" className="gap-2">
             <LayoutGrid className="h-4 w-4" />
             Ad Placements
@@ -234,6 +239,9 @@ const Sponsors = () => {
             Sponsor Accounts
           </TabsTrigger>
         </TabsList>
+        <TabsContent value="billing" className="mt-6">
+          <SponsorBilling />
+        </TabsContent>
         <TabsContent value="placements" className="mt-6">
           <PlacementManagement />
         </TabsContent>
