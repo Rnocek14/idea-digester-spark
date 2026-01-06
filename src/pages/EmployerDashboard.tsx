@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Briefcase, Mail, Clock, CheckCircle, XCircle, AlertCircle, Loader2, MousePointerClick, Globe, Newspaper, RefreshCw } from "lucide-react";
+import { Briefcase, Mail, Clock, CheckCircle, XCircle, AlertCircle, Loader2, MousePointerClick, Globe, Newspaper, RefreshCw, CalendarClock } from "lucide-react";
 
 interface ClickBreakdown {
   total: number;
@@ -417,9 +417,22 @@ export default function EmployerDashboard() {
                           Posted {getRelativeTime(job.created_at)}
                         </p>
                         {!isExpired && job.status === "approved" && (
-                          <p className="text-xs text-muted-foreground">
-                            {daysLeft} days remaining
-                          </p>
+                          <div className={`flex items-center gap-1 text-xs font-medium ${
+                            daysLeft <= 3 
+                              ? "text-red-600" 
+                              : daysLeft <= 7 
+                                ? "text-amber-600" 
+                                : "text-green-600"
+                          }`}>
+                            <CalendarClock className="h-3 w-3" />
+                            {daysLeft === 1 ? "1 day left" : `${daysLeft} days left`}
+                          </div>
+                        )}
+                        {isExpired && (
+                          <div className="flex items-center gap-1 text-xs font-medium text-red-600">
+                            <CalendarClock className="h-3 w-3" />
+                            Expired {Math.abs(daysLeft)} {Math.abs(daysLeft) === 1 ? "day" : "days"} ago
+                          </div>
                         )}
                         {(isExpired || (daysLeft <= 7 && daysLeft > 0)) && (
                           <Button
