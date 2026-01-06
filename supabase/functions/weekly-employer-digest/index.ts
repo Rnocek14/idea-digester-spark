@@ -102,6 +102,22 @@ serve(async (req: Request) => {
       employerJobs[email].push(job);
     });
 
+    // Fetch email preferences to filter out unsubscribed employers
+    const employerEmails = Object.keys(employerJobs);
+    const { data: preferences } = await supabase
+      .from("employer_email_preferences")
+      .select("email, weekly_digest")
+      .in("email", employerEmails);
+
+    // Create a set of unsubscribed emails
+    const unsubscribedEmails = new Set(
+      (preferences || [])
+        .filter((p: { email: string; weekly_digest: boolean }) => p.weekly_digest === false)
+        .map((p: { email: string }) => p.email.toLowerCase())
+    );
+
+    console.log(`Found ${unsubscribedEmails.size} unsubscribed employers`);
+
     // Calculate date ranges
     const now = new Date();
     const thisWeekStart = new Date(now);
@@ -153,6 +169,12 @@ serve(async (req: Request) => {
     let failed = 0;
 
     for (const [email, employerJobList] of Object.entries(employerJobs)) {
+      // Skip unsubscribed employers
+      if (unsubscribedEmails.has(email)) {
+        console.log(`Skipping ${email} - unsubscribed from weekly digest`);
+        continue;
+      }
+
       const businessName = employerJobList[0].business_name;
       
       // Calculate totals for this employer
@@ -273,6 +295,10 @@ serve(async (req: Request) => {
           <p style="color: #94A3B8; font-size: 12px; text-align: center; margin-top: 40px;">
             Lake Geneva Brief · Local Jobs Board<br/>
             <a href="${APP_BASE_URL}" style="color: #94A3B8;">lakegeneva.news</a>
+          </p>
+          <p style="color: #CBD5E1; font-size: 11px; text-align: center; margin-top: 16px;">
+            <a href="https://mzumvkrpnxhkvhdyzgqa.supabase.co/functions/v1/employer-unsubscribe?e=${btoa(email)}&type=weekly_digest&action=unsubscribe" 
+               style="color: #CBD5E1;">Unsubscribe from weekly digests</a>
           </p>
         </div>
       `;

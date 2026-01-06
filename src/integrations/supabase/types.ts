@@ -560,6 +560,33 @@ export type Database = {
         }
         Relationships: []
       }
+      employer_email_preferences: {
+        Row: {
+          created_at: string
+          email: string
+          expiry_reminders: boolean
+          id: string
+          updated_at: string
+          weekly_digest: boolean
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          expiry_reminders?: boolean
+          id?: string
+          updated_at?: string
+          weekly_digest?: boolean
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          expiry_reminders?: boolean
+          id?: string
+          updated_at?: string
+          weekly_digest?: boolean
+        }
+        Relationships: []
+      }
       engagement_opportunities: {
         Row: {
           author_display_name: string | null
