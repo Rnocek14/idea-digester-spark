@@ -29,7 +29,7 @@ export default function WeatherWidget() {
 
   useEffect(() => {
     fetch(
-      "https://api.open-meteo.com/v1/forecast?latitude=42.5917&longitude=-88.4334&current_weather=true"
+      "https://api.open-meteo.com/v1/forecast?latitude=42.5917&longitude=-88.4334&current_weather=true&temperature_unit=fahrenheit&wind_speed_unit=mph"
     )
       .then((res) => res.json())
       .then((data) => {
