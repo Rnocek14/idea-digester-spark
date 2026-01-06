@@ -1136,17 +1136,21 @@ serve(async (req) => {
             continue;
           }
 
-          // Check for recurring events - skip if same title + source already exists (regardless of date)
-          if (isRecurringEvent(title)) {
-            const { data: existingRecurring } = await supabase
+          // EVENTS TITLE DEDUPLICATION: For events category, skip if same title already exists from same source
+          // This catches recurring events that don't have "every/weekly/daily" in the title
+          // Visit Lake Geneva calendar gives each occurrence a unique URL, so URL dedup doesn't work
+          const isEventCategory = source.category === 'events' || source.name.toLowerCase().includes('event');
+          
+          if (isEventCategory || isRecurringEvent(title)) {
+            const { data: existingByTitleSource } = await supabase
               .from("content_queue")
               .select("id")
               .eq("source_id", source.id)
               .eq("title", title)
               .limit(1);
 
-            if (existingRecurring?.length) {
-              console.log(`⏭️ Skipping recurring event already in system: "${title.substring(0, 50)}..."`);
+            if (existingByTitleSource?.length) {
+              console.log(`⏭️ Skipping duplicate event (same title+source): "${title.substring(0, 50)}..."`);
               result.skipped++;
               continue;
             }
