@@ -161,3 +161,6 @@ verify_jwt = false
 
 [functions.employer-unsubscribe]
 verify_jwt = false
+
+[functions.auto-expire-content]
+verify_jwt = false
