@@ -16,6 +16,7 @@ type IncidentRaw = {
   status: string;
   updated_at: string;
   incident_type: string;
+  location: string | null;
   incident_updates: IncidentUpdate[];
 };
 
@@ -26,8 +27,41 @@ type Incident = {
   status: string;
   updated_at: string;
   incident_type: string;
+  location: string | null;
   hasUnverified: boolean;
 };
+
+// Keywords that indicate Lake Geneva coverage area
+const LOCAL_KEYWORDS = [
+  'lake geneva', 'williams bay', 'fontana', 'geneva lake', 'walworth county',
+  'walworth', 'elkhorn', 'delavan', 'como', 'darien', 'whitewater', 'east troy',
+  'lyons', 'bloomfield', 'sharon', 'linn', 'highway 50', 'hwy 50', 'highway 12',
+  'hwy 12', 'us-12', 'highway 67', 'hwy 67', 'highway 120', 'hwy 120'
+];
+
+// Keywords that indicate NON-local incidents (should be excluded)
+const NON_LOCAL_KEYWORDS = [
+  'milwaukee', 'kenosha', 'racine', 'madison', 'waukesha', 'janesville',
+  'beloit', 'chicago', 'rockford', 'green bay', 'brookfield', 'wauwatosa'
+];
+
+// Check if an incident is local to Lake Geneva area
+function isLocalIncident(title: string, location: string | null): boolean {
+  const text = `${title} ${location || ''}`.toLowerCase();
+  
+  // Check for local keywords - if found, it's local
+  const hasLocalKeyword = LOCAL_KEYWORDS.some(keyword => text.includes(keyword));
+  if (hasLocalKeyword) return true;
+  
+  // Check for non-local keywords in title - if found and no local keyword, exclude
+  const titleLower = title.toLowerCase();
+  const hasNonLocalKeyword = NON_LOCAL_KEYWORDS.some(keyword => titleLower.includes(keyword));
+  if (hasNonLocalKeyword) return false;
+  
+  // If location is null/empty but title doesn't have non-local keywords, 
+  // be lenient and show it (could be local)
+  return true;
+}
 
 const typeIcons: Record<string, React.ReactNode> = {
   accident: <Car className="h-3.5 w-3.5" />,
@@ -66,6 +100,7 @@ export default function LiveIncidentsSidebar({ onHide, showCloseButton = false }
           status,
           updated_at,
           incident_type,
+          location,
           incident_updates (
             is_verified
           )
@@ -73,24 +108,28 @@ export default function LiveIncidentsSidebar({ onHide, showCloseButton = false }
         .in("status", ["active", "monitoring"])
         .order("status", { ascending: true })
         .order("updated_at", { ascending: false })
-        .limit(5);
+        .limit(10); // Fetch more to filter
 
       if (error) throw error;
       
-      // Map to include hasUnverified flag
-      return ((data as IncidentRaw[]) || []).map((incident) => {
-        const updates = incident.incident_updates || [];
-        const hasUnverified = updates.some((u) => u.is_verified === false);
-        return {
-          id: incident.id,
-          slug: incident.slug,
-          title: incident.title,
-          status: incident.status,
-          updated_at: incident.updated_at,
-          incident_type: incident.incident_type,
-          hasUnverified,
-        };
-      });
+      // Map and filter to only local incidents
+      return ((data as IncidentRaw[]) || [])
+        .filter(incident => isLocalIncident(incident.title, incident.location))
+        .slice(0, 5) // Take top 5 after filtering
+        .map((incident) => {
+          const updates = incident.incident_updates || [];
+          const hasUnverified = updates.some((u) => u.is_verified === false);
+          return {
+            id: incident.id,
+            slug: incident.slug,
+            title: incident.title,
+            status: incident.status,
+            updated_at: incident.updated_at,
+            incident_type: incident.incident_type,
+            location: incident.location,
+            hasUnverified,
+          };
+        });
     },
     refetchInterval: 30000,
   });
