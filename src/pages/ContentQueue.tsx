@@ -28,7 +28,7 @@ import { format } from "date-fns";
 import { logActivity } from "@/lib/logActivity";
 import { cn } from "@/lib/utils";
 
-type ContentStatus = "pending" | "approved" | "rejected" | "published" | "auto_published" | "flagged";
+type ContentStatus = "pending" | "approved" | "rejected" | "published" | "auto_published" | "flagged" | "expired";
 
 const ContentQueue = () => {
   const [searchParams] = useSearchParams();
@@ -232,6 +232,8 @@ const ContentQueue = () => {
         return "bg-emerald-500/10 text-emerald-500 border-emerald-500/20";
       case "flagged":
         return "bg-orange-500/10 text-orange-500 border-orange-500/20";
+      case "expired":
+        return "bg-gray-500/10 text-gray-500 border-gray-500/20";
       default:
         return "bg-muted text-muted-foreground";
     }
@@ -311,6 +313,7 @@ const ContentQueue = () => {
               <SelectItem value="published">Published</SelectItem>
               <SelectItem value="auto_published">Auto-Published</SelectItem>
               <SelectItem value="flagged">Flagged</SelectItem>
+              <SelectItem value="expired">Expired</SelectItem>
             </SelectContent>
         </Select>
 
