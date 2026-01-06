@@ -4,6 +4,8 @@ type WeatherData = {
   temp: number;
   wind: number;
   code: number;
+  high: number;
+  low: number;
 };
 
 const weatherIcons: Record<number, string> = {
@@ -29,15 +31,17 @@ export default function WeatherWidget() {
 
   useEffect(() => {
     fetch(
-      "https://api.open-meteo.com/v1/forecast?latitude=42.5917&longitude=-88.4334&current_weather=true&temperature_unit=fahrenheit&wind_speed_unit=mph"
+      "https://api.open-meteo.com/v1/forecast?latitude=42.5917&longitude=-88.4334&current_weather=true&daily=temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America%2FChicago"
     )
       .then((res) => res.json())
       .then((data) => {
-        if (data?.current_weather) {
+        if (data?.current_weather && data?.daily) {
           setWeather({
             temp: data.current_weather.temperature,
             wind: data.current_weather.windspeed,
             code: data.current_weather.weathercode,
+            high: data.daily.temperature_2m_max[0],
+            low: data.daily.temperature_2m_min[0],
           });
         }
       })
@@ -51,7 +55,8 @@ export default function WeatherWidget() {
       <span>{weatherIcons[weather.code] || "🌤️"}</span>
       <span>{Math.round(weather.temp)}°F</span>
       <span className="text-slate-400">•</span>
-      <span>Wind {Math.round(weather.wind)} mph</span>
+      <span className="text-blue-600">↓{Math.round(weather.low)}°</span>
+      <span className="text-orange-600">↑{Math.round(weather.high)}°</span>
     </div>
   );
 }
