@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { format, addDays } from "date-fns";
+import { Cloud, Sun, CloudRain, Snowflake, CloudLightning, CloudFog, CloudSun } from "lucide-react";
 
 type DayForecast = {
   date: Date;
@@ -8,58 +9,16 @@ type DayForecast = {
   code: number;
 };
 
-const weatherIcons: Record<number, string> = {
-  0: "☀️",
-  1: "🌤️",
-  2: "⛅",
-  3: "☁️",
-  45: "🌫️",
-  48: "🌫️",
-  51: "🌧️",
-  53: "🌧️",
-  55: "🌧️",
-  61: "🌦️",
-  63: "🌧️",
-  65: "🌧️",
-  71: "❄️",
-  73: "❄️",
-  75: "❄️",
-  77: "❄️",
-  80: "🌧️",
-  81: "🌧️",
-  82: "🌧️",
-  85: "🌨️",
-  86: "🌨️",
-  95: "⛈️",
-  96: "⛈️",
-  99: "⛈️",
-};
-
-const weatherDescriptions: Record<number, string> = {
-  0: "Clear",
-  1: "Mostly Clear",
-  2: "Partly Cloudy",
-  3: "Cloudy",
-  45: "Foggy",
-  48: "Icy Fog",
-  51: "Light Drizzle",
-  53: "Drizzle",
-  55: "Heavy Drizzle",
-  61: "Light Rain",
-  63: "Rain",
-  65: "Heavy Rain",
-  71: "Light Snow",
-  73: "Snow",
-  75: "Heavy Snow",
-  77: "Snow Grains",
-  80: "Light Showers",
-  81: "Showers",
-  82: "Heavy Showers",
-  85: "Light Snow Showers",
-  86: "Snow Showers",
-  95: "Thunderstorm",
-  96: "Thunderstorm w/ Hail",
-  99: "Severe Thunderstorm",
+const getWeatherIcon = (code: number, size = "h-4 w-4") => {
+  if (code === 0) return <Sun className={`${size} text-amber-500`} />;
+  if (code >= 1 && code <= 2) return <CloudSun className={`${size} text-amber-400`} />;
+  if (code === 3) return <Cloud className={`${size} text-muted-foreground`} />;
+  if (code >= 45 && code <= 48) return <CloudFog className={`${size} text-muted-foreground`} />;
+  if ((code >= 51 && code <= 65) || (code >= 80 && code <= 82)) return <CloudRain className={`${size} text-blue-500`} />;
+  if (code >= 71 && code <= 77) return <Snowflake className={`${size} text-sky-400`} />;
+  if (code >= 85 && code <= 86) return <Snowflake className={`${size} text-sky-400`} />;
+  if (code >= 95) return <CloudLightning className={`${size} text-violet-500`} />;
+  return <CloudSun className={`${size} text-amber-400`} />;
 };
 
 export default function WeatherForecast() {
@@ -73,7 +32,6 @@ export default function WeatherForecast() {
       .then((data) => {
         if (data?.daily) {
           const days: DayForecast[] = [];
-          // Skip today (index 0), get next 3 days
           for (let i = 1; i <= 3; i++) {
             days.push({
               date: addDays(new Date(), i),
@@ -91,14 +49,21 @@ export default function WeatherForecast() {
   if (forecast.length === 0) return null;
 
   return (
-    <div className="flex items-center gap-3 rounded-lg bg-slate-50 px-3 py-2 text-xs">
-      <span className="text-slate-500 font-medium">3-Day:</span>
+    <div className="inline-flex items-center gap-1 rounded-lg bg-muted/50 px-2 py-1.5">
       {forecast.map((day, idx) => (
-        <div key={idx} className="flex items-center gap-1.5">
-          <span className="text-slate-500">{format(day.date, "EEE")}</span>
-          <span>{weatherIcons[day.code] || "🌤️"}</span>
-          <span className="text-slate-700">
-            {Math.round(day.low)}°-{Math.round(day.high)}°
+        <div
+          key={idx}
+          className="flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-muted/80 transition-colors"
+        >
+          <span className="text-xs font-medium text-muted-foreground min-w-[28px]">
+            {format(day.date, "EEE")}
+          </span>
+          {getWeatherIcon(day.code)}
+          <span className="text-xs text-foreground font-medium">
+            {Math.round(day.high)}°
+          </span>
+          <span className="text-xs text-muted-foreground">
+            {Math.round(day.low)}°
           </span>
         </div>
       ))}
