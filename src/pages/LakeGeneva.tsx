@@ -100,7 +100,7 @@ const LakeGeneva = () => {
   const [isSubscribing, setIsSubscribing] = useState(false);
   const [activeCategory, setActiveCategory] = useState<'all' | string>('all');
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
-  const [viewMode, setViewMode] = useState<'all' | 'topic' | 'recent'>('topic');
+  const [viewMode, setViewMode] = useState<'all' | 'topic' | 'recent'>('all');
   const [newUpdatesCount, setNewUpdatesCount] = useState(0);
   const previousFeedIdsRef = useRef<Set<string>>(new Set());
   const isInitialLoadRef = useRef(true);
