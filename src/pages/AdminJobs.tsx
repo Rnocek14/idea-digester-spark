@@ -47,6 +47,30 @@ const sendApprovalNotification = async (job: JobListing) => {
   }
 };
 
+// Send rejection notification to employer
+const sendRejectionNotification = async (job: JobListing, reason: string) => {
+  try {
+    const { error } = await supabase.functions.invoke('notify-job-rejected', {
+      body: {
+        job: {
+          id: job.id,
+          business_name: job.business_name,
+          title: job.title,
+          contact_email: job.contact_email,
+          rejection_reason: reason,
+        }
+      }
+    });
+    if (error) {
+      console.error('Failed to send rejection notification:', error);
+    } else {
+      console.log('Rejection notification sent to:', job.contact_email);
+    }
+  } catch (err) {
+    console.error('Error sending rejection notification:', err);
+  }
+};
+
 type JobListing = {
   id: string;
   business_id: string | null;
@@ -101,6 +125,8 @@ const AdminJobs = () => {
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedJob, setSelectedJob] = useState<JobListing | null>(null);
+  const [rejectingJob, setRejectingJob] = useState<JobListing | null>(null);
+  const [rejectionReason, setRejectionReason] = useState("");
   const queryClient = useQueryClient();
 
   // Fetch all jobs
@@ -165,7 +191,19 @@ const AdminJobs = () => {
   };
 
   const handleReject = (job: JobListing) => {
-    updateJobMutation.mutate({ id: job.id, status: 'rejected' });
+    setRejectingJob(job);
+    setRejectionReason("");
+  };
+
+  const confirmReject = () => {
+    if (!rejectingJob) return;
+    updateJobMutation.mutate({ id: rejectingJob.id, status: 'rejected' }, {
+      onSuccess: () => {
+        sendRejectionNotification(rejectingJob, rejectionReason || "The listing did not meet our community guidelines.");
+        setRejectingJob(null);
+        setRejectionReason("");
+      }
+    });
   };
 
   const handleToggleFeatured = (job: JobListing) => {
@@ -570,6 +608,54 @@ const AdminJobs = () => {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Rejection Reason Dialog */}
+      <Dialog open={!!rejectingJob} onOpenChange={() => setRejectingJob(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-foreground">
+              Reject Job Listing
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="bg-muted/50 rounded-lg p-3">
+              <p className="text-sm font-medium text-foreground">{rejectingJob?.title}</p>
+              <p className="text-xs text-muted-foreground">{rejectingJob?.business_name}</p>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-foreground mb-2 block">
+                Rejection Reason <span className="text-muted-foreground font-normal">(will be sent to employer)</span>
+              </label>
+              <Textarea
+                placeholder="e.g., Missing required contact information, description too vague, duplicate listing..."
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                rows={4}
+                className="resize-none"
+              />
+            </div>
+
+            <div className="flex gap-3 justify-end pt-2">
+              <Button
+                variant="outline"
+                onClick={() => setRejectingJob(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={confirmReject}
+                disabled={updateJobMutation.isPending}
+              >
+                <XCircle className="h-4 w-4 mr-2" />
+                Reject Listing
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
