@@ -90,8 +90,9 @@ const PostJob = () => {
   const submitMutation = useMutation({
     mutationFn: async (data: JobFormData) => {
       const expiresAt = addDays(new Date(), 30).toISOString();
+      const createdAt = new Date().toISOString();
       
-      const { error } = await supabase.from("job_listings").insert({
+      const { data: insertedJob, error } = await supabase.from("job_listings").insert({
         business_name: data.business_name,
         title: data.title,
         category: data.category,
@@ -110,9 +111,33 @@ const PostJob = () => {
         status: "pending",
         payment_status: "unpaid",
         expires_at: expiresAt,
-      });
+        created_at: createdAt,
+      }).select("id").single();
 
       if (error) throw error;
+
+      // Send notification to admin (fire and forget)
+      supabase.functions.invoke("notify-on-job", {
+        body: {
+          job: {
+            id: insertedJob?.id,
+            business_name: data.business_name,
+            title: data.title,
+            category: data.category,
+            job_type: data.job_type,
+            description: data.description,
+            location_text: data.location_text,
+            pay_display: data.pay_display,
+            contact_email: data.contact_email,
+            contact_phone: data.contact_phone,
+            apply_url: data.apply_url,
+            pricing_tier: data.pricing_tier,
+            created_at: createdAt,
+          },
+        },
+      }).catch((err) => {
+        console.error("Failed to send job notification:", err);
+      });
     },
     onSuccess: () => {
       toast.success("Job submitted! We'll review and contact you about payment.");
