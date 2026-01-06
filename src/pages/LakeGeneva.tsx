@@ -355,9 +355,17 @@ const LakeGeneva = () => {
       // Combine and dedupe
       const combined = [...newsCivic, ...events, ...other];
       const seenIds = new Set<string>();
+      const todayStr = new Date().toISOString().split('T')[0];
+      
       const deduped = combined.filter(story => {
         if (seenIds.has(story.id)) return false;
         seenIds.add(story.id);
+        
+        // CRITICAL: Filter out past events (event_date < today)
+        if (story.event_date && story.event_date < todayStr) {
+          return false;
+        }
+        
         return true;
       });
       
