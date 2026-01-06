@@ -410,9 +410,21 @@ serve(async (req) => {
 
     console.log(`✅ Found ${jobListings?.length || 0} job listings for newsletter`);
 
+    // Fetch Community Advocates (subscribers with 3+ referrals)
+    console.log("🌟 Fetching community advocates...");
+    const { data: advocates } = await supabase
+      .from("subscribers")
+      .select("email, referral_count")
+      .eq("status", "active")
+      .gte("referral_count", 3)
+      .order("referral_count", { ascending: false })
+      .limit(10);
+
+    console.log(`✅ Found ${advocates?.length || 0} advocates for newsletter`);
+
     // Build newsletter
     console.log("📝 Building newsletter content...");
-    const newsletter = buildNewsletter(selectedStories, optimizedStories, editionDate, headerSponsor, evergreenItems, jobListings || []);
+    const newsletter = buildNewsletter(selectedStories, optimizedStories, editionDate, headerSponsor, evergreenItems, jobListings || [], advocates || []);
 
     // Save newsletter to database
     console.log("💾 Saving newsletter to database...");
@@ -627,7 +639,8 @@ function buildNewsletter(
   editionDate: string,
   sponsor?: any,
   evergreen?: { id: string; title: string; content: string; category: string }[],
-  jobs?: { id: string; title: string; business_name: string; category: string; job_type: string; pay_display: string | null; location_text: string | null; apply_url: string | null; contact_email: string; is_featured: boolean | null }[]
+  jobs?: { id: string; title: string; business_name: string; category: string; job_type: string; pay_display: string | null; location_text: string | null; apply_url: string | null; contact_email: string; is_featured: boolean | null }[],
+  advocates?: { email: string; referral_count: number }[]
 ) {
   const optimizedMap = new Map(optimized.map(o => [o.id, o.newsletter_voice]));
 
@@ -786,6 +799,41 @@ function buildNewsletter(
     </div>
   ` : "";
 
+  // Build Community Advocates section
+  const advocatesHtml = advocates && advocates.length > 0 ? (() => {
+    // Convert emails to first name + last initial (e.g., "sarah.miller@email.com" -> "Sarah M.")
+    const advocateNames = advocates.map(a => {
+      const emailLocal = a.email.split("@")[0];
+      // Try to extract name from email (common patterns: john.doe, johndoe, john_doe)
+      const parts = emailLocal.split(/[._-]/).filter(Boolean);
+      if (parts.length >= 2) {
+        const firstName = parts[0].charAt(0).toUpperCase() + parts[0].slice(1).toLowerCase();
+        const lastInitial = parts[parts.length - 1].charAt(0).toUpperCase();
+        return `${firstName} ${lastInitial}.`;
+      } else if (parts.length === 1 && parts[0].length > 2) {
+        // Single word email - just capitalize first letter
+        return parts[0].charAt(0).toUpperCase() + parts[0].slice(1, 3).toLowerCase() + ".";
+      }
+      return "Reader";
+    }).filter((name, index, self) => self.indexOf(name) === index); // Remove duplicates
+
+    return `
+      <div style="margin-bottom: 32px; padding: 20px; background-color: #fef3c7; border-radius: 8px;">
+        <h2 style="margin: 0 0 12px 0; font-size: 16px; font-weight: 700; color: #92400e;">
+          🌟 Community Advocates
+        </h2>
+        <p style="margin: 0; font-size: 14px; color: #78350f;">
+          These readers help spread local news: ${advocateNames.join(", ")}
+        </p>
+        <p style="margin: 12px 0 0 0; font-size: 12px; color: #92400e;">
+          <a href="https://lakegeneva.news?ref=newsletter" style="color: #92400e; text-decoration: underline;">
+            Refer friends and join them! →
+          </a>
+        </p>
+      </div>
+    `;
+  })() : "";
+
   // Build sponsor block if present
   const sponsorBlock = sponsor ? `
     <div style="background-color: #f8f9fa; border-left: 4px solid #667eea; padding: 20px; margin: 20px 0; border-radius: 4px;">
@@ -841,6 +889,8 @@ function buildNewsletter(
       ${evergreenHtml}
       
       ${jobsHtml}
+      
+      ${advocatesHtml}
       
       <div style="margin-top: 40px; padding-top: 24px; border-top: 1px solid #e2e8f0; text-align: center;">
         <p style="margin: 0; font-size: 13px; color: #718096;">

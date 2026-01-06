@@ -10,6 +10,8 @@ import { SourceQualityCard } from "@/components/SourceQualityCard";
 import { WeeklyMetricsCard } from "@/components/WeeklyMetricsCard";
 import { SourceHealthAlerts } from "@/components/SourceHealthAlerts";
 import { SystemHealthCard } from "@/components/SystemHealthCard";
+import { VIPChampionsCard } from "@/components/VIPChampionsCard";
+
 const Dashboard = () => {
   const { data: pendingCount = 0, isLoading: pendingLoading, refetch: refetchPending } = useQuery({
     queryKey: ["dashboard-pending-count"],
@@ -158,9 +160,10 @@ const Dashboard = () => {
         <PipelineHealthCard />
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <IncidentHealthCard />
         <SourceQualityCard />
+        <VIPChampionsCard />
       </div>
 
       <SourceHealthAlerts />

@@ -31,6 +31,7 @@ import Jobs from "./pages/Jobs";
 import PostJob from "./pages/PostJob";
 import AdminJobs from "./pages/AdminJobs";
 import EmployerDashboard from "./pages/EmployerDashboard";
+import Deals from "./pages/Deals";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -70,6 +71,7 @@ const App = () => (
             <Route path="/jobs" element={<Jobs />} />
             <Route path="/jobs/post" element={<PostJob />} />
             <Route path="/employer-dashboard" element={<EmployerDashboard />} />
+            <Route path="/deals" element={<Deals />} />
             <Route path="/dashboard" element={<DashboardLayout />}>
               <Route index element={<Dashboard />} />
               <Route path="content" element={<ContentQueue />} />

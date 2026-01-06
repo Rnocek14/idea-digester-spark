@@ -203,6 +203,50 @@ export type Database = {
           },
         ]
       }
+      ambassador_deals: {
+        Row: {
+          business_id: string | null
+          created_at: string | null
+          description: string | null
+          discount_code: string | null
+          id: string
+          is_active: boolean | null
+          title: string
+          updated_at: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          business_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          discount_code?: string | null
+          id?: string
+          is_active?: boolean | null
+          title: string
+          updated_at?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          business_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          discount_code?: string | null
+          id?: string
+          is_active?: boolean | null
+          title?: string
+          updated_at?: string | null
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ambassador_deals_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       auto_publish_rules: {
         Row: {
           action: string
@@ -1359,6 +1403,8 @@ export type Database = {
           email: string
           engagement_score: number | null
           id: string
+          is_vip: boolean | null
+          last_breaking_email_at: string | null
           last_clicked_at: string | null
           last_opened_at: string | null
           metadata: Json | null
@@ -1380,6 +1426,8 @@ export type Database = {
           email: string
           engagement_score?: number | null
           id?: string
+          is_vip?: boolean | null
+          last_breaking_email_at?: string | null
           last_clicked_at?: string | null
           last_opened_at?: string | null
           metadata?: Json | null
@@ -1401,6 +1449,8 @@ export type Database = {
           email?: string
           engagement_score?: number | null
           id?: string
+          is_vip?: boolean | null
+          last_breaking_email_at?: string | null
           last_clicked_at?: string | null
           last_opened_at?: string | null
           metadata?: Json | null
