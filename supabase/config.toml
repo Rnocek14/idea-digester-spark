@@ -60,6 +60,9 @@ verify_jwt = false
 [functions.notify-on-lead]
 verify_jwt = false
 
+[functions.notify-on-job]
+verify_jwt = false
+
 [functions.generate-weekend-roundup]
 verify_jwt = false
 
