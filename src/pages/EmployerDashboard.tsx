@@ -8,7 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Briefcase, Mail, Clock, CheckCircle, XCircle, AlertCircle, Loader2, MousePointerClick } from "lucide-react";
+import { Briefcase, Mail, Clock, CheckCircle, XCircle, AlertCircle, Loader2, MousePointerClick, Globe, Newspaper } from "lucide-react";
+
+interface ClickBreakdown {
+  total: number;
+  website: number;
+  newsletter: number;
+}
 
 interface JobListing {
   id: string;
@@ -95,26 +101,41 @@ export default function EmployerDashboard() {
     enabled: !!validatedEmail,
   });
 
-  // Fetch click counts for all jobs
-  const { data: clickCounts } = useQuery({
+  // Fetch click counts with source breakdown for all jobs
+  const { data: clickData } = useQuery({
     queryKey: ["employer-job-clicks", jobs?.map(j => j.id)],
     queryFn: async () => {
-      if (!jobs || jobs.length === 0) return {};
+      if (!jobs || jobs.length === 0) return { byJob: {}, totals: { total: 0, website: 0, newsletter: 0 } };
       
       const jobIds = jobs.map(j => j.id);
       const { data, error } = await supabase
         .from("job_clicks")
-        .select("job_id")
+        .select("job_id, source")
         .in("job_id", jobIds);
 
       if (error) throw error;
       
-      // Count clicks per job
-      const counts: Record<string, number> = {};
+      // Count clicks per job with source breakdown
+      const byJob: Record<string, ClickBreakdown> = {};
+      const totals: ClickBreakdown = { total: 0, website: 0, newsletter: 0 };
+      
       data.forEach(click => {
-        counts[click.job_id] = (counts[click.job_id] || 0) + 1;
+        if (!byJob[click.job_id]) {
+          byJob[click.job_id] = { total: 0, website: 0, newsletter: 0 };
+        }
+        byJob[click.job_id].total++;
+        totals.total++;
+        
+        if (click.source === "newsletter") {
+          byJob[click.job_id].newsletter++;
+          totals.newsletter++;
+        } else {
+          byJob[click.job_id].website++;
+          totals.website++;
+        }
       });
-      return counts;
+      
+      return { byJob, totals };
     },
     enabled: !!jobs && jobs.length > 0,
   });
@@ -284,12 +305,42 @@ export default function EmployerDashboard() {
             <CardContent className="pt-6">
               <div className="text-2xl font-bold text-purple-600 flex items-center gap-1">
                 <MousePointerClick className="h-5 w-5" />
-                {clickCounts ? Object.values(clickCounts).reduce((a, b) => a + b, 0) : 0}
+                {clickData?.totals.total || 0}
               </div>
               <p className="text-xs text-muted-foreground">Total Clicks</p>
             </CardContent>
           </Card>
         </div>
+
+        {/* Click Source Breakdown */}
+        {clickData && clickData.totals.total > 0 && (
+          <Card className="mb-8">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Click Sources</CardTitle>
+              <CardDescription>Where your job listing clicks are coming from</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-6">
+                <div className="flex items-center gap-2">
+                  <Globe className="h-4 w-4 text-blue-500" />
+                  <span className="font-medium">{clickData.totals.website}</span>
+                  <span className="text-muted-foreground text-sm">from Website</span>
+                  <span className="text-muted-foreground text-xs">
+                    ({clickData.totals.total > 0 ? Math.round((clickData.totals.website / clickData.totals.total) * 100) : 0}%)
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Newspaper className="h-4 w-4 text-orange-500" />
+                  <span className="font-medium">{clickData.totals.newsletter}</span>
+                  <span className="text-muted-foreground text-sm">from Newsletter</span>
+                  <span className="text-muted-foreground text-xs">
+                    ({clickData.totals.total > 0 ? Math.round((clickData.totals.newsletter / clickData.totals.total) * 100) : 0}%)
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Jobs List */}
         {isLoadingJobs ? (
@@ -331,9 +382,17 @@ export default function EmployerDashboard() {
                           <StatusIcon className="h-3 w-3 mr-1" />
                           {isExpired ? "Expired" : config.label}
                         </Badge>
-                        <div className="flex items-center gap-1 text-xs text-purple-600 font-medium">
-                          <MousePointerClick className="h-3 w-3" />
-                          {clickCounts?.[job.id] || 0} clicks
+                        <div className="flex items-center gap-2 text-xs">
+                          <span className="text-purple-600 font-medium flex items-center gap-1">
+                            <MousePointerClick className="h-3 w-3" />
+                            {clickData?.byJob[job.id]?.total || 0}
+                          </span>
+                          {clickData?.byJob[job.id]?.total > 0 && (
+                            <span className="text-muted-foreground">
+                              (<Globe className="h-3 w-3 inline" /> {clickData.byJob[job.id].website} · 
+                              <Newspaper className="h-3 w-3 inline ml-1" /> {clickData.byJob[job.id].newsletter})
+                            </span>
+                          )}
                         </div>
                         <p className="text-xs text-muted-foreground">
                           Posted {getRelativeTime(job.created_at)}
