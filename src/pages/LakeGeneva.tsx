@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import PageShell from "@/components/PageShell";
 import { StoryCard } from "@/components/StoryCard";
 import WeatherWidget from "@/components/WeatherWidget";
+import WeatherForecast from "@/components/WeatherForecast";
 import LiveIncidentsSidebar from "@/components/LiveIncidentsSidebar";
 import WeekendSidebarWidget from "@/components/WeekendSidebarWidget";
 import NowHiringWidget from "@/components/NowHiringWidget";
@@ -726,8 +727,9 @@ const LakeGeneva = () => {
                         <p className="max-w-xl text-sm text-slate-600 leading-relaxed">
                           Short, trustworthy updates on city hall, schools, events, and real estate — in under 5 minutes.
                         </p>
-                        <div className="mt-3">
+                        <div className="mt-3 flex flex-col gap-2">
                           <WeatherWidget />
+                          <WeatherForecast />
                         </div>
                       </div>
 
