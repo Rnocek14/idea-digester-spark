@@ -6,7 +6,7 @@ import { JobCard } from "@/components/JobCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Briefcase, Plus, Search } from "lucide-react";
+import { Briefcase, Plus, Search, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 
 type JobListing = {
@@ -105,12 +105,20 @@ const Jobs = () => {
                 Post your job to reach Lake Geneva area job seekers
               </p>
             </div>
-            <Button asChild>
-              <Link to="/jobs/post">
-                <Plus className="h-4 w-4 mr-2" />
-                Post a Job
-              </Link>
-            </Button>
+            <div className="flex gap-2">
+              <Button asChild variant="outline" size="sm">
+                <Link to="/employer-dashboard">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Employer Dashboard
+                </Link>
+              </Button>
+              <Button asChild>
+                <Link to="/jobs/post">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Post a Job
+                </Link>
+              </Button>
+            </div>
           </div>
         </Card>
 
