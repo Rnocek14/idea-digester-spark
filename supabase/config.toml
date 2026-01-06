@@ -155,3 +155,6 @@ verify_jwt = false
 
 [functions.notify-job-rejected]
 verify_jwt = false
+
+[functions.weekly-employer-digest]
+verify_jwt = false
