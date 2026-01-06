@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -94,6 +95,7 @@ type FeedItem = {
 };
 
 const LakeGeneva = () => {
+  const [searchParams] = useSearchParams();
   const [email, setEmail] = useState("");
   const [isSubscribing, setIsSubscribing] = useState(false);
   const [activeCategory, setActiveCategory] = useState<'all' | string>('all');
@@ -103,11 +105,17 @@ const LakeGeneva = () => {
   const previousFeedIdsRef = useRef<Set<string>>(new Set());
   const isInitialLoadRef = useRef(true);
 
+  // Handle URL query parameters for deep linking (e.g., ?category=events)
   useEffect(() => {
     document.title = "Lake Geneva Brief – Today's Local News";
-    // Capture referral source on page load
     getReferralSource();
-  }, []);
+    
+    const categoryParam = searchParams.get('category');
+    if (categoryParam && categoryOrder.includes(categoryParam.toLowerCase())) {
+      setActiveCategory(categoryParam.toLowerCase());
+      setViewMode('topic');
+    }
+  }, [searchParams]);
 
   // Fetch incidents for both sidebar and recent feed
   const { data: incidents = [] } = useQuery({
