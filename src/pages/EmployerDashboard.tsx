@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Briefcase, Mail, Clock, CheckCircle, XCircle, AlertCircle, Loader2, MousePointerClick, Globe, Newspaper, RefreshCw, CalendarClock } from "lucide-react";
+import { Briefcase, Mail, Clock, CheckCircle, XCircle, AlertCircle, Loader2, MousePointerClick, Globe, Newspaper, RefreshCw, CalendarClock, Pencil } from "lucide-react";
 import JobClickTrendsChart from "@/components/JobClickTrendsChart";
+import EditJobDialog from "@/components/EditJobDialog";
 
 interface ClickBreakdown {
   total: number;
@@ -30,6 +31,10 @@ interface JobListing {
   expires_at: string;
   pay_display: string | null;
   location_text: string | null;
+  description: string;
+  contact_email: string;
+  contact_phone: string | null;
+  apply_url: string | null;
 }
 
 const statusConfig: Record<string, { label: string; icon: React.ElementType; color: string }> = {
@@ -48,6 +53,7 @@ export default function EmployerDashboard() {
   const [email, setEmail] = useState("");
   const [isRequestingLink, setIsRequestingLink] = useState(false);
   const [validatedEmail, setValidatedEmail] = useState<string | null>(null);
+  const [editingJob, setEditingJob] = useState<JobListing | null>(null);
 
   // Validate token on load
   const { data: tokenData, isLoading: isValidating } = useQuery({
@@ -445,22 +451,31 @@ export default function EmployerDashboard() {
                             Expired {Math.abs(daysLeft)} {Math.abs(daysLeft) === 1 ? "day" : "days"} ago
                           </div>
                         )}
-                        {(isExpired || (daysLeft <= 7 && daysLeft > 0)) && (
+                        <div className="flex gap-2 mt-2">
                           <Button
                             size="sm"
-                            variant={isExpired ? "default" : "outline"}
-                            onClick={() => renewJobMutation.mutate(job.id)}
-                            disabled={renewJobMutation.isPending}
-                            className="mt-2"
+                            variant="outline"
+                            onClick={() => setEditingJob(job)}
                           >
-                            {renewJobMutation.isPending ? (
-                              <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                            ) : (
-                              <RefreshCw className="h-3 w-3 mr-1" />
-                            )}
-                            {isExpired ? "Renew Listing" : "Extend 30 Days"}
+                            <Pencil className="h-3 w-3 mr-1" />
+                            Edit
                           </Button>
-                        )}
+                          {(isExpired || (daysLeft <= 7 && daysLeft > 0)) && (
+                            <Button
+                              size="sm"
+                              variant={isExpired ? "default" : "outline"}
+                              onClick={() => renewJobMutation.mutate(job.id)}
+                              disabled={renewJobMutation.isPending}
+                            >
+                              {renewJobMutation.isPending ? (
+                                <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                              ) : (
+                                <RefreshCw className="h-3 w-3 mr-1" />
+                              )}
+                              {isExpired ? "Renew" : "Extend"}
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </CardContent>
@@ -491,6 +506,14 @@ export default function EmployerDashboard() {
             </Button>
           </div>
         )}
+
+        {/* Edit Job Dialog */}
+        <EditJobDialog
+          job={editingJob}
+          open={!!editingJob}
+          onOpenChange={(open) => !open && setEditingJob(null)}
+          employerEmail={validatedEmail || ""}
+        />
       </div>
     </PageShell>
   );
