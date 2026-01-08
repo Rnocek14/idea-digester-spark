@@ -65,8 +65,9 @@ DEAL TYPES (use exact values):
 
 FOR EACH DEAL YOU MUST:
 1. Set evidence_url to the EXACT page URL where you found it (copy from === PAGE: url === marker)
-2. Set evidence_snippet to a direct quote (10-30 words) proving the deal exists
-3. Set confidence score based on how clearly stated the deal is
+2. NEVER use the homepage URL if the deal info appears on ANY other page (specials, menu, happy-hour, etc.)
+3. Set evidence_snippet to a direct quote (10-30 words) proving the deal exists - MUST be verbatim text from that page
+4. Set confidence score based on how clearly stated the deal is
 
 FEATURES (use ONLY these exact values):
 lakefront, lake_view, patio, outdoor_seating, rooftop, live_music, trivia, karaoke, dj,
@@ -77,7 +78,8 @@ EXTRACTION RULES:
 - ONLY extract information explicitly stated
 - Prices in "$X.XX" format
 - Times MUST include am/pm (e.g., "3pm", "6:30pm") - never just "3" or "6"
-- Look at each === PAGE: url === section and note which URL had each piece of data`;
+- Look at each === PAGE: url === section and note which URL had each piece of data
+- Prefer non-homepage URLs for evidence_url whenever the deal appears on a dedicated page`;
 
 const EXTRACTION_TOOLS = [{
   type: "function",
@@ -179,14 +181,18 @@ async function generateDealHash(restaurantId: string, deal: DealExtraction): Pro
   return `deal_${(await sha256Hex(key)).slice(0, 24)}`;
 }
 
-// Normalize URL for evidence validation (FIX #4: handle querystrings)
+// Normalize URL for evidence validation (FIX #4: aggressive normalization)
 function normalizeUrlForValidation(urlStr: string): string {
   try {
     const u = new URL(urlStr);
+    // Force HTTPS
+    u.protocol = "https:";
     u.hash = "";
     // Remove common tracking params
     ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'fbclid', 'gclid', 'ref', 'v'].forEach(p => u.searchParams.delete(p));
-    return u.origin + u.pathname;
+    // Strip trailing slash from pathname
+    const path = u.pathname.replace(/\/+$/, '') || '/';
+    return u.origin + path;
   } catch {
     return urlStr;
   }
@@ -325,9 +331,13 @@ function extractRelevantContent(html: string, maxLength = 6000): string {
 function hasRelevantContent(content: string): boolean {
   const lower = content.toLowerCase();
   return ['fish fry', 'perch', 'walleye', 'cod fry', 'all you can eat', 
-          'happy hour', 'menu', 'appetizer', '$', 'brunch', 'taco', 'wing', 'prime rib']
+          'happy hour', 'menu', 'appetizer', '$', 'brunch', 'taco', 'wing', 'prime rib',
+          'special', 'friday', 'saturday', 'sunday', 'drink', 'food']
     .some(k => lower.includes(k));
 }
+
+// HIGH_PRIORITY page types that should always be included regardless of hasRelevantContent
+const HIGH_PRIORITY_PAGE_TYPES = ['menu', 'specials', 'happy_hour', 'brunch', 'events'];
 
 // PDF extraction with guardrails
 async function extractPdfText(pdfUrl: string): Promise<{ text: string | null; status: string; chars: number }> {
@@ -562,11 +572,16 @@ Deno.serve(async (req) => {
           try {
             const result = await fetchWithRetry(pageUrl, 1, 5000);
             const pageContent = extractRelevantContent(result.text, 4000);
+            const pageType = classifyPageType(pageUrl);
             
-            if (pageContent.length > 200 && hasRelevantContent(pageContent)) {
-              pageContents.push({ url: pageUrl, content: pageContent, type: classifyPageType(pageUrl) });
+            // FIX: Always include high-priority page types OR pages with relevant content
+            const isHighPriorityType = HIGH_PRIORITY_PAGE_TYPES.includes(pageType);
+            const hasRelevant = hasRelevantContent(pageContent);
+            
+            if (pageContent.length > 200 && (isHighPriorityType || hasRelevant)) {
+              pageContents.push({ url: pageUrl, content: pageContent, type: pageType });
               pagesScraped++;
-              console.log(`  ✓ ${pageUrl.replace(source.url, '')} (${pageContent.length} chars)`);
+              console.log(`  ✓ ${pageUrl.replace(source.url, '')} (${pageContent.length} chars, type: ${pageType})`);
             }
           } catch (err) {
             console.log(`  ✗ ${pageUrl}: ${err}`);
@@ -600,6 +615,9 @@ Deno.serve(async (req) => {
         // Build allowed URLs set for evidence validation (FIX #4: normalize URLs)
         const allowedUrlsNormalized = new Set(pageContents.map(p => normalizeUrlForValidation(p.url)));
         const urlNormToOriginal = new Map(pageContents.map(p => [normalizeUrlForValidation(p.url), p.url]));
+        
+        // Build content map for snippet validation (NEW: validate evidence_snippet exists)
+        const urlContentMap = new Map(pageContents.map(p => [normalizeUrlForValidation(p.url), p.content.toLowerCase()]));
         
         // Combine content with clear page markers
         const combinedContent = pageContents
@@ -730,6 +748,20 @@ Deno.serve(async (req) => {
             return source.url;
           }
         };
+        
+        // NEW: Validate that evidence_snippet exists in the page content
+        const validateSnippet = (snippet: string | undefined, evidenceUrl: string): { valid: boolean; matchScore: number } => {
+          if (!snippet || snippet.length < 10) return { valid: false, matchScore: 0 };
+          const normalizedUrl = normalizeUrlForValidation(evidenceUrl);
+          const pageContent = urlContentMap.get(normalizedUrl);
+          if (!pageContent) return { valid: false, matchScore: 0 };
+          
+          const snippetLower = snippet.toLowerCase().trim();
+          // Check if first 20 chars of snippet exist in page content
+          const probe = snippetLower.slice(0, Math.min(20, snippetLower.length));
+          const found = pageContent.includes(probe);
+          return { valid: found, matchScore: found ? 1 : 0 };
+        };
 
         // FIX #6: Batch deal upserts instead of per-deal
         const seenHashes: string[] = [];
@@ -744,6 +776,13 @@ Deno.serve(async (req) => {
             const endMinutes = parseTimeToMinutes(deal.end_time || '');
             
             const validatedEvidenceUrl = sanitizeEvidenceUrl(deal.evidence_url);
+            
+            // NEW: Validate snippet exists in the evidence page
+            const snippetValidation = validateSnippet(deal.evidence_snippet, validatedEvidenceUrl);
+            const needsReview = !snippetValidation.valid && deal.evidence_snippet;
+            if (needsReview) {
+              console.log(`  ⚠ Deal "${deal.name}" snippet not found in ${validatedEvidenceUrl}`);
+            }
             
             // Determine verification_method based on evidence_url
             const verificationMethod = validatedEvidenceUrl.toLowerCase().endsWith('.pdf') 
@@ -776,7 +815,9 @@ Deno.serve(async (req) => {
               last_confirmed_at: now,
               last_seen_at: now,
               source_type: 'scraper',
-              confidence_score: deal.confidence || extraction.extraction_confidence?.overall,
+              confidence_score: snippetValidation.valid 
+                ? (deal.confidence || extraction.extraction_confidence?.overall) 
+                : Math.min(0.5, deal.confidence || 0.5), // Downgrade confidence if snippet not validated
             };
             
             // Only update verification fields if not human-verified
