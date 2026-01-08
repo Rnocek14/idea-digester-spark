@@ -79,29 +79,32 @@ const LakeGenevaEats = () => {
     },
   });
 
-  // Group content by type
-  const newOpenings = eatsContent?.filter(c => 
-    c.title.toLowerCase().includes("opening") || 
-    c.title.toLowerCase().includes("new restaurant") ||
-    c.title.toLowerCase().includes("coming soon")
-  ) || [];
+  // Categorize content - prefer metadata dining_category, fallback to title keywords
+  const categorize = (c: EatsContent) => {
+    const diningCat = (c.metadata as any)?.dining_category;
+    if (diningCat) return diningCat;
+    
+    const text = c.title.toLowerCase();
+    if (text.includes("opening") || text.includes("new restaurant") || text.includes("coming soon") || text.includes("now open")) {
+      return "restaurant-opening";
+    }
+    if (text.includes("deal") || text.includes("special") || text.includes("happy hour") || text.includes("discount")) {
+      return "restaurant-deal";
+    }
+    if (text.includes("review") || text.includes("best") || text.includes("top") || text.includes("rating")) {
+      return "restaurant-review";
+    }
+    if (text.includes("fish fry") || text.includes("wine dinner") || text.includes("tasting") || text.includes("event")) {
+      return "dining-event";
+    }
+    return "restaurant-feature";
+  };
 
-  const deals = eatsContent?.filter(c => 
-    c.title.toLowerCase().includes("deal") || 
-    c.title.toLowerCase().includes("special") ||
-    c.title.toLowerCase().includes("happy hour") ||
-    c.title.toLowerCase().includes("discount")
-  ) || [];
-
-  const reviews = eatsContent?.filter(c => 
-    c.title.toLowerCase().includes("review") || 
-    c.title.toLowerCase().includes("best") ||
-    c.title.toLowerCase().includes("top")
-  ) || [];
-
-  const general = eatsContent?.filter(c => 
-    !newOpenings.includes(c) && !deals.includes(c) && !reviews.includes(c)
-  ) || [];
+  const newOpenings = eatsContent?.filter(c => categorize(c) === "restaurant-opening") || [];
+  const deals = eatsContent?.filter(c => categorize(c) === "restaurant-deal") || [];
+  const reviews = eatsContent?.filter(c => categorize(c) === "restaurant-review") || [];
+  const diningEvents = eatsContent?.filter(c => categorize(c) === "dining-event") || [];
+  const features = eatsContent?.filter(c => categorize(c) === "restaurant-feature") || [];
 
   // Extract unique restaurants
   const allContent = eatsContent || [];
@@ -182,28 +185,43 @@ const LakeGenevaEats = () => {
             </section>
           )}
 
-          {/* Latest Dining News */}
+          {/* Dining Events (Fish Fry, Wine Dinners, etc.) */}
+          {diningEvents.length > 0 && (
+            <section>
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-2xl">🐟</span>
+                <h2 className="text-xl font-bold text-slate-900">Dining Events</h2>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {diningEvents.map(item => (
+                  <EatsCard key={item.id} item={item} compact />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Restaurant Features & News */}
           <section>
             <div className="flex items-center gap-2 mb-4">
               <span className="text-2xl">🍽️</span>
-              <h2 className="text-xl font-bold text-slate-900">Latest Dining News</h2>
+              <h2 className="text-xl font-bold text-slate-900">Restaurant Features</h2>
             </div>
             
             {isLoading ? (
               <div className="space-y-3">
                 {[1, 2, 3].map(i => <Skeleton key={i} className="h-24 w-full" />)}
               </div>
-            ) : general.length === 0 ? (
+            ) : features.length === 0 && newOpenings.length === 0 && deals.length === 0 && reviews.length === 0 ? (
               <Card className="border-dashed">
                 <CardContent className="py-8 text-center text-slate-500">
                   <Utensils className="h-8 w-8 mx-auto mb-2 opacity-50" />
                   <p>No dining content yet</p>
-                  <p className="text-sm mt-1">Add content with the "eats" or "dining" vertical tag</p>
+                  <p className="text-sm mt-1">Run the dining sync or add sources with category "dining"</p>
                 </CardContent>
               </Card>
             ) : (
               <div className="space-y-3">
-                {general.slice(0, 10).map(item => (
+                {features.slice(0, 10).map(item => (
                   <EatsCard key={item.id} item={item} />
                 ))}
               </div>
@@ -262,6 +280,14 @@ const LakeGenevaEats = () => {
                 <div className="flex justify-between">
                   <span className="text-slate-600">Reviews</span>
                   <span className="font-medium">{reviews.length}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-600">Dining Events</span>
+                  <span className="font-medium">{diningEvents.length}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-600">Features</span>
+                  <span className="font-medium">{features.length}</span>
                 </div>
                 <div className="flex justify-between border-t pt-2 mt-2">
                   <span className="text-slate-600">Total</span>
