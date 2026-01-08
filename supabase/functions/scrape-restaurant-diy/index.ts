@@ -353,7 +353,7 @@ Deno.serve(async (req) => {
         const content = extractRelevantContent(html);
         console.log(`Extracted ${content.length} chars of content`);
 
-        // Pass 3: Call OpenAI GPT-4o for structured extraction
+        // Pass 3: Call OpenAI GPT-5 for structured extraction
         const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
           method: "POST",
           headers: {
@@ -361,7 +361,7 @@ Deno.serve(async (req) => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: "gpt-4o",
+            model: "gpt-5",
             messages: [
               { role: "system", content: SYSTEM_PROMPT },
               { 
