@@ -181,12 +181,14 @@ async function generateDealHash(restaurantId: string, deal: DealExtraction): Pro
   return `deal_${(await sha256Hex(key)).slice(0, 24)}`;
 }
 
-// Normalize URL for evidence validation (FIX #4: aggressive normalization)
+// Normalize URL for evidence validation (FIX #4: aggressive normalization + www)
 function normalizeUrlForValidation(urlStr: string): string {
   try {
     const u = new URL(urlStr);
     // Force HTTPS
     u.protocol = "https:";
+    // Normalize www
+    u.hostname = u.hostname.replace(/^www\./, '');
     u.hash = "";
     // Remove common tracking params
     ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'fbclid', 'gclid', 'ref', 'v'].forEach(p => u.searchParams.delete(p));
@@ -196,6 +198,16 @@ function normalizeUrlForValidation(urlStr: string): string {
   } catch {
     return urlStr;
   }
+}
+
+// Normalize text for snippet matching (handles quotes, punctuation, whitespace)
+function normalizeTextForMatching(s: string): string {
+  return s.toLowerCase()
+    .replace(/[""]/g, '"')
+    .replace(/['']/g, "'")
+    .replace(/[^a-z0-9$%:.\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 // Fetch with retry
@@ -749,23 +761,61 @@ Deno.serve(async (req) => {
           }
         };
         
-        // NEW: Validate that evidence_snippet exists in the page content
+        // IMPROVED: Validate that evidence_snippet exists in the page content (normalized matching)
         const validateSnippet = (snippet: string | undefined, evidenceUrl: string): { valid: boolean; matchScore: number } => {
           if (!snippet || snippet.length < 10) return { valid: false, matchScore: 0 };
           const normalizedUrl = normalizeUrlForValidation(evidenceUrl);
           const pageContent = urlContentMap.get(normalizedUrl);
           if (!pageContent) return { valid: false, matchScore: 0 };
           
-          const snippetLower = snippet.toLowerCase().trim();
-          // Check if first 20 chars of snippet exist in page content
-          const probe = snippetLower.slice(0, Math.min(20, snippetLower.length));
-          const found = pageContent.includes(probe);
+          const snippetNorm = normalizeTextForMatching(snippet);
+          const contentNorm = normalizeTextForMatching(pageContent);
+          
+          // Try multiple probes: 30 chars, 20 chars, or first 10 words
+          const probes = [
+            snippetNorm.slice(0, 30),
+            snippetNorm.slice(0, 20),
+            snippetNorm.split(' ').slice(0, 10).join(' ')
+          ].filter(p => p.length >= 12);
+          
+          const found = probes.some(p => contentNorm.includes(p));
           return { valid: found, matchScore: found ? 1 : 0 };
+        };
+        
+        // NEW: Find better evidence URL for key deal types when homepage is used
+        const findBetterEvidenceUrl = (deal: DealExtraction, currentUrl: string): string => {
+          const homepageNorm = normalizeUrlForValidation(source.url);
+          const currentNorm = normalizeUrlForValidation(currentUrl);
+          
+          // Only override for fish_fry, happy_hour, brunch when evidence is homepage
+          if (currentNorm !== homepageNorm) return currentUrl;
+          if (!['fish_fry', 'happy_hour', 'brunch'].includes(deal.deal_type)) return currentUrl;
+          
+          const dealHint = (deal.name || '').toLowerCase();
+          const keywords = dealHint.split(/\s+/).filter(w => w.length >= 4).slice(0, 6);
+          if (keywords.length === 0) return currentUrl;
+          
+          // Find non-homepage page containing deal keywords
+          const nonHomeCandidates = pageContents.filter(p => 
+            normalizeUrlForValidation(p.url) !== homepageNorm
+          );
+          
+          const best = nonHomeCandidates.find(p => {
+            const contentLower = p.content.toLowerCase();
+            return keywords.some(k => contentLower.includes(k));
+          });
+          
+          if (best) {
+            console.log(`  ↗ Evidence URL upgraded: ${deal.name} → ${best.url}`);
+            return best.url;
+          }
+          return currentUrl;
         };
 
         // FIX #6: Batch deal upserts instead of per-deal
         const seenHashes: string[] = [];
         const dealUpserts: Record<string, any>[] = [];
+        let badEvidenceCount = 0;
         
         if (extraction.deals && extraction.deals.length > 0) {
           for (const deal of extraction.deals) {
@@ -775,13 +825,21 @@ Deno.serve(async (req) => {
             const startMinutes = parseTimeToMinutes(deal.start_time || '');
             const endMinutes = parseTimeToMinutes(deal.end_time || '');
             
-            const validatedEvidenceUrl = sanitizeEvidenceUrl(deal.evidence_url);
+            // First get initial evidence URL
+            let validatedEvidenceUrl = sanitizeEvidenceUrl(deal.evidence_url);
             
-            // NEW: Validate snippet exists in the evidence page
+            // NEW: Try to find a better evidence URL for key deal types
+            validatedEvidenceUrl = findBetterEvidenceUrl(deal, validatedEvidenceUrl);
+            
+            // IMPROVED: Validate snippet exists in the evidence page
             const snippetValidation = validateSnippet(deal.evidence_snippet, validatedEvidenceUrl);
-            const needsReview = !snippetValidation.valid && deal.evidence_snippet;
-            if (needsReview) {
-              console.log(`  ⚠ Deal "${deal.name}" snippet not found in ${validatedEvidenceUrl}`);
+            
+            // Calculate confidence with proper downgrade for invalid snippets
+            let confidenceScore = deal.confidence || extraction.extraction_confidence?.overall || 0.5;
+            if (!snippetValidation.valid && deal.evidence_snippet) {
+              confidenceScore = Math.min(confidenceScore, 0.35); // Hard downgrade
+              badEvidenceCount++;
+              console.log(`  ⚠ Deal "${deal.name}" snippet not found → confidence=${confidenceScore.toFixed(2)}`);
             }
             
             // Determine verification_method based on evidence_url
@@ -815,9 +873,7 @@ Deno.serve(async (req) => {
               last_confirmed_at: now,
               last_seen_at: now,
               source_type: 'scraper',
-              confidence_score: snippetValidation.valid 
-                ? (deal.confidence || extraction.extraction_confidence?.overall) 
-                : Math.min(0.5, deal.confidence || 0.5), // Downgrade confidence if snippet not validated
+              confidence_score: confidenceScore,
             };
             
             // Only update verification fields if not human-verified
@@ -859,6 +915,16 @@ Deno.serve(async (req) => {
             }
           }
         }
+        
+        // Update restaurant needs_review based on evidence quality
+        const overallConfidence = extraction.extraction_confidence?.overall || 0.5;
+        const anyBadEvidence = badEvidenceCount > 0;
+        if (anyBadEvidence || overallConfidence < 0.6) {
+          await supabase.from("restaurants").update({
+            needs_review: true,
+          }).eq("id", restaurant.id);
+          console.log(`  ⚠ Restaurant marked needs_review: ${anyBadEvidence ? badEvidenceCount + ' bad snippets' : 'low confidence'}`);
+        }
 
         // Update job as complete
         await supabase.from("restaurant_scrape_jobs").update({
@@ -875,10 +941,11 @@ Deno.serve(async (req) => {
           status: "active",
           metadata: { 
             ...(source.metadata || {}), 
-            scraper_version: "v7-batched-validated",
+            scraper_version: "v9-evidence-validated",
             pages_scraped: pagesScraped,
             pdfs_extracted: pdfCount,
             deals_found: extraction.deals?.length || 0,
+            bad_evidence_count: badEvidenceCount,
           }
         }).eq("id", source.id);
 
