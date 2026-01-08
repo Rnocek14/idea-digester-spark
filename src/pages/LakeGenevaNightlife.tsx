@@ -84,7 +84,7 @@ const LakeGenevaNightlife = () => {
       const { data, error } = await supabase
         .from("content_queue")
         .select("id, title, summary, content, event_date, event_time, performer, original_url, image_url, metadata")
-        .eq("status", "published")
+        .in("status", ["published", "auto_published", "approved"])
         .contains("metadata", { verticals: ["nightlife"] })
         .gte("event_date", todayStr)
         .order("event_date", { ascending: true })
@@ -102,7 +102,7 @@ const LakeGenevaNightlife = () => {
       const { data, error } = await supabase
         .from("content_queue")
         .select("id, title, summary, content, event_date, event_time, performer, original_url, image_url, metadata")
-        .eq("status", "published")
+        .in("status", ["published", "auto_published", "approved"])
         .contains("metadata", { verticals: ["nightlife"] })
         .is("event_date", null)
         .limit(30);
