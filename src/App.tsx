@@ -8,13 +8,13 @@ import HostnameRouter from "./components/HostnameRouter";
 import LakeGeneva from "./pages/LakeGeneva";
 import LakeGenevaNightlife from "./pages/LakeGenevaNightlife";
 import LakeGenevaEats from "./pages/LakeGenevaEats";
+import FishFryGuide from "./pages/FishFryGuide";
 import SellingLakeGeneva from "./pages/SellingLakeGeneva";
 import PublicDirectory from "./pages/PublicDirectory";
 import Advertise from "./pages/Advertise";
 import Incidents from "./pages/Incidents";
 import IncidentDetail from "./pages/IncidentDetail";
 import NotFound from "./pages/NotFound";
-
 // Direct imports for dashboard components (v2)
 import DashboardLayout from "./components/DashboardLayout";
 import Dashboard from "./pages/Dashboard";
@@ -72,6 +72,7 @@ const App = () => (
             <Route path="/advertise" element={<Advertise />} />
 <Route path="/nightlife" element={<LakeGenevaNightlife />} />
             <Route path="/eats" element={<LakeGenevaEats />} />
+            <Route path="/eats/fish-fry" element={<FishFryGuide />} />
             <Route path="/incidents" element={<Incidents />} />
             <Route path="/incidents/:slug" element={<IncidentDetail />} />
             <Route path="/jobs" element={<Jobs />} />
