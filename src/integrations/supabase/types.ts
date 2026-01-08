@@ -1297,6 +1297,84 @@ export type Database = {
         }
         Relationships: []
       }
+      restaurants: {
+        Row: {
+          address: string | null
+          amenities: string[] | null
+          categories: string[] | null
+          created_at: string
+          cuisine_types: string[] | null
+          extraction_confidence: Json | null
+          extraction_notes: string | null
+          fish_fry: Json | null
+          happy_hour: Json | null
+          hours: Json | null
+          id: string
+          last_scraped_at: string | null
+          menu_highlights: string[] | null
+          name: string
+          needs_review: boolean | null
+          phone: string | null
+          signature_dishes: Json | null
+          slug: string
+          source_url: string | null
+          tags: string[] | null
+          updated_at: string
+          website: string | null
+          weekly_specials: Json | null
+        }
+        Insert: {
+          address?: string | null
+          amenities?: string[] | null
+          categories?: string[] | null
+          created_at?: string
+          cuisine_types?: string[] | null
+          extraction_confidence?: Json | null
+          extraction_notes?: string | null
+          fish_fry?: Json | null
+          happy_hour?: Json | null
+          hours?: Json | null
+          id?: string
+          last_scraped_at?: string | null
+          menu_highlights?: string[] | null
+          name: string
+          needs_review?: boolean | null
+          phone?: string | null
+          signature_dishes?: Json | null
+          slug: string
+          source_url?: string | null
+          tags?: string[] | null
+          updated_at?: string
+          website?: string | null
+          weekly_specials?: Json | null
+        }
+        Update: {
+          address?: string | null
+          amenities?: string[] | null
+          categories?: string[] | null
+          created_at?: string
+          cuisine_types?: string[] | null
+          extraction_confidence?: Json | null
+          extraction_notes?: string | null
+          fish_fry?: Json | null
+          happy_hour?: Json | null
+          hours?: Json | null
+          id?: string
+          last_scraped_at?: string | null
+          menu_highlights?: string[] | null
+          name?: string
+          needs_review?: boolean | null
+          phone?: string | null
+          signature_dishes?: Json | null
+          slug?: string
+          source_url?: string | null
+          tags?: string[] | null
+          updated_at?: string
+          website?: string | null
+          weekly_specials?: Json | null
+        }
+        Relationships: []
+      }
       sources: {
         Row: {
           category: string | null
