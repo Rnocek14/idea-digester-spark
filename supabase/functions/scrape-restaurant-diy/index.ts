@@ -15,7 +15,6 @@ const CANONICAL_FEATURES = [
   'family_friendly', 'upscale', 'casual', 'bar', 'full_bar'
 ] as const;
 
-// Deal extraction interface with per-deal evidence_url
 interface DealExtraction {
   deal_type: string;
   name: string;
@@ -29,7 +28,7 @@ interface DealExtraction {
   sides?: string;
   drink_deals?: string[];
   food_deals?: string[];
-  evidence_url?: string; // MUST be the specific page URL where this was found
+  evidence_url?: string;
   evidence_snippet?: string;
   confidence?: number;
 }
@@ -65,7 +64,7 @@ DEAL TYPES (use exact values):
 - late_night: late night menu, after 10pm specials
 
 FOR EACH DEAL YOU MUST:
-1. Set evidence_url to the EXACT page URL where you found it (from the === PAGE: url === marker)
+1. Set evidence_url to the EXACT page URL where you found it (copy from === PAGE: url === marker)
 2. Set evidence_snippet to a direct quote (10-30 words) proving the deal exists
 3. Set confidence score based on how clearly stated the deal is
 
@@ -77,7 +76,7 @@ reservations_required, family_friendly, upscale, casual, bar, full_bar
 EXTRACTION RULES:
 - ONLY extract information explicitly stated
 - Prices in "$X.XX" format
-- Times in "Xpm" format (e.g., "3pm", "6:30pm")
+- Times MUST include am/pm (e.g., "3pm", "6:30pm") - never just "3" or "6"
 - Look at each === PAGE: url === section and note which URL had each piece of data`;
 
 const EXTRACTION_TOOLS = [{
@@ -114,8 +113,8 @@ const EXTRACTION_TOOLS = [{
               },
               name: { type: "string", description: "e.g., 'Friday Fish Fry', 'Taco Tuesday'" },
               days: { type: "array", items: { type: "string" } },
-              start_time: { type: "string", description: "e.g., '3pm'" },
-              end_time: { type: "string", description: "e.g., '6pm'" },
+              start_time: { type: "string", description: "Must include am/pm, e.g., '3pm'" },
+              end_time: { type: "string", description: "Must include am/pm, e.g., '6pm'" },
               description: { type: "string" },
               price: { type: "string" },
               fish_type: { type: "string" },
@@ -163,6 +162,22 @@ const EXTRACTION_TOOLS = [{
 const MENU_KEYWORDS = ['menu', 'food', 'dinner', 'lunch', 'drink', 'appetizer', 'entree', 'dessert', 'specials', 'pricing'];
 const SPECIAL_KEYWORDS = ['special', 'happy', 'hour', 'promotion', 'deal', 'fish', 'fry', 'friday', 'weekly', 'event', 'brunch'];
 const HIGH_PRIORITY_PATHS = ['/menu', '/food-menu', '/dinner-menu', '/specials', '/weekly-specials', '/happy-hour', '/friday-fish-fry', '/events', '/food', '/drinks', '/brunch'];
+
+// SHA-256 hash for stable deal IDs (FIX #3)
+async function sha256Hex(input: string): Promise<string> {
+  const data = new TextEncoder().encode(input);
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(digest))
+    .map(b => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+async function generateDealHash(restaurantId: string, deal: DealExtraction): Promise<string> {
+  const normName = (deal.name || "").toLowerCase().trim().replace(/\s+/g, " ");
+  const normDays = (deal.days || []).map(d => d.toLowerCase()).sort().join(",");
+  const key = [restaurantId, deal.deal_type, normName, normDays, deal.start_time || "", deal.end_time || ""].join("|");
+  return `deal_${(await sha256Hex(key)).slice(0, 24)}`;
+}
 
 // Fetch with retry
 async function fetchWithRetry(url: string, retries = 2, timeout = 8000): Promise<{ text: string; contentType: string }> {
@@ -301,7 +316,7 @@ function hasRelevantContent(content: string): boolean {
     .some(k => lower.includes(k));
 }
 
-// PDF extraction with guardrails
+// PDF extraction with guardrails (FIX #3 improvements)
 async function extractPdfText(pdfUrl: string): Promise<{ text: string | null; status: string; chars: number }> {
   try {
     console.log(`Attempting PDF extraction: ${pdfUrl}`);
@@ -326,12 +341,10 @@ async function extractPdfText(pdfUrl: string): Promise<{ text: string | null; st
     
     let text = '';
     
-    // Extract Tj text objects
     for (const match of pdfString.matchAll(/\(([^)]+)\)\s*Tj/g)) {
       text += match[1] + ' ';
     }
     
-    // Extract TJ arrays
     for (const match of pdfString.matchAll(/\[((?:[^[\]]+|\[[^\]]*\])*)\]\s*TJ/gi)) {
       for (const strMatch of match[1].matchAll(/\(([^)]*)\)/g)) {
         text += strMatch[1] + ' ';
@@ -397,7 +410,7 @@ function normalizeFeatures(features: string[]): string[] {
   return [...new Set(normalized)];
 }
 
-// Parse time string to minutes since midnight
+// Parse time string to minutes since midnight (FIX #C: require am/pm unless hour >= 13)
 function parseTimeToMinutes(timeStr: string): number | null {
   if (!timeStr) return null;
   
@@ -408,32 +421,19 @@ function parseTimeToMinutes(timeStr: string): number | null {
   const minutes = parseInt(match[2] || '0');
   const period = match[3];
   
+  // If no am/pm specified, only accept if hour >= 13 (24h format)
+  if (!period) {
+    if (hours >= 13 && hours <= 23) {
+      return hours * 60 + minutes;
+    }
+    // Can't determine - return null
+    return null;
+  }
+  
   if (period === 'pm' && hours < 12) hours += 12;
   if (period === 'am' && hours === 12) hours = 0;
   
   return hours * 60 + minutes;
-}
-
-// Generate stable deal hash for upsert
-function generateDealHash(restaurantId: string, deal: DealExtraction): string {
-  const parts = [
-    restaurantId,
-    deal.deal_type,
-    (deal.name || '').toLowerCase().replace(/\s+/g, '-').substring(0, 30),
-    (deal.days || []).sort().join(','),
-    deal.start_time || '',
-    deal.end_time || ''
-  ];
-  
-  // Simple hash using string encoding
-  const str = parts.join('|');
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash;
-  }
-  return `deal_${Math.abs(hash).toString(16)}`;
 }
 
 function normalizePhone(phone?: string): string | undefined {
@@ -496,7 +496,7 @@ Deno.serve(async (req) => {
       sources = data || [];
     }
 
-    console.log(`Processing ${sources.length} restaurant sources with gpt-4o + PDF + evidence tracking`);
+    console.log(`Processing ${sources.length} restaurant sources with gpt-4o + SHA-256 hashing`);
 
     const results: Array<{ name: string; success: boolean; error?: string; confidence?: number; pages_scraped?: number; pdfs_found?: number; deals_found?: number }> = [];
 
@@ -536,7 +536,7 @@ Deno.serve(async (req) => {
           if (!htmlLinks.includes(testUrl)) htmlLinks.unshift(testUrl);
         }
 
-        // Fetch pages
+        // Fetch pages - track URLs for evidence validation
         const pageContents: Array<{ url: string; content: string; type: string }> = [];
         const homepageContent = extractRelevantContent(homepageHtml);
         pageContents.push({ url: source.url, content: homepageContent, type: 'homepage' });
@@ -558,27 +558,13 @@ Deno.serve(async (req) => {
           await new Promise(r => setTimeout(r, 200));
         }
 
-        // Extract PDFs with guardrails
+        // Extract PDFs with guardrails (FIX #1: removed pre-restaurant pages upsert)
         let pdfCount = 0;
+        const pdfResults: Array<{ url: string; status: string; chars: number }> = [];
+        
         for (const pdfUrl of pdfLinks) {
           const pdfResult = await extractPdfText(pdfUrl);
-          
-          // Store PDF page status
-          if (job?.id) {
-            // Store PDF status - ignore errors since restaurant_id may not match yet
-            try {
-              await supabase.from("restaurant_pages").upsert({
-                restaurant_id: job.id,
-                url: pdfUrl,
-                page_type: 'pdf_menu',
-                is_pdf: true,
-                pdf_extraction_status: pdfResult.status,
-                pdf_extraction_chars: pdfResult.chars,
-                status: pdfResult.text ? 'scraped' : 'failed',
-                last_scraped_at: new Date().toISOString(),
-              }, { onConflict: 'restaurant_id,url' });
-            } catch { /* ignore */ }
-          }
+          pdfResults.push({ url: pdfUrl, status: pdfResult.status, chars: pdfResult.chars });
           
           if (pdfResult.text) {
             pageContents.push({ url: pdfUrl, content: pdfResult.text, type: 'pdf_menu' });
@@ -594,6 +580,9 @@ Deno.serve(async (req) => {
           content_sources: pageContents.map(p => ({ url: p.url, type: p.type })),
         }).eq('id', job?.id);
 
+        // Build allowed URLs set for evidence validation (FIX #4)
+        const allowedUrls = new Set(pageContents.map(p => p.url));
+        
         // Combine content with clear page markers
         const combinedContent = pageContents
           .map(p => `=== PAGE: ${p.url} (${p.type}) ===\n${p.content}`)
@@ -667,7 +656,7 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        // Store discovered pages
+        // Store discovered pages AFTER we have restaurant.id (FIX #1)
         for (const page of pageContents) {
           if (page.url !== source.url) {
             try {
@@ -679,23 +668,62 @@ Deno.serve(async (req) => {
                 status: 'scraped',
                 last_scraped_at: new Date().toISOString(),
               }, { onConflict: 'restaurant_id,url' });
-            } catch { /* ignore duplicates */ }
+            } catch { /* ignore */ }
           }
         }
+        
+        // Store PDF extraction statuses (FIX #1: now using correct restaurant.id)
+        for (const pdf of pdfResults) {
+          try {
+            await supabase.from("restaurant_pages").upsert({
+              restaurant_id: restaurant.id,
+              url: pdf.url,
+              page_type: 'pdf_menu',
+              is_pdf: true,
+              pdf_extraction_status: pdf.status,
+              pdf_extraction_chars: pdf.chars,
+              status: pdf.status === 'ok' ? 'scraped' : 'failed',
+              last_scraped_at: new Date().toISOString(),
+            }, { onConflict: 'restaurant_id,url' });
+          } catch { /* ignore */ }
+        }
 
-        // UPSERT deals with deal_hash (no delete/insert!)
+        // UPSERT deals with SHA-256 hash (FIX #2 & #3)
         const now = new Date().toISOString();
         const seenHashes: string[] = [];
         
+        // Helper to validate and sanitize evidence_url (FIX #4)
+        const sanitizeEvidenceUrl = (url: string | undefined): string => {
+          if (!url) return source.url;
+          return allowedUrls.has(url) ? url : source.url;
+        };
+        
         if (extraction.deals && extraction.deals.length > 0) {
           for (const deal of extraction.deals) {
-            const dealHash = generateDealHash(restaurant.id, deal);
+            const dealHash = await generateDealHash(restaurant.id, deal);
             seenHashes.push(dealHash);
             
             const startMinutes = parseTimeToMinutes(deal.start_time || '');
             const endMinutes = parseTimeToMinutes(deal.end_time || '');
             
-            const dealData = {
+            const validatedEvidenceUrl = sanitizeEvidenceUrl(deal.evidence_url);
+            
+            // Determine verification_method based on evidence_url (FIX #A)
+            const verificationMethod = validatedEvidenceUrl.toLowerCase().endsWith('.pdf') 
+              ? 'pdf' 
+              : 'scraped_text';
+            
+            // Check if deal already exists and is verified (FIX #B)
+            const { data: existingDeal } = await supabase
+              .from("restaurant_deals")
+              .select("verification_status")
+              .eq("deal_hash", dealHash)
+              .single();
+            
+            const isHumanVerified = existingDeal?.verification_status === 'verified' || 
+                                   existingDeal?.verification_status === 'community_verified';
+            
+            const dealData: Record<string, any> = {
               deal_hash: dealHash,
               restaurant_id: restaurant.id,
               deal_type: deal.deal_type,
@@ -712,25 +740,43 @@ Deno.serve(async (req) => {
               sides: deal.sides,
               drink_deals: deal.drink_deals,
               food_deals: deal.food_deals,
-              verification_status: 'unverified',
-              verification_method: pdfCount > 0 ? 'pdf' : 'scraped_text',
-              evidence_url: deal.evidence_url || source.url, // Use GPT-provided URL or fallback
+              evidence_url: validatedEvidenceUrl,
               evidence_snippet: deal.evidence_snippet,
               last_confirmed_at: now,
               last_seen_at: now,
               source_type: 'scraper',
               confidence_score: deal.confidence || extraction.extraction_confidence?.overall,
             };
+            
+            // Only update verification fields if not human-verified (FIX #B)
+            if (!isHumanVerified) {
+              dealData.verification_status = 'unverified';
+              dealData.verification_method = verificationMethod;
+            }
 
             await supabase.from("restaurant_deals").upsert(dealData, { onConflict: 'deal_hash' });
           }
           
-          // Mark deals not seen in this scrape as outdated (instead of deleting)
-          await supabase.from("restaurant_deals")
-            .update({ verification_status: 'outdated', valid_to: now })
-            .eq('restaurant_id', restaurant.id)
-            .eq('source_type', 'scraper')
-            .not('deal_hash', 'in', `(${seenHashes.join(',')})`);
+          // Mark unseen deals as outdated (FIX #2: correct IN clause formatting)
+          if (seenHashes.length > 0) {
+            // Use filter instead of .not('in', ...) for safety
+            const { data: allDeals } = await supabase
+              .from("restaurant_deals")
+              .select("id, deal_hash")
+              .eq("restaurant_id", restaurant.id)
+              .eq("source_type", "scraper");
+            
+            if (allDeals) {
+              const unseenDeals = allDeals.filter(d => !seenHashes.includes(d.deal_hash));
+              if (unseenDeals.length > 0) {
+                await supabase
+                  .from("restaurant_deals")
+                  .update({ verification_status: 'outdated', valid_to: now })
+                  .in('id', unseenDeals.map(d => d.id));
+                console.log(`Marked ${unseenDeals.length} deals as outdated`);
+              }
+            }
+          }
             
           console.log(`Upserted ${seenHashes.length} deals for ${source.name}`);
         }
@@ -750,7 +796,7 @@ Deno.serve(async (req) => {
           status: "active",
           metadata: { 
             ...(source.metadata || {}), 
-            scraper_version: "v5-evidence-hash",
+            scraper_version: "v6-sha256-evidence",
             pages_scraped: pagesScraped,
             pdfs_extracted: pdfCount,
             deals_found: extraction.deals?.length || 0,
@@ -776,7 +822,7 @@ Deno.serve(async (req) => {
     }
 
     await supabase.from("activity_log").insert({
-      action: "scrape_restaurant_v5",
+      action: "scrape_restaurant_v6",
       entity_type: "restaurant",
       actor_type: "system",
       details: {
