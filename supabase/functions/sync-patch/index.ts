@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { DOMParser } from "https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,6 +13,99 @@ const KNOWN_SECTIONS = [
   "https://patch.com/wisconsin/lake-geneva-wi/around-town",
 ];
 
+// User agents for DIY scraping
+const USER_AGENTS = [
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+];
+
+// DIY fetch with anti-bot evasion
+async function diyFetch(url: string, attempt = 0): Promise<string | null> {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
+    
+    const res = await fetch(url, {
+      headers: {
+        'User-Agent': USER_AGENTS[attempt % USER_AGENTS.length],
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Accept-Encoding': 'gzip, deflate',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
+      },
+      redirect: 'follow',
+      signal: controller.signal,
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (res.ok) {
+      return await res.text();
+    }
+    return null;
+  } catch (e) {
+    console.log(`DIY fetch failed for ${url}: ${e}`);
+    return null;
+  }
+}
+
+// Extract article links from HTML
+function extractArticleLinks(html: string): string[] {
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  if (!doc) return [];
+  
+  const links: string[] = [];
+  doc.querySelectorAll('a[href]').forEach((a: any) => {
+    const href = a.getAttribute('href');
+    if (href) links.push(href);
+  });
+  
+  return links.filter(link => {
+    if (!link.includes("patch.com/wisconsin/lake-geneva-wi/")) return false;
+    if (link.endsWith("/lake-geneva-wi") || link.endsWith("/lake-geneva-wi/")) return false;
+    if (link.includes("/calendar") || link.includes("/events")) return false;
+    if (link.includes("/search") || link.includes("/weather")) return false;
+    if (link.includes("/classifieds") || link.includes("/post")) return false;
+    if (link.includes("/users/") || link.includes("/patch-pm")) return false;
+    
+    const pathParts = link.split("/lake-geneva-wi/");
+    if (pathParts.length < 2) return false;
+    const slug = pathParts[1].split("/")[0];
+    return slug.includes("-") && slug.length > 15;
+  });
+}
+
+// Extract main content from article HTML
+function extractArticleContent(html: string): { title: string; content: string; image?: string } {
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  if (!doc) return { title: '', content: '' };
+  
+  // Get title
+  let title = doc.querySelector('h1')?.textContent?.trim() || 
+              doc.querySelector('meta[property="og:title"]')?.getAttribute('content') || '';
+  title = title.replace(/\s*\|\s*Patch$/, '').replace(/\s*-\s*Lake Geneva.*$/i, '').trim();
+  
+  // Get main content
+  const contentSelectors = ['article', '.article-content', '.post-content', 'main', '[role="main"]'];
+  let content = '';
+  for (const sel of contentSelectors) {
+    const el = doc.querySelector(sel);
+    if (el?.textContent && el.textContent.length > 300) {
+      content = el.textContent.replace(/\s+/g, ' ').trim();
+      break;
+    }
+  }
+  if (!content) {
+    content = doc.body?.textContent?.replace(/\s+/g, ' ').trim() || '';
+  }
+  
+  // Get image
+  const image = doc.querySelector('meta[property="og:image"]')?.getAttribute('content') || undefined;
+  
+  return { title, content: content.substring(0, 8000), image };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -20,16 +114,8 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const firecrawlKey = Deno.env.get("FIRECRAWL_API_KEY");
     const openaiKey = Deno.env.get("OPENAI_API_KEY");
-
-    if (!firecrawlKey) {
-      console.error("FIRECRAWL_API_KEY not configured");
-      return new Response(
-        JSON.stringify({ success: false, error: "Firecrawl not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    const firecrawlKey = Deno.env.get("FIRECRAWL_API_KEY");
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -48,113 +134,66 @@ serve(async (req) => {
       );
     }
 
-    console.log(`[sync-patch] Starting Patch scrape with waitFor...`);
+    console.log(`[sync-patch] Starting DIY scrape...`);
 
-    // Collect article links from multiple section pages
+    // Collect article links from section pages using DIY
     const allLinks: string[] = [];
+    let usedFirecrawl = false;
 
     for (const sectionUrl of KNOWN_SECTIONS) {
-      console.log(`[sync-patch] Scraping section: ${sectionUrl}`);
+      console.log(`[sync-patch] DIY scraping section: ${sectionUrl}`);
       
-      try {
-        const firecrawlResponse = await fetch("https://api.firecrawl.dev/v1/scrape", {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${firecrawlKey}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            url: sectionUrl,
-            formats: ["links"],
-            waitFor: 3000, // Wait 3 seconds for JS to render
-          }),
-        });
-
-        const responseData = await firecrawlResponse.json();
-        
-        // Check for Firecrawl credit exhaustion
-        if (!firecrawlResponse.ok) {
-          const errorMsg = responseData.error || responseData.message || "";
-          if (errorMsg.toLowerCase().includes("credit") || errorMsg.toLowerCase().includes("limit") || 
-              errorMsg.toLowerCase().includes("quota") || firecrawlResponse.status === 402) {
-            console.error(`[sync-patch] ❌ Firecrawl credits exhausted: ${errorMsg}`);
-            // Disable source and mark as needing credits
-            await supabase.from("sources").update({
-              status: "inactive",
-              metadata: {
-                ...source.metadata,
-                disabled_reason: "firecrawl_credits_exhausted",
-                disabled_at: new Date().toISOString(),
-                requires_firecrawl_credits: true
-              }
-            }).eq("id", source.id);
-            
-            return new Response(
-              JSON.stringify({ 
-                success: false, 
-                error: "Firecrawl credits exhausted", 
-                action: "source_disabled",
-                requires_firecrawl_credits: true 
-              }),
-              { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-            );
+      // Try DIY first
+      let html = await diyFetch(sectionUrl);
+      
+      // Fallback to Firecrawl if DIY fails
+      if (!html && firecrawlKey) {
+        console.log(`[sync-patch] DIY failed, trying Firecrawl for ${sectionUrl}`);
+        try {
+          const fcRes = await fetch("https://api.firecrawl.dev/v1/scrape", {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${firecrawlKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              url: sectionUrl,
+              formats: ["html"],
+              waitFor: 3000,
+            }),
+          });
+          
+          if (fcRes.ok) {
+            const data = await fcRes.json();
+            html = data.data?.html || '';
+            usedFirecrawl = true;
           }
-          console.warn(`[sync-patch] Firecrawl error: ${errorMsg}`);
-          continue;
+        } catch (err) {
+          console.warn(`[sync-patch] Firecrawl fallback failed: ${err}`);
         }
-
-        const links = responseData.data?.links || [];
+      }
+      
+      if (html) {
+        const links = extractArticleLinks(html);
         console.log(`[sync-patch] Found ${links.length} links from ${sectionUrl}`);
         allLinks.push(...links);
-      } catch (err) {
-        console.warn(`[sync-patch] Failed to scrape ${sectionUrl}:`, err);
       }
     }
 
     console.log(`[sync-patch] Total links collected: ${allLinks.length}`);
     
-    // Dedupe and filter to article links
+    // Dedupe and limit
     const uniqueLinks = [...new Set(allLinks)];
-    console.log(`[sync-patch] Sample links:`, uniqueLinks.slice(0, 10));
+    const articleLinks = uniqueLinks.slice(0, 8);
 
-    const articleLinks = uniqueLinks.filter(link => {
-      // Must be Lake Geneva article
-      if (!link.includes("patch.com/wisconsin/lake-geneva-wi/")) return false;
-      
-      // Skip section/category pages
-      if (link.endsWith("/lake-geneva-wi") || link.endsWith("/lake-geneva-wi/")) return false;
-      if (link.includes("/calendar")) return false;
-      if (link.includes("/events")) return false;
-      if (link.includes("/police-fire") && !link.includes("/police-fire/")) return false;
-      if (link.includes("/around-town") && !link.includes("/around-town/")) return false;
-      if (link.includes("/search")) return false;
-      if (link.includes("/weather")) return false;
-      if (link.includes("/classifieds")) return false;
-      if (link.includes("/post")) return false;
-      if (link.includes("/users/")) return false;
-      if (link.includes("/patch-pm")) return false;
-      if (link.includes("/announcements")) return false;
-      if (link.includes("/obituaries") && !link.includes("/obituaries/")) return false;
-      
-      // Article URLs typically have a descriptive slug
-      const pathParts = link.split("/lake-geneva-wi/");
-      if (pathParts.length < 2) return false;
-      
-      const slug = pathParts[1].split("/")[0];
-      // Real articles have multi-word slugs with hyphens
-      return slug.includes("-") && slug.length > 15;
-    }).slice(0, 8); // Limit to 8 articles per run
-
-    console.log(`[sync-patch] Found ${articleLinks.length} article links to process`);
-    if (articleLinks.length > 0) {
-      console.log(`[sync-patch] Article URLs:`, articleLinks);
-    }
+    console.log(`[sync-patch] Processing ${articleLinks.length} article links`);
 
     const results = {
       processed: 0,
       inserted: 0,
       skipped: 0,
       errors: [] as string[],
+      used_firecrawl: usedFirecrawl,
     };
 
     // Process each article
@@ -175,76 +214,60 @@ serve(async (req) => {
           continue;
         }
 
-        // Scrape the article with waitFor
-        const articleResponse = await fetch("https://api.firecrawl.dev/v1/scrape", {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${firecrawlKey}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            url: articleUrl,
-            formats: ["markdown"],
-            onlyMainContent: true,
-            waitFor: 2000,
-          }),
-        });
-
-        const articleResponseData = await articleResponse.json();
+        // DIY scrape the article
+        let articleHtml = await diyFetch(articleUrl);
+        let articleUsedFirecrawl = false;
         
-        // Check for Firecrawl credit exhaustion on article scrape
-        if (!articleResponse.ok) {
-          const errorMsg = articleResponseData.error || articleResponseData.message || "";
-          if (errorMsg.toLowerCase().includes("credit") || errorMsg.toLowerCase().includes("limit") || 
-              errorMsg.toLowerCase().includes("quota") || articleResponse.status === 402) {
-            console.error(`[sync-patch] ❌ Firecrawl credits exhausted during article scrape`);
-            await supabase.from("sources").update({
-              status: "inactive",
-              metadata: {
-                ...source.metadata,
-                disabled_reason: "firecrawl_credits_exhausted",
-                disabled_at: new Date().toISOString(),
-                requires_firecrawl_credits: true
-              }
-            }).eq("id", source.id);
-            break; // Stop processing, return partial results
+        // Fallback to Firecrawl if DIY fails
+        if (!articleHtml && firecrawlKey) {
+          try {
+            const fcRes = await fetch("https://api.firecrawl.dev/v1/scrape", {
+              method: "POST",
+              headers: {
+                "Authorization": `Bearer ${firecrawlKey}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                url: articleUrl,
+                formats: ["html"],
+                onlyMainContent: true,
+                waitFor: 2000,
+              }),
+            });
+            
+            if (fcRes.ok) {
+              const data = await fcRes.json();
+              articleHtml = data.data?.html || '';
+              articleUsedFirecrawl = true;
+              usedFirecrawl = true;
+            }
+          } catch (err) {
+            console.warn(`[sync-patch] Firecrawl article fallback failed: ${err}`);
           }
-          console.warn(`[sync-patch] Failed to scrape article: ${articleUrl} - ${errorMsg}`);
-          results.errors.push(`Failed: ${articleUrl}`);
+        }
+        
+        if (!articleHtml) {
+          console.warn(`[sync-patch] Could not fetch article: ${articleUrl}`);
+          results.errors.push(`Failed to fetch: ${articleUrl}`);
           continue;
         }
 
-        const articleData = articleResponseData;
-        const articleMarkdown = articleData.data?.markdown || "";
-        const metadata = articleData.data?.metadata || {};
+        const { title, content, image } = extractArticleContent(articleHtml);
 
-        if (!articleMarkdown || articleMarkdown.length < 100) {
-          console.warn(`[sync-patch] Article too short: ${articleUrl}`);
-          results.skipped++;
-          continue;
-        }
-
-        // Extract title from metadata or markdown
-        let title = metadata.title || "";
-        if (!title && articleMarkdown) {
-          const titleMatch = articleMarkdown.match(/^#\s+(.+)$/m);
-          title = titleMatch ? titleMatch[1] : "";
-        }
-        // Clean Patch title suffix
-        title = title.replace(/\s*\|\s*Patch$/, "").replace(/\s*-\s*Lake Geneva.*$/i, "").trim();
-
-        if (!title) {
-          console.warn(`[sync-patch] No title found: ${articleUrl}`);
+        if (!title || content.length < 100) {
+          console.warn(`[sync-patch] Article too short or no title: ${articleUrl}`);
           results.skipped++;
           continue;
         }
 
         // Generate summary with OpenAI if available
-        let summary = metadata.description || "";
+        let summary = "";
         let category = "news";
         let safetyLevel = "safe";
+        let isIncident = false;
+        let incidentType = "none";
 
-        if (openaiKey && articleMarkdown.length > 200) {
+        if (openaiKey && content.length > 200) {
           try {
             const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
               method: "POST",
@@ -259,14 +282,16 @@ serve(async (req) => {
                     role: "system",
                     content: `Analyze this Lake Geneva local news article. Return JSON with:
 - summary: 1-2 sentence summary (max 200 chars)
-- category: one of "news", "civic", "schools", "events", "dining", "real_estate", "community"
+- category: one of "news", "civic", "schools", "events", "dining", "crime", "community"
 - safety_level: "safe", "sensitive", or "blocked"
+- is_incident: true if this is about an accident, fire, crime, emergency
+- incident_type: if is_incident, one of "accident", "fire", "crime", "police", "weather", "road_closure", "none"
 
 Return only valid JSON.`
                   },
                   {
                     role: "user",
-                    content: `Title: ${title}\n\nContent:\n${articleMarkdown.substring(0, 2000)}`
+                    content: `Title: ${title}\n\nContent:\n${content.substring(0, 2000)}`
                   }
                 ],
                 temperature: 0.3,
@@ -275,13 +300,15 @@ Return only valid JSON.`
 
             if (aiResponse.ok) {
               const aiData = await aiResponse.json();
-              const content = aiData.choices?.[0]?.message?.content || "";
-              const jsonMatch = content.match(/\{[\s\S]*\}/);
+              const aiContent = aiData.choices?.[0]?.message?.content || "";
+              const jsonMatch = aiContent.match(/\{[\s\S]*\}/);
               if (jsonMatch) {
                 const parsed = JSON.parse(jsonMatch[0]);
                 summary = parsed.summary || summary;
                 category = parsed.category || category;
                 safetyLevel = parsed.safety_level || safetyLevel;
+                isIncident = parsed.is_incident || false;
+                incidentType = parsed.incident_type || "none";
               }
             }
           } catch (aiError) {
@@ -289,8 +316,11 @@ Return only valid JSON.`
           }
         }
 
-        // Extract image from og:image
-        const imageUrl = metadata.ogImage || metadata.image || null;
+        // Calculate priority score
+        let priorityScore = 3;
+        if (isIncident) priorityScore = 7;
+        if (category === 'crime') priorityScore = 8;
+        if (incidentType !== 'none' && incidentType !== 'weather') priorityScore = 7;
 
         // Insert into content_queue
         const { error: insertError } = await supabase
@@ -298,20 +328,24 @@ Return only valid JSON.`
           .insert({
             source_id: source.id,
             title: title.substring(0, 500),
-            content: articleMarkdown.substring(0, 10000),
+            content: content.substring(0, 10000),
             summary: summary.substring(0, 500),
             original_url: articleUrl,
             category,
-            status: safetyLevel === "safe" ? "pending" : "pending",
+            status: "pending",
             safety_level: safetyLevel,
-            geo_tier: 1, // Patch Lake Geneva is hyperlocal
+            priority_score: priorityScore,
+            is_breaking: isIncident,
+            geo_tier: 1,
             geo_label: "Lake Geneva",
-            image_url: imageUrl,
+            image_url: image,
             publish_date: new Date().toISOString(),
             metadata: {
               source_name: "Patch Lake Geneva",
-              scraped_via: "firecrawl",
+              scraped_via: articleUsedFirecrawl ? "firecrawl_fallback" : "diy",
               trusted_locality: true,
+              is_incident: isIncident,
+              incident_type: incidentType,
             },
           });
 
@@ -323,8 +357,8 @@ Return only valid JSON.`
           results.inserted++;
         }
 
-        // Small delay to avoid rate limits
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Small delay between articles
+        await new Promise(resolve => setTimeout(resolve, 300));
 
       } catch (error: any) {
         console.error(`[sync-patch] Error processing ${articleUrl}:`, error);
@@ -343,7 +377,7 @@ Return only valid JSON.`
       actor_type: "system",
       entity_type: "source",
       action: "sync_patch",
-      message: `Synced Patch Lake Geneva: ${results.inserted} inserted, ${results.skipped} skipped`,
+      message: `Synced Patch Lake Geneva (DIY): ${results.inserted} inserted, ${results.skipped} skipped`,
       details: results,
     });
 

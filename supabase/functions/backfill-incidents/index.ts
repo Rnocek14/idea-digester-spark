@@ -7,17 +7,21 @@ const corsHeaders = {
 };
 
 // Infer incident type from story content
-type IncidentType = 'accident' | 'fire' | 'weather' | 'police' | 'utility' | 'crime' | 'road_closure' | 'other';
+type IncidentType = 'accident' | 'fire' | 'weather' | 'police' | 'utility' | 'crime' | 'road_closure' | 'school_closure' | 'construction' | 'community_alert' | 'missing_person' | 'other';
 
 // Keywords that should ALWAYS create incidents (regardless of priority score threshold)
 const INCIDENT_KEYWORDS = {
-  accident: ['crash', 'accident', 'collision', 'rollover', 'hit and run', 'pedestrian struck', 'fatality'],
-  fire: ['structure fire', 'house fire', 'building fire', 'fire department responds', 'fire call', 'flames'],
-  police: ['police respond', 'shots fired', 'shooting', 'standoff', 'swat', 'armed', 'hostage', 'manhunt'],
-  crime: ['arrest', 'arrested', 'robbery', 'burglary', 'assault', 'homicide', 'stabbing', 'carjacking'],
-  utility: ['power outage', 'water main break', 'gas leak', 'boil water', 'utility emergency'],
-  road_closure: ['road closed', 'closure', 'detour', 'bridge closed', 'highway closed'],
-  weather: ['tornado', 'severe storm', 'flooding', 'blizzard', 'winter storm warning'],
+  accident: ['crash', 'accident', 'collision', 'rollover', 'hit and run', 'pedestrian struck', 'fatality', 'vehicle fire', 'overturned'],
+  fire: ['structure fire', 'house fire', 'building fire', 'fire department responds', 'fire call', 'flames', 'barn fire', 'warehouse fire'],
+  police: ['police respond', 'shots fired', 'shooting', 'standoff', 'swat', 'armed', 'hostage', 'manhunt', 'active shooter'],
+  crime: ['arrest', 'arrested', 'robbery', 'burglary', 'assault', 'homicide', 'stabbing', 'carjacking', 'theft', 'vandalism', 'break-in'],
+  utility: ['power outage', 'water main break', 'gas leak', 'boil water', 'utility emergency', 'sewer', 'electrical fire'],
+  road_closure: ['road closed', 'closure', 'detour', 'bridge closed', 'highway closed', 'lane closure', 'traffic blocked'],
+  weather: ['tornado', 'severe storm', 'flooding', 'blizzard', 'winter storm warning', 'flash flood', 'high wind', 'ice storm'],
+  school_closure: ['school closed', 'school closure', 'school delay', 'two hour delay', '2 hour delay', 'schools closed', 'canceled classes', 'early dismissal', 'snow day'],
+  construction: ['road construction', 'bridge work', 'utility work', 'lane reduction', 'construction zone', 'water main work', 'sewer work', 'paving'],
+  community_alert: ['evacuation', 'shelter in place', 'lockdown', 'emergency alert', 'public safety', 'hazmat', 'chemical spill', 'amber alert', 'silver alert'],
+  missing_person: ['missing person', 'missing child', 'missing teen', 'missing elderly', 'last seen', 'help locate', 'search underway'],
 };
 
 function inferIncidentType(story: {
