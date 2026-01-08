@@ -134,6 +134,22 @@ const LakeGenevaNightlife = () => {
     e.metadata?.recurring_days?.some(d => d.toLowerCase() === todayDayName)
   ) || [];
 
+  // Get recurring events for each day of the week
+  const getRecurringForDay = (dayName: string) => {
+    return recurringEvents?.filter(e => 
+      e.metadata?.recurring_days?.some(d => d.toLowerCase() === dayName.toLowerCase())
+    ) || [];
+  };
+
+  // Build weekly schedule from recurring events
+  const weekDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+  const weeklySchedule = weekDays.map(day => ({
+    day,
+    dayLabel: day.charAt(0).toUpperCase() + day.slice(1),
+    events: getRecurringForDay(day),
+    isToday: day === todayDayName
+  })).filter(d => d.events.length > 0);
+
   // Extract unique venues from all events
   const allEvents = [...(events || []), ...(recurringEvents || [])];
   const venues = [...new Set(allEvents.map(e => extractVenue(e.title)).filter(Boolean))] as string[];
@@ -211,16 +227,64 @@ const LakeGenevaNightlife = () => {
             </section>
           )}
 
-          {/* Weekend Section */}
-          {weekendEvents.length > 0 && (
-            <section>
-              <div className="flex items-center gap-2 mb-4">
-                <span className="text-2xl">🎉</span>
-                <h2 className="text-xl font-bold text-slate-900">This Weekend</h2>
-              </div>
+          {/* Weekend Section - show recurring weekend events if no dated ones */}
+          <section>
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-2xl">🎉</span>
+              <h2 className="text-xl font-bold text-slate-900">This Weekend</h2>
+            </div>
+            {weekendEvents.length > 0 ? (
               <div className="grid gap-3 sm:grid-cols-2">
                 {weekendEvents.slice(0, 6).map(event => (
                   <EventCard key={event.id} event={event} showDate compact />
+                ))}
+              </div>
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {[...getRecurringForDay('friday'), ...getRecurringForDay('saturday'), ...getRecurringForDay('sunday')]
+                  .slice(0, 6)
+                  .map(event => (
+                    <EventCard key={event.id} event={event} compact showRecurring />
+                  ))}
+              </div>
+            )}
+          </section>
+
+          {/* Weekly Schedule */}
+          {weeklySchedule.length > 0 && (
+            <section>
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-2xl">📆</span>
+                <h2 className="text-xl font-bold text-slate-900">Weekly Schedule</h2>
+              </div>
+              <div className="space-y-4">
+                {weeklySchedule.map(({ day, dayLabel, events: dayEvents, isToday }) => (
+                  <div key={day} className={`p-4 rounded-lg ${isToday ? 'bg-purple-50 border border-purple-200' : 'bg-slate-50'}`}>
+                    <h3 className="font-semibold text-slate-900 mb-2 flex items-center gap-2">
+                      {dayLabel}
+                      {isToday && <Badge variant="secondary" className="text-xs">Today</Badge>}
+                    </h3>
+                    <div className="space-y-2">
+                      {dayEvents.map(event => (
+                        <div key={event.id} className="flex items-start gap-2">
+                          <Music className="h-4 w-4 text-purple-600 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <a 
+                              href={event.original_url || '#'} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-sm font-medium text-slate-900 hover:text-purple-700"
+                            >
+                              {event.title}
+                            </a>
+                            {event.event_time && (
+                              <p className="text-xs text-slate-500">{event.event_time}</p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
             </section>
@@ -286,11 +350,13 @@ const LakeGenevaNightlife = () => {
 const EventCard = ({ 
   event, 
   showDate = false,
-  compact = false 
+  compact = false,
+  showRecurring = false
 }: { 
   event: NightlifeEvent; 
   showDate?: boolean;
   compact?: boolean;
+  showRecurring?: boolean;
 }) => {
   const venue = extractVenue(event.title);
   const performer = event.performer || event.title.split(" at ")[0]?.trim();
@@ -315,6 +381,11 @@ const EventCard = ({
                 {showDate && event.event_date && (
                   <Badge variant="outline" className="mb-1.5 text-xs">
                     {formatEventDate(event.event_date)}
+                  </Badge>
+                )}
+                {showRecurring && event.metadata?.recurring_days && (
+                  <Badge variant="secondary" className="mb-1.5 text-xs">
+                    {event.metadata.recurring_days.map(d => d.charAt(0).toUpperCase() + d.slice(1, 3)).join(", ")}
                   </Badge>
                 )}
                 <h3 className={`font-semibold text-slate-900 ${compact ? "text-sm line-clamp-2" : "line-clamp-1"}`}>
