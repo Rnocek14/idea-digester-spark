@@ -823,7 +823,7 @@ Deno.serve(async (req) => {
         // Update source (FIX #1: 'now' is now in scope)
         await supabase.from("sources").update({ 
           last_fetched_at: now,
-          type: "diy-scrape",
+          type: "scrape",
           status: "active",
           metadata: { 
             ...(source.metadata || {}), 
