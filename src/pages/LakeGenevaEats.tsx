@@ -85,6 +85,13 @@ const LakeGenevaEats = () => {
     if (diningCat) return diningCat;
     
     const text = c.title.toLowerCase();
+    // Fish fry is special for Lake Geneva!
+    if (text.includes("fish fry")) {
+      return "fish-fry";
+    }
+    if (text.includes("closing") || text.includes("closes") || text.includes("last day")) {
+      return "restaurant-closing";
+    }
     if (text.includes("opening") || text.includes("new restaurant") || text.includes("coming soon") || text.includes("now open")) {
       return "restaurant-opening";
     }
@@ -94,13 +101,16 @@ const LakeGenevaEats = () => {
     if (text.includes("review") || text.includes("best") || text.includes("top") || text.includes("rating")) {
       return "restaurant-review";
     }
-    if (text.includes("fish fry") || text.includes("wine dinner") || text.includes("tasting") || text.includes("event")) {
+    if (text.includes("wine dinner") || text.includes("tasting") || text.includes("brunch")) {
       return "dining-event";
     }
     return "restaurant-feature";
   };
 
+  // Categorized content
+  const fishFry = eatsContent?.filter(c => categorize(c) === "fish-fry") || [];
   const newOpenings = eatsContent?.filter(c => categorize(c) === "restaurant-opening") || [];
+  const closings = eatsContent?.filter(c => categorize(c) === "restaurant-closing") || [];
   const deals = eatsContent?.filter(c => categorize(c) === "restaurant-deal") || [];
   const reviews = eatsContent?.filter(c => categorize(c) === "restaurant-review") || [];
   const diningEvents = eatsContent?.filter(c => categorize(c) === "dining-event") || [];
@@ -109,6 +119,9 @@ const LakeGenevaEats = () => {
   // Extract unique restaurants
   const allContent = eatsContent || [];
   const restaurants = [...new Set(allContent.map(c => extractRestaurant(c.title)).filter(Boolean))] as string[];
+  
+  // Get today's day of week for Fish Fry highlight
+  const isFriday = today.getDay() === 5;
 
   return (
     <PageShell>
@@ -140,6 +153,30 @@ const LakeGenevaEats = () => {
       <div className="grid gap-8 lg:grid-cols-3">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-8">
+          {/* Friday Fish Fry - Lake Geneva staple! */}
+          <section className={isFriday ? "bg-blue-50 -mx-4 px-4 py-6 rounded-xl border-2 border-blue-200" : ""}>
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-2xl">🐟</span>
+              <h2 className="text-xl font-bold text-slate-900">
+                Friday Fish Fry {isFriday && <Badge className="ml-2 bg-blue-600">Today!</Badge>}
+              </h2>
+            </div>
+            {fishFry.length > 0 ? (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {fishFry.map(item => (
+                  <EatsCard key={item.id} item={item} compact />
+                ))}
+              </div>
+            ) : (
+              <Card className="border-dashed border-blue-200 bg-blue-50/50">
+                <CardContent className="py-6 text-center text-slate-600">
+                  <p className="font-medium">🐟 Fish Fry is a Lake Geneva tradition!</p>
+                  <p className="text-sm mt-1">Check back for the best local fish fry spots.</p>
+                </CardContent>
+              </Card>
+            )}
+          </section>
+
           {/* New Openings */}
           {newOpenings.length > 0 && (
             <section>
@@ -149,6 +186,21 @@ const LakeGenevaEats = () => {
               </div>
               <div className="space-y-3">
                 {newOpenings.map(item => (
+                  <EatsCard key={item.id} item={item} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Closings - important news! */}
+          {closings.length > 0 && (
+            <section>
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-2xl">📍</span>
+                <h2 className="text-xl font-bold text-slate-900">Closing Soon</h2>
+              </div>
+              <div className="space-y-3">
+                {closings.map(item => (
                   <EatsCard key={item.id} item={item} />
                 ))}
               </div>
@@ -270,23 +322,31 @@ const LakeGenevaEats = () => {
               </h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-slate-600">New Openings</span>
+                  <span className="text-slate-600">🐟 Fish Fry</span>
+                  <span className="font-medium">{fishFry.length}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-600">🆕 New Openings</span>
                   <span className="font-medium">{newOpenings.length}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-600">Deals & Specials</span>
+                  <span className="text-slate-600">📍 Closings</span>
+                  <span className="font-medium">{closings.length}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-600">💰 Deals</span>
                   <span className="font-medium">{deals.length}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-600">Reviews</span>
+                  <span className="text-slate-600">⭐ Reviews</span>
                   <span className="font-medium">{reviews.length}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-600">Dining Events</span>
+                  <span className="text-slate-600">🎉 Events</span>
                   <span className="font-medium">{diningEvents.length}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-600">Features</span>
+                  <span className="text-slate-600">🍽️ Features</span>
                   <span className="font-medium">{features.length}</span>
                 </div>
                 <div className="flex justify-between border-t pt-2 mt-2">

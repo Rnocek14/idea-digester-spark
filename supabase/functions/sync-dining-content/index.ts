@@ -15,22 +15,43 @@ const KNOWN_RESTAURANTS = [
   "Hunt Club Steakhouse", "Geneva National"
 ];
 
+// Valuable dining keywords - filter out generic content
+const DINING_KEYWORDS = [
+  "fish fry", "opening", "closes", "closing", "new restaurant", "now open",
+  "happy hour", "special", "deal", "menu", "chef", "review", "best",
+  "brewery", "winery", "distillery", "coffee", "cafe", "bakery",
+  "brunch", "dinner", "lunch", "reservation", "tasting", "wine dinner"
+];
+
 // Dining-specific categories
-type DiningCategory = "restaurant-review" | "restaurant-opening" | "restaurant-deal" | "restaurant-feature" | "dining-event";
+type DiningCategory = "fish-fry" | "restaurant-opening" | "restaurant-closing" | "restaurant-deal" | "restaurant-review" | "restaurant-feature" | "dining-event";
+
+function isDiningRelevant(title: string, description: string): boolean {
+  const text = `${title} ${description}`.toLowerCase();
+  return DINING_KEYWORDS.some(keyword => text.includes(keyword)) ||
+         KNOWN_RESTAURANTS.some(r => text.includes(r.toLowerCase()));
+}
 
 function categorizeDiningContent(title: string, content: string): DiningCategory {
   const text = `${title} ${content}`.toLowerCase();
   
-  if (text.includes("opening") || text.includes("coming soon") || text.includes("new restaurant") || text.includes("now open")) {
+  // Fish fry is a special category for Lake Geneva
+  if (text.includes("fish fry")) {
+    return "fish-fry";
+  }
+  if (text.includes("closing") || text.includes("closes") || text.includes("shutting down") || text.includes("last day")) {
+    return "restaurant-closing";
+  }
+  if (text.includes("opening") || text.includes("coming soon") || text.includes("new restaurant") || text.includes("now open") || text.includes("grand opening")) {
     return "restaurant-opening";
   }
-  if (text.includes("review") || text.includes("best") || text.includes("top 10") || text.includes("rating") || text.includes("star")) {
+  if (text.includes("review") || text.includes("best") || text.includes("top 10") || text.includes("rating") || text.includes("star") || text.includes("ranked")) {
     return "restaurant-review";
   }
-  if (text.includes("deal") || text.includes("special") || text.includes("happy hour") || text.includes("discount") || text.includes("coupon")) {
+  if (text.includes("deal") || text.includes("special") || text.includes("happy hour") || text.includes("discount") || text.includes("coupon") || text.includes("% off")) {
     return "restaurant-deal";
   }
-  if (text.includes("fish fry") || text.includes("wine dinner") || text.includes("tasting") || text.includes("event")) {
+  if (text.includes("wine dinner") || text.includes("tasting") || text.includes("event") || text.includes("brunch")) {
     return "dining-event";
   }
   return "restaurant-feature";
@@ -159,9 +180,17 @@ Deno.serve(async (req) => {
 
           if (existing?.length) continue;
 
+          // Filter for dining-relevant content (skip generic stuff)
+          if (!isDiningRelevant(title, item.description || "")) {
+            console.log(`  ⏭️ Skipping non-dining: ${title.substring(0, 50)}...`);
+            continue;
+          }
+
           // Categorize the content
           const diningCategory = categorizeDiningContent(title, item.description || "");
           const restaurant = extractRestaurantName(title);
+
+          console.log(`  ✅ Adding: ${title.substring(0, 50)}... [${diningCategory}]`);
 
           // Insert new content
           const { error: insertError } = await supabase
@@ -179,6 +208,7 @@ Deno.serve(async (req) => {
                 dining_category: diningCategory,
                 restaurant_name: restaurant,
                 source_name: source.name,
+                is_fish_fry: diningCategory === "fish-fry",
               }
             });
 
