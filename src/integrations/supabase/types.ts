@@ -1395,6 +1395,148 @@ export type Database = {
         }
         Relationships: []
       }
+      restaurant_deals: {
+        Row: {
+          all_you_can_eat: boolean | null
+          confidence_score: number | null
+          created_at: string | null
+          days: string[] | null
+          deal_type: string
+          description: string | null
+          drink_deals: string[] | null
+          end_time: string | null
+          evidence_snippet: string | null
+          evidence_url: string | null
+          fish_type: string | null
+          food_deals: string[] | null
+          id: string
+          last_confirmed_at: string | null
+          name: string
+          price: string | null
+          restaurant_id: string | null
+          sides: string | null
+          source_type: string | null
+          start_time: string | null
+          submitted_by: string | null
+          updated_at: string | null
+          verification_method: string | null
+          verification_status: string | null
+        }
+        Insert: {
+          all_you_can_eat?: boolean | null
+          confidence_score?: number | null
+          created_at?: string | null
+          days?: string[] | null
+          deal_type: string
+          description?: string | null
+          drink_deals?: string[] | null
+          end_time?: string | null
+          evidence_snippet?: string | null
+          evidence_url?: string | null
+          fish_type?: string | null
+          food_deals?: string[] | null
+          id?: string
+          last_confirmed_at?: string | null
+          name: string
+          price?: string | null
+          restaurant_id?: string | null
+          sides?: string | null
+          source_type?: string | null
+          start_time?: string | null
+          submitted_by?: string | null
+          updated_at?: string | null
+          verification_method?: string | null
+          verification_status?: string | null
+        }
+        Update: {
+          all_you_can_eat?: boolean | null
+          confidence_score?: number | null
+          created_at?: string | null
+          days?: string[] | null
+          deal_type?: string
+          description?: string | null
+          drink_deals?: string[] | null
+          end_time?: string | null
+          evidence_snippet?: string | null
+          evidence_url?: string | null
+          fish_type?: string | null
+          food_deals?: string[] | null
+          id?: string
+          last_confirmed_at?: string | null
+          name?: string
+          price?: string | null
+          restaurant_id?: string | null
+          sides?: string | null
+          source_type?: string | null
+          start_time?: string | null
+          submitted_by?: string | null
+          updated_at?: string | null
+          verification_method?: string | null
+          verification_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurant_deals_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      restaurant_pages: {
+        Row: {
+          content_hash: string | null
+          created_at: string | null
+          error_message: string | null
+          id: string
+          is_pdf: boolean | null
+          last_scraped_at: string | null
+          page_type: string | null
+          pdf_text_extracted: string | null
+          restaurant_id: string | null
+          status: string | null
+          updated_at: string | null
+          url: string
+        }
+        Insert: {
+          content_hash?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          is_pdf?: boolean | null
+          last_scraped_at?: string | null
+          page_type?: string | null
+          pdf_text_extracted?: string | null
+          restaurant_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+          url: string
+        }
+        Update: {
+          content_hash?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          is_pdf?: boolean | null
+          last_scraped_at?: string | null
+          page_type?: string | null
+          pdf_text_extracted?: string | null
+          restaurant_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurant_pages_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       restaurant_scrape_jobs: {
         Row: {
           combined_content: string | null
@@ -1478,7 +1620,10 @@ export type Database = {
           cuisine_types: string[] | null
           extraction_confidence: Json | null
           extraction_notes: string | null
+          facebook_url: string | null
+          features: string[] | null
           fish_fry: Json | null
+          google_place_id: string | null
           happy_hour: Json | null
           hours: Json | null
           id: string
@@ -1486,7 +1631,10 @@ export type Database = {
           menu_highlights: string[] | null
           name: string
           needs_review: boolean | null
+          opentable_url: string | null
           phone: string | null
+          price_range: string | null
+          reservation_required: boolean | null
           signature_dishes: Json | null
           slug: string
           source_url: string | null
@@ -1503,7 +1651,10 @@ export type Database = {
           cuisine_types?: string[] | null
           extraction_confidence?: Json | null
           extraction_notes?: string | null
+          facebook_url?: string | null
+          features?: string[] | null
           fish_fry?: Json | null
+          google_place_id?: string | null
           happy_hour?: Json | null
           hours?: Json | null
           id?: string
@@ -1511,7 +1662,10 @@ export type Database = {
           menu_highlights?: string[] | null
           name: string
           needs_review?: boolean | null
+          opentable_url?: string | null
           phone?: string | null
+          price_range?: string | null
+          reservation_required?: boolean | null
           signature_dishes?: Json | null
           slug: string
           source_url?: string | null
@@ -1528,7 +1682,10 @@ export type Database = {
           cuisine_types?: string[] | null
           extraction_confidence?: Json | null
           extraction_notes?: string | null
+          facebook_url?: string | null
+          features?: string[] | null
           fish_fry?: Json | null
+          google_place_id?: string | null
           happy_hour?: Json | null
           hours?: Json | null
           id?: string
@@ -1536,7 +1693,10 @@ export type Database = {
           menu_highlights?: string[] | null
           name?: string
           needs_review?: boolean | null
+          opentable_url?: string | null
           phone?: string | null
+          price_range?: string | null
+          reservation_required?: boolean | null
           signature_dishes?: Json | null
           slug?: string
           source_url?: string | null
