@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Utensils, MapPin, Clock, ArrowRight, Star, Calendar } from "lucide-react";
+import { Utensils, MapPin, Clock, ArrowRight, Star, Calendar, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import PageShell from "@/components/PageShell";
 import { Card, CardContent } from "@/components/ui/card";
@@ -21,6 +21,30 @@ type EatsContent = {
     verticals?: string[];
     content_tags?: string[];
   } | null;
+};
+
+type Restaurant = {
+  id: string;
+  name: string;
+  slug: string | null;
+  website: string | null;
+  phone: string | null;
+  hours: Record<string, string> | null;
+  fish_fry: {
+    available?: boolean;
+    day?: string;
+    price?: string;
+    description?: string;
+  } | null;
+  happy_hour: {
+    days?: string[];
+    times?: string;
+    deals?: string[];
+  } | null;
+  weekly_specials: Array<{ day: string; name: string; description?: string }> | null;
+  tags: string[] | null;
+  categories: string[] | null;
+  last_scraped_at: string | null;
 };
 
 // Known restaurants for extraction
@@ -62,6 +86,19 @@ const LakeGenevaEats = () => {
   const today = new Date();
   const todayStr = format(today, "yyyy-MM-dd");
 
+  // Fetch scraped restaurant data
+  const { data: restaurantsData } = useQuery({
+    queryKey: ["restaurants-scraped"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("restaurants" as any)
+        .select("*")
+        .order("name");
+      if (error) throw error;
+      return data as unknown as Restaurant[];
+    },
+  });
+
   // Fetch eats/dining content
   const { data: eatsContent, isLoading } = useQuery({
     queryKey: ["eats-content"],
@@ -78,6 +115,10 @@ const LakeGenevaEats = () => {
       return data as EatsContent[];
     },
   });
+
+  // Filter restaurants with fish fry
+  const fishFryRestaurants = restaurantsData?.filter(r => r.fish_fry?.available) || [];
+  const happyHourRestaurants = restaurantsData?.filter(r => r.happy_hour?.times) || [];
 
   // Categorize content - prefer metadata dining_category, fallback to title keywords
   const categorize = (c: EatsContent) => {
@@ -161,13 +202,46 @@ const LakeGenevaEats = () => {
                 Friday Fish Fry {isFriday && <Badge className="ml-2 bg-blue-600">Today!</Badge>}
               </h2>
             </div>
+            
+            {/* Scraped Fish Fry Restaurants */}
+            {fishFryRestaurants.length > 0 && (
+              <div className="mb-4">
+                <p className="text-sm text-slate-600 mb-3">🔥 Local spots serving fish fry:</p>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {fishFryRestaurants.map(restaurant => (
+                    <Card key={restaurant.id} className="bg-white">
+                      <CardContent className="p-3">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h4 className="font-medium text-slate-900">{restaurant.name}</h4>
+                            {restaurant.fish_fry?.price && (
+                              <p className="text-sm text-green-700 font-medium">{restaurant.fish_fry.price}</p>
+                            )}
+                            {restaurant.fish_fry?.description && (
+                              <p className="text-xs text-slate-600 mt-1 line-clamp-2">{restaurant.fish_fry.description}</p>
+                            )}
+                          </div>
+                          {restaurant.website && (
+                            <a href={restaurant.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800">
+                              <ExternalLink className="h-4 w-4" />
+                            </a>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Content about fish fry */}
             {fishFry.length > 0 ? (
               <div className="grid gap-3 sm:grid-cols-2">
                 {fishFry.map(item => (
                   <EatsCard key={item.id} item={item} compact />
                 ))}
               </div>
-            ) : (
+            ) : fishFryRestaurants.length === 0 && (
               <Card className="border-dashed border-blue-200 bg-blue-50/50">
                 <CardContent className="py-6 text-center text-slate-600">
                   <p className="font-medium">🐟 Fish Fry is a Lake Geneva tradition!</p>
@@ -176,6 +250,54 @@ const LakeGenevaEats = () => {
               </Card>
             )}
           </section>
+
+          {/* Happy Hour Guide */}
+          {happyHourRestaurants.length > 0 && (
+            <section>
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-2xl">🍸</span>
+                <h2 className="text-xl font-bold text-slate-900">Happy Hour Guide</h2>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {happyHourRestaurants.map(restaurant => (
+                  <Card key={restaurant.id} className="hover:shadow-md transition-shadow">
+                    <CardContent className="p-4">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h4 className="font-semibold text-slate-900">{restaurant.name}</h4>
+                          {restaurant.happy_hour?.times && (
+                            <p className="text-sm text-orange-700 flex items-center gap-1 mt-1">
+                              <Clock className="h-3 w-3" />
+                              {restaurant.happy_hour.times}
+                            </p>
+                          )}
+                          {restaurant.happy_hour?.days && (
+                            <p className="text-xs text-slate-600 mt-1">
+                              {restaurant.happy_hour.days.join(", ")}
+                            </p>
+                          )}
+                          {restaurant.happy_hour?.deals && restaurant.happy_hour.deals.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {restaurant.happy_hour.deals.slice(0, 3).map((deal, i) => (
+                                <Badge key={i} variant="secondary" className="text-xs">
+                                  {deal}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        {restaurant.website && (
+                          <a href={restaurant.website} target="_blank" rel="noopener noreferrer" className="text-orange-600 hover:text-orange-800">
+                            <ExternalLink className="h-4 w-4" />
+                          </a>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* New Openings */}
           {newOpenings.length > 0 && (
@@ -288,12 +410,55 @@ const LakeGenevaEats = () => {
 
         {/* Sidebar */}
         <aside className="space-y-6">
-          {/* Restaurant Directory */}
+          {/* Scraped Restaurant Directory */}
+          {restaurantsData && restaurantsData.length > 0 && (
+            <Card className="border-orange-200 bg-orange-50/50">
+              <CardContent className="pt-6">
+                <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                  <Utensils className="h-4 w-4 text-orange-600" />
+                  Restaurant Directory
+                  <Badge variant="secondary" className="ml-auto text-xs">
+                    {restaurantsData.length} scraped
+                  </Badge>
+                </h3>
+                <div className="space-y-2">
+                  {restaurantsData.slice(0, 12).map(restaurant => (
+                    <div key={restaurant.id} className="flex items-center justify-between text-sm group">
+                      <div className="flex items-center gap-2">
+                        <span className="text-slate-900">{restaurant.name}</span>
+                        <div className="flex gap-1">
+                          {restaurant.fish_fry?.available && <span title="Fish Fry">🐟</span>}
+                          {restaurant.happy_hour?.times && <span title="Happy Hour">🍸</span>}
+                        </div>
+                      </div>
+                      {restaurant.website && (
+                        <a 
+                          href={restaurant.website} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-orange-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                {restaurantsData.some(r => r.last_scraped_at) && (
+                  <p className="text-xs text-slate-500 mt-3 pt-3 border-t">
+                    Last updated: {format(new Date(restaurantsData.find(r => r.last_scraped_at)?.last_scraped_at || ""), "MMM d, yyyy")}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Featured Restaurants from Content */}
           <Card>
             <CardContent className="pt-6">
               <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
                 <MapPin className="h-4 w-4 text-orange-600" />
-                Featured Restaurants
+                In the News
               </h3>
               {restaurants.length > 0 ? (
                 <div className="space-y-2">
@@ -308,7 +473,7 @@ const LakeGenevaEats = () => {
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-slate-500">No restaurants extracted yet</p>
+                <p className="text-sm text-slate-500">No restaurants in recent news</p>
               )}
             </CardContent>
           </Card>
