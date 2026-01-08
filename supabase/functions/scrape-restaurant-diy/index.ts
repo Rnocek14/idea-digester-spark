@@ -163,7 +163,7 @@ const MENU_KEYWORDS = ['menu', 'food', 'dinner', 'lunch', 'drink', 'appetizer', 
 const SPECIAL_KEYWORDS = ['special', 'happy', 'hour', 'promotion', 'deal', 'fish', 'fry', 'friday', 'weekly', 'event', 'brunch'];
 const HIGH_PRIORITY_PATHS = ['/menu', '/food-menu', '/dinner-menu', '/specials', '/weekly-specials', '/happy-hour', '/friday-fish-fry', '/events', '/food', '/drinks', '/brunch'];
 
-// SHA-256 hash for stable deal IDs (FIX #3)
+// SHA-256 hash for stable deal IDs
 async function sha256Hex(input: string): Promise<string> {
   const data = new TextEncoder().encode(input);
   const digest = await crypto.subtle.digest("SHA-256", data);
@@ -177,6 +177,19 @@ async function generateDealHash(restaurantId: string, deal: DealExtraction): Pro
   const normDays = (deal.days || []).map(d => d.toLowerCase()).sort().join(",");
   const key = [restaurantId, deal.deal_type, normName, normDays, deal.start_time || "", deal.end_time || ""].join("|");
   return `deal_${(await sha256Hex(key)).slice(0, 24)}`;
+}
+
+// Normalize URL for evidence validation (FIX #4: handle querystrings)
+function normalizeUrlForValidation(urlStr: string): string {
+  try {
+    const u = new URL(urlStr);
+    u.hash = "";
+    // Remove common tracking params
+    ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'fbclid', 'gclid', 'ref', 'v'].forEach(p => u.searchParams.delete(p));
+    return u.origin + u.pathname;
+  } catch {
+    return urlStr;
+  }
 }
 
 // Fetch with retry
@@ -316,7 +329,7 @@ function hasRelevantContent(content: string): boolean {
     .some(k => lower.includes(k));
 }
 
-// PDF extraction with guardrails (FIX #3 improvements)
+// PDF extraction with guardrails
 async function extractPdfText(pdfUrl: string): Promise<{ text: string | null; status: string; chars: number }> {
   try {
     console.log(`Attempting PDF extraction: ${pdfUrl}`);
@@ -410,7 +423,7 @@ function normalizeFeatures(features: string[]): string[] {
   return [...new Set(normalized)];
 }
 
-// Parse time string to minutes since midnight (FIX #C: require am/pm unless hour >= 13)
+// Parse time string to minutes since midnight (require am/pm unless hour >= 13)
 function parseTimeToMinutes(timeStr: string): number | null {
   if (!timeStr) return null;
   
@@ -496,11 +509,14 @@ Deno.serve(async (req) => {
       sources = data || [];
     }
 
-    console.log(`Processing ${sources.length} restaurant sources with gpt-4o + SHA-256 hashing`);
+    console.log(`Processing ${sources.length} restaurant sources with gpt-4o + v7 fixes`);
 
     const results: Array<{ name: string; success: boolean; error?: string; confidence?: number; pages_scraped?: number; pdfs_found?: number; deals_found?: number }> = [];
 
     for (const source of sources) {
+      // FIX #1: Define 'now' at the top of loop scope
+      const now = new Date().toISOString();
+      
       try {
         console.log(`\n=== Scraping ${source.name}: ${source.url} ===`);
         
@@ -508,7 +524,7 @@ Deno.serve(async (req) => {
           source_id: source.id,
           restaurant_slug: slugify(source.name),
           status: 'discovering',
-          started_at: new Date().toISOString(),
+          started_at: now,
         }, { onConflict: 'source_id' }).select().single();
 
         // Fetch homepage
@@ -536,7 +552,7 @@ Deno.serve(async (req) => {
           if (!htmlLinks.includes(testUrl)) htmlLinks.unshift(testUrl);
         }
 
-        // Fetch pages - track URLs for evidence validation
+        // Fetch pages - track URLs for evidence validation (non-PDFs only in first pass)
         const pageContents: Array<{ url: string; content: string; type: string }> = [];
         const homepageContent = extractRelevantContent(homepageHtml);
         pageContents.push({ url: source.url, content: homepageContent, type: 'homepage' });
@@ -558,15 +574,16 @@ Deno.serve(async (req) => {
           await new Promise(r => setTimeout(r, 200));
         }
 
-        // Extract PDFs with guardrails (FIX #1: removed pre-restaurant pages upsert)
+        // Extract PDFs with guardrails (FIX #5: store PDFs only via pdfResults, not duplicated)
         let pdfCount = 0;
-        const pdfResults: Array<{ url: string; status: string; chars: number }> = [];
+        const pdfResults: Array<{ url: string; status: string; chars: number; text: string | null }> = [];
         
         for (const pdfUrl of pdfLinks) {
           const pdfResult = await extractPdfText(pdfUrl);
-          pdfResults.push({ url: pdfUrl, status: pdfResult.status, chars: pdfResult.chars });
+          pdfResults.push({ url: pdfUrl, status: pdfResult.status, chars: pdfResult.chars, text: pdfResult.text });
           
           if (pdfResult.text) {
+            // Add to pageContents for GPT extraction
             pageContents.push({ url: pdfUrl, content: pdfResult.text, type: 'pdf_menu' });
             pdfCount++;
             console.log(`  ✓ PDF ${pdfUrl} (${pdfResult.chars} chars, status: ${pdfResult.status})`);
@@ -580,8 +597,9 @@ Deno.serve(async (req) => {
           content_sources: pageContents.map(p => ({ url: p.url, type: p.type })),
         }).eq('id', job?.id);
 
-        // Build allowed URLs set for evidence validation (FIX #4)
-        const allowedUrls = new Set(pageContents.map(p => p.url));
+        // Build allowed URLs set for evidence validation (FIX #4: normalize URLs)
+        const allowedUrlsNormalized = new Set(pageContents.map(p => normalizeUrlForValidation(p.url)));
+        const urlNormToOriginal = new Map(pageContents.map(p => [normalizeUrlForValidation(p.url), p.url]));
         
         // Combine content with clear page markers
         const combinedContent = pageContents
@@ -644,7 +662,7 @@ Deno.serve(async (req) => {
           extraction_confidence: extraction.extraction_confidence || {},
           needs_review: (extraction.extraction_confidence?.overall || 0) < 0.6,
           extraction_notes: extraction.extraction_notes,
-          last_scraped_at: new Date().toISOString(),
+          last_scraped_at: now,
         };
 
         const { data: restaurant, error: upsertError } = await supabase
@@ -656,23 +674,23 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        // Store discovered pages AFTER we have restaurant.id (FIX #1)
+        // Store discovered pages AFTER we have restaurant.id (FIX #5: only non-PDFs here)
         for (const page of pageContents) {
-          if (page.url !== source.url) {
+          if (page.url !== source.url && page.type !== 'pdf_menu') {
             try {
               await supabase.from("restaurant_pages").upsert({
                 restaurant_id: restaurant.id,
                 url: page.url,
                 page_type: page.type,
-                is_pdf: page.type === 'pdf_menu',
+                is_pdf: false,
                 status: 'scraped',
-                last_scraped_at: new Date().toISOString(),
+                last_scraped_at: now,
               }, { onConflict: 'restaurant_id,url' });
             } catch { /* ignore */ }
           }
         }
         
-        // Store PDF extraction statuses (FIX #1: now using correct restaurant.id)
+        // Store PDF extraction statuses (FIX #5: PDFs stored only here, not duplicated)
         for (const pdf of pdfResults) {
           try {
             await supabase.from("restaurant_pages").upsert({
@@ -683,20 +701,39 @@ Deno.serve(async (req) => {
               pdf_extraction_status: pdf.status,
               pdf_extraction_chars: pdf.chars,
               status: pdf.status === 'ok' ? 'scraped' : 'failed',
-              last_scraped_at: new Date().toISOString(),
+              last_scraped_at: now,
             }, { onConflict: 'restaurant_id,url' });
           } catch { /* ignore */ }
         }
 
-        // UPSERT deals with SHA-256 hash (FIX #2 & #3)
-        const now = new Date().toISOString();
-        const seenHashes: string[] = [];
+        // FIX #2: Fetch ALL existing deals once (not per-deal)
+        const { data: existingDeals } = await supabase
+          .from("restaurant_deals")
+          .select("id, deal_hash, verification_status")
+          .eq("restaurant_id", restaurant.id);
         
-        // Helper to validate and sanitize evidence_url (FIX #4)
+        const verifiedMap = new Map(
+          (existingDeals || []).map(d => [d.deal_hash, d.verification_status])
+        );
+
+        // Helper to validate and sanitize evidence_url (FIX #4: normalize before checking)
         const sanitizeEvidenceUrl = (url: string | undefined): string => {
           if (!url) return source.url;
-          return allowedUrls.has(url) ? url : source.url;
+          try {
+            const normalized = normalizeUrlForValidation(url);
+            if (allowedUrlsNormalized.has(normalized)) {
+              // Return the original URL from our scraped set (preserves casing, etc.)
+              return urlNormToOriginal.get(normalized) || url;
+            }
+            return source.url;
+          } catch {
+            return source.url;
+          }
         };
+
+        // FIX #6: Batch deal upserts instead of per-deal
+        const seenHashes: string[] = [];
+        const dealUpserts: Record<string, any>[] = [];
         
         if (extraction.deals && extraction.deals.length > 0) {
           for (const deal of extraction.deals) {
@@ -708,20 +745,14 @@ Deno.serve(async (req) => {
             
             const validatedEvidenceUrl = sanitizeEvidenceUrl(deal.evidence_url);
             
-            // Determine verification_method based on evidence_url (FIX #A)
+            // Determine verification_method based on evidence_url
             const verificationMethod = validatedEvidenceUrl.toLowerCase().endsWith('.pdf') 
               ? 'pdf' 
               : 'scraped_text';
             
-            // Check if deal already exists and is verified (FIX #B)
-            const { data: existingDeal } = await supabase
-              .from("restaurant_deals")
-              .select("verification_status")
-              .eq("deal_hash", dealHash)
-              .single();
-            
-            const isHumanVerified = existingDeal?.verification_status === 'verified' || 
-                                   existingDeal?.verification_status === 'community_verified';
+            // Check if deal is human-verified (FIX #2: use cached map)
+            const existingStatus = verifiedMap.get(dealHash);
+            const isHumanVerified = existingStatus === 'verified' || existingStatus === 'community_verified';
             
             const dealData: Record<string, any> = {
               deal_hash: dealHash,
@@ -748,37 +779,37 @@ Deno.serve(async (req) => {
               confidence_score: deal.confidence || extraction.extraction_confidence?.overall,
             };
             
-            // Only update verification fields if not human-verified (FIX #B)
+            // Only update verification fields if not human-verified
             if (!isHumanVerified) {
               dealData.verification_status = 'unverified';
               dealData.verification_method = verificationMethod;
             }
 
-            await supabase.from("restaurant_deals").upsert(dealData, { onConflict: 'deal_hash' });
+            dealUpserts.push(dealData);
           }
           
-          // Mark unseen deals as outdated (FIX #2: correct IN clause formatting)
-          if (seenHashes.length > 0) {
-            // Use filter instead of .not('in', ...) for safety
-            const { data: allDeals } = await supabase
-              .from("restaurant_deals")
-              .select("id, deal_hash")
-              .eq("restaurant_id", restaurant.id)
-              .eq("source_type", "scraper");
+          // FIX #6: Single batch upsert
+          if (dealUpserts.length > 0) {
+            await supabase.from("restaurant_deals").upsert(dealUpserts, { onConflict: 'deal_hash' });
+            console.log(`Batch upserted ${dealUpserts.length} deals for ${source.name}`);
+          }
+          
+          // FIX #3: Mark unseen deals as outdated ONLY if not human-verified
+          if (seenHashes.length > 0 && existingDeals) {
+            const unseenDeals = existingDeals.filter(d => 
+              !seenHashes.includes(d.deal_hash) &&
+              d.verification_status !== 'verified' &&
+              d.verification_status !== 'community_verified'
+            );
             
-            if (allDeals) {
-              const unseenDeals = allDeals.filter(d => !seenHashes.includes(d.deal_hash));
-              if (unseenDeals.length > 0) {
-                await supabase
-                  .from("restaurant_deals")
-                  .update({ verification_status: 'outdated', valid_to: now })
-                  .in('id', unseenDeals.map(d => d.id));
-                console.log(`Marked ${unseenDeals.length} deals as outdated`);
-              }
+            if (unseenDeals.length > 0) {
+              await supabase
+                .from("restaurant_deals")
+                .update({ verification_status: 'outdated', valid_to: now })
+                .in('id', unseenDeals.map(d => d.id));
+              console.log(`Marked ${unseenDeals.length} non-verified deals as outdated`);
             }
           }
-            
-          console.log(`Upserted ${seenHashes.length} deals for ${source.name}`);
         }
 
         // Update job as complete
@@ -789,14 +820,14 @@ Deno.serve(async (req) => {
           completed_at: new Date().toISOString(),
         }).eq('id', job?.id);
 
-        // Update source
+        // Update source (FIX #1: 'now' is now in scope)
         await supabase.from("sources").update({ 
           last_fetched_at: now,
           type: "diy-scrape",
           status: "active",
           metadata: { 
             ...(source.metadata || {}), 
-            scraper_version: "v6-sha256-evidence",
+            scraper_version: "v7-batched-validated",
             pages_scraped: pagesScraped,
             pdfs_extracted: pdfCount,
             deals_found: extraction.deals?.length || 0,
@@ -822,7 +853,7 @@ Deno.serve(async (req) => {
     }
 
     await supabase.from("activity_log").insert({
-      action: "scrape_restaurant_v6",
+      action: "scrape_restaurant_v7",
       entity_type: "restaurant",
       actor_type: "system",
       details: {
