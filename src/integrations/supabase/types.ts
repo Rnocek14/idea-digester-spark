@@ -739,6 +739,69 @@ export type Database = {
         }
         Relationships: []
       }
+      fish_fry_history: {
+        Row: {
+          all_you_can_eat: boolean | null
+          change_type: string
+          changed_by: string | null
+          created_at: string
+          days: string[] | null
+          deal_id: string | null
+          evidence_snippet: string | null
+          evidence_url: string | null
+          fish_type: string | null
+          id: string
+          price: string | null
+          restaurant_id: string | null
+          sides: string | null
+        }
+        Insert: {
+          all_you_can_eat?: boolean | null
+          change_type: string
+          changed_by?: string | null
+          created_at?: string
+          days?: string[] | null
+          deal_id?: string | null
+          evidence_snippet?: string | null
+          evidence_url?: string | null
+          fish_type?: string | null
+          id?: string
+          price?: string | null
+          restaurant_id?: string | null
+          sides?: string | null
+        }
+        Update: {
+          all_you_can_eat?: boolean | null
+          change_type?: string
+          changed_by?: string | null
+          created_at?: string
+          days?: string[] | null
+          deal_id?: string | null
+          evidence_snippet?: string | null
+          evidence_url?: string | null
+          fish_type?: string | null
+          id?: string
+          price?: string | null
+          restaurant_id?: string | null
+          sides?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fish_fry_history_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "restaurant_deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fish_fry_history_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fish_fry_submissions: {
         Row: {
           created_at: string
@@ -1637,6 +1700,7 @@ export type Database = {
           address: string | null
           amenities: string[] | null
           categories: string[] | null
+          city: string | null
           created_at: string
           cuisine_types: string[] | null
           extraction_confidence: Json | null
@@ -1648,6 +1712,7 @@ export type Database = {
           happy_hour: Json | null
           hours: Json | null
           id: string
+          is_lakefront: boolean | null
           last_scraped_at: string | null
           menu_highlights: string[] | null
           name: string
@@ -1668,6 +1733,7 @@ export type Database = {
           address?: string | null
           amenities?: string[] | null
           categories?: string[] | null
+          city?: string | null
           created_at?: string
           cuisine_types?: string[] | null
           extraction_confidence?: Json | null
@@ -1679,6 +1745,7 @@ export type Database = {
           happy_hour?: Json | null
           hours?: Json | null
           id?: string
+          is_lakefront?: boolean | null
           last_scraped_at?: string | null
           menu_highlights?: string[] | null
           name: string
@@ -1699,6 +1766,7 @@ export type Database = {
           address?: string | null
           amenities?: string[] | null
           categories?: string[] | null
+          city?: string | null
           created_at?: string
           cuisine_types?: string[] | null
           extraction_confidence?: Json | null
@@ -1710,6 +1778,7 @@ export type Database = {
           happy_hour?: Json | null
           hours?: Json | null
           id?: string
+          is_lakefront?: boolean | null
           last_scraped_at?: string | null
           menu_highlights?: string[] | null
           name?: string
