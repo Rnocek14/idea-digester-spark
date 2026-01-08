@@ -105,14 +105,24 @@ const LakeGenevaEats = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("content_queue")
-        .select("id, title, summary, content, event_date, original_url, image_url, category, metadata")
-        .in("status", ["published", "auto_published", "approved"])
+        .select("id, title, summary, content, event_date, original_url, image_url, category, metadata, normalized_url")
+        .in("status", ["published", "auto_published"])
         .or("category.eq.dining,category.eq.restaurant,category.eq.food,metadata->verticals.cs.[\"eats\"],metadata->verticals.cs.[\"dining\"],metadata->verticals.cs.[\"food\"]")
         .order("created_at", { ascending: false })
         .limit(50);
 
       if (error) throw error;
-      return data as EatsContent[];
+      
+      // Deduplicate by normalized_url to avoid showing same story multiple times
+      const seen = new Set<string>();
+      const deduplicated = (data || []).filter(item => {
+        const key = (item as any).normalized_url || item.title.toLowerCase().slice(0, 50);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+      
+      return deduplicated as EatsContent[];
     },
   });
 
