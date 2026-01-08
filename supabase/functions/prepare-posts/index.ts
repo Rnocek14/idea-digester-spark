@@ -13,6 +13,7 @@ const OPTIMAL_SLOTS_CENTRAL = [8, 10, 12, 14, 16, 18]; // 8am, 10am, 12pm, 2pm, 
 
 // Topic-specific civic image libraries for smart keyword mapping
 type CivicTopic = 'land_use' | 'historic' | 'council' | 'parks' | 'lakefront' | 'library' | 'safety' | 'tourism' | 'utilities' | 'finance' | 'default';
+type DiningTopic = 'fish_fry' | 'happy_hour' | 'brunch' | 'default';
 
 const CIVIC_IMAGE_LIBRARIES: Record<CivicTopic, string[]> = {
   land_use: [
@@ -72,6 +73,48 @@ const CIVIC_IMAGE_LIBRARIES: Record<CivicTopic, string[]> = {
 };
 
 const GENERIC_OG_PATTERNS = ["IconModuleCalendar", "calendar-icon", "default-event", "placeholder"];
+
+// Curated dining images for restaurant deals
+const DINING_IMAGE_LIBRARIES: Record<DiningTopic, string[]> = {
+  fish_fry: [
+    "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&q=80",
+    "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&q=80",
+    "https://images.unsplash.com/photo-1559847844-5315695dadae?w=800&q=80",
+  ],
+  happy_hour: [
+    "https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=800&q=80",
+    "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=800&q=80",
+    "https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=800&q=80",
+  ],
+  brunch: [
+    "https://images.unsplash.com/photo-1533920379810-6bed1ccd1228?w=800&q=80",
+    "https://images.unsplash.com/photo-1525351484163-7529414344d8?w=800&q=80",
+    "https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=800&q=80",
+  ],
+  default: [
+    "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80",
+    "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&q=80",
+    "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&q=80",
+  ],
+};
+
+function detectDiningTopic(title: string, metadata: any): DiningTopic {
+  const t = title.toLowerCase();
+  const dealType = metadata?.deal_type?.toLowerCase() || '';
+  
+  if (dealType.includes('fish') || t.includes('fish fry') || t.includes('friday fish')) return 'fish_fry';
+  if (dealType.includes('happy') || t.includes('happy hour')) return 'happy_hour';
+  if (dealType.includes('brunch') || t.includes('brunch')) return 'brunch';
+  
+  return 'default';
+}
+
+function getCuratedDiningImage(storyId: string, title: string, metadata: any): string {
+  const topic = detectDiningTopic(title, metadata);
+  const images = DINING_IMAGE_LIBRARIES[topic] ?? DINING_IMAGE_LIBRARIES.default;
+  const hash = storyId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return images[hash % images.length];
+}
 
 function detectCivicTopic(title: string): CivicTopic {
   const t = title.toLowerCase();
@@ -389,6 +432,7 @@ serve(async (req) => {
     for (const story of freshStories) {
       const category = (story.category || '').toLowerCase();
       const isCivic = category === 'civic';
+      const isDining = category === 'dining';
       
       // Determine image ONCE per story
       let finalImageUrl = story.image_url;
@@ -397,8 +441,14 @@ serve(async (req) => {
       const isSponsored = story.is_sponsored || false;
       
       const hasGenericCivicImage = isCivic && isGenericCivicImage(story.image_url);
+      const isDiningWithCuratedImage = isDining && story.image_source === 'curated_dining';
       
-      if (hasGenericCivicImage) {
+      // Use curated dining image if it's a dining post without a good image
+      if (isDining && (!story.image_url || story.image_source === 'curated_dining')) {
+        finalImageUrl = getCuratedDiningImage(story.id, story.title, story.metadata);
+        imageSource = 'curated_dining';
+        console.log(`[prepare-posts] Using curated dining image for story ${story.id}`);
+      } else if (hasGenericCivicImage) {
         const civicTopic = detectCivicTopic(story.title);
         finalImageUrl = getCuratedCivicImage(story.id, story.title);
         imageSource = 'curated_civic';

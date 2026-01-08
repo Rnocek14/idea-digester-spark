@@ -194,3 +194,6 @@ verify_jwt = false
 
 [functions.scrape-content]
 verify_jwt = false
+
+[functions.sync-dining-content-v2]
+verify_jwt = false
