@@ -1032,21 +1032,99 @@ serve(async (req) => {
 
           console.log(`Found ${items.length} RSS items in ${source.name}`);
         } else if (source.type === "scrape") {
-          // Fetch HTML page
-          // Fetch HTML with full browser-like headers to avoid 403 blocks
-          const htmlResponse = await fetch(source.url, {
-            headers: {
-              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-              "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-              "Accept-Language": "en-US,en;q=0.9",
-            },
-          });
-
-          if (!htmlResponse.ok) {
-            throw new Error(`HTTP ${htmlResponse.status}: ${htmlResponse.statusText}`);
+          // DIY Scraping with anti-bot evasion and Firecrawl fallback
+          const USER_AGENTS = [
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+          ];
+          
+          let htmlText = '';
+          let usedFirecrawl = false;
+          
+          // Try DIY fetch first with anti-bot headers
+          for (let attempt = 0; attempt < 2; attempt++) {
+            try {
+              if (attempt > 0) {
+                await new Promise(r => setTimeout(r, 500 + Math.random() * 1000));
+              }
+              
+              const controller = new AbortController();
+              const timeoutId = setTimeout(() => controller.abort(), 12000);
+              
+              let referer = '';
+              try { referer = new URL(source.url).origin; } catch {}
+              
+              const htmlResponse = await fetch(source.url, {
+                headers: {
+                  'User-Agent': USER_AGENTS[attempt % USER_AGENTS.length],
+                  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                  'Accept-Language': 'en-US,en;q=0.9',
+                  'Accept-Encoding': 'gzip, deflate',
+                  'Sec-Fetch-Dest': 'document',
+                  'Sec-Fetch-Mode': 'navigate',
+                  'Sec-Fetch-Site': 'none',
+                  'Upgrade-Insecure-Requests': '1',
+                  'Referer': referer,
+                  'Cache-Control': 'no-cache',
+                },
+                redirect: 'follow',
+                signal: controller.signal,
+              });
+              
+              clearTimeout(timeoutId);
+              
+              if (htmlResponse.ok) {
+                htmlText = await htmlResponse.text();
+                if (htmlText.length >= 500) {
+                  console.log(`✅ DIY fetch succeeded for ${source.name} (${htmlText.length} chars)`);
+                  break;
+                }
+                console.log(`⚠️ Sparse content (${htmlText.length} chars), trying again...`);
+              } else if (htmlResponse.status === 403 || htmlResponse.status === 429) {
+                console.log(`⚠️ Got ${htmlResponse.status} for ${source.name}, will try Firecrawl`);
+                break;
+              }
+            } catch (e) {
+              console.log(`DIY fetch attempt ${attempt + 1} failed: ${e}`);
+            }
           }
-
-          const htmlText = await htmlResponse.text();
+          
+          // Firecrawl fallback if DIY failed
+          const firecrawlKey = Deno.env.get('FIRECRAWL_API_KEY');
+          if ((!htmlText || htmlText.length < 500) && firecrawlKey) {
+            console.log(`🔥 Using Firecrawl fallback for ${source.name}`);
+            try {
+              const fcRes = await fetch('https://api.firecrawl.dev/v1/scrape', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${firecrawlKey}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  url: source.url,
+                  formats: ['html'],
+                  onlyMainContent: false,
+                  waitFor: 3000,
+                }),
+              });
+              
+              if (fcRes.ok) {
+                const data = await fcRes.json();
+                htmlText = data.data?.html || '';
+                usedFirecrawl = true;
+                console.log(`✅ Firecrawl succeeded for ${source.name} (${htmlText.length} chars)`);
+              } else {
+                const errData = await fcRes.json().catch(() => ({}));
+                console.log(`⚠️ Firecrawl failed: ${errData.error || fcRes.status}`);
+              }
+            } catch (err) {
+              console.log(`⚠️ Firecrawl error: ${err}`);
+            }
+          }
+          
+          if (!htmlText || htmlText.length < 200) {
+            throw new Error(`Failed to fetch content for ${source.name} - no HTML retrieved`);
+          }
 
           // Parse HTML using deno-dom
           const { DOMParser } = await import("https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts");
@@ -1057,7 +1135,7 @@ serve(async (req) => {
           }
 
           // Get selector from metadata with fallback logic
-          let selector = source.metadata?.scrape_selector || ".event-item";
+          let selector = source.metadata?.scrape_selector || "article, .post, .news-item, .announcement";
           
           // HARDCODED FIX: For Visit Lake Geneva Events, use correct selector
           if (source.name === "Visit Lake Geneva – Events" && selector === ".event-item") {
@@ -1073,15 +1151,28 @@ serve(async (req) => {
             console.log(`✅ Updated ${source.name} selector in database to "article.slide"`);
           }
 
-          console.log(`🔍 Using selector "${selector}" for ${source.name}`);
-          const elements = doc.querySelectorAll(selector);
+          console.log(`🔍 Using selector "${selector}" for ${source.name} (firecrawl: ${usedFirecrawl})`);
+          let elements = doc.querySelectorAll(selector);
+          
+          // Fallback: try common selectors if primary returns nothing
+          if (elements.length === 0) {
+            const fallbackSelectors = ['article', '.post', '.entry', '.news-item', '.announcement-item', 'li.item', '.card'];
+            for (const fallback of fallbackSelectors) {
+              elements = doc.querySelectorAll(fallback);
+              if (elements.length > 0) {
+                console.log(`🔄 Primary selector empty, using fallback "${fallback}" (found ${elements.length})`);
+                break;
+              }
+            }
+          }
+          
           console.log(`Found ${elements.length} elements with selector "${selector}" in ${source.name}`);
 
           // Get configurable selectors from metadata with fallbacks
-          const titleSelector = source.metadata?.title_selector || "h2, h3, .title, .event-title";
+          const titleSelector = source.metadata?.title_selector || "h1, h2, h3, .title, .event-title, a";
           const linkSelector = source.metadata?.link_selector || "a";
-          const dateSelector = source.metadata?.date_selector || "time, .date, .event-date";
-          const descSelector = source.metadata?.desc_selector || "p, .description, .event-description";
+          const dateSelector = source.metadata?.date_selector || "time, .date, .event-date, .published";
+          const descSelector = source.metadata?.desc_selector || "p, .description, .excerpt, .summary";
 
           console.log(`🎯 Using extraction selectors - title: "${titleSelector}", link: "${linkSelector}"`);
 
@@ -1099,11 +1190,18 @@ serve(async (req) => {
             const descEl = element.querySelector(descSelector);
 
             const title = titleEl?.textContent?.trim() || "";
-            const link = linkEl?.getAttribute("href") || "";
+            let link = linkEl?.getAttribute("href") || "";
+            
+            // Resolve relative URLs
+            if (link && !link.startsWith('http')) {
+              try {
+                link = new URL(link, source.url).toString();
+              } catch {}
+            }
             
             // Debug logging for first few items
             if (idx < 3) {
-              console.log(`  Item ${idx + 1}: title="${title.substring(0, 50)}...", link="${link}"`);
+              console.log(`  Item ${idx + 1}: title="${title.substring(0, 50)}...", link="${link.substring(0, 60)}..."`);
             }
 
             return {
