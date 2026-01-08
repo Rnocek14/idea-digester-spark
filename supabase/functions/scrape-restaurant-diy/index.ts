@@ -200,15 +200,27 @@ function normalizeUrlForValidation(urlStr: string): string {
   }
 }
 
-// Normalize text for snippet matching (handles quotes, punctuation, whitespace)
+// Normalize text for snippet matching (handles curly quotes, punctuation, whitespace)
 function normalizeTextForMatching(s: string): string {
   return s.toLowerCase()
-    .replace(/[""]/g, '"')
-    .replace(/['']/g, "'")
+    .replace(/[\u201C\u201D]/g, '"')  // curly double quotes → straight
+    .replace(/[\u2018\u2019]/g, "'")  // curly single quotes → straight
     .replace(/[^a-z0-9$%:.\s]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }
+
+// Page type priority for evidence URL ranking
+const PAGE_TYPE_PRIORITY: Record<string, number> = {
+  happy_hour: 1,
+  specials: 2,
+  brunch: 3,
+  menu: 4,
+  events: 10,
+  pdf_menu: 5,
+  unknown: 99,
+  homepage: 100,
+};
 
 // Fetch with retry
 async function fetchWithRetry(url: string, retries = 2, timeout = 8000): Promise<{ text: string; contentType: string }> {
@@ -782,7 +794,7 @@ Deno.serve(async (req) => {
           return { valid: found, matchScore: found ? 1 : 0 };
         };
         
-        // NEW: Find better evidence URL for key deal types when homepage is used
+        // IMPROVED: Find better evidence URL for key deal types when homepage is used (page-type ranked)
         const findBetterEvidenceUrl = (deal: DealExtraction, currentUrl: string): string => {
           const homepageNorm = normalizeUrlForValidation(source.url);
           const currentNorm = normalizeUrlForValidation(currentUrl);
@@ -795,19 +807,21 @@ Deno.serve(async (req) => {
           const keywords = dealHint.split(/\s+/).filter(w => w.length >= 4).slice(0, 6);
           if (keywords.length === 0) return currentUrl;
           
-          // Find non-homepage page containing deal keywords
+          // Find non-homepage pages containing deal keywords, ranked by page type priority
           const nonHomeCandidates = pageContents.filter(p => 
             normalizeUrlForValidation(p.url) !== homepageNorm
           );
           
-          const best = nonHomeCandidates.find(p => {
-            const contentLower = p.content.toLowerCase();
-            return keywords.some(k => contentLower.includes(k));
-          });
+          const candidates = nonHomeCandidates
+            .filter(p => {
+              const contentLower = p.content.toLowerCase();
+              return keywords.some(k => contentLower.includes(k));
+            })
+            .sort((a, b) => (PAGE_TYPE_PRIORITY[a.type] ?? 99) - (PAGE_TYPE_PRIORITY[b.type] ?? 99));
           
-          if (best) {
-            console.log(`  ↗ Evidence URL upgraded: ${deal.name} → ${best.url}`);
-            return best.url;
+          if (candidates.length > 0) {
+            console.log(`  ↗ Evidence URL upgraded: ${deal.name} → ${candidates[0].url} (type: ${candidates[0].type})`);
+            return candidates[0].url;
           }
           return currentUrl;
         };
@@ -828,8 +842,8 @@ Deno.serve(async (req) => {
             // First get initial evidence URL
             let validatedEvidenceUrl = sanitizeEvidenceUrl(deal.evidence_url);
             
-            // NEW: Try to find a better evidence URL for key deal types
-            validatedEvidenceUrl = findBetterEvidenceUrl(deal, validatedEvidenceUrl);
+            // NEW: Try to find a better evidence URL for key deal types, then re-sanitize
+            validatedEvidenceUrl = sanitizeEvidenceUrl(findBetterEvidenceUrl(deal, validatedEvidenceUrl));
             
             // IMPROVED: Validate snippet exists in the evidence page
             const snippetValidation = validateSnippet(deal.evidence_snippet, validatedEvidenceUrl);
@@ -916,13 +930,13 @@ Deno.serve(async (req) => {
           }
         }
         
-        // Update restaurant needs_review based on evidence quality
+        // Update restaurant needs_review based on evidence quality (safe: only set true, never override existing true)
         const overallConfidence = extraction.extraction_confidence?.overall || 0.5;
         const anyBadEvidence = badEvidenceCount > 0;
         if (anyBadEvidence || overallConfidence < 0.6) {
           await supabase.from("restaurants").update({
             needs_review: true,
-          }).eq("id", restaurant.id);
+          }).eq("id", restaurant.id).neq("needs_review", true);
           console.log(`  ⚠ Restaurant marked needs_review: ${anyBadEvidence ? badEvidenceCount + ' bad snippets' : 'low confidence'}`);
         }
 
