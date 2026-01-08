@@ -788,10 +788,17 @@ Deno.serve(async (req) => {
             dealUpserts.push(dealData);
           }
           
-          // FIX #6: Single batch upsert
+          // FIX #6: Single batch upsert with error logging
           if (dealUpserts.length > 0) {
-            await supabase.from("restaurant_deals").upsert(dealUpserts, { onConflict: 'deal_hash' });
-            console.log(`Batch upserted ${dealUpserts.length} deals for ${source.name}`);
+            const { error: dealUpsertError } = await supabase
+              .from("restaurant_deals")
+              .upsert(dealUpserts, { onConflict: 'deal_hash' });
+            
+            if (dealUpsertError) {
+              console.error(`Deal upsert failed for ${source.name}:`, dealUpsertError.message);
+            } else {
+              console.log(`Batch upserted ${dealUpserts.length} deals for ${source.name}`);
+            }
           }
           
           // FIX #3: Mark unseen deals as outdated ONLY if not human-verified
