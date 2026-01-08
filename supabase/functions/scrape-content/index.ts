@@ -9,7 +9,10 @@ const corsHeaders = {
 // Content type specific extraction schemas
 const EXTRACTION_SCHEMAS = {
   article: {
-    system: `You are an expert news article extractor. Extract the article's key information.`,
+    system: `You are an expert local news article extractor for Lake Geneva, Wisconsin and surrounding communities (Williams Bay, Fontana, Delavan, Walworth County). Extract the article's key information with special attention to:
+- Local relevance (is this about our coverage area?)
+- Incident potential (could this become a safety incident?)
+- Civic importance (school, government, community impact)`,
     tool: {
       name: "extract_article",
       description: "Extract article details",
@@ -20,11 +23,14 @@ const EXTRACTION_SCHEMAS = {
           summary: { type: "string", description: "2-3 sentence summary" },
           author: { type: "string" },
           published_date: { type: "string" },
-          category: { type: "string", enum: ["news", "events", "business", "sports", "community", "government", "crime", "weather", "dining", "entertainment"] },
-          location_mentions: { type: "array", items: { type: "string" } },
+          category: { type: "string", enum: ["news", "events", "business", "sports", "community", "government", "crime", "weather", "dining", "entertainment", "schools", "civic"] },
+          location_mentions: { type: "array", items: { type: "string" }, description: "Cities, streets, venues mentioned" },
           key_entities: { type: "array", items: { type: "string" }, description: "People, organizations, places mentioned" },
-          is_breaking: { type: "boolean" },
+          is_breaking: { type: "boolean", description: "Is this urgent/breaking news?" },
+          is_incident: { type: "boolean", description: "Is this about an accident, fire, crime, or emergency?" },
+          incident_type: { type: "string", enum: ["accident", "fire", "crime", "weather", "utility", "road_closure", "school_closure", "construction", "community_alert", "missing_person", "none"] },
           sentiment: { type: "string", enum: ["positive", "neutral", "negative"] },
+          geo_tier: { type: "number", description: "1=Lake Geneva/Williams Bay/Fontana, 2=Walworth County, 3=Regional" },
         },
         required: ["title", "summary", "category"],
       },
