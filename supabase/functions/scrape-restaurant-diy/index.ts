@@ -222,23 +222,54 @@ const PAGE_TYPE_PRIORITY: Record<string, number> = {
   homepage: 100,
 };
 
-// Fetch with retry
-async function fetchWithRetry(url: string, retries = 2, timeout = 8000): Promise<{ text: string; contentType: string }> {
+// Enhanced fetch with retry, anti-bot evasion, and Firecrawl fallback
+async function fetchWithRetry(
+  url: string, 
+  retries = 2, 
+  timeout = 10000,
+  useFirecrawlFallback = true
+): Promise<{ text: string; contentType: string; usedFirecrawl: boolean }> {
   const userAgents = [
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_3) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15',
   ];
   
+  let lastError: Error | null = null;
+  let needsJsRendering = false;
+  
+  // Try static fetch first
   for (let i = 0; i <= retries; i++) {
     try {
+      // Add randomized delay between retries to appear more human-like
+      if (i > 0) {
+        await new Promise(r => setTimeout(r, 500 + Math.random() * 1500));
+      }
+      
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeout);
+      
+      // Get hostname for referer
+      let referer = '';
+      try {
+        const u = new URL(url);
+        referer = u.origin;
+      } catch {}
       
       const res = await fetch(url, {
         headers: { 
           'User-Agent': userAgents[i % userAgents.length],
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,application/pdf;q=0.8,*/*;q=0.7',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
           'Accept-Language': 'en-US,en;q=0.9',
+          'Accept-Encoding': 'gzip, deflate, br',
+          'Sec-Fetch-Dest': 'document',
+          'Sec-Fetch-Mode': 'navigate',
+          'Sec-Fetch-Site': 'none',
+          'Sec-Fetch-User': '?1',
+          'Upgrade-Insecure-Requests': '1',
+          'Cache-Control': 'max-age=0',
+          'Referer': referer,
         },
         redirect: 'follow',
         signal: controller.signal,
@@ -247,22 +278,83 @@ async function fetchWithRetry(url: string, retries = 2, timeout = 8000): Promise
       clearTimeout(timeoutId);
       
       if (res.ok) {
-        return { text: await res.text(), contentType: res.headers.get('content-type') || '' };
+        const text = await res.text();
+        const contentType = res.headers.get('content-type') || '';
+        
+        // Detect JS-heavy sites that return minimal content
+        if (text.length < 1000) {
+          const lowerText = text.toLowerCase();
+          // Check for SPA framework indicators
+          if (lowerText.includes('__next_data__') || 
+              lowerText.includes('ng-app') || 
+              lowerText.includes('data-reactroot') ||
+              lowerText.includes('id="app"') && lowerText.includes('script')) {
+            console.log(`Detected JS-heavy site: ${url} (${text.length} chars)`);
+            needsJsRendering = true;
+            break;
+          }
+        }
+        
+        return { text, contentType, usedFirecrawl: false };
       }
       
+      // Track errors that might benefit from Firecrawl
       if (res.status === 403 || res.status === 429) {
-        await new Promise(r => setTimeout(r, 1000 * (i + 1)));
-        continue;
+        console.log(`Got ${res.status} for ${url}, will try Firecrawl fallback`);
+        lastError = new Error(`HTTP ${res.status}`);
+        needsJsRendering = true;
+        break;
       }
       
       throw new Error(`HTTP ${res.status}`);
     } catch (e: any) {
-      if (e.name === 'AbortError') throw new Error('Timeout');
-      if (i === retries) throw e;
-      await new Promise(r => setTimeout(r, 500 * (i + 1)));
+      lastError = e;
+      if (e.name === 'AbortError') {
+        lastError = new Error('Timeout');
+      }
+      if (i === retries && !useFirecrawlFallback) throw lastError;
     }
   }
-  throw new Error('Fetch failed after retries');
+  
+  // Try Firecrawl fallback for blocked/JS-heavy sites
+  if (useFirecrawlFallback && (needsJsRendering || lastError)) {
+    const firecrawlKey = Deno.env.get('FIRECRAWL_API_KEY');
+    if (firecrawlKey) {
+      try {
+        console.log(`Using Firecrawl fallback for: ${url}`);
+        const fcResponse = await fetch('https://api.firecrawl.dev/v1/scrape', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${firecrawlKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            url,
+            formats: ['html'],
+            onlyMainContent: false,
+            waitFor: 2000,
+          }),
+        });
+        
+        if (fcResponse.ok) {
+          const fcData = await fcResponse.json();
+          const html = fcData.data?.html || fcData.html || '';
+          if (html.length > 500) {
+            console.log(`Firecrawl success: ${html.length} chars`);
+            return { text: html, contentType: 'text/html', usedFirecrawl: true };
+          }
+        } else {
+          const errText = await fcResponse.text();
+          console.log(`Firecrawl error ${fcResponse.status}: ${errText.slice(0, 200)}`);
+        }
+      } catch (fcErr) {
+        console.log(`Firecrawl fallback failed: ${fcErr}`);
+      }
+    }
+  }
+  
+  // If we get here, everything failed
+  throw lastError || new Error('Fetch failed after retries');
 }
 
 // Discover internal links including PDFs

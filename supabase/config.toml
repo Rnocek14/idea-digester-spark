@@ -191,3 +191,6 @@ verify_jwt = false
 
 [functions.queue-restaurant-scrapes]
 verify_jwt = false
+
+[functions.scrape-content]
+verify_jwt = false
