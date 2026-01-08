@@ -578,8 +578,7 @@ Deno.serve(async (req) => {
             ],
             tools: EXTRACTION_TOOLS,
             tool_choice: { type: "function", function: { name: "extract_restaurant_details" } },
-            max_tokens: 2500,
-            temperature: 0.1,
+            max_completion_tokens: 2500,
           }),
         });
 
