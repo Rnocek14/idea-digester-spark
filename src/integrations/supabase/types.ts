@@ -739,6 +739,104 @@ export type Database = {
         }
         Relationships: []
       }
+      fish_fry_submissions: {
+        Row: {
+          created_at: string
+          day_served: string | null
+          description: string | null
+          fish_type: string | null
+          happy_hour_days: string[] | null
+          happy_hour_deals: string | null
+          happy_hour_end: string | null
+          happy_hour_start: string | null
+          id: string
+          is_all_you_can_eat: boolean | null
+          is_verified: boolean | null
+          moderated_at: string | null
+          moderated_by: string | null
+          moderation_notes: string | null
+          price: string | null
+          proof_image_url: string | null
+          proof_url: string | null
+          restaurant_id: string | null
+          restaurant_name: string
+          restaurant_slug: string | null
+          sides: string | null
+          source: string | null
+          status: string
+          submitter_email: string | null
+          submitter_name: string | null
+          updated_at: string
+          weekly_specials: Json | null
+        }
+        Insert: {
+          created_at?: string
+          day_served?: string | null
+          description?: string | null
+          fish_type?: string | null
+          happy_hour_days?: string[] | null
+          happy_hour_deals?: string | null
+          happy_hour_end?: string | null
+          happy_hour_start?: string | null
+          id?: string
+          is_all_you_can_eat?: boolean | null
+          is_verified?: boolean | null
+          moderated_at?: string | null
+          moderated_by?: string | null
+          moderation_notes?: string | null
+          price?: string | null
+          proof_image_url?: string | null
+          proof_url?: string | null
+          restaurant_id?: string | null
+          restaurant_name: string
+          restaurant_slug?: string | null
+          sides?: string | null
+          source?: string | null
+          status?: string
+          submitter_email?: string | null
+          submitter_name?: string | null
+          updated_at?: string
+          weekly_specials?: Json | null
+        }
+        Update: {
+          created_at?: string
+          day_served?: string | null
+          description?: string | null
+          fish_type?: string | null
+          happy_hour_days?: string[] | null
+          happy_hour_deals?: string | null
+          happy_hour_end?: string | null
+          happy_hour_start?: string | null
+          id?: string
+          is_all_you_can_eat?: boolean | null
+          is_verified?: boolean | null
+          moderated_at?: string | null
+          moderated_by?: string | null
+          moderation_notes?: string | null
+          price?: string | null
+          proof_image_url?: string | null
+          proof_url?: string | null
+          restaurant_id?: string | null
+          restaurant_name?: string
+          restaurant_slug?: string | null
+          sides?: string | null
+          source?: string | null
+          status?: string
+          submitter_email?: string | null
+          submitter_name?: string | null
+          updated_at?: string
+          weekly_specials?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fish_fry_submissions_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       incident_updates: {
         Row: {
           created_at: string
@@ -1296,6 +1394,80 @@ export type Database = {
           zip_code?: string
         }
         Relationships: []
+      }
+      restaurant_scrape_jobs: {
+        Row: {
+          combined_content: string | null
+          completed_at: string | null
+          content_sources: Json | null
+          created_at: string
+          discovered_pages: Json | null
+          error_message: string | null
+          extraction_confidence: number | null
+          extraction_result: Json | null
+          id: string
+          max_retries: number | null
+          pages_scraped: number | null
+          priority: number | null
+          restaurant_slug: string | null
+          retry_count: number | null
+          source_id: string | null
+          started_at: string | null
+          status: string
+          total_pages: number | null
+          updated_at: string
+        }
+        Insert: {
+          combined_content?: string | null
+          completed_at?: string | null
+          content_sources?: Json | null
+          created_at?: string
+          discovered_pages?: Json | null
+          error_message?: string | null
+          extraction_confidence?: number | null
+          extraction_result?: Json | null
+          id?: string
+          max_retries?: number | null
+          pages_scraped?: number | null
+          priority?: number | null
+          restaurant_slug?: string | null
+          retry_count?: number | null
+          source_id?: string | null
+          started_at?: string | null
+          status?: string
+          total_pages?: number | null
+          updated_at?: string
+        }
+        Update: {
+          combined_content?: string | null
+          completed_at?: string | null
+          content_sources?: Json | null
+          created_at?: string
+          discovered_pages?: Json | null
+          error_message?: string | null
+          extraction_confidence?: number | null
+          extraction_result?: Json | null
+          id?: string
+          max_retries?: number | null
+          pages_scraped?: number | null
+          priority?: number | null
+          restaurant_slug?: string | null
+          retry_count?: number | null
+          source_id?: string | null
+          started_at?: string | null
+          status?: string
+          total_pages?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurant_scrape_jobs_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "sources"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       restaurants: {
         Row: {
