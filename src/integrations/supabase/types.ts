@@ -1401,9 +1401,11 @@ export type Database = {
           confidence_score: number | null
           created_at: string | null
           days: string[] | null
+          deal_hash: string | null
           deal_type: string
           description: string | null
           drink_deals: string[] | null
+          end_minutes: number | null
           end_time: string | null
           evidence_snippet: string | null
           evidence_url: string | null
@@ -1411,14 +1413,17 @@ export type Database = {
           food_deals: string[] | null
           id: string
           last_confirmed_at: string | null
+          last_seen_at: string | null
           name: string
           price: string | null
           restaurant_id: string | null
           sides: string | null
           source_type: string | null
+          start_minutes: number | null
           start_time: string | null
           submitted_by: string | null
           updated_at: string | null
+          valid_to: string | null
           verification_method: string | null
           verification_status: string | null
         }
@@ -1427,9 +1432,11 @@ export type Database = {
           confidence_score?: number | null
           created_at?: string | null
           days?: string[] | null
+          deal_hash?: string | null
           deal_type: string
           description?: string | null
           drink_deals?: string[] | null
+          end_minutes?: number | null
           end_time?: string | null
           evidence_snippet?: string | null
           evidence_url?: string | null
@@ -1437,14 +1444,17 @@ export type Database = {
           food_deals?: string[] | null
           id?: string
           last_confirmed_at?: string | null
+          last_seen_at?: string | null
           name: string
           price?: string | null
           restaurant_id?: string | null
           sides?: string | null
           source_type?: string | null
+          start_minutes?: number | null
           start_time?: string | null
           submitted_by?: string | null
           updated_at?: string | null
+          valid_to?: string | null
           verification_method?: string | null
           verification_status?: string | null
         }
@@ -1453,9 +1463,11 @@ export type Database = {
           confidence_score?: number | null
           created_at?: string | null
           days?: string[] | null
+          deal_hash?: string | null
           deal_type?: string
           description?: string | null
           drink_deals?: string[] | null
+          end_minutes?: number | null
           end_time?: string | null
           evidence_snippet?: string | null
           evidence_url?: string | null
@@ -1463,14 +1475,17 @@ export type Database = {
           food_deals?: string[] | null
           id?: string
           last_confirmed_at?: string | null
+          last_seen_at?: string | null
           name?: string
           price?: string | null
           restaurant_id?: string | null
           sides?: string | null
           source_type?: string | null
+          start_minutes?: number | null
           start_time?: string | null
           submitted_by?: string | null
           updated_at?: string | null
+          valid_to?: string | null
           verification_method?: string | null
           verification_status?: string | null
         }
@@ -1493,6 +1508,8 @@ export type Database = {
           is_pdf: boolean | null
           last_scraped_at: string | null
           page_type: string | null
+          pdf_extraction_chars: number | null
+          pdf_extraction_status: string | null
           pdf_text_extracted: string | null
           restaurant_id: string | null
           status: string | null
@@ -1507,6 +1524,8 @@ export type Database = {
           is_pdf?: boolean | null
           last_scraped_at?: string | null
           page_type?: string | null
+          pdf_extraction_chars?: number | null
+          pdf_extraction_status?: string | null
           pdf_text_extracted?: string | null
           restaurant_id?: string | null
           status?: string | null
@@ -1521,6 +1540,8 @@ export type Database = {
           is_pdf?: boolean | null
           last_scraped_at?: string | null
           page_type?: string | null
+          pdf_extraction_chars?: number | null
+          pdf_extraction_status?: string | null
           pdf_text_extracted?: string | null
           restaurant_id?: string | null
           status?: string | null
