@@ -31,22 +31,21 @@ serve(async (req) => {
       isAuthorized = true;
     }
     
-    // Check admin JWT
+    // Check admin JWT (use getUser for broader compatibility)
     if (!isAuthorized && authHeader?.startsWith('Bearer ')) {
       const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
         global: { headers: { Authorization: authHeader } }
       });
       
-      const token = authHeader.replace('Bearer ', '');
-      const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
+      const { data: { user }, error: userError } = await supabaseAuth.auth.getUser();
       
-      if (!claimsError && claimsData?.claims?.sub) {
+      if (!userError && user?.id) {
         // Check if user is admin
         const supabase = createClient(supabaseUrl, supabaseKey);
         const { data: roleData } = await supabase
           .from('user_roles')
           .select('role')
-          .eq('user_id', claimsData.claims.sub)
+          .eq('user_id', user.id)
           .eq('role', 'admin')
           .single();
         
@@ -62,8 +61,6 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
-    
-    const supabase = createClient(supabaseUrl, supabaseKey);
 
     const { content_type = 'fish_fry_guide' } = await req.json().catch(() => ({}));
 
@@ -73,6 +70,33 @@ serve(async (req) => {
         error: 'Only fish_fry_guide is currently supported' 
       }), {
         status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Idempotency check: don't create duplicate guide within same week
+    const weekStart = new Date();
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay()); // Start of week (Sunday)
+    weekStart.setHours(0, 0, 0, 0);
+    
+    const { data: existingGuide } = await supabase
+      .from('content_queue')
+      .select('id, created_at')
+      .eq('source_type', 'data_journalism')
+      .eq('category', 'dining')
+      .ilike('title', '%Fish Fry Guide%')
+      .gte('created_at', weekStart.toISOString())
+      .single();
+    
+    if (existingGuide) {
+      return new Response(JSON.stringify({ 
+        error: 'Fish fry guide already exists for this week',
+        existing_id: existingGuide.id,
+        created_at: existingGuide.created_at
+      }), {
+        status: 409,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
@@ -183,7 +207,7 @@ serve(async (req) => {
     const title = `This Week's Fish Fry Guide: ${dealCount} Options in the Lake Geneva Area`;
     
     let content = `# ${title}\n\n`;
-    content += `*Based on ${verifiedCount} verified listings from Lake Geneva Eats data.*\n\n`;
+    content += `*Based on ${verifiedCount} verified listings out of ${dealCount} total from Lake Geneva Eats data.*\n\n`;
     
     if (fridayDeals.length > 0) {
       content += `## Friday Fish Fry Specials\n\n`;
