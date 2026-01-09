@@ -42,7 +42,8 @@ const LOCAL_KEYWORDS = [
 // Keywords that indicate NON-local incidents (should be excluded)
 const NON_LOCAL_KEYWORDS = [
   'milwaukee', 'kenosha', 'racine', 'madison', 'waukesha', 'janesville',
-  'beloit', 'chicago', 'rockford', 'green bay', 'brookfield', 'wauwatosa'
+  'beloit', 'chicago', 'rockford', 'green bay', 'brookfield', 'wauwatosa',
+  'minneapolis', 'minnesota', 'illinois', 'indiana', 'iowa', 'michigan'
 ];
 
 // Check if an incident is local to Lake Geneva area
