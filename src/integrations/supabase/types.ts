@@ -1608,36 +1608,48 @@ export type Database = {
       restaurant_news: {
         Row: {
           created_at: string | null
+          expires_at: string | null
           headline: string
+          hook_type: Database["public"]["Enums"]["hook_type"] | null
           id: string
+          is_current: boolean
           news_type: string
           published_at: string | null
           restaurant_id: string | null
           source_name: string | null
           source_url: string | null
           summary: string | null
+          verified: boolean
         }
         Insert: {
           created_at?: string | null
+          expires_at?: string | null
           headline: string
+          hook_type?: Database["public"]["Enums"]["hook_type"] | null
           id?: string
+          is_current?: boolean
           news_type: string
           published_at?: string | null
           restaurant_id?: string | null
           source_name?: string | null
           source_url?: string | null
           summary?: string | null
+          verified?: boolean
         }
         Update: {
           created_at?: string | null
+          expires_at?: string | null
           headline?: string
+          hook_type?: Database["public"]["Enums"]["hook_type"] | null
           id?: string
+          is_current?: boolean
           news_type?: string
           published_at?: string | null
           restaurant_id?: string | null
           source_name?: string | null
           source_url?: string | null
           summary?: string | null
+          verified?: boolean
         }
         Relationships: [
           {
@@ -2268,6 +2280,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_feature_eligibility: {
+        Args: { p_restaurant_id: string }
+        Returns: Json
+      }
+      expire_old_restaurant_news: { Args: never; Returns: number }
       generate_invoice_number: { Args: never; Returns: string }
       generate_referral_code: { Args: { email_input: string }; Returns: string }
       has_role: {
@@ -2281,6 +2298,17 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      hook_type:
+        | "event_series"
+        | "seasonal_menu"
+        | "new_menu"
+        | "anniversary"
+        | "expansion"
+        | "renovation"
+        | "reopening"
+        | "award"
+        | "special_event"
+        | "announcement"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2409,6 +2437,18 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      hook_type: [
+        "event_series",
+        "seasonal_menu",
+        "new_menu",
+        "anniversary",
+        "expansion",
+        "renovation",
+        "reopening",
+        "award",
+        "special_event",
+        "announcement",
+      ],
     },
   },
 } as const

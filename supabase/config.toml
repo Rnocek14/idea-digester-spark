@@ -200,3 +200,6 @@ verify_jwt = false
 
 [functions.generate-editorial-content]
 verify_jwt = false
+
+[functions.generate-local-context-feature]
+verify_jwt = false
