@@ -16,7 +16,11 @@ CRITICAL RULES:
 - Do NOT invent facts - only use what's provided
 - If evidence is thin, write conservatively and say less
 - Never use: "you should check out", "the best place", "amazing", "incredible", "must-try", "hidden gem"
-- Allowed language: "often mentioned for", "locals tend to highlight", "known around town for"
+
+PHRASING RULES (important):
+- Avoid phrases that imply unseen consensus: "often mentioned", "locals say", "tends to be noted", "people highlight", "frequently cited"
+- Prefer descriptive, attributable statements: "appears in local guides", "is known for", "features include", "one of the few that"
+- Describe attributes, not popularity. State inclusion, not sentiment. Say what exists, not what people think.
 
 TONE: Observational, local, grounded, slightly conservative. Explain why this place comes up in local conversation - don't sell it.`;
 
