@@ -157,7 +157,7 @@ serve(async (req) => {
     };
 
     // Dedupe by restaurant: pick the best deal per restaurant
-    // Priority: verified > has price > most recent
+    // Priority: verified > has price > more recent > higher confidence
     const dealsMap = new Map<string, typeof fishFryDeals[0]>();
     for (const deal of fishFryDeals || []) {
       const restId = deal.restaurant_id;
@@ -167,15 +167,27 @@ serve(async (req) => {
       if (!existing) {
         dealsMap.set(restId, deal);
       } else {
-        // Compare: verified beats unverified, then price, then recency
+        // Compare: verified > hasPrice > recency > confidence
         const existingVerified = existing.verification_status === 'verified';
         const newVerified = deal.verification_status === 'verified';
         const existingHasPrice = parsePrice(existing.price) !== null;
         const newHasPrice = parsePrice(deal.price) !== null;
+        const existingDate = existing.last_seen_at ? new Date(existing.last_seen_at).getTime() : 0;
+        const newDate = deal.last_seen_at ? new Date(deal.last_seen_at).getTime() : 0;
         
-        if ((!existingVerified && newVerified) || 
-            (existingVerified === newVerified && !existingHasPrice && newHasPrice)) {
+        // Verified beats unverified
+        if (!existingVerified && newVerified) {
           dealsMap.set(restId, deal);
+        } 
+        // Same verified status: check price
+        else if (existingVerified === newVerified) {
+          if (!existingHasPrice && newHasPrice) {
+            dealsMap.set(restId, deal);
+          }
+          // Same price status: check recency
+          else if (existingHasPrice === newHasPrice && newDate > existingDate) {
+            dealsMap.set(restId, deal);
+          }
         }
       }
     }
@@ -286,14 +298,14 @@ serve(async (req) => {
           verified: deal.verification_status === 'verified'
         };
 
-        // Count how many "rich" distinctions we have for conservative mode
-        const richDistinctions = [
-          context.local_reputation,
-          context.distinguishing_feature,
-          context.features?.length > 0
-        ].filter(Boolean).length;
-        
-        const isConservativeMode = richDistinctions === 0;
+        // Conservative mode: only allow 2-3 sentences if we have REAL storytelling material
+        // local_reputation, distinguishing_feature, or substantial evidence_snippet (60+ chars)
+        const hasRichContext = Boolean(
+          context.local_reputation ||
+          context.distinguishing_feature ||
+          (context.evidence_snippet && context.evidence_snippet.length > 60)
+        );
+        const isConservativeMode = !hasRichContext;
 
         try {
           const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
