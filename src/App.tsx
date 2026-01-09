@@ -36,6 +36,7 @@ import EmployerDashboard from "./pages/EmployerDashboard";
 import Deals from "./pages/Deals";
 import AdminDeals from "./pages/AdminDeals";
 import SponsorPortal from "./pages/SponsorPortal";
+import BusinessCoverage from "./pages/BusinessCoverage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -86,6 +87,7 @@ const App = () => (
               <Route path="sources" element={<Sources />} />
               <Route path="sponsors" element={<Sponsors />} />
               <Route path="directory" element={<Directory />} />
+              <Route path="coverage" element={<BusinessCoverage />} />
               <Route path="leads" element={<Leads />} />
               <Route path="newsletter" element={<Newsletter />} />
               <Route path="social-queue" element={<SocialQueue />} />
