@@ -291,6 +291,9 @@ serve(async (req) => {
         const restaurant = deal.restaurants as any;
         
         // Build context for AI
+        const isVerified = deal.verification_status === 'verified';
+        const isManualVerified = deal.verification_status === 'manual_verified';
+        
         const context = {
           name: restaurant?.name || 'Unknown',
           city: restaurant?.city,
@@ -304,7 +307,9 @@ serve(async (req) => {
           distinguishing_feature: restaurant?.distinguishing_feature,
           features: restaurant?.features,
           evidence_snippet: deal.evidence_snippet,
-          verified: deal.verification_status === 'verified'
+          verified: isVerified,
+          manualVerified: isManualVerified,
+          anyVerified: isVerified || isManualVerified
         };
 
         // Conservative mode: only allow 2-3 sentences if we have REAL storytelling material
@@ -382,12 +387,15 @@ Write only the 2-3 sentence recommendation, nothing else.`
               if (context.fish_type) facts.push(`🐟 ${context.fish_type}`);
               if (isFridayDeal(deal.days)) facts.push('📅 Friday');
               // Price display: exact > range > "varies" for verified without price
+              // Price display: exact > range > "varies" (only if verified/manual_verified)
               if (context.price) facts.push(`💰 ~$${context.price}`);
               else if (context.price_range) facts.push(`💰 ${context.price_range}`);
-              else facts.push('💰 Price varies');
+              else if (context.anyVerified) facts.push('💰 Price varies');
               if (context.all_you_can_eat) facts.push('🍽️ AYCE');
               if (context.is_lakefront) facts.push('🌊 Lakefront');
+              // Verification badge: distinguish verified vs manual_verified
               if (context.verified) facts.push('✓ Verified');
+              else if (context.manualVerified) facts.push('✓ Verified (manual)');
               
               if (facts.length > 0) {
                 block += facts.join(' · ') + '\n';
@@ -418,15 +426,20 @@ Write only the 2-3 sentence recommendation, nothing else.`
       if (restaurant?.city) block += ` in ${restaurant.city}`;
       block += '.\n\n';
       
+      const isAnyVerified = deal.verification_status === 'verified' || deal.verification_status === 'manual_verified';
+      
       const facts: string[] = [];
       if (deal.fish_type) facts.push(`🐟 ${deal.fish_type}`);
       if (isFridayDeal(deal.days)) facts.push('📅 Friday');
-      // Price display: exact > range > "varies"
+      // Price display: exact > range > "varies" (only if verified)
       if (price) facts.push(`💰 ~$${price}`);
       else if (restaurant?.price_range) facts.push(`💰 ${restaurant.price_range}`);
-      else facts.push('💰 Price varies');
+      else if (isAnyVerified) facts.push('💰 Price varies');
       if (deal.all_you_can_eat) facts.push('🍽️ AYCE');
       if (restaurant?.is_lakefront) facts.push('🌊 Lakefront');
+      // Verification badge
+      if (deal.verification_status === 'verified') facts.push('✓ Verified');
+      else if (deal.verification_status === 'manual_verified') facts.push('✓ Verified (manual)');
       
       if (facts.length > 0) block += facts.join(' · ') + '\n';
       return block;
