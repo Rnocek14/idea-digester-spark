@@ -389,7 +389,53 @@ function detectLocality(title: string, summary?: string | null): LocalityResult 
   return { tier: 0, label: null };
 }
 
-// Check if story is fresh enough to be breaking (within 24 hours)
+// ============== DINING NEWS DETECTION ==============
+// Keywords to detect restaurant openings, closings, reviews from news sources
+const DINING_NEWS_KEYWORDS = {
+  opening: ['now open', 'grand opening', 'opening soon', 'new restaurant', 'opens doors', 'set to open', 
+            'announces opening', 'coming to', 'coming soon', 'new location', 'new eatery', 'new bar'],
+  closing: ['closing', 'shutting down', 'last day', 'final day', 'closes permanently', 'closing its doors',
+            'going out of business', 'farewell', 'says goodbye', 'end of an era'],
+  review: ['review', 'best restaurants', 'top 10', 'must-try', 'hidden gem', 'where to eat', 
+           'food critic', 'we tried', 'taste test', 'worth the trip', 'worth the hype'],
+  deal: ['happy hour', 'fish fry', 'brunch special', 'taco tuesday', 'wing wednesday', 
+         'kids eat free', 'early bird', 'late night menu', 'daily special'],
+  chef: ['new chef', 'head chef', 'executive chef', 'culinary director', 'chef announces', 'chef leaves'],
+  award: ['awarded', 'wins award', 'best of', 'award-winning', 'michelin', 'james beard', 'recognized'],
+  menu: ['new menu', 'menu update', 'seasonal menu', 'menu change', 'revamped menu']
+};
+
+type DiningNewsCategory = 'opening' | 'closing' | 'review' | 'deal' | 'chef' | 'award' | 'menu' | null;
+
+function detectDiningNewsCategory(title: string, content?: string): DiningNewsCategory {
+  const text = `${title} ${content || ''}`.toLowerCase();
+  
+  // Check categories in order of importance
+  for (const [category, keywords] of Object.entries(DINING_NEWS_KEYWORDS)) {
+    if (keywords.some(kw => text.includes(kw))) {
+      return category as DiningNewsCategory;
+    }
+  }
+  return null;
+}
+
+// Extract restaurant name from dining news
+function extractRestaurantFromNews(title: string): string | null {
+  // Common patterns: "Restaurant Name Now Open", "Restaurant Name Closing", etc.
+  const patterns = [
+    /^([A-Z][A-Za-z\s&']+?)\s+(?:now open|opens|opening|closing|closes|review|announces)/i,
+    /(?:review:|trying|visit)\s+([A-Z][A-Za-z\s&']+?)(?:\s*[-–|:]|$)/i,
+    /^([A-Z][A-Za-z\s&']+?)\s+(?:to open|set to|announces)/i,
+  ];
+  
+  for (const pattern of patterns) {
+    const match = title.match(pattern);
+    if (match && match[1].trim().length > 3 && match[1].trim().length < 50) {
+      return match[1].trim();
+    }
+  }
+  return null;
+}
 function isFreshEnoughForBreaking(publishedAt: string | null): boolean {
   if (!publishedAt) return true; // Be lenient when missing
   try {
@@ -1468,7 +1514,12 @@ When in doubt between safe and sensitive, choose sensitive. Only use blocked for
                       category: { 
                         type: "string", 
                         enum: ["news", "events", "dining", "real-estate", "community", "civic"],
-                        description: "Article category - use 'civic' for city council, committee meetings, municipal content"
+                        description: "Article category - use 'civic' for city council, committee meetings, municipal content. Use 'dining' for restaurant news, openings, closings, reviews."
+                      },
+                      dining_sub_category: {
+                        type: "string",
+                        enum: ["opening", "closing", "review", "deal", "chef", "award", "menu", "general"],
+                        description: "For dining articles: subcategory indicating type of restaurant news"
                       },
                       content_tags: {
                         type: "array",
@@ -1531,6 +1582,19 @@ When in doubt between safe and sensitive, choose sensitive. Only use blocked for
             console.log(`🏛️ Detected civic content: "${title.substring(0, 40)}..." → overriding category to 'civic'`);
             aiCategory = "civic";
           }
+
+          // Detect dining news subcategory
+          let diningSubCategory: DiningNewsCategory = aiResult.dining_sub_category || null;
+          if (aiCategory === 'dining' && !diningSubCategory) {
+            // Fallback detection using keywords
+            diningSubCategory = detectDiningNewsCategory(title, rawContent);
+            if (diningSubCategory) {
+              console.log(`🍽️ Detected dining news: "${title.substring(0, 40)}..." → ${diningSubCategory}`);
+            }
+          }
+          
+          // Extract restaurant name for dining news
+          const diningRestaurantName = (aiCategory === 'dining') ? extractRestaurantFromNews(title) : null;
           
           const safetyLevel = aiResult.safety_level || "safe";
           
@@ -1645,6 +1709,8 @@ When in doubt between safe and sensitive, choose sensitive. Only use blocked for
                 content_tags: aiResult.content_tags || [],
                 verticals: aiResult.verticals || ["local"],
                 recurring_days: isNightlifeContent ? extractRecurringDays(title, rawContent) : null,
+                dining_sub_category: diningSubCategory,
+                dining_restaurant_name: diningRestaurantName,
               },
             });
 
@@ -1653,6 +1719,35 @@ When in doubt between safe and sensitive, choose sensitive. Only use blocked for
             result.errors.push(`Insert failed: ${title.substring(0, 50)}`);
           } else {
             result.articlesInserted++;
+            
+            // Log dining news to restaurant_news table for tracking openings/closings
+            if (aiCategory === 'dining' && diningSubCategory && ['opening', 'closing', 'chef', 'award'].includes(diningSubCategory)) {
+              // Try to find matching restaurant by name
+              let restaurantId: string | null = null;
+              if (diningRestaurantName) {
+                const { data: matchedRestaurant } = await supabase
+                  .from("restaurants")
+                  .select("id")
+                  .ilike("name", `%${diningRestaurantName}%`)
+                  .limit(1)
+                  .maybeSingle();
+                restaurantId = matchedRestaurant?.id || null;
+              }
+              
+              await supabase.from("restaurant_news").insert({
+                restaurant_id: restaurantId,
+                news_type: diningSubCategory,
+                headline: title,
+                summary: aiResult.summary,
+                source_url: originalUrl,
+                source_name: source.name,
+                published_at: adjustedPublishDate,
+              }).then(({ error }) => {
+                if (!error) {
+                  console.log(`📰 Logged restaurant news: ${diningSubCategory} - "${title.substring(0, 40)}..."`);
+                }
+              });
+            }
             
             // Track event insertions against daily cap
             if (isEventSource) {

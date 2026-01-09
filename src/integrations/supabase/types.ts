@@ -1562,6 +1562,50 @@ export type Database = {
           },
         ]
       }
+      restaurant_news: {
+        Row: {
+          created_at: string | null
+          headline: string
+          id: string
+          news_type: string
+          published_at: string | null
+          restaurant_id: string | null
+          source_name: string | null
+          source_url: string | null
+          summary: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          headline: string
+          id?: string
+          news_type: string
+          published_at?: string | null
+          restaurant_id?: string | null
+          source_name?: string | null
+          source_url?: string | null
+          summary?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          headline?: string
+          id?: string
+          news_type?: string
+          published_at?: string | null
+          restaurant_id?: string | null
+          source_name?: string | null
+          source_url?: string | null
+          summary?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurant_news_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       restaurant_pages: {
         Row: {
           content_hash: string | null
@@ -1614,6 +1658,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "restaurant_pages_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      restaurant_reviews: {
+        Row: {
+          excerpt: string | null
+          fetched_at: string | null
+          id: string
+          platform: string
+          rating: number | null
+          restaurant_id: string | null
+          review_count: number | null
+          source_url: string | null
+        }
+        Insert: {
+          excerpt?: string | null
+          fetched_at?: string | null
+          id?: string
+          platform: string
+          rating?: number | null
+          restaurant_id?: string | null
+          review_count?: number | null
+          source_url?: string | null
+        }
+        Update: {
+          excerpt?: string | null
+          fetched_at?: string | null
+          id?: string
+          platform?: string
+          rating?: number | null
+          restaurant_id?: string | null
+          review_count?: number | null
+          source_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurant_reviews_restaurant_id_fkey"
             columns: ["restaurant_id"]
             isOneToOne: false
             referencedRelation: "restaurants"
@@ -1701,6 +1786,8 @@ export type Database = {
           amenities: string[] | null
           categories: string[] | null
           city: string | null
+          closing_date: string | null
+          closure_reason: string | null
           created_at: string
           cuisine_types: string[] | null
           extraction_confidence: Json | null
@@ -1717,6 +1804,7 @@ export type Database = {
           menu_highlights: string[] | null
           name: string
           needs_review: boolean | null
+          opening_date: string | null
           opentable_url: string | null
           phone: string | null
           price_range: string | null
@@ -1724,6 +1812,7 @@ export type Database = {
           signature_dishes: Json | null
           slug: string
           source_url: string | null
+          status: string | null
           tags: string[] | null
           updated_at: string
           website: string | null
@@ -1734,6 +1823,8 @@ export type Database = {
           amenities?: string[] | null
           categories?: string[] | null
           city?: string | null
+          closing_date?: string | null
+          closure_reason?: string | null
           created_at?: string
           cuisine_types?: string[] | null
           extraction_confidence?: Json | null
@@ -1750,6 +1841,7 @@ export type Database = {
           menu_highlights?: string[] | null
           name: string
           needs_review?: boolean | null
+          opening_date?: string | null
           opentable_url?: string | null
           phone?: string | null
           price_range?: string | null
@@ -1757,6 +1849,7 @@ export type Database = {
           signature_dishes?: Json | null
           slug: string
           source_url?: string | null
+          status?: string | null
           tags?: string[] | null
           updated_at?: string
           website?: string | null
@@ -1767,6 +1860,8 @@ export type Database = {
           amenities?: string[] | null
           categories?: string[] | null
           city?: string | null
+          closing_date?: string | null
+          closure_reason?: string | null
           created_at?: string
           cuisine_types?: string[] | null
           extraction_confidence?: Json | null
@@ -1783,6 +1878,7 @@ export type Database = {
           menu_highlights?: string[] | null
           name?: string
           needs_review?: boolean | null
+          opening_date?: string | null
           opentable_url?: string | null
           phone?: string | null
           price_range?: string | null
@@ -1790,6 +1886,7 @@ export type Database = {
           signature_dishes?: Json | null
           slug?: string
           source_url?: string | null
+          status?: string | null
           tags?: string[] | null
           updated_at?: string
           website?: string | null
