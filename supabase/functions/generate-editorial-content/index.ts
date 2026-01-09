@@ -112,7 +112,7 @@ serve(async (req) => {
       });
     }
 
-    // Fetch verified fish fry data
+    // Fetch fish fry data with restaurant details including new feature-grade fields
     const { data: fishFryDeals, error: dealsError } = await supabase
       .from('restaurant_deals')
       .select(`
@@ -127,7 +127,17 @@ serve(async (req) => {
         end_time,
         verification_status,
         last_seen_at,
-        restaurants!inner(name, city, cuisine_type)
+        evidence_snippet,
+        restaurants!inner(
+          name, 
+          city, 
+          address,
+          price_range,
+          is_lakefront,
+          features,
+          local_reputation,
+          distinguishing_feature
+        )
       `)
       .eq('deal_type', 'fish_fry')
       .gte('confidence_score', 0.7)
@@ -138,9 +148,6 @@ serve(async (req) => {
       throw dealsError;
     }
 
-    const dealCount = fishFryDeals?.length || 0;
-    const verifiedCount = fishFryDeals?.filter(d => d.verification_status === 'verified').length || 0;
-    
     // Parse prices safely - strip $ and parse as number
     const parsePrice = (price: unknown): number | null => {
       if (price === null || price === undefined) return null;
@@ -148,18 +155,40 @@ serve(async (req) => {
       const num = parseFloat(str);
       return isNaN(num) ? null : num;
     };
+
+    // Quality gate: only include restaurants that meet feature-grade criteria
+    // Must have: price OR price_range, AND at least one distinguishing element
+    const qualifyingDeals = (fishFryDeals || []).filter(deal => {
+      const restaurant = deal.restaurants as any;
+      const hasPrice = parsePrice(deal.price) !== null || restaurant?.price_range;
+      const hasDistinction = 
+        deal.fish_type || 
+        deal.all_you_can_eat || 
+        restaurant?.is_lakefront ||
+        restaurant?.local_reputation ||
+        restaurant?.distinguishing_feature ||
+        (restaurant?.features && restaurant.features.length > 0) ||
+        deal.evidence_snippet;
+      
+      return hasPrice && hasDistinction;
+    });
+
+    const excludedCount = (fishFryDeals?.length || 0) - qualifyingDeals.length;
+    const dealCount = qualifyingDeals.length;
+    const verifiedCount = qualifyingDeals.filter(d => d.verification_status === 'verified').length;
     
-    const prices = fishFryDeals?.map(d => parsePrice(d.price)).filter((p): p is number => p !== null) || [];
+    const prices = qualifyingDeals.map(d => parsePrice(d.price)).filter((p): p is number => p !== null);
     const minPrice = prices.length > 0 ? Math.min(...prices) : null;
     const maxPrice = prices.length > 0 ? Math.max(...prices) : null;
     
     // Create data snapshot
     const snapshotSummary = {
       total_deals: dealCount,
+      excluded_for_quality: excludedCount,
       verified_deals: verifiedCount,
       price_range: { min: minPrice, max: maxPrice },
-      restaurants: fishFryDeals?.map(d => {
-        const restaurant = d.restaurants as unknown as { name: string; city: string; cuisine_type: string } | null;
+      restaurants: qualifyingDeals.map(d => {
+        const restaurant = d.restaurants as any;
         return {
           name: restaurant?.name,
           city: restaurant?.city,
@@ -167,9 +196,12 @@ serve(async (req) => {
           fish_type: d.fish_type,
           ayce: d.all_you_can_eat,
           days: d.days,
-          verified: d.verification_status === 'verified'
+          verified: d.verification_status === 'verified',
+          is_lakefront: restaurant?.is_lakefront,
+          local_reputation: restaurant?.local_reputation,
+          distinguishing_feature: restaurant?.distinguishing_feature
         };
-      }) || []
+      })
     };
 
     const { data: snapshot, error: snapshotError } = await supabase
@@ -186,102 +218,182 @@ serve(async (req) => {
       console.error('Error creating snapshot:', snapshotError);
     }
 
-    // Filter Friday deals (case-insensitive, handles 'fri', 'friday', 'Friday', etc.)
+    // Filter Friday deals (case-insensitive)
     const isFridayDeal = (days: unknown): boolean => {
       if (!days) return false;
       const daysStr = Array.isArray(days) ? days.join(' ') : String(days);
       return daysStr.toLowerCase().includes('fri');
     };
     
-    const fridayDeals = fishFryDeals?.filter(d => isFridayDeal(d.days)) || [];
-    const ayceDeals = fishFryDeals?.filter(d => d.all_you_can_eat) || [];
-    
-    // Format restaurant listings
-    const formatDeal = (deal: any) => {
-      const restaurant = deal.restaurants as unknown as { name: string; city: string; cuisine_type: string } | null;
-      const parts = [];
-      parts.push(`**${restaurant?.name}**`);
-      if (restaurant?.city) parts.push(` (${restaurant.city})`);
-      parts.push(': ');
-      
-      // Format price safely
-      const price = parsePrice(deal.price);
-      if (price !== null) parts.push(`$${price.toFixed(2)}`);
-      
-      if (deal.fish_type) parts.push(` - ${deal.fish_type}`);
-      if (deal.all_you_can_eat) parts.push(' (AYCE)');
-      if (deal.verification_status === 'verified') parts.push(' ✓');
-      return parts.join('');
-    };
+    const fridayDeals = qualifyingDeals.filter(d => isFridayDeal(d.days));
+    const ayceDeals = qualifyingDeals.filter(d => d.all_you_can_eat);
+    const lakefrontDeals = qualifyingDeals.filter(d => (d.restaurants as any)?.is_lakefront);
 
-    // Generate structured article (no AI needed for basic format)
-    const title = `This Week's Fish Fry Guide: ${dealCount} Options in the Lake Geneva Area`;
+    // Generate feature-grade content with AI recommendations per restaurant
+    let restaurantBlocks: string[] = [];
+    
+    if (lovableApiKey && qualifyingDeals.length > 0) {
+      // Generate human recommendations for each restaurant
+      for (const deal of qualifyingDeals) {
+        const restaurant = deal.restaurants as any;
+        
+        // Build context for AI
+        const context = {
+          name: restaurant?.name || 'Unknown',
+          city: restaurant?.city,
+          fish_type: deal.fish_type,
+          price: parsePrice(deal.price),
+          price_range: restaurant?.price_range,
+          is_lakefront: restaurant?.is_lakefront,
+          all_you_can_eat: deal.all_you_can_eat,
+          sides: deal.sides,
+          local_reputation: restaurant?.local_reputation,
+          distinguishing_feature: restaurant?.distinguishing_feature,
+          features: restaurant?.features,
+          evidence_snippet: deal.evidence_snippet,
+          verified: deal.verification_status === 'verified'
+        };
+
+        try {
+          const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${lovableApiKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: 'google/gemini-2.5-flash',
+              messages: [
+                {
+                  role: 'system',
+                  content: `You are a local food writer for Lake Geneva. Write 2-3 sentences recommending this restaurant's fish fry to a local audience.
+
+RULES:
+- Use a warm, human tone like you're telling a friend
+- Reference what locals like about it and what makes it distinct
+- DO NOT invent facts - only use information provided
+- If evidence is thin, write conservatively and focus on what you know
+- Never use phrases like "data shows" or "according to our sources"
+- Sound like a genuine recommendation, not a summary`
+                },
+                {
+                  role: 'user',
+                  content: `Write a 2-3 sentence recommendation for ${context.name}'s fish fry.
+
+Known facts:
+- Fish type: ${context.fish_type || 'not specified'}
+- Price: ${context.price ? `$${context.price}` : context.price_range || 'varies'}
+- All-you-can-eat: ${context.all_you_can_eat ? 'Yes' : 'No'}
+- Lakefront: ${context.is_lakefront ? 'Yes' : 'No'}
+- Local reputation: ${context.local_reputation || 'not available'}
+- What makes it special: ${context.distinguishing_feature || 'not specified'}
+- Features: ${context.features?.join(', ') || 'none listed'}
+- Evidence from their site: "${context.evidence_snippet || 'none available'}"
+
+Write only the 2-3 sentence recommendation, nothing else.`
+                }
+              ],
+              max_tokens: 200,
+            }),
+          });
+
+          if (aiResponse.ok) {
+            const aiData = await aiResponse.json();
+            const recommendation = aiData.choices?.[0]?.message?.content?.trim();
+            
+            if (recommendation) {
+              // Build the feature-grade block
+              let block = `### ${restaurant?.name}\n\n`;
+              block += `${recommendation}\n\n`;
+              
+              // Add verified facts as compact info line
+              const facts: string[] = [];
+              if (context.fish_type) facts.push(`🐟 ${context.fish_type}`);
+              if (isFridayDeal(deal.days)) facts.push('📅 Friday');
+              if (context.price) facts.push(`💰 ~$${context.price}`);
+              else if (context.price_range) facts.push(`💰 ${context.price_range}`);
+              if (context.all_you_can_eat) facts.push('🍽️ AYCE');
+              if (context.is_lakefront) facts.push('🌊 Lakefront');
+              if (context.verified) facts.push('✓ Verified');
+              
+              if (facts.length > 0) {
+                block += facts.join(' · ') + '\n';
+              }
+              
+              restaurantBlocks.push(block);
+            }
+          }
+        } catch (aiError) {
+          console.error(`AI generation failed for ${restaurant?.name}:`, aiError);
+          // Fallback to basic listing
+          restaurantBlocks.push(formatBasicListing(deal, restaurant));
+        }
+      }
+    } else {
+      // No API key - use basic format
+      qualifyingDeals.forEach(deal => {
+        const restaurant = deal.restaurants as any;
+        restaurantBlocks.push(formatBasicListing(deal, restaurant));
+      });
+    }
+
+    // Helper function for fallback format
+    function formatBasicListing(deal: any, restaurant: any): string {
+      const price = parsePrice(deal.price);
+      let block = `### ${restaurant?.name}\n\n`;
+      block += `A local option for fish fry`;
+      if (restaurant?.city) block += ` in ${restaurant.city}`;
+      block += '.\n\n';
+      
+      const facts: string[] = [];
+      if (deal.fish_type) facts.push(`🐟 ${deal.fish_type}`);
+      if (isFridayDeal(deal.days)) facts.push('📅 Friday');
+      if (price) facts.push(`💰 ~$${price}`);
+      if (deal.all_you_can_eat) facts.push('🍽️ AYCE');
+      if (restaurant?.is_lakefront) facts.push('🌊 Lakefront');
+      
+      if (facts.length > 0) block += facts.join(' · ') + '\n';
+      return block;
+    }
+
+    // Generate the full article
+    const title = `This Week's Fish Fry Guide: ${dealCount} Curated Picks in the Lake Geneva Area`;
     
     let content = `# ${title}\n\n`;
-    content += `*Based on ${verifiedCount} verified listings out of ${dealCount} total from Lake Geneva Eats data.*\n\n`;
     
-    if (fridayDeals.length > 0) {
-      content += `## Friday Fish Fry Specials\n\n`;
-      fridayDeals.forEach(deal => {
-        content += `- ${formatDeal(deal)}\n`;
-      });
-      content += '\n';
-    }
-
-    if (ayceDeals.length > 0) {
-      content += `## All-You-Can-Eat Options\n\n`;
-      ayceDeals.forEach(deal => {
-        content += `- ${formatDeal(deal)}\n`;
-      });
-      content += '\n';
-    }
-
-    // Generate AI summary only if we have the API key
-    let summary = `${dealCount} fish fry options this week across the Lake Geneva area, including ${ayceDeals.length} all-you-can-eat specials.`;
+    // Opening paragraph
+    content += `*Your curated guide to the best fish fry options this week. Each spot was selected for having something worth knowing about — whether it's lakefront views, generous portions, or that beer-battered cod locals keep coming back for.*\n\n`;
     
-    if (lovableApiKey && dealCount > 0) {
-      try {
-        // Build clean price range string
-        let priceRangeStr = 'varies';
-        if (minPrice !== null && maxPrice !== null) {
-          priceRangeStr = minPrice === maxPrice 
-            ? `$${minPrice.toFixed(2)}` 
-            : `$${minPrice.toFixed(2)} to $${maxPrice.toFixed(2)}`;
-        }
-        
-        const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${lovableApiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'google/gemini-2.5-flash',
-            messages: [
-              {
-                role: 'system',
-                content: `You are a local food writer for Lake Geneva. Write a 2-sentence summary for a fish fry guide article. Be warm and inviting. Only mention facts from the data provided. Do not invent any restaurants, prices, or details.`
-              },
-              {
-                role: 'user',
-                content: `Write a 2-sentence summary for this week's fish fry guide. Data: ${dealCount} total options, ${verifiedCount} verified, ${ayceDeals.length} AYCE options, ${fridayDeals.length} Friday specials. Price range: ${priceRangeStr}.`
-              }
-            ],
-            max_tokens: 150,
-          }),
-        });
-
-        if (aiResponse.ok) {
-          const aiData = await aiResponse.json();
-          summary = aiData.choices?.[0]?.message?.content || summary;
-        }
-      } catch (aiError) {
-        console.error('AI summary generation failed, using default:', aiError);
+    if (excludedCount > 0) {
+      content += `*Note: ${excludedCount} additional restaurants were excluded from this guide due to incomplete information.*\n\n`;
+    }
+    
+    content += `---\n\n`;
+    
+    // Restaurant blocks
+    content += restaurantBlocks.join('\n---\n\n');
+    
+    // Quick reference section
+    if (ayceDeals.length > 0 || lakefrontDeals.length > 0) {
+      content += `\n---\n\n## Quick Reference\n\n`;
+      
+      if (ayceDeals.length > 0) {
+        content += `**All-You-Can-Eat Options:** ${ayceDeals.map(d => (d.restaurants as any)?.name).join(', ')}\n\n`;
+      }
+      
+      if (lakefrontDeals.length > 0) {
+        content += `**Lakefront Dining:** ${lakefrontDeals.map(d => (d.restaurants as any)?.name).join(', ')}\n\n`;
       }
     }
 
-    // Determine trust labels - only "verified" if ALL items are verified
-    const trustLabels: string[] = ['data_journalism'];
+    // Generate summary
+    let summary = `${dealCount} curated fish fry picks this week across the Lake Geneva area`;
+    if (ayceDeals.length > 0) summary += `, including ${ayceDeals.length} all-you-can-eat option${ayceDeals.length > 1 ? 's' : ''}`;
+    if (lakefrontDeals.length > 0) summary += ` and ${lakefrontDeals.length} with lakefront dining`;
+    summary += '.';
+
+    // Determine trust labels
+    const trustLabels: string[] = ['data_journalism', 'curated'];
     if (dealCount > 0 && verifiedCount === dealCount) {
       trustLabels.push('verified');
     }
@@ -304,7 +416,12 @@ serve(async (req) => {
             content_type: 'fish_fry_guide', 
             week_key: weekKey, 
             generated_at: now.toISOString(),
-            is_regeneration: !!existingGuide
+            is_regeneration: !!existingGuide,
+            quality_gate: {
+              included: dealCount,
+              excluded: excludedCount,
+              verified: verifiedCount
+            }
           } 
         }
       })
@@ -319,11 +436,15 @@ serve(async (req) => {
     // Log activity
     await supabase.from('activity_log').insert({
       action: 'editorial_content_generated',
+      entity_type: 'content_queue',
+      entity_id: queueEntry?.id,
+      message: `Generated feature-grade Fish Fry Guide with ${dealCount} curated picks`,
       details: {
         content_type: 'fish_fry_guide',
         queue_id: queueEntry?.id,
         snapshot_id: snapshot?.id,
         deal_count: dealCount,
+        excluded_count: excludedCount,
         verified_count: verifiedCount,
         trust_labels: trustLabels
       }
@@ -336,6 +457,7 @@ serve(async (req) => {
       title,
       summary,
       deal_count: dealCount,
+      excluded_count: excludedCount,
       verified_count: verifiedCount,
       trust_labels: trustLabels
     }), {
