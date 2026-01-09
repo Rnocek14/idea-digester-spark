@@ -197,3 +197,6 @@ verify_jwt = false
 
 [functions.sync-dining-content-v2]
 verify_jwt = false
+
+[functions.generate-editorial-content]
+verify_jwt = false
