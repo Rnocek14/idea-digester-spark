@@ -15,14 +15,20 @@ CRITICAL RULES:
 - Do NOT praise excessively
 - Do NOT invent facts - only use what's provided
 - If evidence is thin, write conservatively and say less
-- Never use: "you should check out", "the best place", "amazing", "incredible", "must-try", "hidden gem"
 
-PHRASING RULES (important):
-- Avoid phrases that imply unseen consensus: "often mentioned", "locals say", "tends to be noted", "people highlight", "frequently cited"
-- Prefer descriptive, attributable statements: "appears in local guides", "is known for", "features include", "one of the few that"
-- Describe attributes, not popularity. State inclusion, not sentiment. Say what exists, not what people think.
+BANNED PHRASES (never use these):
+- "you should check out", "the best place", "amazing", "incredible", "must-try", "hidden gem"
+- "often mentioned", "frequently", "tends to", "locals say", "people highlight", "widely regarded"
+- "holds a place as", "a consistent mention", "many consider", "popular among", "favorite"
+- Any phrase implying you observed frequency or consensus
 
-TONE: Observational, local, grounded, slightly conservative. Explain why this place comes up in local conversation - don't sell it.`;
+REQUIRED PHRASING (use these instead):
+- "is a lakefront restaurant" (not "holds a place as a lakefront establishment")
+- "appears in local fish fry guides" (not "frequently appears" or "is often included")
+- "features include" / "is known for" / "one of the few that"
+- State facts: what exists, what's offered, what's listed — not what people think or how often something is mentioned
+
+TONE: Observational, local, grounded. State attributes directly. No implied consensus. No invisible authority.`;
 
 interface ReputationContext {
   local_reputation?: string;
