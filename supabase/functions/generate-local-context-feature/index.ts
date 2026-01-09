@@ -50,7 +50,7 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
-    const editorialSecret = Deno.env.get('EDITORIAL_SECRET');
+    const editorialSecret = Deno.env.get('EDITORIAL_GENERATION_SECRET');
     
     const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -282,7 +282,7 @@ serve(async (req) => {
       .from('content_queue')
       .insert({
         source_type: 'local_context_feature',
-        headline: `What's New at ${restaurant.name}`,
+        title: `What's New at ${restaurant.name}`,
         content,
         summary,
         status: 'pending_review',
