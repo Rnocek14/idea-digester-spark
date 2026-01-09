@@ -62,7 +62,7 @@ serve(async (req) => {
       });
     }
 
-    const { content_type = 'fish_fry_guide' } = await req.json().catch(() => ({}));
+    const { content_type = 'fish_fry_guide', force = false } = await req.json().catch(() => ({}));
 
     // Phase 3: Only fish_fry_guide is implemented
     if (content_type !== 'fish_fry_guide') {
@@ -76,24 +76,28 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Generate deterministic week_key in UTC (YYYY-WXX format)
-    const now = new Date();
-    const yearStart = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
-    const dayOfYear = Math.floor((now.getTime() - yearStart.getTime()) / (24 * 60 * 60 * 1000));
-    const weekNumber = Math.ceil((dayOfYear + yearStart.getUTCDay() + 1) / 7);
-    const weekKey = `${now.getUTCFullYear()}-W${String(weekNumber).padStart(2, '0')}`;
+    // ISO 8601 week calculation (handles year boundaries correctly)
+    const getISOWeekKey = (date: Date): string => {
+      const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+      // Set to nearest Thursday (ISO week starts Monday, week 1 contains Jan 4)
+      d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+      const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+      const weekNum = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+      return `${d.getUTCFullYear()}-W${String(weekNum).padStart(2, '0')}`;
+    };
     
-    // Idempotency check: don't create duplicate guide for same week_key
+    const now = new Date();
+    const weekKey = getISOWeekKey(now);
+    
+    // Idempotency check: unambiguous query using nested metadata structure
     const { data: existingGuide } = await supabase
       .from('content_queue')
       .select('id, created_at, metadata')
       .eq('source_type', 'data_journalism')
-      .eq('category', 'dining')
-      .ilike('title', '%Fish Fry Guide%')
-      .contains('metadata', { week_key: weekKey })
+      .contains('metadata', { editorial: { content_type: 'fish_fry_guide', week_key: weekKey } })
       .single();
     
-    if (existingGuide) {
+    if (existingGuide && !force) {
       // Return 200 with skipped flag for clean cron logs
       return new Response(JSON.stringify({ 
         success: true,
@@ -295,7 +299,14 @@ serve(async (req) => {
         trust_labels: trustLabels,
         last_updated_at: new Date().toISOString(),
         data_snapshot_id: snapshot?.id,
-        metadata: { week_key: weekKey, generated_at: now.toISOString() }
+        metadata: { 
+          editorial: { 
+            content_type: 'fish_fry_guide', 
+            week_key: weekKey, 
+            generated_at: now.toISOString(),
+            is_regeneration: !!existingGuide
+          } 
+        }
       })
       .select()
       .single();
