@@ -20,6 +20,7 @@ BANNED PHRASES (never use these):
 - "you should check out", "the best place", "amazing", "incredible", "must-try", "hidden gem"
 - "often mentioned", "frequently", "tends to", "locals say", "people highlight", "widely regarded"
 - "holds a place as", "a consistent mention", "many consider", "popular among", "favorite"
+- "often compared to", "is considered", "is also considered" (implies unseen consensus)
 - Any phrase implying you observed frequency or consensus
 
 REQUIRED PHRASING (use these instead):
