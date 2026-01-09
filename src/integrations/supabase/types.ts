@@ -1833,6 +1833,7 @@ export type Database = {
           closure_reason: string | null
           created_at: string
           cuisine_types: string[] | null
+          distinguishing_feature: string | null
           extraction_confidence: Json | null
           extraction_notes: string | null
           facebook_url: string | null
@@ -1844,6 +1845,7 @@ export type Database = {
           id: string
           is_lakefront: boolean | null
           last_scraped_at: string | null
+          local_reputation: string | null
           menu_highlights: string[] | null
           name: string
           needs_review: boolean | null
@@ -1870,6 +1872,7 @@ export type Database = {
           closure_reason?: string | null
           created_at?: string
           cuisine_types?: string[] | null
+          distinguishing_feature?: string | null
           extraction_confidence?: Json | null
           extraction_notes?: string | null
           facebook_url?: string | null
@@ -1881,6 +1884,7 @@ export type Database = {
           id?: string
           is_lakefront?: boolean | null
           last_scraped_at?: string | null
+          local_reputation?: string | null
           menu_highlights?: string[] | null
           name: string
           needs_review?: boolean | null
@@ -1907,6 +1911,7 @@ export type Database = {
           closure_reason?: string | null
           created_at?: string
           cuisine_types?: string[] | null
+          distinguishing_feature?: string | null
           extraction_confidence?: Json | null
           extraction_notes?: string | null
           facebook_url?: string | null
@@ -1918,6 +1923,7 @@ export type Database = {
           id?: string
           is_lakefront?: boolean | null
           last_scraped_at?: string | null
+          local_reputation?: string | null
           menu_highlights?: string[] | null
           name?: string
           needs_review?: boolean | null
