@@ -165,19 +165,39 @@ serve(async (req) => {
       });
     }
 
-    // Get current hooks
+    // Get current hooks - use literal ISO timestamp instead of now()
+    const nowIso = new Date().toISOString();
     const { data: hooks } = await supabase
       .from('restaurant_news')
       .select('*')
       .eq('restaurant_id', restaurant_id)
       .eq('is_current', true)
       .not('hook_type', 'is', null)
-      .or('expires_at.is.null,expires_at.gt.now()')
+      .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
       .order('published_at', { ascending: false })
-      .limit(3);
+      .limit(10); // Get more so we can score them
 
-    const currentHooks: TimelyHook[] = hooks || [];
+    // Score hooks to pick the best one, not just newest
+    const scoreHook = (h: any): number => {
+      let score = 0;
+      if (h.verified) score += 2;
+      if (h.summary) score += 1;
+      if (h.source_url) score += 1;
+      if (['event_series', 'anniversary', 'award', 'expansion'].includes(h.hook_type)) score += 1;
+      return score;
+    };
+
+    const sortedHooks = (hooks || [])
+      .map(h => ({ ...h, _score: scoreHook(h) }))
+      .sort((a, b) => b._score - a._score || new Date(b.published_at).getTime() - new Date(a.published_at).getTime());
+
+    const currentHooks: TimelyHook[] = sortedHooks.slice(0, 3);
     const primaryHook = currentHooks[0];
+
+    console.log('Hook selection', { 
+      total: hooks?.length || 0, 
+      primaryHook: primaryHook ? { headline: primaryHook.headline, score: (primaryHook as any)._score } : null 
+    });
 
     if (!primaryHook && !force) {
       return new Response(JSON.stringify({ error: 'No current hook found' }), {
@@ -199,13 +219,17 @@ serve(async (req) => {
       address: restaurant.address,
     };
 
-    // Check for existing feature this month (using metadata instead of idempotency_key)
-    const monthKey = new Date().toISOString().substring(0, 7); // YYYY-MM
+    // Check for existing feature this month - use proper UTC start of month
+    const startOfMonth = new Date();
+    startOfMonth.setUTCDate(1);
+    startOfMonth.setUTCHours(0, 0, 0, 0);
+    const startIso = startOfMonth.toISOString();
+
     const { data: existing } = await supabase
       .from('content_queue')
       .select('id, metadata')
       .eq('source_type', 'local_context_feature')
-      .gte('created_at', `${monthKey}-01`)
+      .gte('created_at', startIso)
       .limit(100);
 
     const alreadyExists = existing?.some(item => {
@@ -225,8 +249,8 @@ serve(async (req) => {
     }
 
     // Generate content
-    let content: string;
-    let summary: string;
+    let content: string = '';
+    let summary: string = '';
     
     if (lovableApiKey) {
       // AI-powered generation
@@ -300,10 +324,23 @@ serve(async (req) => {
         const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
         
         if (toolCall?.function?.arguments) {
-          const args = JSON.parse(toolCall.function.arguments);
-          content = formatArticle(args, restaurant);
-          summary = args.summary;
-          console.log('AI generation successful');
+          // Wrap JSON parse in try/catch for robustness
+          let args;
+          try {
+            args = JSON.parse(toolCall.function.arguments);
+          } catch (parseError) {
+            console.error('Failed to parse tool arguments:', parseError, toolCall.function.arguments);
+            const fallback = generateFallbackContent(restaurant.name, primaryHook, reputationContext);
+            content = fallback.content;
+            summary = fallback.summary;
+            args = null;
+          }
+          
+          if (args) {
+            content = formatArticle(args, restaurant);
+            summary = args.summary;
+            console.log('AI generation successful');
+          }
         } else {
           console.log('No tool call in AI response, using fallback');
           const fallback = generateFallbackContent(restaurant.name, primaryHook, reputationContext);
