@@ -779,6 +779,9 @@ const LakeGeneva = () => {
                             src={featured.image_url || getCategoryFallbackImage(featured.id, featured.category)}
                             alt={featured.title}
                             className="h-full w-full object-cover object-top transition-transform duration-500 hover:scale-[1.03]"
+                            onError={(e) => {
+                              e.currentTarget.src = getCategoryFallbackImage(featured.id, featured.category);
+                            }}
                           />
                           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-black/30 to-transparent" />
                           <div className="pointer-events-none absolute inset-x-0 bottom-0 p-4 sm:p-5">
