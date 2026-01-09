@@ -47,14 +47,22 @@ const NON_LOCAL_KEYWORDS = [
 
 // Check if an incident is local to Lake Geneva area
 function isLocalIncident(title: string, location: string | null): boolean {
-  const text = `${title} ${location || ''}`.toLowerCase();
-  
-  // Check for local keywords - if found, it's local
-  const hasLocalKeyword = LOCAL_KEYWORDS.some(keyword => text.includes(keyword));
-  if (hasLocalKeyword) return true;
-  
-  // Check for non-local keywords in title - if found and no local keyword, exclude
   const titleLower = title.toLowerCase();
+  const locationLower = (location || '').toLowerCase();
+  
+  // Priority 1: If location field explicitly mentions local areas, it's local
+  const locationHasLocal = LOCAL_KEYWORDS.some(keyword => locationLower.includes(keyword));
+  if (locationHasLocal) return true;
+  
+  // Priority 2: Check for local keywords in title
+  const titleHasLocal = LOCAL_KEYWORDS.some(keyword => titleLower.includes(keyword));
+  if (titleHasLocal) return true;
+  
+  // Priority 3: Weather alerts from "NWS Milwaukee" are regional and cover our area
+  const isNWSAlert = titleLower.includes('nws milwaukee') || titleLower.includes('nws sullivan');
+  if (isNWSAlert) return true;
+  
+  // Priority 4: Check for non-local keywords in title - exclude if found
   const hasNonLocalKeyword = NON_LOCAL_KEYWORDS.some(keyword => titleLower.includes(keyword));
   if (hasNonLocalKeyword) return false;
   
