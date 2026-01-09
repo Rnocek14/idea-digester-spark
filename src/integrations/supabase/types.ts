@@ -376,6 +376,7 @@ export type Database = {
           is_breaking: boolean | null
           is_sponsored: boolean | null
           last_newsletter_id: string | null
+          last_updated_at: string | null
           metadata: Json | null
           normalized_url: string | null
           original_url: string | null
@@ -388,10 +389,12 @@ export type Database = {
           safety_reason: string | null
           safety_tags: Json | null
           source_id: string | null
+          source_type: string | null
           sponsor_id: string | null
           status: string
           summary: string | null
           title: string
+          trust_labels: Json | null
           updated_at: string
           voice_generated_at: string | null
           voice_version: string | null
@@ -417,6 +420,7 @@ export type Database = {
           is_breaking?: boolean | null
           is_sponsored?: boolean | null
           last_newsletter_id?: string | null
+          last_updated_at?: string | null
           metadata?: Json | null
           normalized_url?: string | null
           original_url?: string | null
@@ -429,10 +433,12 @@ export type Database = {
           safety_reason?: string | null
           safety_tags?: Json | null
           source_id?: string | null
+          source_type?: string | null
           sponsor_id?: string | null
           status?: string
           summary?: string | null
           title: string
+          trust_labels?: Json | null
           updated_at?: string
           voice_generated_at?: string | null
           voice_version?: string | null
@@ -458,6 +464,7 @@ export type Database = {
           is_breaking?: boolean | null
           is_sponsored?: boolean | null
           last_newsletter_id?: string | null
+          last_updated_at?: string | null
           metadata?: Json | null
           normalized_url?: string | null
           original_url?: string | null
@@ -470,10 +477,12 @@ export type Database = {
           safety_reason?: string | null
           safety_tags?: Json | null
           source_id?: string | null
+          source_type?: string | null
           sponsor_id?: string | null
           status?: string
           summary?: string | null
           title?: string
+          trust_labels?: Json | null
           updated_at?: string
           voice_generated_at?: string | null
           voice_version?: string | null
@@ -552,6 +561,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      data_snapshots: {
+        Row: {
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          query_description: string
+          result_summary: Json
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          query_description: string
+          result_summary: Json
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          query_description?: string
+          result_summary?: Json
+        }
+        Relationships: []
       }
       distribution_channels: {
         Row: {

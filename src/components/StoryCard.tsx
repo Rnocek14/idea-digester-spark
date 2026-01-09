@@ -1,6 +1,9 @@
 import { useState } from "react";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, CheckCircle2, Newspaper } from "lucide-react";
 import { ShareButtons } from "@/components/ShareButtons";
+
+type TrustLabel = 'verified' | 'data_journalism' | 'sourced' | 'sponsored';
+
 type StoryCardProps = {
   id?: string;
   title: string;
@@ -11,6 +14,8 @@ type StoryCardProps = {
   sponsored?: boolean;
   geoTier?: number | null;
   geoLabel?: string | null;
+  sourceType?: 'sourced' | 'data_journalism' | 'original_reporting' | 'sponsored' | 'user_submitted' | null;
+  trustLabels?: TrustLabel[] | null;
   meta?: {
     time?: string | null;
     source?: string | null;
@@ -123,6 +128,8 @@ export const StoryCard = ({
   sponsored = false,
   geoTier,
   geoLabel,
+  sourceType,
+  trustLabels,
   meta,
 }: StoryCardProps) => {
   const geoIcon = getGeoIcon(geoTier);
@@ -134,6 +141,10 @@ export const StoryCard = ({
       setImgSrc(fallbackImage);
     }
   };
+
+  // Determine trust badge to show (single, most important one)
+  const isVerified = trustLabels?.includes('verified');
+  const isDataJournalism = sourceType === 'data_journalism' || trustLabels?.includes('data_journalism');
   
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow">
@@ -166,11 +177,25 @@ export const StoryCard = ({
       </div>
 
       <div className="flex flex-1 flex-col gap-2 p-4">
-        {sponsored && (
-          <span className="text-[11px] font-medium uppercase tracking-[0.16em] text-amber-700">
-            Sponsored
-          </span>
-        )}
+        <div className="flex items-center gap-2 flex-wrap">
+          {sponsored && (
+            <span className="text-[11px] font-medium uppercase tracking-[0.16em] text-amber-700">
+              Sponsored
+            </span>
+          )}
+          {isVerified && (
+            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700">
+              <CheckCircle2 className="h-3 w-3" />
+              Verified
+            </span>
+          )}
+          {isDataJournalism && !isVerified && (
+            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-700">
+              <Newspaper className="h-3 w-3" />
+              Based on Lake Geneva Eats data
+            </span>
+          )}
+        </div>
 
         {url ? (
           <a
