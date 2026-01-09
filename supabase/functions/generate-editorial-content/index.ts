@@ -156,28 +156,59 @@ serve(async (req) => {
       return isNaN(num) ? null : num;
     };
 
-    // Quality gate: only include restaurants that meet feature-grade criteria
-    // Must have: price OR price_range, AND at least one distinguishing element
-    const qualifyingDeals = (fishFryDeals || []).filter(deal => {
+    // Dedupe by restaurant: pick the best deal per restaurant
+    // Priority: verified > has price > most recent
+    const dealsMap = new Map<string, typeof fishFryDeals[0]>();
+    for (const deal of fishFryDeals || []) {
+      const restId = deal.restaurant_id;
+      if (!restId) continue;
+      
+      const existing = dealsMap.get(restId);
+      if (!existing) {
+        dealsMap.set(restId, deal);
+      } else {
+        // Compare: verified beats unverified, then price, then recency
+        const existingVerified = existing.verification_status === 'verified';
+        const newVerified = deal.verification_status === 'verified';
+        const existingHasPrice = parsePrice(existing.price) !== null;
+        const newHasPrice = parsePrice(deal.price) !== null;
+        
+        if ((!existingVerified && newVerified) || 
+            (existingVerified === newVerified && !existingHasPrice && newHasPrice)) {
+          dealsMap.set(restId, deal);
+        }
+      }
+    }
+    const dedupedDeals = Array.from(dealsMap.values());
+
+    // Tighter quality gate: require REAL distinction (not just fish_type/evidence)
+    // Must have: (price OR price_range) AND (real distinction)
+    const qualifyingDeals = dedupedDeals.filter(deal => {
       const restaurant = deal.restaurants as any;
       const hasPrice = parsePrice(deal.price) !== null || restaurant?.price_range;
-      const hasDistinction = 
-        deal.fish_type || 
-        deal.all_you_can_eat || 
-        restaurant?.is_lakefront ||
+      
+      // Real distinctions that make it feature-worthy
+      const hasRealDistinction = 
         restaurant?.local_reputation ||
         restaurant?.distinguishing_feature ||
-        (restaurant?.features && restaurant.features.length > 0) ||
-        deal.evidence_snippet;
+        restaurant?.is_lakefront ||
+        deal.all_you_can_eat ||
+        (restaurant?.features && restaurant.features.length > 0);
       
-      return hasPrice && hasDistinction;
+      return hasPrice && hasRealDistinction;
     });
 
-    const excludedCount = (fishFryDeals?.length || 0) - qualifyingDeals.length;
-    const dealCount = qualifyingDeals.length;
-    const verifiedCount = qualifyingDeals.filter(d => d.verification_status === 'verified').length;
+    // Cap at 12 restaurants to prevent timeout and keep it curated
+    const MAX_RESTAURANTS = 12;
+    const cappedDeals = qualifyingDeals.slice(0, MAX_RESTAURANTS);
+    const cappedCount = qualifyingDeals.length - cappedDeals.length;
+
+    const excludedCount = (fishFryDeals?.length || 0) - dedupedDeals.length + 
+                          (dedupedDeals.length - qualifyingDeals.length) + cappedCount;
+    const dealCount = cappedDeals.length;
+    const verifiedCount = cappedDeals.filter(d => d.verification_status === 'verified').length;
     
-    const prices = qualifyingDeals.map(d => parsePrice(d.price)).filter((p): p is number => p !== null);
+    const prices = cappedDeals.map(d => parsePrice(d.price)).filter((p): p is number => p !== null);
     const minPrice = prices.length > 0 ? Math.min(...prices) : null;
     const maxPrice = prices.length > 0 ? Math.max(...prices) : null;
     
@@ -185,9 +216,10 @@ serve(async (req) => {
     const snapshotSummary = {
       total_deals: dealCount,
       excluded_for_quality: excludedCount,
+      duplicates_removed: (fishFryDeals?.length || 0) - dedupedDeals.length,
       verified_deals: verifiedCount,
       price_range: { min: minPrice, max: maxPrice },
-      restaurants: qualifyingDeals.map(d => {
+      restaurants: cappedDeals.map(d => {
         const restaurant = d.restaurants as any;
         return {
           name: restaurant?.name,
@@ -225,16 +257,16 @@ serve(async (req) => {
       return daysStr.toLowerCase().includes('fri');
     };
     
-    const fridayDeals = qualifyingDeals.filter(d => isFridayDeal(d.days));
-    const ayceDeals = qualifyingDeals.filter(d => d.all_you_can_eat);
-    const lakefrontDeals = qualifyingDeals.filter(d => (d.restaurants as any)?.is_lakefront);
+    const fridayDeals = cappedDeals.filter(d => isFridayDeal(d.days));
+    const ayceDeals = cappedDeals.filter(d => d.all_you_can_eat);
+    const lakefrontDeals = cappedDeals.filter(d => (d.restaurants as any)?.is_lakefront);
 
     // Generate feature-grade content with AI recommendations per restaurant
     let restaurantBlocks: string[] = [];
     
-    if (lovableApiKey && qualifyingDeals.length > 0) {
+    if (lovableApiKey && cappedDeals.length > 0) {
       // Generate human recommendations for each restaurant
-      for (const deal of qualifyingDeals) {
+      for (const deal of cappedDeals) {
         const restaurant = deal.restaurants as any;
         
         // Build context for AI
@@ -254,6 +286,15 @@ serve(async (req) => {
           verified: deal.verification_status === 'verified'
         };
 
+        // Count how many "rich" distinctions we have for conservative mode
+        const richDistinctions = [
+          context.local_reputation,
+          context.distinguishing_feature,
+          context.features?.length > 0
+        ].filter(Boolean).length;
+        
+        const isConservativeMode = richDistinctions === 0;
+
         try {
           const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
             method: 'POST',
@@ -266,7 +307,16 @@ serve(async (req) => {
               messages: [
                 {
                   role: 'system',
-                  content: `You are a local food writer for Lake Geneva. Write 2-3 sentences recommending this restaurant's fish fry to a local audience.
+                  content: isConservativeMode 
+                    ? `You are a local food writer for Lake Geneva. Write 1-2 SHORT sentences about this restaurant's fish fry.
+
+RULES:
+- Keep it simple and factual - you have limited information
+- Only mention what you know for certain
+- DO NOT embellish or add color you can't verify
+- One simple, honest sentence is better than two fluffy ones
+- Never invent atmosphere, history, or local opinions`
+                    : `You are a local food writer for Lake Geneva. Write 2-3 sentences recommending this restaurant's fish fry to a local audience.
 
 RULES:
 - Use a warm, human tone like you're telling a friend
@@ -278,7 +328,7 @@ RULES:
                 },
                 {
                   role: 'user',
-                  content: `Write a 2-3 sentence recommendation for ${context.name}'s fish fry.
+                  content: `Write a ${isConservativeMode ? '1-2' : '2-3'} sentence recommendation for ${context.name}'s fish fry.
 
 Known facts:
 - Fish type: ${context.fish_type || 'not specified'}
@@ -331,7 +381,7 @@ Write only the 2-3 sentence recommendation, nothing else.`
       }
     } else {
       // No API key - use basic format
-      qualifyingDeals.forEach(deal => {
+      cappedDeals.forEach(deal => {
         const restaurant = deal.restaurants as any;
         restaurantBlocks.push(formatBasicListing(deal, restaurant));
       });
@@ -363,6 +413,9 @@ Write only the 2-3 sentence recommendation, nothing else.`
     
     // Opening paragraph
     content += `*Your curated guide to the best fish fry options this week. Each spot was selected for having something worth knowing about — whether it's lakefront views, generous portions, or that beer-battered cod locals keep coming back for.*\n\n`;
+    
+    // Trust-building line
+    content += `*If anything here is outdated, [tell us](mailto:tips@lakegenevaeats.com) and we'll fix it fast.*\n\n`;
     
     if (excludedCount > 0) {
       content += `*Note: ${excludedCount} additional restaurants were excluded from this guide due to incomplete information.*\n\n`;
