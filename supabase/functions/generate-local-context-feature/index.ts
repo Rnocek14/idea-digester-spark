@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-editorial-secret',
 };
 
 // Conservative, trust-first system prompt
@@ -46,40 +46,78 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Early logging for debugging
+  console.log('LCF request', {
+    method: req.method,
+    hasAuth: !!req.headers.get('authorization'),
+    hasSecret: !!req.headers.get('x-editorial-secret'),
+  });
+
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
-    const editorialSecret = Deno.env.get('EDITORIAL_GENERATION_SECRET');
     
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    // Support both secret env var names for robustness
+    const editorialSecret = 
+      Deno.env.get('EDITORIAL_SECRET') || 
+      Deno.env.get('EDITORIAL_GENERATION_SECRET') || 
+      '';
 
-    // Auth check
+    // Auth check - support both secret header and JWT auth
     const authHeader = req.headers.get('authorization');
     const providedSecret = req.headers.get('x-editorial-secret');
     
-    let isAuthorized = providedSecret === editorialSecret;
+    let isAuthorized = !!editorialSecret && providedSecret === editorialSecret;
     
+    console.log('Auth check', { 
+      hasEditorialSecret: !!editorialSecret,
+      providedSecretMatch: isAuthorized,
+      hasAuthHeader: !!authHeader 
+    });
+    
+    // If not authorized via secret, try JWT auth with admin role check
     if (!isAuthorized && authHeader) {
-      const token = authHeader.replace('Bearer ', '');
-      const { data: { user } } = await supabase.auth.getUser(token);
-      if (user) {
-        const { data: roles } = await supabase
+      // Use anon client with user's bearer token
+      const anonClient = createClient(supabaseUrl, supabaseAnonKey, {
+        global: { headers: { Authorization: authHeader } }
+      });
+      
+      const { data: { user }, error: userError } = await anonClient.auth.getUser();
+      
+      if (user && !userError) {
+        // Use service role to check admin status
+        const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+        const { data: roleData } = await adminClient
           .from('user_roles')
           .select('role')
-          .eq('user_id', user.id);
-        isAuthorized = roles?.some(r => r.role === 'admin') || false;
+          .eq('user_id', user.id)
+          .eq('role', 'admin')
+          .maybeSingle();
+        
+        isAuthorized = !!roleData;
+        console.log('JWT auth result', { userId: user.id, isAdmin: isAuthorized });
+      } else {
+        console.log('JWT auth failed', { error: userError?.message });
       }
     }
     
     if (!isAuthorized) {
+      console.log('Authorization failed - returning 401');
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    const { restaurant_id, force = false } = await req.json();
+    // Create service role client for all DB operations
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    const body = await req.json();
+    const { restaurant_id, force = false, dry_run = false } = body;
+    
+    console.log('Request params', { restaurant_id, force, dry_run });
     
     if (!restaurant_id) {
       return new Response(JSON.stringify({ error: 'restaurant_id required' }), {
@@ -99,6 +137,8 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
+
+    console.log('Eligibility result', eligibility);
 
     if (!eligibility.eligible && !force) {
       return new Response(JSON.stringify({
@@ -159,19 +199,25 @@ serve(async (req) => {
       address: restaurant.address,
     };
 
-    // Check for existing feature this month
+    // Check for existing feature this month (using metadata instead of idempotency_key)
     const monthKey = new Date().toISOString().substring(0, 7); // YYYY-MM
     const { data: existing } = await supabase
       .from('content_queue')
-      .select('id')
+      .select('id, metadata')
       .eq('source_type', 'local_context_feature')
-      .like('idempotency_key', `lcf-${restaurant_id}-${monthKey}%`)
-      .limit(1);
+      .gte('created_at', `${monthKey}-01`)
+      .limit(100);
 
-    if (existing && existing.length > 0 && !force) {
+    const alreadyExists = existing?.some(item => {
+      const meta = item.metadata as any;
+      return meta?.restaurant_id === restaurant_id;
+    });
+
+    if (alreadyExists && !force) {
+      const existingItem = existing?.find(item => (item.metadata as any)?.restaurant_id === restaurant_id);
       return new Response(JSON.stringify({
         error: 'Feature already generated this month',
-        existing_id: existing[0].id
+        existing_id: existingItem?.id
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -185,6 +231,8 @@ serve(async (req) => {
     if (lovableApiKey) {
       // AI-powered generation
       const userPrompt = buildUserPrompt(restaurant.name, primaryHook, reputationContext, currentHooks);
+      
+      console.log('Calling AI for content generation...');
       
       const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
         method: 'POST',
@@ -255,14 +303,16 @@ serve(async (req) => {
           const args = JSON.parse(toolCall.function.arguments);
           content = formatArticle(args, restaurant);
           summary = args.summary;
+          console.log('AI generation successful');
         } else {
+          console.log('No tool call in AI response, using fallback');
           const fallback = generateFallbackContent(restaurant.name, primaryHook, reputationContext);
           content = fallback.content;
           summary = fallback.summary;
         }
       }
     } else {
-      // Template-based fallback
+      console.log('No LOVABLE_API_KEY, using template fallback');
       const fallback = generateFallbackContent(restaurant.name, primaryHook, reputationContext);
       content = fallback.content;
       summary = fallback.summary;
@@ -275,9 +325,31 @@ serve(async (req) => {
     if (primaryHook?.hook_type === 'event_series') trustLabels.push('event-driven');
     if (primaryHook?.hook_type === 'anniversary') trustLabels.push('milestone');
 
-    const idempotencyKey = `lcf-${restaurant_id}-${monthKey}-${Date.now()}`;
+    // DRY RUN - return without inserting
+    if (dry_run) {
+      console.log('Dry run - returning without insert');
+      return new Response(JSON.stringify({
+        success: true,
+        dry_run: true,
+        restaurant: restaurant.name,
+        eligibility,
+        primary_hook: primaryHook,
+        trust_labels: trustLabels,
+        generated_content: content,
+        summary,
+        would_insert: {
+          title: `What's New at ${restaurant.name}`,
+          source_type: 'local_context_feature',
+          status: 'pending_review',
+          category: 'dining',
+          geo_tier: 1
+        }
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
 
-    // Insert into content_queue
+    // Insert into content_queue - using only columns that exist
     const { data: inserted, error: insertError } = await supabase
       .from('content_queue')
       .insert({
@@ -286,19 +358,20 @@ serve(async (req) => {
         content,
         summary,
         status: 'pending_review',
-        idempotency_key: idempotencyKey,
-        raw_json: {
+        category: 'dining',
+        geo_tier: 1, // core = 1
+        geo_label: restaurant.city || 'Lake Geneva Area',
+        normalized_url: restaurant.website || restaurant.source_url,
+        original_url: primaryHook?.source_url,
+        trust_labels: trustLabels,
+        metadata: {
           restaurant_id,
           restaurant_name: restaurant.name,
           eligibility,
           primary_hook: primaryHook,
           reputation_context: reputationContext,
-          trust_labels: trustLabels,
           generated_at: new Date().toISOString()
-        },
-        normalized_url: restaurant.website || restaurant.source_url,
-        vertical: 'dining',
-        geo_tier: 'core'
+        }
       })
       .select()
       .single();
@@ -311,15 +384,18 @@ serve(async (req) => {
       });
     }
 
+    console.log('Content inserted', { id: inserted.id });
+
     // Log activity
     await supabase.from('activity_log').insert({
-      type: 'local_context_feature_generated',
+      action: 'local_context_feature_generated',
+      entity_type: 'content_queue',
+      entity_id: inserted.id,
       message: `Generated Local Context Feature for ${restaurant.name}`,
-      metadata: {
-        content_id: inserted.id,
+      details: {
         restaurant_id,
         eligibility,
-        trustLabels
+        trust_labels: trustLabels
       }
     });
 
@@ -328,7 +404,7 @@ serve(async (req) => {
       content_id: inserted.id,
       restaurant: restaurant.name,
       eligibility,
-      trustLabels,
+      trust_labels: trustLabels,
       preview: content.substring(0, 500) + '...'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
