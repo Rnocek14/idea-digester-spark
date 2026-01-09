@@ -310,6 +310,7 @@ export type Database = {
           is_hidden: boolean | null
           last_synced_at: string | null
           logo_url: string | null
+          merged_into_id: string | null
           metadata: Json | null
           name: string
           normalized_name: string | null
@@ -341,6 +342,7 @@ export type Database = {
           is_hidden?: boolean | null
           last_synced_at?: string | null
           logo_url?: string | null
+          merged_into_id?: string | null
           metadata?: Json | null
           name: string
           normalized_name?: string | null
@@ -372,6 +374,7 @@ export type Database = {
           is_hidden?: boolean | null
           last_synced_at?: string | null
           logo_url?: string | null
+          merged_into_id?: string | null
           metadata?: Json | null
           name?: string
           normalized_name?: string | null
@@ -385,7 +388,15 @@ export type Database = {
           zillow_review_count?: number | null
           zillow_url?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "business_profiles_merged_into_id_fkey"
+            columns: ["merged_into_id"]
+            isOneToOne: false
+            referencedRelation: "business_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       content_queue: {
         Row: {
