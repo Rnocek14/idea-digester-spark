@@ -95,7 +95,7 @@ serve(async (req) => {
       .select('id, created_at, metadata')
       .eq('source_type', 'data_journalism')
       .contains('metadata', { editorial: { content_type: 'fish_fry_guide', week_key: weekKey } })
-      .single();
+      .maybeSingle();
     
     if (existingGuide && !force) {
       // Return 200 with skipped flag for clean cron logs
