@@ -301,10 +301,14 @@ export type Database = {
           created_at: string | null
           description: string | null
           email: string | null
+          external_payload: Json | null
           geo_tier: number | null
           google_place_id: string | null
           id: string
+          import_source: string | null
           is_featured: boolean | null
+          is_hidden: boolean | null
+          last_synced_at: string | null
           logo_url: string | null
           metadata: Json | null
           name: string
@@ -328,10 +332,14 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           email?: string | null
+          external_payload?: Json | null
           geo_tier?: number | null
           google_place_id?: string | null
           id?: string
+          import_source?: string | null
           is_featured?: boolean | null
+          is_hidden?: boolean | null
+          last_synced_at?: string | null
           logo_url?: string | null
           metadata?: Json | null
           name: string
@@ -355,10 +363,14 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           email?: string | null
+          external_payload?: Json | null
           geo_tier?: number | null
           google_place_id?: string | null
           id?: string
+          import_source?: string | null
           is_featured?: boolean | null
+          is_hidden?: boolean | null
+          last_synced_at?: string | null
           logo_url?: string | null
           metadata?: Json | null
           name?: string
