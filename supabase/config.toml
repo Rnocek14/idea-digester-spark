@@ -1,5 +1,8 @@
 project_id = "mzumvkrpnxhkvhdyzgqa"
 
+[functions.cleanup-stale-posts]
+verify_jwt = false
+
 [functions.sync-nws-alerts]
 verify_jwt = false
 
