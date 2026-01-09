@@ -157,7 +157,7 @@ serve(async (req) => {
     };
 
     // Dedupe by restaurant: pick the best deal per restaurant
-    // Priority: verified > has price > more recent > higher confidence
+    // Priority: verified > has price > more recent
     const dealsMap = new Map<string, typeof fishFryDeals[0]>();
     for (const deal of fishFryDeals || []) {
       const restId = deal.restaurant_id;
