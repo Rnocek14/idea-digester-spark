@@ -42,6 +42,17 @@ interface RestaurantExtraction {
   cuisine_types?: string[];
   price_range?: string;
   signature_dishes?: Array<{ name: string; price?: string; description?: string }>;
+  // Restaurant status detection
+  restaurant_status?: {
+    is_new_opening?: boolean;
+    opening_date?: string;
+    is_closing?: boolean;
+    closing_date?: string;
+    closure_reason?: string;
+    is_temporarily_closed?: boolean;
+    reopening_date?: string;
+    is_under_renovation?: boolean;
+  };
   extraction_confidence?: {
     fish_fry?: number;
     happy_hour?: number;
@@ -62,6 +73,13 @@ DEAL TYPES (use exact values):
 - weekly_special: Taco Tuesday, Wing Wednesday, Prime Rib Saturday
 - kids_deal: kids eat free, children's pricing
 - late_night: late night menu, after 10pm specials
+
+RESTAURANT STATUS DETECTION:
+Look for indicators of:
+- NEW OPENING: "Now Open", "Grand Opening", "Coming Soon", "Opening [date]", "New Location"
+- CLOSING: "Closing", "Last Day", "Final Day", "Shutting Down", "Permanently Closed"
+- TEMPORARILY CLOSED: "Temporarily Closed", "Closed for Season", "Reopening [date]"
+- RENOVATION: "Under Renovation", "Remodeling", "Reopening After Renovation"
 
 FOR EACH DEAL YOU MUST:
 1. Set evidence_url to the EXACT page URL where you found it (copy from === PAGE: url === marker)
@@ -153,6 +171,20 @@ const EXTRACTION_TOOLS = [{
         extraction_confidence: {
           type: "object",
           properties: { fish_fry: { type: "number" }, happy_hour: { type: "number" }, hours: { type: "number" }, overall: { type: "number" } }
+        },
+        restaurant_status: {
+          type: "object",
+          description: "Detected restaurant status changes",
+          properties: {
+            is_new_opening: { type: "boolean", description: "True if 'Now Open', 'Grand Opening', 'Coming Soon' detected" },
+            opening_date: { type: "string", description: "Opening date if mentioned (YYYY-MM-DD format)" },
+            is_closing: { type: "boolean", description: "True if 'Closing', 'Last Day', 'Permanently Closed' detected" },
+            closing_date: { type: "string", description: "Closing date if mentioned (YYYY-MM-DD format)" },
+            closure_reason: { type: "string", description: "Reason for closure if mentioned" },
+            is_temporarily_closed: { type: "boolean", description: "True if 'Temporarily Closed', 'Closed for Season'" },
+            reopening_date: { type: "string", description: "Reopening date if mentioned (YYYY-MM-DD format)" },
+            is_under_renovation: { type: "boolean", description: "True if 'Under Renovation', 'Remodeling'" }
+          }
         },
         extraction_notes: { type: "string" }
       },
@@ -780,8 +812,20 @@ Deno.serve(async (req) => {
         const extraction: RestaurantExtraction = JSON.parse(toolCall.function.arguments);
         console.log(`Extracted: ${extraction.deals?.length || 0} deals, ${extraction.features?.length || 0} features`);
 
+        // Determine restaurant status from extraction
+        let restaurantStatus = 'open';
+        if (extraction.restaurant_status?.is_closing) {
+          restaurantStatus = 'permanently_closed';
+        } else if (extraction.restaurant_status?.is_temporarily_closed) {
+          restaurantStatus = 'temporarily_closed';
+        } else if (extraction.restaurant_status?.is_new_opening) {
+          restaurantStatus = extraction.restaurant_status.opening_date ? 'opening_soon' : 'open';
+        } else if (extraction.restaurant_status?.is_under_renovation) {
+          restaurantStatus = 'temporarily_closed';
+        }
+
         // Upsert restaurant
-        const restaurantData = {
+        const restaurantData: Record<string, any> = {
           name: source.name,
           slug: slugify(source.name),
           website: source.url,
@@ -797,7 +841,19 @@ Deno.serve(async (req) => {
           needs_review: (extraction.extraction_confidence?.overall || 0) < 0.6,
           extraction_notes: extraction.extraction_notes,
           last_scraped_at: now,
+          status: restaurantStatus,
         };
+
+        // Add opening/closing dates if detected
+        if (extraction.restaurant_status?.opening_date) {
+          restaurantData.opening_date = extraction.restaurant_status.opening_date;
+        }
+        if (extraction.restaurant_status?.closing_date) {
+          restaurantData.closing_date = extraction.restaurant_status.closing_date;
+        }
+        if (extraction.restaurant_status?.closure_reason) {
+          restaurantData.closure_reason = extraction.restaurant_status.closure_reason;
+        }
 
         const { data: restaurant, error: upsertError } = await supabase
           .from("restaurants").upsert(restaurantData, { onConflict: "slug" }).select().single();
@@ -806,6 +862,39 @@ Deno.serve(async (req) => {
           console.error(`DB error:`, upsertError);
           results.push({ name: source.name, success: false, error: upsertError?.message });
           continue;
+        }
+
+        // Log restaurant news for status changes (opening/closing/renovation)
+        if (extraction.restaurant_status) {
+          const rs = extraction.restaurant_status;
+          let newsType: string | null = null;
+          let headline = '';
+          
+          if (rs.is_new_opening) {
+            newsType = 'opening';
+            headline = `${source.name} ${rs.opening_date ? 'Opening Soon' : 'Now Open'}`;
+          } else if (rs.is_closing) {
+            newsType = 'closing';
+            headline = `${source.name} Closing${rs.closing_date ? ` on ${rs.closing_date}` : ''}`;
+          } else if (rs.is_under_renovation) {
+            newsType = 'renovation';
+            headline = `${source.name} Under Renovation${rs.reopening_date ? `, Reopening ${rs.reopening_date}` : ''}`;
+          }
+
+          if (newsType) {
+            await supabase.from("restaurant_news").insert({
+              restaurant_id: restaurant.id,
+              news_type: newsType,
+              headline,
+              summary: rs.closure_reason || `Detected from website scrape`,
+              source_url: source.url,
+              source_name: 'Website Scraper',
+            }).then(({ error }) => {
+              if (error && !error.message?.includes('duplicate')) {
+                console.log(`  📰 Logged restaurant news: ${newsType} - ${headline}`);
+              }
+            });
+          }
         }
 
         // Store discovered pages AFTER we have restaurant.id (FIX #5: only non-PDFs here)
