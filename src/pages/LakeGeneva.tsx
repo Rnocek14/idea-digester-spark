@@ -191,7 +191,7 @@ const LakeGeneva = () => {
   };
 
   // Topic-specific civic image libraries for smart keyword mapping
-  type CivicTopic = 'land_use' | 'historic' | 'council' | 'parks' | 'lakefront' | 'library' | 'safety' | 'tourism' | 'utilities' | 'finance' | 'default';
+  type CivicTopic = 'land_use' | 'historic' | 'council' | 'parks' | 'lakefront' | 'library' | 'safety' | 'tourism' | 'utilities' | 'finance' | 'art' | 'default';
 
   const CIVIC_IMAGE_LIBRARIES: Record<CivicTopic, string[]> = {
     land_use: [
@@ -243,6 +243,12 @@ const LakeGeneva = () => {
       "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&q=80",
       "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80",
     ],
+    art: [
+      "https://images.unsplash.com/photo-1541367777708-7905fe3296c0?w=800&q=80", // Art gallery interior
+      "https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?w=800&q=80", // Art exhibition
+      "https://images.unsplash.com/photo-1531913764164-f85c52e6e654?w=800&q=80", // Gallery wall
+      "https://images.unsplash.com/photo-1594794312433-6b9bf9ea7130?w=800&q=80", // Art studio
+    ],
     default: [
       "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Lake_Geneva_Wisconsin_City_Hall.jpg/1280px-Lake_Geneva_Wisconsin_City_Hall.jpg",
       "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Walworth_County_Courthouse.jpg/1280px-Walworth_County_Courthouse.jpg",
@@ -255,6 +261,9 @@ const LakeGeneva = () => {
     
     // Order matters: more specific matches first to avoid false positives
     // Land use/development catches Hillmoor, rezoning, subdivisions before historic
+    // Art/gallery catches art shows, exhibitions, galleries
+    if (t.includes('gallery') || t.includes('art show') || t.includes('art exhibit') || t.includes('exhibition') || 
+        t.includes('arts foundation') || t.includes('artist') || t.includes('artwork')) return 'art';
     if (t.includes('hillmoor') || t.includes('development') || t.includes('rezoning') || t.includes('zoning') || 
         t.includes('subdivision') || t.includes('neighborhood plan') || t.includes('annexation') || 
         t.includes('redevelopment') || t.includes('plat') || t.includes('land use')) return 'land_use';
