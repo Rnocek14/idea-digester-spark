@@ -294,16 +294,23 @@ export type Database = {
       business_profiles: {
         Row: {
           address: string | null
+          business_type: string | null
+          categories: string[] | null
           category: string | null
+          city: string | null
           created_at: string | null
           description: string | null
           email: string | null
+          geo_tier: number | null
+          google_place_id: string | null
           id: string
           is_featured: boolean | null
           logo_url: string | null
           metadata: Json | null
           name: string
+          normalized_name: string | null
           phone: string | null
+          source_confidence: string | null
           status: string | null
           testimonial_quote: string | null
           updated_at: string | null
@@ -314,16 +321,23 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          business_type?: string | null
+          categories?: string[] | null
           category?: string | null
+          city?: string | null
           created_at?: string | null
           description?: string | null
           email?: string | null
+          geo_tier?: number | null
+          google_place_id?: string | null
           id?: string
           is_featured?: boolean | null
           logo_url?: string | null
           metadata?: Json | null
           name: string
+          normalized_name?: string | null
           phone?: string | null
+          source_confidence?: string | null
           status?: string | null
           testimonial_quote?: string | null
           updated_at?: string | null
@@ -334,16 +348,23 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          business_type?: string | null
+          categories?: string[] | null
           category?: string | null
+          city?: string | null
           created_at?: string | null
           description?: string | null
           email?: string | null
+          geo_tier?: number | null
+          google_place_id?: string | null
           id?: string
           is_featured?: boolean | null
           logo_url?: string | null
           metadata?: Json | null
           name?: string
+          normalized_name?: string | null
           phone?: string | null
+          source_confidence?: string | null
           status?: string | null
           testimonial_quote?: string | null
           updated_at?: string | null
@@ -1839,6 +1860,7 @@ export type Database = {
         Row: {
           address: string | null
           amenities: string[] | null
+          business_profile_id: string | null
           categories: string[] | null
           city: string | null
           closing_date: string | null
@@ -1878,6 +1900,7 @@ export type Database = {
         Insert: {
           address?: string | null
           amenities?: string[] | null
+          business_profile_id?: string | null
           categories?: string[] | null
           city?: string | null
           closing_date?: string | null
@@ -1917,6 +1940,7 @@ export type Database = {
         Update: {
           address?: string | null
           amenities?: string[] | null
+          business_profile_id?: string | null
           categories?: string[] | null
           city?: string | null
           closing_date?: string | null
@@ -1953,7 +1977,15 @@ export type Database = {
           website?: string | null
           weekly_specials?: Json | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "restaurants_business_profile_id_fkey"
+            columns: ["business_profile_id"]
+            isOneToOne: false
+            referencedRelation: "business_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sources: {
         Row: {
