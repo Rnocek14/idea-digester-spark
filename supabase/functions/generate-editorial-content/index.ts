@@ -6,6 +6,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Shared secret for system invocations (set in Supabase secrets)
+const EDITORIAL_SECRET = Deno.env.get('EDITORIAL_GENERATION_SECRET');
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -14,7 +17,51 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
+    
+    // Auth check: require either admin JWT or shared secret
+    const authHeader = req.headers.get('Authorization');
+    const secretHeader = req.headers.get('X-Editorial-Secret');
+    
+    let isAuthorized = false;
+    
+    // Check shared secret (for cron/system calls)
+    if (EDITORIAL_SECRET && secretHeader === EDITORIAL_SECRET) {
+      isAuthorized = true;
+    }
+    
+    // Check admin JWT
+    if (!isAuthorized && authHeader?.startsWith('Bearer ')) {
+      const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+        global: { headers: { Authorization: authHeader } }
+      });
+      
+      const token = authHeader.replace('Bearer ', '');
+      const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
+      
+      if (!claimsError && claimsData?.claims?.sub) {
+        // Check if user is admin
+        const supabase = createClient(supabaseUrl, supabaseKey);
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', claimsData.claims.sub)
+          .eq('role', 'admin')
+          .single();
+        
+        if (roleData) {
+          isAuthorized = true;
+        }
+      }
+    }
+    
+    if (!isAuthorized) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
     
     const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -59,16 +106,29 @@ serve(async (req) => {
     const dealCount = fishFryDeals?.length || 0;
     const verifiedCount = fishFryDeals?.filter(d => d.verification_status === 'verified').length || 0;
     
+    // Parse prices safely - strip $ and parse as number
+    const parsePrice = (price: unknown): number | null => {
+      if (price === null || price === undefined) return null;
+      const str = String(price).replace(/[$,]/g, '').trim();
+      const num = parseFloat(str);
+      return isNaN(num) ? null : num;
+    };
+    
+    const prices = fishFryDeals?.map(d => parsePrice(d.price)).filter((p): p is number => p !== null) || [];
+    const minPrice = prices.length > 0 ? Math.min(...prices) : null;
+    const maxPrice = prices.length > 0 ? Math.max(...prices) : null;
+    
     // Create data snapshot
     const snapshotSummary = {
       total_deals: dealCount,
       verified_deals: verifiedCount,
+      price_range: { min: minPrice, max: maxPrice },
       restaurants: fishFryDeals?.map(d => {
         const restaurant = d.restaurants as unknown as { name: string; city: string; cuisine_type: string } | null;
         return {
           name: restaurant?.name,
           city: restaurant?.city,
-          price: d.price,
+          price: parsePrice(d.price),
           fish_type: d.fish_type,
           ayce: d.all_you_can_eat,
           days: d.days,
@@ -91,8 +151,14 @@ serve(async (req) => {
       console.error('Error creating snapshot:', snapshotError);
     }
 
-    // Build the article content from data (no hallucination)
-    const fridayDeals = fishFryDeals?.filter(d => d.days?.includes('friday') || d.days?.includes('Friday')) || [];
+    // Filter Friday deals (case-insensitive, handles 'fri', 'friday', 'Friday', etc.)
+    const isFridayDeal = (days: unknown): boolean => {
+      if (!days) return false;
+      const daysStr = Array.isArray(days) ? days.join(' ') : String(days);
+      return daysStr.toLowerCase().includes('fri');
+    };
+    
+    const fridayDeals = fishFryDeals?.filter(d => isFridayDeal(d.days)) || [];
     const ayceDeals = fishFryDeals?.filter(d => d.all_you_can_eat) || [];
     
     // Format restaurant listings
@@ -102,7 +168,11 @@ serve(async (req) => {
       parts.push(`**${restaurant?.name}**`);
       if (restaurant?.city) parts.push(` (${restaurant.city})`);
       parts.push(': ');
-      if (deal.price) parts.push(`$${deal.price}`);
+      
+      // Format price safely
+      const price = parsePrice(deal.price);
+      if (price !== null) parts.push(`$${price.toFixed(2)}`);
+      
       if (deal.fish_type) parts.push(` - ${deal.fish_type}`);
       if (deal.all_you_can_eat) parts.push(' (AYCE)');
       if (deal.verification_status === 'verified') parts.push(' ✓');
@@ -110,7 +180,7 @@ serve(async (req) => {
     };
 
     // Generate structured article (no AI needed for basic format)
-    const title = `This Week's Fish Fry Guide: ${dealCount} Options in Lake Geneva`;
+    const title = `This Week's Fish Fry Guide: ${dealCount} Options in the Lake Geneva Area`;
     
     let content = `# ${title}\n\n`;
     content += `*Based on ${verifiedCount} verified listings from Lake Geneva Eats data.*\n\n`;
@@ -136,6 +206,14 @@ serve(async (req) => {
     
     if (lovableApiKey && dealCount > 0) {
       try {
+        // Build clean price range string
+        let priceRangeStr = 'varies';
+        if (minPrice !== null && maxPrice !== null) {
+          priceRangeStr = minPrice === maxPrice 
+            ? `$${minPrice.toFixed(2)}` 
+            : `$${minPrice.toFixed(2)} to $${maxPrice.toFixed(2)}`;
+        }
+        
         const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
           method: 'POST',
           headers: {
@@ -151,7 +229,7 @@ serve(async (req) => {
               },
               {
                 role: 'user',
-                content: `Write a 2-sentence summary for this week's fish fry guide. Data: ${dealCount} total options, ${verifiedCount} verified, ${ayceDeals.length} AYCE options, ${fridayDeals.length} Friday specials. Price range: ${fishFryDeals?.map(d => d.price).filter(Boolean).sort((a,b) => a-b).join(', ') || 'varies'}.`
+                content: `Write a 2-sentence summary for this week's fish fry guide. Data: ${dealCount} total options, ${verifiedCount} verified, ${ayceDeals.length} AYCE options, ${fridayDeals.length} Friday specials. Price range: ${priceRangeStr}.`
               }
             ],
             max_tokens: 150,
@@ -167,14 +245,13 @@ serve(async (req) => {
       }
     }
 
-    // Determine trust labels
-    const trustLabels = [];
-    if (verifiedCount > dealCount * 0.5) {
+    // Determine trust labels - only "verified" if ALL items are verified
+    const trustLabels: string[] = ['data_journalism'];
+    if (dealCount > 0 && verifiedCount === dealCount) {
       trustLabels.push('verified');
     }
-    trustLabels.push('data_journalism'); // Always for this content type
 
-    // Insert into content_queue
+    // Insert into content_queue with proper snapshot linkage
     const { data: queueEntry, error: queueError } = await supabase
       .from('content_queue')
       .insert({
@@ -186,13 +263,7 @@ serve(async (req) => {
         source_type: 'data_journalism',
         trust_labels: trustLabels,
         last_updated_at: new Date().toISOString(),
-        // Link to snapshot via metadata or a future column
-        raw_content: JSON.stringify({ 
-          snapshot_id: snapshot?.id,
-          generated_at: new Date().toISOString(),
-          deal_count: dealCount,
-          verified_count: verifiedCount
-        })
+        data_snapshot_id: snapshot?.id, // Proper FK linkage
       })
       .select()
       .single();

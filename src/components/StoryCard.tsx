@@ -183,13 +183,14 @@ export const StoryCard = ({
               Sponsored
             </span>
           )}
-          {isVerified && (
+          {/* Don't show Verified next to Sponsored to avoid implied endorsement */}
+          {isVerified && !sponsored && (
             <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700">
               <CheckCircle2 className="h-3 w-3" />
               Verified
             </span>
           )}
-          {isDataJournalism && !isVerified && (
+          {isDataJournalism && !isVerified && !sponsored && (
             <span className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-700">
               <Newspaper className="h-3 w-3" />
               Based on Lake Geneva Eats data

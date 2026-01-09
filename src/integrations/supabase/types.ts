@@ -366,6 +366,7 @@ export type Database = {
           content_website: string | null
           content_x: string | null
           created_at: string
+          data_snapshot_id: string | null
           event_date: string | null
           event_time: string | null
           geo_label: string | null
@@ -410,6 +411,7 @@ export type Database = {
           content_website?: string | null
           content_x?: string | null
           created_at?: string
+          data_snapshot_id?: string | null
           event_date?: string | null
           event_time?: string | null
           geo_label?: string | null
@@ -454,6 +456,7 @@ export type Database = {
           content_website?: string | null
           content_x?: string | null
           created_at?: string
+          data_snapshot_id?: string | null
           event_date?: string | null
           event_time?: string | null
           geo_label?: string | null
@@ -488,6 +491,13 @@ export type Database = {
           voice_version?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "content_queue_data_snapshot_id_fkey"
+            columns: ["data_snapshot_id"]
+            isOneToOne: false
+            referencedRelation: "data_snapshots"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "content_queue_last_newsletter_id_fkey"
             columns: ["last_newsletter_id"]
