@@ -193,11 +193,17 @@ serve(async (req) => {
     }
     const dedupedDeals = Array.from(dealsMap.values());
 
-    // Tighter quality gate: require REAL distinction (not just fish_type/evidence)
-    // Must have: (price OR price_range) AND (real distinction)
+    // Quality gate: require REAL distinction AND (price info OR verified/manual_verified status)
+    // This allows verified restaurants without price to still be included with "Price: varies"
     const qualifyingDeals = dedupedDeals.filter(deal => {
       const restaurant = deal.restaurants as any;
-      const hasPrice = parsePrice(deal.price) !== null || restaurant?.price_range;
+      
+      // Price info: exact price OR price range
+      const hasPriceInfo = parsePrice(deal.price) !== null || restaurant?.price_range;
+      
+      // Editorial override: verified or manually verified by admin
+      const isVerifiedOrManual = deal.verification_status === 'verified' || 
+                                  deal.verification_status === 'manual_verified';
       
       // Real distinctions that make it feature-worthy
       const hasRealDistinction = 
@@ -207,7 +213,8 @@ serve(async (req) => {
         deal.all_you_can_eat ||
         (restaurant?.features && restaurant.features.length > 0);
       
-      return hasPrice && hasRealDistinction;
+      // Must have distinction AND (price OR verified status)
+      return hasRealDistinction && (hasPriceInfo || isVerifiedOrManual);
     });
 
     // Cap at 12 restaurants to prevent timeout and keep it curated
@@ -218,7 +225,9 @@ serve(async (req) => {
     const excludedCount = (fishFryDeals?.length || 0) - dedupedDeals.length + 
                           (dedupedDeals.length - qualifyingDeals.length) + cappedCount;
     const dealCount = cappedDeals.length;
-    const verifiedCount = cappedDeals.filter(d => d.verification_status === 'verified').length;
+    const verifiedCount = cappedDeals.filter(d => 
+      d.verification_status === 'verified' || d.verification_status === 'manual_verified'
+    ).length;
     
     const prices = cappedDeals.map(d => parsePrice(d.price)).filter((p): p is number => p !== null);
     const minPrice = prices.length > 0 ? Math.min(...prices) : null;
@@ -372,8 +381,10 @@ Write only the 2-3 sentence recommendation, nothing else.`
               const facts: string[] = [];
               if (context.fish_type) facts.push(`🐟 ${context.fish_type}`);
               if (isFridayDeal(deal.days)) facts.push('📅 Friday');
+              // Price display: exact > range > "varies" for verified without price
               if (context.price) facts.push(`💰 ~$${context.price}`);
               else if (context.price_range) facts.push(`💰 ${context.price_range}`);
+              else facts.push('💰 Price varies');
               if (context.all_you_can_eat) facts.push('🍽️ AYCE');
               if (context.is_lakefront) facts.push('🌊 Lakefront');
               if (context.verified) facts.push('✓ Verified');
@@ -410,7 +421,10 @@ Write only the 2-3 sentence recommendation, nothing else.`
       const facts: string[] = [];
       if (deal.fish_type) facts.push(`🐟 ${deal.fish_type}`);
       if (isFridayDeal(deal.days)) facts.push('📅 Friday');
+      // Price display: exact > range > "varies"
       if (price) facts.push(`💰 ~$${price}`);
+      else if (restaurant?.price_range) facts.push(`💰 ${restaurant.price_range}`);
+      else facts.push('💰 Price varies');
       if (deal.all_you_can_eat) facts.push('🍽️ AYCE');
       if (restaurant?.is_lakefront) facts.push('🌊 Lakefront');
       
