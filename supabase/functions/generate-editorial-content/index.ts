@@ -76,27 +76,34 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Idempotency check: don't create duplicate guide within same week
-    const weekStart = new Date();
-    weekStart.setDate(weekStart.getDate() - weekStart.getDay()); // Start of week (Sunday)
-    weekStart.setHours(0, 0, 0, 0);
+    // Generate deterministic week_key in UTC (YYYY-WXX format)
+    const now = new Date();
+    const yearStart = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
+    const dayOfYear = Math.floor((now.getTime() - yearStart.getTime()) / (24 * 60 * 60 * 1000));
+    const weekNumber = Math.ceil((dayOfYear + yearStart.getUTCDay() + 1) / 7);
+    const weekKey = `${now.getUTCFullYear()}-W${String(weekNumber).padStart(2, '0')}`;
     
+    // Idempotency check: don't create duplicate guide for same week_key
     const { data: existingGuide } = await supabase
       .from('content_queue')
-      .select('id, created_at')
+      .select('id, created_at, metadata')
       .eq('source_type', 'data_journalism')
       .eq('category', 'dining')
       .ilike('title', '%Fish Fry Guide%')
-      .gte('created_at', weekStart.toISOString())
+      .contains('metadata', { week_key: weekKey })
       .single();
     
     if (existingGuide) {
+      // Return 200 with skipped flag for clean cron logs
       return new Response(JSON.stringify({ 
-        error: 'Fish fry guide already exists for this week',
-        existing_id: existingGuide.id,
+        success: true,
+        skipped: true,
+        reason: 'already_generated',
+        week_key: weekKey,
+        existing_queue_id: existingGuide.id,
         created_at: existingGuide.created_at
       }), {
-        status: 409,
+        status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
@@ -275,7 +282,7 @@ serve(async (req) => {
       trustLabels.push('verified');
     }
 
-    // Insert into content_queue with proper snapshot linkage
+    // Insert into content_queue with proper snapshot linkage and week_key
     const { data: queueEntry, error: queueError } = await supabase
       .from('content_queue')
       .insert({
@@ -287,7 +294,8 @@ serve(async (req) => {
         source_type: 'data_journalism',
         trust_labels: trustLabels,
         last_updated_at: new Date().toISOString(),
-        data_snapshot_id: snapshot?.id, // Proper FK linkage
+        data_snapshot_id: snapshot?.id,
+        metadata: { week_key: weekKey, generated_at: now.toISOString() }
       })
       .select()
       .single();
