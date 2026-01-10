@@ -6,6 +6,26 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// URL patterns that indicate non-article pages (category listings, navigation, etc.)
+const JUNK_URL_PATTERNS = [
+  '/category/', '/tag/', '/page/', '/author/',
+  '/categories/', '/tags/', '/archives/',
+  'index.cfm', '/about', '/contact', '/privacy',
+  '/terms', '/login', '/register', '/cart', '/checkout',
+  '/wp-admin', '/wp-login', '/feed/', '/rss/',
+  '/search', '/sitemap', '/404', '/error',
+];
+
+// Check if URL is a junk/non-article page
+function isJunkUrl(url: string): boolean {
+  try {
+    const path = new URL(url).pathname.toLowerCase();
+    return JUNK_URL_PATTERNS.some(pattern => path.includes(pattern));
+  } catch {
+    return JUNK_URL_PATTERNS.some(pattern => url.toLowerCase().includes(pattern));
+  }
+}
+
 // Content type specific extraction schemas
 const EXTRACTION_SCHEMAS = {
   article: {
@@ -307,6 +327,19 @@ Deno.serve(async (req) => {
     if (!url) {
       return new Response(
         JSON.stringify({ success: false, error: 'URL is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // Block junk URLs before any processing
+    if (isJunkUrl(url)) {
+      console.log(`Blocked junk URL: ${url}`);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'URL appears to be a category/tag/navigation page, not an article',
+          is_junk: true
+        }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
