@@ -36,6 +36,59 @@ type AutoPublishRule = {
   requires_hyperlocal: boolean;
 };
 
+// URL patterns that indicate non-article pages (category listings, navigation, etc.)
+const JUNK_URL_PATTERNS = [
+  '/category/', '/tag/', '/page/', '/author/',
+  '/categories/', '/tags/', '/archives/',
+  'index.cfm', '/about', '/contact', '/privacy',
+  '/terms', '/login', '/register', '/cart', '/checkout',
+  '/wp-admin', '/wp-login', '/feed/', '/rss/',
+  '/search', '/sitemap', '/404', '/error',
+];
+
+// Titles that indicate meta-pages, not articles
+const BLOCKED_TITLES = [
+  'home', 'about', 'contact', 'menu', 'categories', 'tags',
+  'archive', 'search', 'login', 'register', 'privacy policy',
+  'terms of service', 'posts categories', 'uncategorized',
+];
+
+// AI hallucination phrases that indicate non-article content was processed
+const HALLUCINATION_PHRASES = [
+  'this article provides an overview',
+  'readers to navigate',
+  'enhance your experience',
+  'rich tapestry of',
+  'stay tuned for updates',
+  'organize local content',
+  'help organize',
+  'making it easier to find',
+];
+
+// Check if URL is a junk/non-article page
+function isJunkUrl(url: string): boolean {
+  try {
+    const path = new URL(url).pathname.toLowerCase();
+    return JUNK_URL_PATTERNS.some(pattern => path.includes(pattern));
+  } catch {
+    return JUNK_URL_PATTERNS.some(pattern => url.toLowerCase().includes(pattern));
+  }
+}
+
+// Check if title indicates a meta-page
+function isBlockedTitle(title: string): boolean {
+  const normalized = title.toLowerCase().trim();
+  return BLOCKED_TITLES.includes(normalized) || 
+         normalized.length < 5 ||
+         /^[a-z]+$/.test(normalized); // Single word titles like "About", "Home"
+}
+
+// Check if AI summary contains hallucination patterns (sign of non-article content)
+function isHallucinatedSummary(summary: string): boolean {
+  const lower = summary.toLowerCase();
+  return HALLUCINATION_PHRASES.some(phrase => lower.includes(phrase));
+}
+
 // Normalize URL for deduplication (handles trailing slashes, encoding, case, tracking params)
 function normalizeUrl(url: string): string {
   try {
@@ -1284,6 +1337,20 @@ serve(async (req) => {
             continue;
           }
 
+          // JUNK URL FILTER: Skip category pages, tag pages, navigation pages
+          if (isJunkUrl(originalUrl)) {
+            console.log(`⏭️ Skipping junk URL: "${title.substring(0, 50)}..." - URL pattern blocked`);
+            result.skipped++;
+            continue;
+          }
+
+          // BLOCKED TITLE FILTER: Skip meta-page titles like "Home", "About", "Categories"
+          if (isBlockedTitle(title)) {
+            console.log(`⏭️ Skipping blocked title: "${title}" - appears to be a meta-page`);
+            result.skipped++;
+            continue;
+          }
+
           // For regional sources, filter to only local stories
           if (isRegionalSource) {
             if (!isLocalToCoverageArea({ title, summary: rawContent, content: rawContent }, coverageKeywords)) {
@@ -1573,6 +1640,13 @@ When in doubt between safe and sensitive, choose sensitive. Only use blocked for
             safety_tags: [],
             safety_reason: "Fallback processing"
           };
+
+          // HALLUCINATION DETECTION: Check if AI produced filler content from non-article pages
+          if (isHallucinatedSummary(aiResult.summary || '')) {
+            console.log(`⚠️ Hallucination detected in summary: "${title}" - flagging for review`);
+            aiResult.safety_level = 'sensitive';
+            aiResult.safety_reason = 'AI-generated summary appears to be hallucinated from non-article content';
+          }
 
           // Compute category and status based on safety + rules
           let aiCategory = aiResult.category || source.category || "news";
