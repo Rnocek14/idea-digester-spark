@@ -65,6 +65,16 @@ const HALLUCINATION_PHRASES = [
   'making it easier to find',
 ];
 
+// Check if URL is a valid HTTP/HTTPS URL (rejects tel:, mailto:, javascript:, urn:, etc.)
+function isValidHttpUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 // Check if URL is a junk/non-article page
 function isJunkUrl(url: string): boolean {
   try {
@@ -1333,6 +1343,13 @@ serve(async (req) => {
           const pubDate = item.pubDate || item.published || item.updated || new Date().toISOString();
 
           if (!originalUrl || !title) {
+            result.skipped++;
+            continue;
+          }
+
+          // HTTP-ONLY FILTER: Skip non-HTTP URLs (tel:, mailto:, javascript:, urn:, etc.)
+          if (!isValidHttpUrl(originalUrl)) {
+            console.log(`⏭️ Skipping non-HTTP URL: "${originalUrl.substring(0, 40)}..." - not a valid article URL`);
             result.skipped++;
             continue;
           }
