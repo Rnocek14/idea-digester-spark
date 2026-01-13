@@ -16,6 +16,16 @@ const JUNK_URL_PATTERNS = [
   '/search', '/sitemap', '/404', '/error',
 ];
 
+// Check if URL is a valid HTTP/HTTPS URL (rejects tel:, mailto:, javascript:, urn:, etc.)
+function isValidHttpUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 // Check if URL is a junk/non-article page
 function isJunkUrl(url: string): boolean {
   try {
@@ -331,6 +341,19 @@ Deno.serve(async (req) => {
       );
     }
     
+    // Block non-HTTP URLs before any processing (tel:, mailto:, javascript:, urn:, etc.)
+    if (!isValidHttpUrl(url)) {
+      console.log(`Blocked non-HTTP URL: ${url}`);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'URL is not a valid HTTP/HTTPS URL',
+          is_invalid_protocol: true
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Block junk URLs before any processing
     if (isJunkUrl(url)) {
       console.log(`Blocked junk URL: ${url}`);
