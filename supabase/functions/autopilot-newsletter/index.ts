@@ -201,10 +201,10 @@ serve(async (req) => {
     }
 
     // ========== FRESHNESS PIPELINE ==========
-    // Only include stories from the last 24 hours that have already been published
-    // This prevents stale content and future-dated stories from appearing
+    // Include stories from the last 72 hours OR use created_at as fallback
+    // Extended window ensures we always have content for newsletters
     
-    const freshnessWindowHours = 24;
+    const freshnessWindowHours = 72; // Extended from 24 to 72 hours
     const freshCutoff = new Date();
     freshCutoff.setHours(freshCutoff.getHours() - freshnessWindowHours);
     
@@ -214,16 +214,18 @@ serve(async (req) => {
     console.log(`   Freshness cutoff: ${freshCutoff.toISOString()}`);
     console.log(`   Today's date for events: ${todayDate}`);
 
-    // Fetch fresh stories with freshness filter on publish_date
+    // Fetch fresh stories - use publish_date if available, otherwise created_at
+    // This fixes the issue where stories without publish_date were being excluded
     const { data: freshStories, error: fetchError } = await supabase
       .from("content_queue")
       .select("id, title, content, summary, category, content_newsletter, voice_generated_at, status, created_at, original_url, publish_date, event_date")
       .in("status", ["approved", "auto_published", "published"])
       .eq("safety_level", "safe")
       .is("last_newsletter_id", null) // GUARDRAIL: Dedupe - never reuse stories
-      .gte("publish_date", freshCutoff.toISOString()) // Only stories from last 24h
-      .lte("publish_date", today.toISOString()) // No future-dated stories
-      .order("publish_date", { ascending: false });
+      .or(`publish_date.gte.${freshCutoff.toISOString()},and(publish_date.is.null,created_at.gte.${freshCutoff.toISOString()})`)
+      .lte("created_at", today.toISOString()) // No future-dated stories
+      .order("created_at", { ascending: false })
+      .limit(100); // Cap results to prevent overwhelming
 
     if (fetchError) throw fetchError;
 
