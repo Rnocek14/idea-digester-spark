@@ -12,8 +12,8 @@ const TIMEOUT_RULES: Record<string, { maxAge: number; maxSilence: number }> = {
   traffic: { maxAge: 6, maxSilence: 3 },
   road_closure: { maxAge: 6, maxSilence: 3 },
   
-  // Weather: 24h max (NWS alerts typically expire)
-  weather: { maxAge: 24, maxSilence: 24 },
+  // Weather: 6h max age, 4h silence (NWS alerts typically short-lived)
+  weather: { maxAge: 6, maxSilence: 4 },
   
   // Fire/Safety: 24h max age, 6h since last update
   fire: { maxAge: 24, maxSilence: 6 },
@@ -23,6 +23,23 @@ const TIMEOUT_RULES: Record<string, { maxAge: number; maxSilence: number }> = {
   // Generic/Other: 12h max
   other: { maxAge: 12, maxSilence: 12 },
   community: { maxAge: 12, maxSilence: 12 },
+};
+
+// Parse NWS alert expiration from title (e.g., "...until January 14 at 10:00AM CST...")
+const parseNWSExpiration = (title: string): Date | null => {
+  const match = title.match(/until\s+(\w+\s+\d+)\s+at\s+(\d+:\d+(?:AM|PM))\s+CST/i);
+  if (!match) return null;
+  
+  const [, dateStr, timeStr] = match;
+  const currentYear = new Date().getFullYear();
+  const parsed = new Date(`${dateStr} ${currentYear} ${timeStr}`);
+  
+  // Handle year rollover (e.g., December alert in January)
+  if (parsed.getMonth() > new Date().getMonth() + 6) {
+    parsed.setFullYear(currentYear - 1);
+  }
+  
+  return isNaN(parsed.getTime()) ? null : parsed;
 };
 
 const getResolutionReason = (incidentType: string): string => {
@@ -56,7 +73,7 @@ Deno.serve(async (req) => {
     // Fetch active/monitoring incidents
     const { data: incidents, error: fetchError } = await supabase
       .from("incidents")
-      .select("id, incident_type, status, started_at, updated_at")
+      .select("id, incident_type, status, started_at, updated_at, title")
       .in("status", ["active", "monitoring"]);
 
     if (fetchError) {
@@ -104,7 +121,20 @@ Deno.serve(async (req) => {
 
       console.log(`Incident ${incident.id} (${incident.incident_type}): age=${ageHours.toFixed(1)}h, silence=${silenceHours.toFixed(1)}h, rules: maxAge=${rules.maxAge}h, maxSilence=${rules.maxSilence}h`);
 
-      // Check if incident should be resolved
+      // Special handling for weather alerts: check if NWS expiration time has passed
+      if (incident.incident_type === "weather" && (incident as any).title) {
+        const nwsExpiration = parseNWSExpiration((incident as any).title);
+        if (nwsExpiration && now > nwsExpiration) {
+          toResolve.push({
+            id: incident.id,
+            reason: "nws_alert_expired",
+          });
+          console.log(`→ Marking for auto-resolve (NWS expired at ${nwsExpiration.toISOString()}): ${incident.id}`);
+          continue;
+        }
+      }
+
+      // Check if incident should be resolved based on age/silence rules
       if (ageHours > rules.maxAge && silenceHours > rules.maxSilence) {
         toResolve.push({
           id: incident.id,
