@@ -46,12 +46,13 @@ function isFreshEvent(event: MusicEvent): boolean {
   const createdAt = new Date(event.created_at);
   const now = new Date();
   const hoursDiff = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
-  // 3 days = 72 hours - show recently ingested events as fallback
-  return hoursDiff <= 72;
+  // 7 days = 168 hours - extended fallback while ingestion coverage improves
+  // Can reduce back to 72h (3 days) once venue sources are producing properly
+  return hoursDiff <= 168;
 }
 
 // Check if event is generic recurring (no specific days)
-// RELAXED: For fresh nightlife events (< 3 days old), show them even without explicit date data
+// RELAXED: For fresh nightlife events (< 7 days old), show them even without explicit date data
 // This allows newly ingested events to appear before we backfill event_date
 function isGenericRecurring(event: MusicEvent): boolean {
   // Show fresh nightlife events as fallback when they lack explicit date data
