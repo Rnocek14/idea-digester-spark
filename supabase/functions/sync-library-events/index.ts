@@ -135,6 +135,7 @@ serve(async (req) => {
           url: source.url,
           extract_type: "event",
           use_firecrawl: true,
+          include_raw: true, // Request raw HTML for link extraction
         }),
       });
       
@@ -225,12 +226,13 @@ serve(async (req) => {
       const title = event.title || event.performer || "Library Event";
       const dedupeKey = generateDedupeKey(title, event.event_date, result.url);
       
-      // Check for existing
+      // Check for existing using normalized_url (safer than .or with JSON paths)
+      const normalizedUrl = result.url.toLowerCase().split('?')[0].replace(/\/+$/, '');
       const { data: existing } = await supabase
         .from("content_queue")
         .select("id")
         .eq("source_id", source.id)
-        .or(`title.eq.${title},metadata->>dedupe_key.eq.${dedupeKey}`)
+        .eq("normalized_url", normalizedUrl)
         .limit(1);
       
       if (existing && existing.length > 0) {
@@ -248,6 +250,7 @@ serve(async (req) => {
           summary: (event.description || title).substring(0, 200),
           category: "events",
           original_url: result.url,
+          normalized_url: normalizedUrl, // For faster dedupe
           event_date: event.event_date,
           event_time: event.start_time || event.event_time,
           performer: event.performer,

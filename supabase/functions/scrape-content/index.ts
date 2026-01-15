@@ -332,7 +332,7 @@ Deno.serve(async (req) => {
   }
   
   try {
-    const { url, extract_type = 'article', use_firecrawl = true } = await req.json();
+    const { url, extract_type = 'article', use_firecrawl = true, include_raw = false } = await req.json();
     
     if (!url) {
       return new Response(
@@ -391,15 +391,23 @@ Deno.serve(async (req) => {
     
     console.log(`Extraction complete: ${JSON.stringify(extraction).slice(0, 200)}`);
     
+    const response: Record<string, any> = {
+      success: true,
+      url,
+      extract_type,
+      used_firecrawl: usedFirecrawl,
+      content_length: content.length,
+      data: extraction,
+    };
+    
+    // Include raw content if requested (for link discovery in syncers)
+    if (include_raw) {
+      response.raw_html = html;
+      response.raw_content = content;
+    }
+    
     return new Response(
-      JSON.stringify({
-        success: true,
-        url,
-        extract_type,
-        used_firecrawl: usedFirecrawl,
-        content_length: content.length,
-        data: extraction,
-      }),
+      JSON.stringify(response),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
     

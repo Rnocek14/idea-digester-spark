@@ -165,6 +165,7 @@ serve(async (req) => {
           url: indexUrl,
           extract_type: "article", // Use article for index pages
           use_firecrawl: true,
+          include_raw: true, // Request raw HTML for link extraction
         }),
       });
       
