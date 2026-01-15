@@ -325,7 +325,7 @@ function mapIncidentType(type: string): string {
   return mapping[type] || 'other';
 }
 
-// ============= SLUG GENERATION =============
+// ============= DEDUPLICATION UTILITIES =============
 
 function generateSlug(text: string, sourceUrl: string): string {
   const dateStr = new Date().toISOString().split('T')[0];
@@ -334,6 +334,40 @@ function generateSlug(text: string, sourceUrl: string): string {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '');
   return slug;
+}
+
+// Generate a content hash for cross-system deduplication
+function generateContentHash(title: string, date?: string): string {
+  const normalized = title
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '')
+    .substring(0, 50);
+  return date ? `${normalized}-${date}` : normalized;
+}
+
+// Check if title is too similar to existing content (fuzzy match)
+function isTitleSimilar(newTitle: string, existingTitle: string, threshold = 0.8): boolean {
+  const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
+  const a = normalize(newTitle);
+  const b = normalize(existingTitle);
+  
+  // Exact prefix match
+  if (a.startsWith(b.substring(0, 30)) || b.startsWith(a.substring(0, 30))) {
+    return true;
+  }
+  
+  // Word overlap check
+  const wordsA = new Set(a.split(/\s+/).filter(w => w.length > 3));
+  const wordsB = new Set(b.split(/\s+/).filter(w => w.length > 3));
+  if (wordsA.size === 0 || wordsB.size === 0) return false;
+  
+  let overlap = 0;
+  for (const word of wordsA) {
+    if (wordsB.has(word)) overlap++;
+  }
+  
+  const similarity = overlap / Math.min(wordsA.size, wordsB.size);
+  return similarity >= threshold;
 }
 
 // ============= PROCESS EXTRACTED POSTS =============
@@ -347,19 +381,58 @@ async function processExtractedPosts(
   let inserted = 0;
   let skipped = 0;
 
+  // CROSS-SYSTEM DEDUP: Load recent titles from both tables (last 7 days)
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  
+  const [{ data: recentContent }, { data: recentIncidents }] = await Promise.all([
+    supabase
+      .from('content_queue')
+      .select('title, normalized_url')
+      .gte('created_at', sevenDaysAgo)
+      .in('status', ['pending', 'approved', 'auto_published', 'published']),
+    supabase
+      .from('incidents')
+      .select('title, slug')
+      .gte('started_at', sevenDaysAgo)
+  ]);
+
+  const existingContentTitles = new Set((recentContent || []).map((c: any) => c.title.toLowerCase()));
+  const existingContentSlugs = new Set((recentContent || []).map((c: any) => c.normalized_url));
+  const existingIncidentTitles = new Set((recentIncidents || []).map((i: any) => i.title.toLowerCase()));
+  const existingIncidentSlugs = new Set((recentIncidents || []).map((i: any) => i.slug));
+
+  console.log(`  Cross-system dedup: ${existingContentTitles.size} content, ${existingIncidentTitles.size} incidents loaded`);
+
   for (const post of posts) {
     try {
       const slug = generateSlug(post.title, source.url);
+      const titleLower = post.title.toLowerCase();
       
-      // Check for duplicates by normalized_url
-      const { data: existing } = await supabase
-        .from('content_queue')
-        .select('id')
-        .eq('normalized_url', slug)
-        .single();
+      // DEDUP CHECK 1: Exact slug match in content_queue
+      if (existingContentSlugs.has(slug)) {
+        console.log(`  ⏭️ Skipping (slug exists): ${post.title.substring(0, 40)}`);
+        skipped++;
+        continue;
+      }
 
-      if (existing) {
-        console.log(`Skipping duplicate: ${post.title.substring(0, 50)}`);
+      // DEDUP CHECK 2: Exact title match across both systems
+      if (existingContentTitles.has(titleLower) || existingIncidentTitles.has(titleLower)) {
+        console.log(`  ⏭️ Skipping (title exists): ${post.title.substring(0, 40)}`);
+        skipped++;
+        continue;
+      }
+
+      // DEDUP CHECK 3: Fuzzy title similarity check
+      let isSimilar = false;
+      const allExistingTitles = [...Array.from(existingContentTitles), ...Array.from(existingIncidentTitles)] as string[];
+      for (const existingTitle of allExistingTitles) {
+        if (isTitleSimilar(post.title, existingTitle, 0.75)) {
+          console.log(`  ⏭️ Skipping (similar to "${existingTitle.substring(0, 30)}"): ${post.title.substring(0, 40)}`);
+          isSimilar = true;
+          break;
+        }
+      }
+      if (isSimilar) {
         skipped++;
         continue;
       }
@@ -368,33 +441,31 @@ async function processExtractedPosts(
       if (category === 'fire' && post.incident_type && post.incident_type !== 'none') {
         const incidentSlug = `incident-${slug}`;
         
-        // Check for duplicate incident
-        const { data: existingIncident } = await supabase
+        if (existingIncidentSlugs.has(incidentSlug)) {
+          skipped++;
+          continue;
+        }
+
+        const { error: incidentError } = await supabase
           .from('incidents')
-          .select('id')
-          .eq('slug', incidentSlug)
-          .single();
+          .insert({
+            title: post.title,
+            slug: incidentSlug,
+            incident_type: mapIncidentType(post.incident_type),
+            location: post.location || source.city,
+            source: `facebook:${source.name}`,
+            status: post.is_urgent ? 'active' : 'monitoring',
+            priority_score: post.is_urgent ? 80 : 50,
+            started_at: new Date().toISOString(),
+          });
 
-        if (!existingIncident) {
-          const { error: incidentError } = await supabase
-            .from('incidents')
-            .insert({
-              title: post.title,
-              slug: incidentSlug,
-              incident_type: mapIncidentType(post.incident_type),
-              location: post.location || source.city,
-              source: `facebook:${source.name}`,
-              status: post.is_urgent ? 'active' : 'monitoring',
-              priority_score: post.is_urgent ? 80 : 50,
-              started_at: new Date().toISOString(),
-            });
-
-          if (!incidentError) {
-            console.log(`✅ Incident inserted: ${post.title}`);
-            inserted++;
-          } else {
-            console.error(`Incident insert error: ${incidentError.message}`);
-          }
+        if (!incidentError) {
+          console.log(`  ✅ Incident: ${post.title}`);
+          inserted++;
+          existingIncidentTitles.add(titleLower);
+          existingIncidentSlugs.add(incidentSlug);
+        } else {
+          console.error(`  ❌ Incident error: ${incidentError.message}`);
         }
         continue;
       }
@@ -403,13 +474,7 @@ async function processExtractedPosts(
       if (category === 'schools' && (post.is_closure || post.incident_type === 'school_closure')) {
         const closureSlug = `closure-${slug}`;
         
-        const { data: existingClosure } = await supabase
-          .from('incidents')
-          .select('id')
-          .eq('slug', closureSlug)
-          .single();
-
-        if (!existingClosure) {
+        if (!existingIncidentSlugs.has(closureSlug)) {
           await supabase.from('incidents').insert({
             title: `School Alert: ${post.title}`,
             slug: closureSlug,
@@ -418,10 +483,11 @@ async function processExtractedPosts(
             location: source.city,
             source: `facebook:${source.name}`,
             status: 'active',
-            priority_score: 90, // High priority for parents
+            priority_score: 90,
             started_at: new Date().toISOString(),
           });
-          console.log(`✅ School closure incident: ${post.title}`);
+          console.log(`  ✅ School closure: ${post.title}`);
+          existingIncidentSlugs.add(closureSlug);
         }
       }
 
@@ -465,13 +531,15 @@ async function processExtractedPosts(
         });
 
       if (insertError) {
-        console.error(`Insert error: ${insertError.message}`);
+        console.error(`  ❌ Insert error: ${insertError.message}`);
       } else {
-        console.log(`✅ Content inserted: ${post.title}`);
+        console.log(`  ✅ Content: ${post.title}`);
         inserted++;
+        existingContentTitles.add(titleLower);
+        existingContentSlugs.add(slug);
       }
     } catch (err) {
-      console.error(`Error processing post: ${err}`);
+      console.error(`  ❌ Error processing: ${err}`);
     }
   }
 
