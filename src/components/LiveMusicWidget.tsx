@@ -280,28 +280,38 @@ function isLiveMusicEvent(event: MusicEvent): boolean {
     'bingo', 'game night', 'wine tasting', 'wine night', 'paint night',
     'yoga', 'brunch', 'wonderful!', 'magic show', 'poker', 'fish fry',
     'new year', 'happy new year', 'thank you for attending', 'casino',
-    'skeptics', 'las vegas headliners', 'carson hall', 'thank you'
+    'skeptics', 'las vegas headliners', 'carson hall', 'thank you',
+    'dance away winter blues', 'kids can dance'
   ];
   
   if (excludeTitleKeywords.some(kw => title.includes(kw))) return false;
   
-  // Must have "live music" in title, OR "music mondays/tuesdays/etc" pattern, OR have a clean performer
-  const hasLiveMusic = title.includes('live music') || title.includes('live:');
+  // Check for music-related keywords in title (expanded list)
+  const musicKeywords = [
+    'live music', 'live:', 'band', 'dueling pianos', 'concert', 
+    'dj', 'karaoke', 'open mic', 'acoustic', 'jazz', 'blues',
+    'duo', 'trio', 'quartet', 'live @', 'live at'
+  ];
+  const hasMusicKeyword = musicKeywords.some(kw => title.includes(kw));
   const hasMusicDayPattern = /music (monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i.test(title);
   const hasCleanPerformer = getDisplayPerformer(event) !== null;
   
-  if (!hasLiveMusic && !hasMusicDayPattern && !hasCleanPerformer) return false;
+  // Accept event if it has music keyword OR clean performer
+  if (!hasMusicKeyword && !hasMusicDayPattern && !hasCleanPerformer) return false;
   
-  // Require at least performer OR specific time to be worth showing
+  // For events with music keywords, we don't need additional details
+  // For events without keywords, require performer or time
+  if (hasMusicKeyword || hasMusicDayPattern) {
+    return true;
+  }
+  
+  // Fallback: require at least performer OR specific time
   const displayPerformer = getDisplayPerformer(event);
   const hasSpecificTime = event.event_time && 
     !event.event_time.toLowerCase().includes('all day') &&
     event.event_time.trim().length > 0;
   
-  // Must have at least one useful detail (performer or time)
-  if (!displayPerformer && !hasSpecificTime) return false;
-  
-  return true;
+  return displayPerformer !== null || hasSpecificTime;
 }
 
 function getEventEmoji(title: string, tags?: string[]): string {
