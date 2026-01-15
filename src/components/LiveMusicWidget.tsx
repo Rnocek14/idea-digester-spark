@@ -40,24 +40,26 @@ function eventMatchesDay(event: MusicEvent, dayOfWeek: number): boolean {
 }
 
 // Check if event is fresh enough to show (for undated events without recurring_days)
+// Uses created_at (when ingested) rather than publish_date
 function isFreshEvent(event: MusicEvent): boolean {
-  // If published within last 24 hours, consider it fresh/relevant
-  if (!event.publish_date) return false;
-  const publishDate = new Date(event.publish_date);
+  if (!event.created_at) return false;
+  const createdAt = new Date(event.created_at);
   const now = new Date();
-  const hoursDiff = (now.getTime() - publishDate.getTime()) / (1000 * 60 * 60);
-  return hoursDiff <= 24;
+  const hoursDiff = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+  // 3 days = 72 hours - show recently ingested events as fallback
+  return hoursDiff <= 72;
 }
 
 // Check if event is generic recurring (no specific days)
-// STRICT: Events without explicit recurring_days or day in title are NOT shown
-// This prevents undated/stale events from appearing in widget
+// RELAXED: For fresh nightlife events (< 3 days old), show them even without explicit date data
+// This allows newly ingested events to appear before we backfill event_date
 function isGenericRecurring(event: MusicEvent): boolean {
-  // Never return true - require explicit date data to show events
-  // Events must have either:
-  // 1. event_date matching today/weekend (handled elsewhere)
-  // 2. recurring_days metadata (handled by eventMatchesDay)
-  // 3. Day name in title (handled by matchesRecurringDay via eventMatchesDay fallback)
+  // Show fresh nightlife events as fallback when they lack explicit date data
+  // They must have nightlife vertical and be recently ingested
+  const hasNightlifeVertical = event.metadata?.verticals?.includes('nightlife');
+  if (hasNightlifeVertical && isFreshEvent(event)) {
+    return true;
+  }
   return false;
 }
 
