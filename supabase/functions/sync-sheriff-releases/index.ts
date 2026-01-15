@@ -51,6 +51,61 @@ async function hashString(input: string): Promise<string> {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 16);
 }
 
+// Extract PDF/release links from HTML
+function extractReleaseLinks(html: string): Array<{ id: string; filename: string; url: string }> {
+  const releases: Array<{ id: string; filename: string; url: string }> = [];
+  
+  // Look for DocumentCenter PDF links (news releases)
+  const pdfPattern = /DocumentCenter\/View\/(\d+)\/([^"'\s]+News-Release[^"'\s]*)/gi;
+  let match;
+  while ((match = pdfPattern.exec(html)) !== null) {
+    releases.push({
+      id: match[1],
+      filename: match[2],
+      url: `https://www.co.walworth.wi.us/DocumentCenter/View/${match[1]}/${match[2]}`,
+    });
+  }
+  
+  // Also look for generic PDF links
+  const genericPattern = /href=["']([^"']*DocumentCenter\/View\/\d+[^"']*)["']/gi;
+  while ((match = genericPattern.exec(html)) !== null) {
+    const urlMatch = match[1].match(/DocumentCenter\/View\/(\d+)\/([^"'\s?#]+)/);
+    if (urlMatch && urlMatch[2].toLowerCase().includes('news')) {
+      const exists = releases.some(r => r.id === urlMatch[1]);
+      if (!exists) {
+        releases.push({
+          id: urlMatch[1],
+          filename: urlMatch[2],
+          url: match[1].startsWith('http') ? match[1] : `https://www.co.walworth.wi.us${match[1]}`,
+        });
+      }
+    }
+  }
+  
+  return releases;
+}
+
+// Rate limiter for concurrent requests
+async function rateLimitedFetch<T>(
+  items: T[],
+  fetcher: (item: T, index: number) => Promise<any>,
+  concurrency: number = 3,
+  delayMs: number = 500
+): Promise<any[]> {
+  const results: any[] = [];
+  for (let i = 0; i < items.length; i += concurrency) {
+    const batch = items.slice(i, i + concurrency);
+    const batchResults = await Promise.all(
+      batch.map((item, idx) => fetcher(item, i + idx))
+    );
+    results.push(...batchResults);
+    if (i + concurrency < items.length) {
+      await new Promise(r => setTimeout(r, delayMs));
+    }
+  }
+  return results;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -59,210 +114,193 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const firecrawlKey = Deno.env.get("FIRECRAWL_API_KEY");
-
-    if (!firecrawlKey) {
-      console.error("[sync-sheriff] FIRECRAWL_API_KEY not configured");
-      return new Response(
-        JSON.stringify({ success: false, error: "Firecrawl not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const results = {
+      method: "scrape-content",
       processed: 0,
       inserted: 0,
       skipped: 0,
       errors: [] as string[],
       releases_found: [] as string[],
+      static_fetch_used: true,
+      firecrawl_used: false,
     };
 
     console.log("[sync-sheriff] Fetching Walworth County Sheriff news releases...");
 
-    // Scrape the news releases page with JavaScript wait
-    const fcRes = await fetch("https://api.firecrawl.dev/v1/scrape", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${firecrawlKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        url: "https://www.co.walworth.wi.us/747/News-Releases",
-        formats: ["markdown", "html", "links"],
-        waitFor: 8000,  // Wait for JS to load
-        onlyMainContent: false,
-      }),
-    });
+    // Step 1: Static fetch for the index page first
+    let html = "";
+    const indexUrl = "https://www.co.walworth.wi.us/747/News-Releases";
+    
+    try {
+      console.log("[sync-sheriff] Attempting static fetch of index page...");
+      const staticRes = await fetch(indexUrl, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        },
+      });
+      
+      if (staticRes.ok) {
+        html = await staticRes.text();
+        console.log(`[sync-sheriff] Static fetch success: ${html.length} chars`);
+      }
+    } catch (err) {
+      console.log("[sync-sheriff] Static fetch failed:", err);
+    }
 
-    if (!fcRes.ok) {
-      const errText = await fcRes.text();
-      console.error("[sync-sheriff] Firecrawl error:", fcRes.status, errText);
+    // Step 2: If static fetch didn't work, use scrape-content with firecrawl fallback
+    if (html.length < 500 || !html.includes('DocumentCenter')) {
+      console.log("[sync-sheriff] Content insufficient, using scrape-content...");
       
-      // Check for credit exhaustion (402 or credit-related error)
-      const isCreditsExhausted = fcRes.status === 402 || 
-        errText.toLowerCase().includes('credit') || 
-        errText.toLowerCase().includes('limit') ||
-        errText.toLowerCase().includes('quota');
+      const scrapeResponse = await fetch(`${supabaseUrl}/functions/v1/scrape-content`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${supabaseKey}`,
+          "apikey": supabaseKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          url: indexUrl,
+          extract_type: "article", // Use article for index pages
+          use_firecrawl: true,
+        }),
+      });
       
-      if (isCreditsExhausted) {
-        console.warn("[sync-sheriff] Firecrawl credits exhausted - disabling source");
-        
-        // Get current metadata and merge with disabled flags
-        const { data: sourceData } = await supabase
-          .from("sources")
-          .select("metadata")
-          .eq("name", "Walworth County Sheriff News")
-          .single();
-        
-        const currentMetadata = (sourceData?.metadata as Record<string, unknown>) || {};
-        
-        await supabase
-          .from("sources")
-          .update({
-            status: 'inactive',
-            metadata: {
-              ...currentMetadata,
-              disabled_reason: 'firecrawl_credits_exhausted',
-              disabled_at: new Date().toISOString(),
-              requires_firecrawl_credits: true,
-            },
-          })
-          .eq("name", "Walworth County Sheriff News");
-        
+      if (!scrapeResponse.ok) {
+        const errorText = await scrapeResponse.text();
+        console.error("[sync-sheriff] scrape-content error:", scrapeResponse.status, errorText);
         return new Response(
-          JSON.stringify({ success: false, error: "Firecrawl credits exhausted", credits_exhausted: true }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({ success: false, error: "Failed to scrape index page" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
       
-      return new Response(
-        JSON.stringify({ success: false, error: "Firecrawl request failed" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const fcData = await fcRes.json();
-    const markdown: string = fcData.data?.markdown || "";
-    const html: string = fcData.data?.html || "";
-    const links: string[] = fcData.data?.links || [];
-
-    console.log(`[sync-sheriff] Received: markdown=${markdown.length}, html=${html.length}, links=${links.length}`);
-
-    // Find news release PDF links
-    const pdfPattern = /DocumentCenter\/View\/(\d+)\/([^"'\s]+News-Release[^"'\s]*)/gi;
-    const foundReleases: Array<{ id: string; filename: string; url: string }> = [];
-
-    // Search in HTML
-    let match;
-    while ((match = pdfPattern.exec(html)) !== null) {
-      foundReleases.push({
-        id: match[1],
-        filename: match[2],
-        url: `https://www.co.walworth.wi.us/DocumentCenter/View/${match[1]}/${match[2]}`,
-      });
-    }
-
-    // Also check links array
-    for (const link of links) {
-      if (link.includes('News-Release') && link.includes('DocumentCenter')) {
-        const linkMatch = link.match(/DocumentCenter\/View\/(\d+)\/([^"'\s]+)/);
-        if (linkMatch) {
-          foundReleases.push({
-            id: linkMatch[1],
-            filename: linkMatch[2],
-            url: link,
-          });
-        }
+      const scrapeData = await scrapeResponse.json();
+      results.firecrawl_used = scrapeData.used_firecrawl || false;
+      results.static_fetch_used = !results.firecrawl_used;
+      
+      // Get raw HTML if available
+      html = scrapeData.html || scrapeData.raw_html || "";
+      
+      if (html.length < 200) {
+        console.error("[sync-sheriff] No HTML content from scrape-content");
+        return new Response(
+          JSON.stringify({ success: false, error: "No content from scrape" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
     }
 
-    // Dedupe releases by ID
+    // Step 3: Extract release PDF links
+    const foundReleases = extractReleaseLinks(html);
     const uniqueReleases = Array.from(new Map(foundReleases.map(r => [r.id, r])).values());
     
     console.log(`[sync-sheriff] Found ${uniqueReleases.length} unique news releases`);
     results.releases_found = uniqueReleases.map(r => r.filename);
 
-    // Process each release (limit to most recent 5)
-    for (const release of uniqueReleases.slice(0, 5)) {
-      results.processed++;
+    // Step 4: Process each release (limit to most recent 5)
+    const releasesToProcess = uniqueReleases.slice(0, 5);
+    
+    const releaseDetails = await rateLimitedFetch(
+      releasesToProcess,
+      async (release) => {
+        results.processed++;
+        
+        // Extract incident number from filename
+        const incidentMatch = release.filename.match(/(\d{2}-\d{5,6})/);
+        const incidentNumber = incidentMatch ? incidentMatch[1] : null;
 
-      // Extract incident number from filename (e.g., "25-036149-News-Release-PDF")
-      const incidentMatch = release.filename.match(/(\d{2}-\d{5,6})/);
-      const incidentNumber = incidentMatch ? incidentMatch[1] : null;
+        if (!incidentNumber) {
+          console.log(`[sync-sheriff] No incident number in: ${release.filename}`);
+          return { release, skipped: true, reason: "no_incident_number" };
+        }
 
-      if (!incidentNumber) {
-        console.log(`[sync-sheriff] No incident number in: ${release.filename}`);
+        // Check if we already have this incident
+        const externalId = await hashString(`sheriff-${incidentNumber}`);
+        
+        const { data: existing } = await supabase
+          .from("incidents")
+          .select("id")
+          .eq("source", "sheriff")
+          .eq("external_id", externalId)
+          .limit(1);
+
+        if (existing && existing.length > 0) {
+          console.log(`[sync-sheriff] Skipping existing: ${incidentNumber}`);
+          return { release, skipped: true, reason: "duplicate", incidentNumber };
+        }
+
+        // Use scrape-content to extract incident details from the PDF page
+        console.log(`[sync-sheriff] Extracting details: ${release.url}`);
+        
+        const scrapeResponse = await fetch(`${supabaseUrl}/functions/v1/scrape-content`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${supabaseKey}`,
+            "apikey": supabaseKey,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            url: release.url,
+            extract_type: "incident",
+            use_firecrawl: true, // PDFs often need rendering
+          }),
+        });
+
+        if (!scrapeResponse.ok) {
+          return { release, error: `HTTP ${scrapeResponse.status}`, incidentNumber };
+        }
+
+        const scrapeData = await scrapeResponse.json();
+        if (scrapeData.used_firecrawl) {
+          results.firecrawl_used = true;
+        }
+
+        return { 
+          release, 
+          incidentNumber, 
+          externalId,
+          data: scrapeData.success ? scrapeData.data : null,
+          rawContent: scrapeData.raw_content,
+        };
+      },
+      2, // Max 2 concurrent (PDFs are heavier)
+      1000 // 1s delay between batches
+    );
+
+    // Step 5: Insert extracted incidents
+    for (const result of releaseDetails) {
+      if (result.skipped) {
         results.skipped++;
         continue;
       }
-
-      // Check if we already have this incident
-      const externalId = await hashString(`sheriff-${incidentNumber}`);
       
-      const { data: existing } = await supabase
-        .from("incidents")
-        .select("id")
-        .eq("source", "sheriff")
-        .eq("external_id", externalId)
-        .limit(1);
-
-      if (existing && existing.length > 0) {
-        console.log(`[sync-sheriff] Skipping existing: ${incidentNumber}`);
-        results.skipped++;
+      if (result.error) {
+        results.errors.push(`${result.release.filename}: ${result.error}`);
         continue;
       }
 
-      // Scrape the PDF page to get details
-      console.log(`[sync-sheriff] Fetching release: ${release.url}`);
+      const extracted = result.data || {};
+      const incidentNumber = result.incidentNumber;
+      const externalId = result.externalId;
       
-      const pdfRes = await fetch("https://api.firecrawl.dev/v1/scrape", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${firecrawlKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          url: release.url,
-          formats: ["markdown"],
-          waitFor: 3000,
-        }),
-      });
+      // Build title from extracted data or filename
+      const incidentTypeText = extracted.incident_type || result.release.filename.replace(/-/g, ' ');
+      const title = `${incidentTypeText} - Walworth County (${incidentNumber})`.substring(0, 140);
+      const typeInfo = inferIncidentType(incidentTypeText + ' ' + (extracted.description || ''));
 
-      if (!pdfRes.ok) {
-        console.warn(`[sync-sheriff] Failed to fetch release: ${release.url}`);
-        results.errors.push(`Failed to fetch ${release.filename}`);
-        continue;
-      }
-
-      const pdfData = await pdfRes.json();
-      const pdfContent = pdfData.data?.markdown || "";
-
-      // Extract incident type from content
-      const typeMatch = pdfContent.match(/Type:\s*([^\n]+)/i);
-      const incidentTypeText = typeMatch ? typeMatch[1].trim() : release.filename;
-      
-      // Extract date
-      const dateMatch = pdfContent.match(/Date:\s*([^\n]+)/i);
+      // Get date from extraction or use now
       let startedAt = new Date().toISOString();
-      if (dateMatch) {
-        const parsed = new Date(dateMatch[1].trim());
+      if (extracted.incident_time) {
+        const parsed = new Date(extracted.incident_time);
         if (!isNaN(parsed.getTime())) {
           startedAt = parsed.toISOString();
         }
       }
 
-      // Build title
-      const title = `${incidentTypeText} - Walworth County (${incidentNumber})`.substring(0, 140);
-      const typeInfo = inferIncidentType(incidentTypeText + ' ' + pdfContent);
-
-      // Get description from narrative
-      const narrativeMatch = pdfContent.match(/Narrative\s*([\s\S]*?)(?:\n\n|$)/i);
-      const description = narrativeMatch 
-        ? narrativeMatch[1].trim().substring(0, 500) 
-        : `Sheriff's news release for incident ${incidentNumber}`;
-
+      const description = extracted.description || `Sheriff's news release for incident ${incidentNumber}`;
       const slug = slugify(title) + '-' + Date.now().toString(36);
 
       // Insert incident
@@ -272,11 +310,11 @@ serve(async (req) => {
           slug,
           title,
           incident_type: typeInfo.type,
-          sub_type: incidentTypeText.toLowerCase().replace(/\s+/g, '_').substring(0, 50),
+          sub_type: (extracted.sub_type || incidentTypeText).toLowerCase().replace(/\s+/g, '_').substring(0, 50),
           status: 'resolved', // Sheriff releases are usually after-the-fact
           priority_score: typeInfo.priority,
           started_at: startedAt,
-          location: 'Walworth County',
+          location: extracted.location || 'Walworth County',
           source: 'sheriff',
           external_id: externalId,
         })
@@ -289,20 +327,26 @@ serve(async (req) => {
         continue;
       }
 
-      // Add incident update with the full content
+      // Add incident update with structured details
+      const updateParts: string[] = [];
+      if (extracted.location) updateParts.push(`📍 Location: ${extracted.location}`);
+      if (extracted.incident_time) updateParts.push(`⏰ Time: ${extracted.incident_time}`);
+      if (extracted.responding_agencies?.length > 0) updateParts.push(`🚨 Responding: ${extracted.responding_agencies.join(", ")}`);
+      if (extracted.injuries) updateParts.push(`🏥 Injuries: ${extracted.injuries}`);
+      if (extracted.fatalities !== null && extracted.fatalities !== undefined) updateParts.push(`⚠️ Fatalities: ${extracted.fatalities}`);
+      if (extracted.road_status) updateParts.push(`🚗 Road: ${extracted.road_status}`);
+      if (extracted.suspect_status) updateParts.push(`👮 Suspect: ${extracted.suspect_status}`);
+
       await supabase.from("incident_updates").insert({
         incident_id: newIncident.id,
         source: 'sheriff',
         source_label: 'Walworth County Sheriff',
-        text: description,
+        text: updateParts.length > 0 ? updateParts.join("\n") : description.substring(0, 500),
         is_verified: true,
       });
 
       console.log(`[sync-sheriff] ✅ Created: ${title.substring(0, 60)}`);
       results.inserted++;
-
-      // Rate limit
-      await new Promise(r => setTimeout(r, 1000));
     }
 
     console.log(`[sync-sheriff] Complete:`, results);
