@@ -7,8 +7,8 @@ const corsHeaders = {
 };
 
 // Generate stable dedupe key for calendar events
-function generateDedupeKey(title: string, eventDate: string, eventUrl: string): string {
-  const normalized = `${title.toLowerCase().trim()}|${eventDate}|${eventUrl}`.replace(/\s+/g, ' ');
+function generateDedupeKey(title: string, eventDate: string): string {
+  const normalized = `${title.toLowerCase().trim()}|${eventDate}`.replace(/\s+/g, ' ');
   let hash = 0;
   for (let i = 0; i < normalized.length; i++) {
     const char = normalized.charCodeAt(i);
@@ -18,31 +18,23 @@ function generateDedupeKey(title: string, eventDate: string, eventUrl: string): 
   return `library-event-${Math.abs(hash).toString(36)}`;
 }
 
-// Extract event links from HTML
-function extractEventLinks(html: string, baseUrl: string): string[] {
-  const links: string[] = [];
+// Discover PDF links from the library's program guide page
+function discoverProgramGuidePdfs(html: string, baseUrl: string): string[] {
+  const pdfs: string[] = [];
   const seen = new Set<string>();
   
-  // Multiple patterns for different library calendar systems
+  // Look for PDF links that contain program/newsletter/guide keywords
   const patterns = [
-    // LibCal/SpringShare event links (common library platform)
-    /href=["']([^"']*\/event\/\d+[^"']*)/gi,
-    /href=["']([^"']*\/events\/[^"']+)/gi,
-    // Generic event/calendar/program links
-    /href=["']([^"']*(?:event|calendar|program)[^"']*)/gi,
-    // Links with date-like patterns in path
-    /href=["']([^"']*\/\d{4}[-\/]\d{1,2}[-\/]\d{1,2}[^"']*)/gi,
+    /href=["']([^"']*\.pdf[^"']*)/gi,
+    /href=["']([^"']*program[^"']*)/gi,
+    /href=["']([^"']*newsletter[^"']*)/gi,
+    /href=["']([^"']*calendar[^"']*)/gi,
   ];
   
   for (const pattern of patterns) {
     let match;
     while ((match = pattern.exec(html)) !== null) {
       let url = match[1];
-      
-      // Skip anchors, javascript, mailto
-      if (url.startsWith('#') || url.startsWith('javascript:') || url.startsWith('mailto:')) {
-        continue;
-      }
       
       // Make absolute URL
       try {
@@ -53,11 +45,23 @@ function extractEventLinks(html: string, baseUrl: string): string[] {
           url = new URL(url, baseUrl).href;
         }
         
-        // Normalize and dedupe
-        const normalized = url.split('?')[0].split('#')[0];
-        if (!seen.has(normalized)) {
-          seen.add(normalized);
-          links.push(url);
+        // Only include PDFs
+        if (!url.toLowerCase().endsWith('.pdf')) continue;
+        
+        // Skip if seen
+        const normalized = url.toLowerCase();
+        if (seen.has(normalized)) continue;
+        seen.add(normalized);
+        
+        // Prioritize recent newsletters/program guides
+        const lower = url.toLowerCase();
+        if (lower.includes('program') || lower.includes('newsletter') || 
+            lower.includes('2025') || lower.includes('2026') ||
+            lower.includes('january') || lower.includes('february') ||
+            lower.includes('march') || lower.includes('april')) {
+          pdfs.unshift(url); // High priority at front
+        } else {
+          pdfs.push(url);
         }
       } catch {
         // Invalid URL, skip
@@ -65,29 +69,8 @@ function extractEventLinks(html: string, baseUrl: string): string[] {
     }
   }
   
-  console.log(`[extractEventLinks] Found ${links.length} unique event links from ${patterns.length} patterns`);
-  return links.slice(0, 20); // Limit to 20 events per run
-}
-
-// Rate limiter for concurrent requests
-async function rateLimitedFetch<T>(
-  items: T[],
-  fetcher: (item: T, index: number) => Promise<any>,
-  concurrency: number = 3,
-  delayMs: number = 300
-): Promise<any[]> {
-  const results: any[] = [];
-  for (let i = 0; i < items.length; i += concurrency) {
-    const batch = items.slice(i, i + concurrency);
-    const batchResults = await Promise.all(
-      batch.map((item, idx) => fetcher(item, i + idx))
-    );
-    results.push(...batchResults);
-    if (i + concurrency < items.length) {
-      await new Promise(r => setTimeout(r, delayMs));
-    }
-  }
-  return results;
+  console.log(`[discoverProgramGuidePdfs] Found ${pdfs.length} PDF links`);
+  return pdfs.slice(0, 5); // Limit to top 5
 }
 
 serve(async (req) => {
@@ -118,169 +101,113 @@ serve(async (req) => {
     console.log(`📚 Syncing library events from: ${source.url}`);
 
     const results = {
-      method: "scrape-content",
-      scraped: 0,
-      future: 0,
+      method: "pdf_program_guide",
+      pdf_url: null as string | null,
+      events_extracted: 0,
+      future_events: 0,
       inserted: 0,
       skipped: 0,
       errors: [] as string[],
-      static_fetch_used: true,
       firecrawl_used: false,
     };
 
-    // Step 1: Try static fetch for the main calendar page first
-    let html = "";
-    let usedFirecrawl = false;
-    let hasUsefulContent = false;
+    // Step 1: Try multiple pages to find PDF links
+    // The library publishes PDF newsletters/program guides with event schedules
+    const pagesToScan = [
+      "https://lglibrary.org/",  // Homepage
+      "https://lglibrary.org/about",  // About page mentions newsletters
+      "https://lglibrary.org/newsletter",  // Direct newsletter page
+      "https://lglibrary.org/bookpage",  // BookPage newsletter
+    ];
     
-    try {
-      console.log(`[sync-library-events] Attempting static fetch...`);
-      const staticRes = await fetch(source.url, {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        },
-      });
+    let pdfUrls: string[] = [];
+    
+    for (const pageUrl of pagesToScan) {
+      if (pdfUrls.length > 0) break;
       
-      if (staticRes.ok) {
-        html = await staticRes.text();
-        // Check actual text content, not just HTML length (JS-rendered pages have lots of HTML but little text)
-        const textContent = html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-          .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-          .replace(/<[^>]+>/g, ' ')
-          .replace(/\s+/g, ' ')
-          .trim();
-        hasUsefulContent = textContent.length >= 500;
-        console.log(`[sync-library-events] Static fetch: ${html.length} HTML chars, ${textContent.length} text chars, useful: ${hasUsefulContent}`);
-      }
-    } catch (err) {
-      console.log(`[sync-library-events] Static fetch failed, will try scrape-content with firecrawl fallback`);
-    }
-
-    // Step 2: If static fetch didn't get useful content, use scrape-content with firecrawl
-    if (!hasUsefulContent) {
-      console.log(`[sync-library-events] Not enough text content, using scrape-content with firecrawl...`);
-      
-      const scrapeResponse = await fetch(`${supabaseUrl}/functions/v1/scrape-content`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${supabaseKey}`,
-          "apikey": supabaseKey,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          url: source.url,
-          extract_type: "event",
-          use_firecrawl: true,
-          include_raw: true, // Request raw HTML for link extraction
-        }),
-      });
-      
-      if (scrapeResponse.ok) {
-        const scrapeData = await scrapeResponse.json();
-        usedFirecrawl = scrapeData.used_firecrawl || false;
-        results.static_fetch_used = !usedFirecrawl;
-        results.firecrawl_used = usedFirecrawl;
+      try {
+        console.log(`[sync-library-events] Scanning for PDFs: ${pageUrl}`);
+        const pageRes = await fetch(pageUrl, {
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            "Accept": "text/html,application/xhtml+xml",
+          },
+        });
         
-        // If we got structured event data directly, use it
-        if (scrapeData.success && scrapeData.data) {
-          console.log(`[sync-library-events] Got structured data from scrape-content`);
-          // Handle single event extraction - calendar pages need link discovery
+        if (pageRes.ok) {
+          const html = await pageRes.text();
+          pdfUrls = discoverProgramGuidePdfs(html, pageUrl);
+          console.log(`[sync-library-events] Found ${pdfUrls.length} PDFs from ${pageUrl}`);
         }
-        
-        // Get the raw HTML for link extraction
-        html = scrapeData.html || scrapeData.raw_html || "";
+      } catch (err: any) {
+        console.log(`[sync-library-events] Failed to fetch ${pageUrl}: ${err.message}`);
       }
     }
-
-    // Step 3: Detect calendar type and choose extraction strategy
-    const eventLinks = extractEventLinks(html, source.url);
-    console.log(`[sync-library-events] Found ${eventLinks.length} event links`);
     
+    // If no PDFs found, mark source as needing attention
+    if (pdfUrls.length === 0) {
+      console.log(`[sync-library-events] No PDF links found on any page - source may need manual review`);
+      results.errors.push("No PDF program guides found - library may have changed publishing format");
+    }
+
+    // Step 2: Try to extract events from each PDF until we get results
     let eventDetails: any[] = [];
     
-    // Strategy A: If few links found (likely inline calendar/SPA), use event_list extraction
-    if (eventLinks.length < 5) {
-      console.log(`[sync-library-events] Few links found, using event_list extraction (likely SPA/inline calendar)`);
+    for (const pdfUrl of pdfUrls) {
+      if (eventDetails.length > 0) break; // Stop once we have events
       
-      const scrapeResponse = await fetch(`${supabaseUrl}/functions/v1/scrape-content`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${supabaseKey}`,
-          "apikey": supabaseKey,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          url: source.url,
-          extract_type: "event_list",
-          use_firecrawl: true, // Required for SPA calendars like LocalHop
-        }),
-      });
+      console.log(`[sync-library-events] Extracting events from PDF: ${pdfUrl}`);
+      results.pdf_url = pdfUrl;
       
-      if (scrapeResponse.ok) {
-        const scrapeData = await scrapeResponse.json();
-        results.firecrawl_used = scrapeData.used_firecrawl || false;
-        results.static_fetch_used = !results.firecrawl_used;
+      try {
+        const scrapeResponse = await fetch(`${supabaseUrl}/functions/v1/scrape-content`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${supabaseKey}`,
+            "apikey": supabaseKey,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            url: pdfUrl,
+            extract_type: "event_list",
+            use_firecrawl: true, // Allow Firecrawl for OCR if needed
+          }),
+        });
         
-        if (scrapeData.success && scrapeData.data?.events) {
-          console.log(`[sync-library-events] Extracted ${scrapeData.data.events.length} events via event_list`);
-          eventDetails = scrapeData.data.events.map((event: any) => ({
-            success: true,
-            url: event.event_url || source.url,
-            data: event,
-          }));
+        if (scrapeResponse.ok) {
+          const scrapeData = await scrapeResponse.json();
+          results.firecrawl_used = scrapeData.used_firecrawl || false;
+          
+          if (scrapeData.success && scrapeData.data?.events?.length > 0) {
+            console.log(`[sync-library-events] Extracted ${scrapeData.data.events.length} events from PDF`);
+            eventDetails = scrapeData.data.events.map((event: any) => ({
+              success: true,
+              url: pdfUrl,
+              data: event,
+            }));
+            results.events_extracted = eventDetails.length;
+          } else {
+            console.log(`[sync-library-events] No events extracted from ${pdfUrl}`);
+            if (scrapeData.error) {
+              results.errors.push(`${pdfUrl}: ${scrapeData.error}`);
+            }
+          }
+        } else {
+          const errText = await scrapeResponse.text();
+          console.log(`[sync-library-events] scrape-content error: ${errText.slice(0, 200)}`);
+          results.errors.push(`${pdfUrl}: HTTP ${scrapeResponse.status}`);
         }
+      } catch (err: any) {
+        console.log(`[sync-library-events] Error processing PDF: ${err.message}`);
+        results.errors.push(`${pdfUrl}: ${err.message}`);
       }
     }
-    
-    // Strategy B: If we have event links, scrape each detail page
-    if (eventDetails.length === 0 && eventLinks.length > 0) {
-      console.log(`[sync-library-events] Using link-based extraction for ${eventLinks.length} links`);
-      
-      eventDetails = await rateLimitedFetch(
-        eventLinks,
-        async (eventUrl) => {
-          try {
-            const scrapeResponse = await fetch(`${supabaseUrl}/functions/v1/scrape-content`, {
-              method: "POST",
-              headers: {
-                "Authorization": `Bearer ${supabaseKey}`,
-                "apikey": supabaseKey,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                url: eventUrl,
-                extract_type: "event",
-                use_firecrawl: true,
-              }),
-            });
 
-            if (!scrapeResponse.ok) {
-              return { url: eventUrl, success: false, error: `HTTP ${scrapeResponse.status}` };
-            }
-
-            const data = await scrapeResponse.json();
-            if (data.used_firecrawl) {
-              results.firecrawl_used = true;
-            }
-            return { url: eventUrl, ...data };
-          } catch (err: any) {
-            return { url: eventUrl, success: false, error: err.message };
-          }
-        },
-        3, // Max 3 concurrent
-        300 // 300ms delay between batches
-      );
-    }
-
-    // Step 5: Process extracted events
+    // Step 3: Process extracted events
     const today = new Date().toISOString().split('T')[0];
     
     for (const result of eventDetails) {
-      results.scraped++;
-      
       if (!result.success || !result.data) {
-        if (result.error) results.errors.push(`${result.url}: ${result.error}`);
         continue;
       }
 
@@ -290,13 +217,12 @@ serve(async (req) => {
       if (!event.event_date || event.event_date < today) {
         continue;
       }
-      results.future++;
+      results.future_events++;
 
       const title = event.title || event.performer || "Library Event";
-      const eventUrl = event.event_url || result.url || source.url;
-      const dedupeKey = generateDedupeKey(title, event.event_date, eventUrl);
+      const dedupeKey = generateDedupeKey(title, event.event_date);
       
-      // Check for existing - use dedupe_key for inline events since URL may be same for all
+      // Check for existing using dedupe_key in metadata
       const { data: existing } = await supabase
         .from("content_queue")
         .select("id")
@@ -310,6 +236,7 @@ serve(async (req) => {
       }
 
       // Insert new event
+      const eventUrl = `${source.url}#${dedupeKey}`;
       const { error: insertError } = await supabase
         .from("content_queue")
         .insert({
@@ -319,7 +246,7 @@ serve(async (req) => {
           summary: (event.description || title).substring(0, 200),
           category: "events",
           original_url: eventUrl,
-          normalized_url: eventUrl.toLowerCase().split('?')[0].split('#')[0].replace(/\/+$/, ''),
+          normalized_url: eventUrl.toLowerCase(),
           event_date: event.event_date,
           event_time: event.start_time || event.event_time,
           performer: event.performer,
@@ -333,6 +260,7 @@ serve(async (req) => {
             location_tags: ["Lake Geneva"],
             trusted_locality: true,
             ai_extracted: true,
+            source_pdf: results.pdf_url,
           },
         });
 
@@ -357,7 +285,7 @@ serve(async (req) => {
       entity_type: "source",
       entity_id: source.id,
       action: "sync_library_events",
-      message: `Library sync: ${results.inserted} new events, ${results.skipped} duplicates skipped (firecrawl: ${results.firecrawl_used})`,
+      message: `Library sync: ${results.inserted} new events from PDF, ${results.skipped} duplicates skipped`,
       details: results,
     });
 
