@@ -2342,6 +2342,16 @@ export type Database = {
       expire_old_restaurant_news: { Args: never; Returns: number }
       generate_invoice_number: { Args: never; Returns: string }
       generate_referral_code: { Args: { email_input: string }; Returns: string }
+      get_source_health_stats: {
+        Args: never
+        Returns: {
+          breaking_24h: number
+          firecrawl_7d: number
+          source_id: string
+          stories_24h: number
+          stories_7d: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

@@ -28,63 +28,47 @@ const SourceHealth = () => {
     queryKey: ["source-health-detailed"],
     queryFn: async () => {
       const now = new Date();
-      const twentyFourHoursAgo = subHours(now, 24).toISOString();
-      const sevenDaysAgo = subDays(now, 7).toISOString();
       const twoHoursAgo = subHours(now, 2).toISOString();
       const fortyEightHoursAgo = subHours(now, 48).toISOString();
+      const sevenDaysAgo = subDays(now, 7).toISOString();
 
-      // Fetch sources only (lightweight)
-      const { data: sourcesData } = await supabase
-        .from("sources")
-        .select("id, name, type, status, category, last_fetched_at")
-        .order("name");
+      // Parallel fetch: sources + server-side aggregated stats + recent errors
+      const [sourcesResult, statsResult, errorsResult] = await Promise.all([
+        supabase
+          .from("sources")
+          .select("id, name, type, status, category, last_fetched_at")
+          .order("name"),
+        // Use RPC for server-side aggregation (returns ~dozens of rows, not thousands)
+        supabase.rpc("get_source_health_stats"),
+        // Fetch only error logs (with limit)
+        supabase
+          .from("activity_log")
+          .select("entity_id, details, created_at")
+          .eq("entity_type", "source")
+          .ilike("action", "%sync%")
+          .gte("created_at", sevenDaysAgo)
+          .order("created_at", { ascending: false })
+          .limit(100),
+      ]);
 
-      // Fetch aggregated counts per source using group queries (much more efficient)
-      // Stories in last 7 days with counts
-      const { data: counts7d } = await supabase
-        .from("content_queue")
-        .select("source_id, is_breaking, metadata")
-        .gte("created_at", sevenDaysAgo)
-        .not("source_id", "is", null);
+      const sourcesData = sourcesResult.data || [];
+      const statsData = statsResult.data || [];
+      const recentErrors = errorsResult.data || [];
 
-      const { data: counts24h } = await supabase
-        .from("content_queue")
-        .select("source_id, is_breaking")
-        .gte("created_at", twentyFourHoursAgo)
-        .not("source_id", "is", null);
-
-      // Fetch last errors from activity_log (lightweight - only recent sync errors)
-      const { data: recentErrors } = await supabase
-        .from("activity_log")
-        .select("entity_id, details, created_at")
-        .eq("entity_type", "source")
-        .ilike("action", "%sync%")
-        .gte("created_at", sevenDaysAgo)
-        .order("created_at", { ascending: false })
-        .limit(100);
-
-      // Build counts map per source (client-side aggregation on smaller dataset)
-      const countMap7d: Record<string, { total: number; breaking: number; firecrawl: number }> = {};
-      const countMap24h: Record<string, { total: number; breaking: number }> = {};
-      const errorMap: Record<string, { message: string; at: string }> = {};
-
-      (counts7d || []).forEach(c => {
-        const id = c.source_id;
-        if (!countMap7d[id]) countMap7d[id] = { total: 0, breaking: 0, firecrawl: 0 };
-        countMap7d[id].total++;
-        if (c.is_breaking) countMap7d[id].breaking++;
-        if ((c.metadata as any)?.used_firecrawl === true) countMap7d[id].firecrawl++;
-      });
-
-      (counts24h || []).forEach(c => {
-        const id = c.source_id;
-        if (!countMap24h[id]) countMap24h[id] = { total: 0, breaking: 0 };
-        countMap24h[id].total++;
-        if (c.is_breaking) countMap24h[id].breaking++;
+      // Build stats map from RPC result
+      const statsMap: Record<string, { stories_24h: number; stories_7d: number; breaking_24h: number; firecrawl_7d: number }> = {};
+      statsData.forEach((row: any) => {
+        statsMap[row.source_id] = {
+          stories_24h: Number(row.stories_24h) || 0,
+          stories_7d: Number(row.stories_7d) || 0,
+          breaking_24h: Number(row.breaking_24h) || 0,
+          firecrawl_7d: Number(row.firecrawl_7d) || 0,
+        };
       });
 
       // Build error map (first error per source)
-      (recentErrors || []).forEach(e => {
+      const errorMap: Record<string, { message: string; at: string }> = {};
+      recentErrors.forEach((e: any) => {
         const id = e.entity_id;
         if (id && !errorMap[id]) {
           const details = e.details as any;
@@ -94,15 +78,14 @@ const SourceHealth = () => {
         }
       });
 
-      const sources: SourceStats[] = (sourcesData || []).map(source => {
-        const c7d = countMap7d[source.id] || { total: 0, breaking: 0, firecrawl: 0 };
-        const c24h = countMap24h[source.id] || { total: 0, breaking: 0 };
+      const sources: SourceStats[] = sourcesData.map(source => {
+        const stats = statsMap[source.id] || { stories_24h: 0, stories_7d: 0, breaking_24h: 0, firecrawl_7d: 0 };
         const lastFetched = source.last_fetched_at ? new Date(source.last_fetched_at) : null;
         const isActive = source.status === 'active';
 
         let health_status: SourceStats['health_status'] = 'dormant';
         if (isActive) {
-          if (c24h.total > 0 || (lastFetched && lastFetched >= new Date(twoHoursAgo))) {
+          if (stats.stories_24h > 0 || (lastFetched && lastFetched >= new Date(twoHoursAgo))) {
             health_status = 'healthy';
           } else if (lastFetched && lastFetched >= new Date(fortyEightHoursAgo)) {
             health_status = 'warning';
@@ -118,10 +101,10 @@ const SourceHealth = () => {
           status: source.status,
           category: source.category,
           last_fetched_at: source.last_fetched_at,
-          stories_24h: c24h.total,
-          stories_7d: c7d.total,
-          breaking_24h: c24h.breaking,
-          firecrawl_used: c7d.firecrawl,
+          stories_24h: stats.stories_24h,
+          stories_7d: stats.stories_7d,
+          breaking_24h: stats.breaking_24h,
+          firecrawl_used: stats.firecrawl_7d,
           health_status,
           last_error: errorMap[source.id],
         };
