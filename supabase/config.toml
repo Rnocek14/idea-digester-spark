@@ -114,8 +114,7 @@ verify_jwt = false
 [functions.sync-patch]
 verify_jwt = false
 
-[functions.sync-facebook-incidents]
-verify_jwt = false
+# [DELETED] sync-facebook-incidents - replaced by sync-facebook-local which uses OpenAI extraction
 
 [functions.sync-spotcrime-incidents]
 verify_jwt = false
