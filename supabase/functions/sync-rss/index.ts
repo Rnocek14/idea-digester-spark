@@ -51,6 +51,13 @@ const BLOCKED_TITLES = [
   'home', 'about', 'contact', 'menu', 'categories', 'tags',
   'archive', 'search', 'login', 'register', 'privacy policy',
   'terms of service', 'posts categories', 'uncategorized',
+  'more info', 'read more', 'click here', 'new boats',
+];
+
+// Titles containing these indicate non-local content (not Lake Geneva area)
+const NON_LOCAL_TITLE_KEYWORDS = [
+  'wisconsin dells', 'milwaukee weekend', 'chicago things to do',
+  'madison events', 'green bay', 'appleton', 'oshkosh',
 ];
 
 // AI hallucination phrases that indicate non-article content was processed
@@ -63,6 +70,13 @@ const HALLUCINATION_PHRASES = [
   'organize local content',
   'help organize',
   'making it easier to find',
+  // Generic AI filler patterns
+  'something for everyone',
+  'popular destination known for',
+  'stunning views and welcoming',
+  'variety of attractions suitable',
+  'whether you\'re looking for adventure or relaxation',
+  'perfect for all ages',
 ];
 
 // Check if URL is a valid HTTP/HTTPS URL (rejects tel:, mailto:, javascript:, urn:, etc.)
@@ -85,12 +99,26 @@ function isJunkUrl(url: string): boolean {
   }
 }
 
-// Check if title indicates a meta-page
+// Check if title indicates a meta-page or placeholder
 function isBlockedTitle(title: string): boolean {
   const normalized = title.toLowerCase().trim();
-  return BLOCKED_TITLES.includes(normalized) || 
-         normalized.length < 5 ||
-         /^[a-z]+$/.test(normalized); // Single word titles like "About", "Home"
+  // Check against blocked list
+  if (BLOCKED_TITLES.some(blocked => normalized.includes(blocked))) return true;
+  // Too short
+  if (normalized.length < 5) return true;
+  // Single word titles like "About", "Home"
+  if (/^[a-z]+$/.test(normalized)) return true;
+  // "More Info" pattern (e.g., "Lake Geneva More Info")
+  if (/^[a-z\s]+more info\s*$/i.test(normalized)) return true;
+  return false;
+}
+
+// Check if title contains non-local destination (not Lake Geneva area)
+function isNonLocalTitle(title: string): boolean {
+  const lower = title.toLowerCase();
+  // Skip if it mentions Lake Geneva (probably comparative article)
+  if (lower.includes('lake geneva')) return false;
+  return NON_LOCAL_TITLE_KEYWORDS.some(keyword => lower.includes(keyword));
 }
 
 // Check if AI summary contains hallucination patterns (sign of non-article content)
@@ -1364,6 +1392,13 @@ serve(async (req) => {
           // BLOCKED TITLE FILTER: Skip meta-page titles like "Home", "About", "Categories"
           if (isBlockedTitle(title)) {
             console.log(`⏭️ Skipping blocked title: "${title}" - appears to be a meta-page`);
+            result.skipped++;
+            continue;
+          }
+
+          // NON-LOCAL DESTINATION FILTER: Skip articles about Wisconsin Dells, Milwaukee, etc.
+          if (isNonLocalTitle(title)) {
+            console.log(`⏭️ Skipping non-local destination: "${title.substring(0, 50)}..."`);
             result.skipped++;
             continue;
           }
