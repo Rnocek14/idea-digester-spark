@@ -76,6 +76,25 @@ function slugify(text: string): string {
     .substring(0, 80);
 }
 
+// Rate limiter for concurrent requests
+async function rateLimitedFetch<T>(
+  items: T[],
+  fetcher: (item: T) => Promise<any>,
+  concurrency: number = 3,
+  delayMs: number = 300
+): Promise<any[]> {
+  const results: any[] = [];
+  for (let i = 0; i < items.length; i += concurrency) {
+    const batch = items.slice(i, i + concurrency);
+    const batchResults = await Promise.all(batch.map(fetcher));
+    results.push(...batchResults);
+    if (i + concurrency < items.length) {
+      await new Promise(r => setTimeout(r, delayMs));
+    }
+  }
+  return results;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -84,61 +103,64 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const firecrawlKey = Deno.env.get("FIRECRAWL_API_KEY");
-
-    if (!firecrawlKey) {
-      console.error("[sync-spotcrime] FIRECRAWL_API_KEY not configured");
-      return new Response(
-        JSON.stringify({ success: false, error: "Firecrawl not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const results = {
+      method: "scrape-content",
       processed: 0,
       inserted: 0,
       skipped: 0,
       filtered_out: 0,
       errors: [] as string[],
-      sample_content: [] as string[],
+      static_fetch_used: true,
+      firecrawl_used: false,
     };
 
     console.log("[sync-spotcrime] Scraping Walworth County crime data...");
 
-    // Try SpotCrime with both markdown and HTML
-    const fcRes = await fetch("https://api.firecrawl.dev/v1/scrape", {
+    const spotcrimeUrl = "https://spotcrime.com/WI/Walworth%20County";
+
+    // Step 1: Use scrape-content for the main page (SpotCrime is JS-heavy)
+    // SpotCrime almost always needs JS rendering, so we go straight to scrape-content
+    console.log("[sync-spotcrime] Using scrape-content with firecrawl fallback...");
+    
+    const scrapeResponse = await fetch(`${supabaseUrl}/functions/v1/scrape-content`, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${firecrawlKey}`,
+        "Authorization": `Bearer ${supabaseKey}`,
+        "apikey": supabaseKey,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        url: "https://spotcrime.com/WI/Walworth%20County",
-        formats: ["markdown", "html"],
-        waitFor: 5000,  // Wait longer for JS to load
-        onlyMainContent: false,  // Get full page
+        url: spotcrimeUrl,
+        extract_type: "incident", // Use incident schema
+        use_firecrawl: true, // SpotCrime requires JS rendering
       }),
     });
 
-    if (!fcRes.ok) {
-      const errText = await fcRes.text();
-      console.error("[sync-spotcrime] Firecrawl error:", errText);
+    if (!scrapeResponse.ok) {
+      const errText = await scrapeResponse.text();
+      console.error("[sync-spotcrime] scrape-content error:", errText);
       return new Response(
-        JSON.stringify({ success: false, error: "Firecrawl request failed" }),
+        JSON.stringify({ success: false, error: "Failed to scrape SpotCrime" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const fcData = await fcRes.json();
-    const markdown: string = fcData.data?.markdown || "";
-    const html: string = fcData.data?.html || "";
+    const scrapeData = await scrapeResponse.json();
+    results.firecrawl_used = scrapeData.used_firecrawl || false;
+    results.static_fetch_used = !results.firecrawl_used;
 
-    console.log(`[sync-spotcrime] Received markdown: ${markdown.length} chars, html: ${html.length} chars`);
+    console.log(`[sync-spotcrime] scrape-content success (firecrawl: ${results.firecrawl_used})`);
 
-    // Try to parse crime data from HTML using regex patterns
-    // SpotCrime typically has crime markers with data attributes or structured elements
+    // Get raw content for additional parsing
+    const rawContent = scrapeData.raw_content || "";
+    const html = scrapeData.html || "";
+    
+    console.log(`[sync-spotcrime] Content length: raw=${rawContent.length}, html=${html.length}`);
+
+    // Step 2: Try to extract individual crime entries
+    // SpotCrime typically has crime data in JSON format or structured markers
     const incidents: Array<{
       type: string;
       address: string;
@@ -146,7 +168,7 @@ serve(async (req) => {
       description: string;
     }> = [];
 
-    // Pattern 1: Look for crime marker data in HTML
+    // Pattern 1: Look for crime marker data in HTML/JSON
     const markerPattern = /"type"\s*:\s*"([^"]+)".*?"address"\s*:\s*"([^"]+)".*?"date"\s*:\s*"([^"]+)"/gi;
     let markerMatch;
     while ((markerMatch = markerPattern.exec(html)) !== null) {
@@ -158,36 +180,19 @@ serve(async (req) => {
       });
     }
 
-    // Pattern 2: Look for structured crime list items
-    const listPattern = /<div[^>]*class="[^"]*crime[^"]*"[^>]*>.*?<span[^>]*>([^<]+)<\/span>.*?<span[^>]*>([^<]+)<\/span>/gi;
-    while ((markerMatch = listPattern.exec(html)) !== null) {
-      incidents.push({
-        type: markerMatch[1],
-        address: markerMatch[2],
-        date: new Date().toISOString(),
-        description: `${markerMatch[1]} near ${markerMatch[2]}`,
-      });
-    }
-
-    // Pattern 3: Parse markdown for crime entries
-    const lines = markdown.split('\n').filter(l => l.trim().length > 15);
-    
-    // Log sample for debugging
-    results.sample_content = lines.slice(0, 10).map(l => l.substring(0, 100));
-    console.log("[sync-spotcrime] Sample markdown lines:", results.sample_content);
-
-    // Crime keywords to detect in text
+    // Pattern 2: Parse from structured content
+    const contentLines = rawContent.split('\n').filter((l: string) => l.trim().length > 15);
     const crimeKeywords = [
       'theft', 'burglary', 'robbery', 'assault', 'vandalism', 'arrest',
       'shooting', 'arson', 'larceny', 'battery', 'breaking', 'stolen',
       'criminal', 'damage', 'trespass', 'disorder', 'weapon', 'drug'
     ];
     
-    for (const line of lines) {
+    for (const line of contentLines) {
       const lower = line.toLowerCase();
       const hasCrimeKeyword = crimeKeywords.some(kw => lower.includes(kw));
       
-      if (hasCrimeKeyword) {
+      if (hasCrimeKeyword && !incidents.some(i => i.description === line.trim())) {
         incidents.push({
           type: 'crime',
           address: line.trim(),
@@ -197,10 +202,25 @@ serve(async (req) => {
       }
     }
 
+    // If we got structured data from AI extraction, add those too
+    if (scrapeData.success && scrapeData.data) {
+      const extracted = scrapeData.data;
+      if (extracted.location && extracted.description) {
+        incidents.push({
+          type: extracted.incident_type || 'crime',
+          address: extracted.location,
+          date: extracted.incident_time || new Date().toISOString(),
+          description: extracted.description,
+        });
+      }
+    }
+
     console.log(`[sync-spotcrime] Found ${incidents.length} potential incidents`);
 
-    // Process each incident
-    for (const inc of incidents) {
+    // Step 3: Process each incident (limit to 30 per run)
+    const incidentsToProcess = incidents.slice(0, 30);
+    
+    for (const inc of incidentsToProcess) {
       results.processed++;
       
       // Check if in Lake Geneva area
@@ -213,12 +233,12 @@ serve(async (req) => {
       const crimeInfo = inferCrimeInfo(inc.type + ' ' + inc.description);
       const title = `${crimeInfo.subType.replace(/_/g, ' ')} in ${geoInfo.geoLabel}`.substring(0, 140);
       
-      // Create external_id for deduplication
-      const timeBucket = Math.floor(Date.now() / (60 * 60 * 1000)); // 1-hour buckets
+      // Create external_id for deduplication (1-hour buckets)
+      const timeBucket = Math.floor(Date.now() / (60 * 60 * 1000));
       const addressNorm = inc.address.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 50);
       const externalId = await hashString(`${crimeInfo.subType}|${addressNorm}|${timeBucket}`);
 
-      // Check for existing incident with same external_id
+      // Check for existing incident
       const { data: existing } = await supabase
         .from("incidents")
         .select("id")
@@ -256,8 +276,8 @@ serve(async (req) => {
         results.inserted++;
       }
 
-      // Rate limit
-      await new Promise(r => setTimeout(r, 200));
+      // Small delay between inserts
+      await new Promise(r => setTimeout(r, 100));
     }
 
     console.log(`[sync-spotcrime] Complete:`, results);

@@ -18,63 +18,47 @@ function generateDedupeKey(title: string, eventDate: string, eventUrl: string): 
   return `library-event-${Math.abs(hash).toString(36)}`;
 }
 
-// Extract date from various formats
-function extractEventDate(text: string): string | null {
-  // Try ISO format first
-  const isoMatch = text.match(/(\d{4}-\d{2}-\d{2})/);
-  if (isoMatch) return isoMatch[1];
-  
-  // Try "Month Day, Year" format
-  const monthDayYear = text.match(/(\w+)\s+(\d{1,2}),?\s*(\d{4})/i);
-  if (monthDayYear) {
-    const months: Record<string, string> = {
-      january: '01', february: '02', march: '03', april: '04',
-      may: '05', june: '06', july: '07', august: '08',
-      september: '09', october: '10', november: '11', december: '12'
-    };
-    const month = months[monthDayYear[1].toLowerCase()];
-    if (month) {
-      const day = monthDayYear[2].padStart(2, '0');
-      return `${monthDayYear[3]}-${month}-${day}`;
+// Extract event links from HTML
+function extractEventLinks(html: string, baseUrl: string): string[] {
+  const links: string[] = [];
+  // Match href links that look like event pages
+  const linkPattern = /href=["']([^"']*(?:event|calendar|program)[^"']*)/gi;
+  let match;
+  while ((match = linkPattern.exec(html)) !== null) {
+    let url = match[1];
+    // Make absolute URL
+    if (url.startsWith('/')) {
+      const base = new URL(baseUrl);
+      url = `${base.origin}${url}`;
+    } else if (!url.startsWith('http')) {
+      url = `${baseUrl}/${url}`;
+    }
+    if (!links.includes(url)) {
+      links.push(url);
     }
   }
-  
-  // Try "Month Day" format (assume current/next year)
-  const monthDay = text.match(/(\w+)\s+(\d{1,2})(?!\d)/i);
-  if (monthDay) {
-    const months: Record<string, string> = {
-      january: '01', february: '02', march: '03', april: '04',
-      may: '05', june: '06', july: '07', august: '08',
-      september: '09', october: '10', november: '11', december: '12'
-    };
-    const month = months[monthDay[1].toLowerCase()];
-    if (month) {
-      const day = monthDay[2].padStart(2, '0');
-      const now = new Date();
-      let year = now.getFullYear();
-      const testDate = new Date(`${year}-${month}-${day}`);
-      if (testDate < now) year++;
-      return `${year}-${month}-${day}`;
-    }
-  }
-  
-  return null;
+  return links.slice(0, 20); // Limit to 20 events per run
 }
 
-// Extract time from text
-function extractEventTime(text: string): string | null {
-  const timeMatch = text.match(/(\d{1,2}):?(\d{2})?\s*(am|pm|AM|PM)/i);
-  if (timeMatch) {
-    let hour = parseInt(timeMatch[1]);
-    const minute = timeMatch[2] || '00';
-    const period = timeMatch[3].toLowerCase();
-    
-    if (period === 'pm' && hour !== 12) hour += 12;
-    if (period === 'am' && hour === 12) hour = 0;
-    
-    return `${hour.toString().padStart(2, '0')}:${minute}`;
+// Rate limiter for concurrent requests
+async function rateLimitedFetch<T>(
+  items: T[],
+  fetcher: (item: T, index: number) => Promise<any>,
+  concurrency: number = 3,
+  delayMs: number = 300
+): Promise<any[]> {
+  const results: any[] = [];
+  for (let i = 0; i < items.length; i += concurrency) {
+    const batch = items.slice(i, i + concurrency);
+    const batchResults = await Promise.all(
+      batch.map((item, idx) => fetcher(item, i + idx))
+    );
+    results.push(...batchResults);
+    if (i + concurrency < items.length) {
+      await new Promise(r => setTimeout(r, delayMs));
+    }
   }
-  return null;
+  return results;
 }
 
 serve(async (req) => {
@@ -85,16 +69,6 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const firecrawlKey = Deno.env.get("FIRECRAWL_API_KEY");
-    
-    if (!firecrawlKey) {
-      console.error("FIRECRAWL_API_KEY not configured");
-      return new Response(
-        JSON.stringify({ error: "Firecrawl not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
     const supabase = createClient(supabaseUrl, supabaseKey);
     
     // Get the library source
@@ -112,178 +86,190 @@ serve(async (req) => {
       );
     }
 
-    console.log(`🔥 Scraping library calendar: ${source.url}`);
+    console.log(`📚 Syncing library events from: ${source.url}`);
 
-    // Call Firecrawl to scrape the JS-rendered page
-    const firecrawlResponse = await fetch("https://api.firecrawl.dev/v1/scrape", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${firecrawlKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        url: source.url,
-        formats: ["markdown", "html"],
-        onlyMainContent: true,
-        waitFor: 5000, // Wait for JS to render events
-      }),
-    });
+    const results = {
+      method: "scrape-content",
+      scraped: 0,
+      future: 0,
+      inserted: 0,
+      skipped: 0,
+      errors: [] as string[],
+      static_fetch_used: true,
+      firecrawl_used: false,
+    };
 
-    if (!firecrawlResponse.ok) {
-      const errorText = await firecrawlResponse.text();
-      console.error("Firecrawl error:", errorText);
+    // Step 1: Try static fetch for the main calendar page first
+    let html = "";
+    let usedFirecrawl = false;
+    
+    try {
+      console.log(`[sync-library-events] Attempting static fetch...`);
+      const staticRes = await fetch(source.url, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        },
+      });
+      
+      if (staticRes.ok) {
+        html = await staticRes.text();
+        console.log(`[sync-library-events] Static fetch success: ${html.length} chars`);
+      }
+    } catch (err) {
+      console.log(`[sync-library-events] Static fetch failed, will try scrape-content with firecrawl fallback`);
+    }
+
+    // Step 2: If static fetch didn't get enough content, use scrape-content with firecrawl
+    if (html.length < 500) {
+      console.log(`[sync-library-events] Content too short, using scrape-content with firecrawl...`);
+      
+      const scrapeResponse = await fetch(`${supabaseUrl}/functions/v1/scrape-content`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${supabaseKey}`,
+          "apikey": supabaseKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          url: source.url,
+          extract_type: "event",
+          use_firecrawl: true,
+        }),
+      });
+      
+      if (scrapeResponse.ok) {
+        const scrapeData = await scrapeResponse.json();
+        usedFirecrawl = scrapeData.used_firecrawl || false;
+        results.static_fetch_used = !usedFirecrawl;
+        results.firecrawl_used = usedFirecrawl;
+        
+        // If we got structured event data directly, use it
+        if (scrapeData.success && scrapeData.data) {
+          console.log(`[sync-library-events] Got structured data from scrape-content`);
+          // Handle single event extraction - calendar pages need link discovery
+        }
+        
+        // Get the raw HTML for link extraction
+        html = scrapeData.html || scrapeData.raw_html || "";
+      }
+    }
+
+    if (html.length < 200) {
+      console.error(`[sync-library-events] Could not get calendar content`);
       return new Response(
-        JSON.stringify({ error: "Firecrawl scrape failed", details: errorText }),
+        JSON.stringify({ error: "Could not fetch calendar content", results }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const firecrawlData = await firecrawlResponse.json();
-    const markdown = firecrawlData.data?.markdown || firecrawlData.markdown || "";
-    
-    console.log(`📄 Got ${markdown.length} chars of markdown`);
+    // Step 3: Extract event links from calendar page
+    const eventLinks = extractEventLinks(html, source.url);
+    console.log(`[sync-library-events] Found ${eventLinks.length} event links`);
 
-    // Parse events from markdown
-    // Squarespace calendars typically have event blocks with title, date, time, description
-    const events: Array<{
-      title: string;
-      event_date: string | null;
-      event_time: string | null;
-      description: string;
-      url: string;
-    }> = [];
-
-    // Split by common event delimiters and look for event patterns
-    const lines = markdown.split('\n');
-    let currentEvent: { title: string; date: string | null; time: string | null; desc: string; url: string } | null = null;
-    
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim();
-      
-      // Look for event titles (usually headers or bold text)
-      const headerMatch = line.match(/^#+\s*(.+)$/) || line.match(/^\*\*(.+)\*\*$/);
-      if (headerMatch) {
-        // Save previous event
-        if (currentEvent && currentEvent.title && currentEvent.date) {
-          events.push({
-            title: currentEvent.title,
-            event_date: currentEvent.date,
-            event_time: currentEvent.time,
-            description: currentEvent.desc.substring(0, 500),
-            url: currentEvent.url || source.url,
+    // Step 4: For each event link, call scrape-content with extract_type: 'event'
+    const eventDetails = await rateLimitedFetch(
+      eventLinks,
+      async (eventUrl) => {
+        try {
+          const scrapeResponse = await fetch(`${supabaseUrl}/functions/v1/scrape-content`, {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${supabaseKey}`,
+              "apikey": supabaseKey,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              url: eventUrl,
+              extract_type: "event",
+              use_firecrawl: true, // Allow fallback for JS-rendered pages
+            }),
           });
+
+          if (!scrapeResponse.ok) {
+            return { url: eventUrl, success: false, error: `HTTP ${scrapeResponse.status}` };
+          }
+
+          const data = await scrapeResponse.json();
+          if (data.used_firecrawl) {
+            results.firecrawl_used = true;
+          }
+          return { url: eventUrl, ...data };
+        } catch (err: any) {
+          return { url: eventUrl, success: false, error: err.message };
         }
-        currentEvent = { title: headerMatch[1], date: null, time: null, desc: '', url: source.url };
+      },
+      3, // Max 3 concurrent
+      300 // 300ms delay between batches
+    );
+
+    // Step 5: Process extracted events
+    const today = new Date().toISOString().split('T')[0];
+    
+    for (const result of eventDetails) {
+      results.scraped++;
+      
+      if (!result.success || !result.data) {
+        if (result.error) results.errors.push(`${result.url}: ${result.error}`);
         continue;
       }
+
+      const event = result.data;
       
-      if (currentEvent) {
-        // Look for dates
-        if (!currentEvent.date) {
-          const foundDate = extractEventDate(line);
-          if (foundDate) {
-            currentEvent.date = foundDate;
-          }
-        }
-        
-        // Look for times
-        if (!currentEvent.time) {
-          const foundTime = extractEventTime(line);
-          if (foundTime) {
-            currentEvent.time = foundTime;
-          }
-        }
-        
-        // Look for URLs
-        const urlMatch = line.match(/\[.*?\]\((https?:\/\/[^\)]+)\)/);
-        if (urlMatch) {
-          currentEvent.url = urlMatch[1];
-        }
-        
-        // Accumulate description
-        if (line && !line.startsWith('#') && !line.startsWith('*')) {
-          currentEvent.desc += (currentEvent.desc ? ' ' : '') + line;
-        }
+      // Skip if no event_date or in the past
+      if (!event.event_date || event.event_date < today) {
+        continue;
       }
-    }
-    
-    // Save last event
-    if (currentEvent && currentEvent.title && currentEvent.date) {
-      events.push({
-        title: currentEvent.title,
-        event_date: currentEvent.date,
-        event_time: currentEvent.time,
-        description: currentEvent.desc.substring(0, 500),
-        url: currentEvent.url || source.url,
-      });
-    }
+      results.future++;
 
-    console.log(`📅 Parsed ${events.length} events from calendar`);
+      const title = event.title || event.performer || "Library Event";
+      const dedupeKey = generateDedupeKey(title, event.event_date, result.url);
+      
+      // Check for existing
+      const { data: existing } = await supabase
+        .from("content_queue")
+        .select("id")
+        .eq("source_id", source.id)
+        .or(`title.eq.${title},metadata->>dedupe_key.eq.${dedupeKey}`)
+        .limit(1);
+      
+      if (existing && existing.length > 0) {
+        results.skipped++;
+        continue;
+      }
 
-    // Filter to future events only
-    const today = new Date().toISOString().split('T')[0];
-    const futureEvents = events.filter(e => e.event_date && e.event_date >= today);
-    
-    console.log(`📅 ${futureEvents.length} future events`);
+      // Insert new event
+      const { error: insertError } = await supabase
+        .from("content_queue")
+        .insert({
+          source_id: source.id,
+          title: title.substring(0, 200),
+          content: event.description || `Library event: ${title}`,
+          summary: (event.description || title).substring(0, 200),
+          category: "events",
+          original_url: result.url,
+          event_date: event.event_date,
+          event_time: event.start_time || event.event_time,
+          performer: event.performer,
+          geo_tier: 1,
+          geo_label: "Lake Geneva",
+          status: "auto_published", // Trusted local source
+          safety_level: "safe",
+          metadata: {
+            dedupe_key: dedupeKey,
+            venue: event.venue || "Lake Geneva Public Library",
+            location_tags: ["Lake Geneva"],
+            trusted_locality: true,
+            ai_extracted: true,
+          },
+        });
 
-    const results = {
-      scraped: events.length,
-      future: futureEvents.length,
-      inserted: 0,
-      skipped: 0,
-      errors: [] as string[],
-    };
-
-    for (const event of futureEvents) {
-      try {
-        const dedupeKey = generateDedupeKey(event.title, event.event_date!, event.url);
-        
-        // Check for existing
-        const { data: existing } = await supabase
-          .from("content_queue")
-          .select("id")
-          .eq("source_id", source.id)
-          .or(`title.eq.${event.title},metadata->>dedupe_key.eq.${dedupeKey}`)
-          .limit(1);
-        
-        if (existing && existing.length > 0) {
-          results.skipped++;
-          continue;
-        }
-
-        // Insert new event
-        const { error: insertError } = await supabase
-          .from("content_queue")
-          .insert({
-            source_id: source.id,
-            title: event.title,
-            content: event.description || `Library event: ${event.title}`,
-            summary: event.description?.substring(0, 200) || event.title,
-            category: "events",
-            original_url: event.url,
-            event_date: event.event_date,
-            event_time: event.event_time,
-            geo_tier: 1,
-            geo_label: "Lake Geneva",
-            status: "auto_published", // Trusted local source
-            safety_level: "safe",
-            metadata: {
-              dedupe_key: dedupeKey,
-              venue: "Lake Geneva Public Library",
-              location_tags: ["Lake Geneva"],
-              trusted_locality: true,
-            },
-          });
-
-        if (insertError) {
-          console.error("Insert error:", insertError);
-          results.errors.push(`${event.title}: ${insertError.message}`);
-        } else {
-          results.inserted++;
-          console.log(`✅ Inserted: ${event.title} (${event.event_date})`);
-        }
-      } catch (err: any) {
-        results.errors.push(`${event.title}: ${err.message}`);
+      if (insertError) {
+        console.error("Insert error:", insertError);
+        results.errors.push(`${title}: ${insertError.message}`);
+      } else {
+        results.inserted++;
+        console.log(`✅ Inserted: ${title} (${event.event_date})`);
       }
     }
 
@@ -299,11 +285,11 @@ serve(async (req) => {
       entity_type: "source",
       entity_id: source.id,
       action: "sync_library_events",
-      message: `Library sync: ${results.inserted} new events, ${results.skipped} duplicates skipped`,
+      message: `Library sync: ${results.inserted} new events, ${results.skipped} duplicates skipped (firecrawl: ${results.firecrawl_used})`,
       details: results,
     });
 
-    console.log(`🏁 Library sync complete: ${results.inserted} inserted, ${results.skipped} skipped`);
+    console.log(`🏁 Library sync complete:`, results);
 
     return new Response(
       JSON.stringify(results),
