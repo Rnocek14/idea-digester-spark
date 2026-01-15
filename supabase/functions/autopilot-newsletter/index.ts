@@ -216,11 +216,15 @@ serve(async (req) => {
 
     // Fetch fresh stories - use publish_date if available, otherwise created_at
     // This fixes the issue where stories without publish_date were being excluded
+    // NON-LOCAL keywords for hyperlocal filtering
+    const NON_LOCAL_TITLE_KEYWORDS = ['milwaukee', 'madison', 'chicago', 'racine', 'kenosha', 'waukesha', 'green bay', 'janesville', 'beloit', 'rockford', 'appleton', 'oshkosh'];
+
     const { data: freshStories, error: fetchError } = await supabase
       .from("content_queue")
-      .select("id, title, content, summary, category, content_newsletter, voice_generated_at, status, created_at, original_url, publish_date, event_date")
+      .select("id, title, content, summary, category, content_newsletter, voice_generated_at, status, created_at, original_url, publish_date, event_date, geo_tier")
       .in("status", ["approved", "auto_published", "published"])
       .eq("safety_level", "safe")
+      .in("geo_tier", [1, 2]) // HYPERLOCAL LOCKDOWN: Only Lake Geneva (1) and county (2)
       .is("last_newsletter_id", null) // GUARDRAIL: Dedupe - never reuse stories
       .or(`publish_date.gte.${freshCutoff.toISOString()},and(publish_date.is.null,created_at.gte.${freshCutoff.toISOString()})`)
       .lte("created_at", today.toISOString()) // No future-dated stories
@@ -229,17 +233,22 @@ serve(async (req) => {
 
     if (fetchError) throw fetchError;
 
-    // Filter out past events (event_date < today)
+    // Filter out past events AND non-local titles
     let candidates = (freshStories || []).filter(story => {
       // If it has an event_date, it must be today or in the future
-      if (story.event_date) {
-        return story.event_date >= todayDate;
+      if (story.event_date && story.event_date < todayDate) {
+        return false;
       }
-      // Non-events pass through
+      // HYPERLOCAL: Exclude stories with non-local city names in title
+      const titleLower = (story.title || '').toLowerCase();
+      if (NON_LOCAL_TITLE_KEYWORDS.some(kw => titleLower.includes(kw))) {
+        console.log(`⚠️ Excluding non-local story: ${story.title.substring(0, 50)}...`);
+        return false;
+      }
       return true;
     });
 
-    console.log(`✅ Found ${candidates.length} fresh candidates (${freshStories?.length || 0} before event filter)`);
+    console.log(`✅ Found ${candidates.length} fresh hyperlocal candidates (${freshStories?.length || 0} before filters)`);
 
     // Also fetch active incidents for content threshold check
     const sixHoursAgo = new Date();

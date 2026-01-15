@@ -56,9 +56,25 @@ function slugifyTitle(title: string): string {
     .substring(0, 80);
 }
 
-// Check if story should be excluded (court proceedings, memorials, etc.)
+// NON-LOCAL cities that should NEVER create incidents
+const NON_LOCAL_EXCLUSIONS = [
+  'milwaukee', 'madison', 'chicago', 'racine', 'kenosha', 'waukesha',
+  'green bay', 'janesville', 'beloit', 'rockford', 'minneapolis', 'minnesota',
+  'appleton', 'oshkosh', 'brookfield', 'wauwatosa', 'fond du lac',
+  'iran', 'gaza', 'ukraine', 'russia', 'israel', 'mexico', 'canada'
+];
+
+// Check if story should be excluded (court proceedings, memorials, non-local, etc.)
 function shouldExclude(title: string, summary: string): boolean {
+  const titleLower = title.toLowerCase();
   const text = `${title} ${summary}`.toLowerCase();
+  
+  // HYPERLOCAL LOCKDOWN: Exclude any story with non-local city/country in title
+  for (const excluded of NON_LOCAL_EXCLUSIONS) {
+    if (titleLower.includes(excluded)) {
+      return true; // Non-local story
+    }
+  }
   
   // Court proceedings / legal outcomes
   if (/sentenced|pleads guilty|convicted|charged with|arraigned|verdict|prison/.test(text)) {
@@ -69,7 +85,7 @@ function shouldExclude(title: string, summary: string): boolean {
   }
   
   // Memorial / grieving content
-  if (/grieves|mourns|memorial|obituary|funeral|in memory/.test(text)) {
+  if (/grieves|mourns|memorial|obituary|funeral|in memory|dies at/.test(text)) {
     return true;
   }
   
