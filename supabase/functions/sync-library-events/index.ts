@@ -18,59 +18,64 @@ function generateDedupeKey(title: string, eventDate: string): string {
   return `library-event-${Math.abs(hash).toString(36)}`;
 }
 
-// Discover PDF links from the library's program guide page
+// Discover PDF links from raw HTML content (not just href attributes)
+// This catches PDFs linked via JS, embedded JSON, raw URLs, etc.
 function discoverProgramGuidePdfs(html: string, baseUrl: string): string[] {
   const pdfs: string[] = [];
   const seen = new Set<string>();
   
-  // Look for PDF links that contain program/newsletter/guide keywords
-  const patterns = [
-    /href=["']([^"']*\.pdf[^"']*)/gi,
-    /href=["']([^"']*program[^"']*)/gi,
-    /href=["']([^"']*newsletter[^"']*)/gi,
-    /href=["']([^"']*calendar[^"']*)/gi,
-  ];
+  // BROAD pattern: any URL ending in .pdf anywhere in the HTML
+  // This catches: href="...", src="...", data-url="...", JSON strings, etc.
+  const broadPattern = /https?:\/\/[^"'\s<>]+\.pdf(?:\?[^"'\s<>]*)?/gi;
   
-  for (const pattern of patterns) {
-    let match;
-    while ((match = pattern.exec(html)) !== null) {
-      let url = match[1];
-      
-      // Make absolute URL
-      try {
-        if (url.startsWith('/')) {
-          const base = new URL(baseUrl);
-          url = `${base.origin}${url}`;
-        } else if (!url.startsWith('http')) {
-          url = new URL(url, baseUrl).href;
-        }
-        
-        // Only include PDFs
-        if (!url.toLowerCase().endsWith('.pdf')) continue;
-        
-        // Skip if seen
-        const normalized = url.toLowerCase();
-        if (seen.has(normalized)) continue;
-        seen.add(normalized);
-        
-        // Prioritize recent newsletters/program guides
-        const lower = url.toLowerCase();
-        if (lower.includes('program') || lower.includes('newsletter') || 
-            lower.includes('2025') || lower.includes('2026') ||
-            lower.includes('january') || lower.includes('february') ||
-            lower.includes('march') || lower.includes('april')) {
-          pdfs.unshift(url); // High priority at front
-        } else {
-          pdfs.push(url);
-        }
-      } catch {
-        // Invalid URL, skip
-      }
-    }
+  let match;
+  while ((match = broadPattern.exec(html)) !== null) {
+    const url = match[0];
+    const normalized = url.toLowerCase().split('?')[0]; // Ignore query params for dedupe
+    if (seen.has(normalized)) continue;
+    seen.add(normalized);
+    pdfs.push(url);
   }
   
-  console.log(`[discoverProgramGuidePdfs] Found ${pdfs.length} PDF links`);
-  return pdfs.slice(0, 5); // Limit to top 5
+  // Also check relative paths: /something.pdf or files/something.pdf
+  const relativePattern = /["'](\/[^"'\s]*\.pdf[^"']*)["']/gi;
+  while ((match = relativePattern.exec(html)) !== null) {
+    try {
+      const base = new URL(baseUrl);
+      const url = `${base.origin}${match[1]}`;
+      const normalized = url.toLowerCase().split('?')[0];
+      if (seen.has(normalized)) continue;
+      seen.add(normalized);
+      pdfs.push(url);
+    } catch { /* skip invalid */ }
+  }
+  
+  // Score and sort by relevance (higher = better)
+  const scorePdf = (url: string): number => {
+    const lower = url.toLowerCase();
+    let score = 0;
+    // Recent years
+    if (lower.includes('2026')) score += 100;
+    if (lower.includes('2025')) score += 50;
+    // Current months (dynamic based on current date)
+    const months = ['january', 'february', 'march', 'april', 'may', 'june',
+                    'july', 'august', 'september', 'october', 'november', 'december'];
+    const currentMonth = months[new Date().getMonth()];
+    const nextMonth = months[(new Date().getMonth() + 1) % 12];
+    if (lower.includes(currentMonth)) score += 30;
+    if (lower.includes(nextMonth)) score += 25;
+    // Keywords
+    if (lower.includes('program')) score += 20;
+    if (lower.includes('newsletter')) score += 20;
+    if (lower.includes('calendar')) score += 15;
+    if (lower.includes('event')) score += 10;
+    return score;
+  };
+  
+  pdfs.sort((a, b) => scorePdf(b) - scorePdf(a));
+  
+  console.log(`[discoverProgramGuidePdfs] Found ${pdfs.length} PDF links, top 5: ${pdfs.slice(0, 5).join(', ')}`);
+  return pdfs.slice(0, 5);
 }
 
 serve(async (req) => {
@@ -111,13 +116,13 @@ serve(async (req) => {
       firecrawl_used: false,
     };
 
-    // Step 1: Try multiple pages to find PDF links
+    // Step 1: Try multiple pages to find PDF links (use Firecrawl for JS-rendered pages)
     // The library publishes PDF newsletters/program guides with event schedules
     const pagesToScan = [
       "https://lglibrary.org/",  // Homepage
       "https://lglibrary.org/about",  // About page mentions newsletters
       "https://lglibrary.org/newsletter",  // Direct newsletter page
-      "https://lglibrary.org/bookpage",  // BookPage newsletter
+      "https://lglibrary.org/news",  // News/posts page
     ];
     
     let pdfUrls: string[] = [];
@@ -126,21 +131,38 @@ serve(async (req) => {
       if (pdfUrls.length > 0) break;
       
       try {
-        console.log(`[sync-library-events] Scanning for PDFs: ${pageUrl}`);
-        const pageRes = await fetch(pageUrl, {
+        console.log(`[sync-library-events] Scanning for PDFs via scrape-content: ${pageUrl}`);
+        
+        // Use scrape-content with Firecrawl to handle JS-rendered pages
+        const scrapeResponse = await fetch(`${supabaseUrl}/functions/v1/scrape-content`, {
+          method: "POST",
           headers: {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-            "Accept": "text/html,application/xhtml+xml",
+            "Authorization": `Bearer ${supabaseKey}`,
+            "apikey": supabaseKey,
+            "Content-Type": "application/json",
           },
+          body: JSON.stringify({
+            url: pageUrl,
+            extract_type: "article", // We just need the HTML for PDF discovery
+            use_firecrawl: true,
+            include_raw: true, // Get raw HTML for PDF link scanning
+          }),
         });
         
-        if (pageRes.ok) {
-          const html = await pageRes.text();
-          pdfUrls = discoverProgramGuidePdfs(html, pageUrl);
-          console.log(`[sync-library-events] Found ${pdfUrls.length} PDFs from ${pageUrl}`);
+        if (scrapeResponse.ok) {
+          const scrapeData = await scrapeResponse.json();
+          const rawHtml = scrapeData.raw_html || scrapeData.raw_content || "";
+          
+          if (rawHtml.length > 0) {
+            pdfUrls = discoverProgramGuidePdfs(rawHtml, pageUrl);
+            console.log(`[sync-library-events] Found ${pdfUrls.length} PDFs from ${pageUrl} (firecrawl: ${scrapeData.used_firecrawl})`);
+            if (scrapeData.used_firecrawl) {
+              results.firecrawl_used = true;
+            }
+          }
         }
       } catch (err: any) {
-        console.log(`[sync-library-events] Failed to fetch ${pageUrl}: ${err.message}`);
+        console.log(`[sync-library-events] Failed to scan ${pageUrl}: ${err.message}`);
       }
     }
     
@@ -222,12 +244,15 @@ serve(async (req) => {
       const title = event.title || event.performer || "Library Event";
       const dedupeKey = generateDedupeKey(title, event.event_date);
       
-      // Check for existing using dedupe_key in metadata
+      // Build deterministic normalized_url for dedupe (source + dedupe key)
+      const normalizedUrl = `${source.url.toLowerCase().replace(/\/+$/, '')}#${dedupeKey}`;
+      
+      // Check for existing using normalized_url (fast, indexed)
       const { data: existing } = await supabase
         .from("content_queue")
         .select("id")
         .eq("source_id", source.id)
-        .contains("metadata", { dedupe_key: dedupeKey })
+        .eq("normalized_url", normalizedUrl)
         .limit(1);
       
       if (existing && existing.length > 0) {
@@ -236,7 +261,6 @@ serve(async (req) => {
       }
 
       // Insert new event
-      const eventUrl = `${source.url}#${dedupeKey}`;
       const { error: insertError } = await supabase
         .from("content_queue")
         .insert({
@@ -245,8 +269,8 @@ serve(async (req) => {
           content: event.description || `Library event: ${title}`,
           summary: (event.description || title).substring(0, 200),
           category: "events",
-          original_url: eventUrl,
-          normalized_url: eventUrl.toLowerCase(),
+          original_url: results.pdf_url || source.url,
+          normalized_url: normalizedUrl,
           event_date: event.event_date,
           event_time: event.start_time || event.event_time,
           performer: event.performer,
