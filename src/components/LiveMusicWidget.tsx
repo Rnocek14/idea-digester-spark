@@ -41,24 +41,23 @@ function eventMatchesDay(event: MusicEvent, dayOfWeek: number): boolean {
 
 // Check if event is fresh enough to show (for undated events without recurring_days)
 // Uses created_at (when ingested) rather than publish_date
-function isFreshEvent(event: MusicEvent): boolean {
+function isFreshEvent(event: MusicEvent, maxDays: number = 14): boolean {
   if (!event.created_at) return false;
   const createdAt = new Date(event.created_at);
   const now = new Date();
-  const hoursDiff = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
-  // 7 days = 168 hours - extended fallback while ingestion coverage improves
-  // Can reduce back to 72h (3 days) once venue sources are producing properly
-  return hoursDiff <= 168;
+  const daysDiff = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24);
+  // Default 14 days for music events - prevents undated content from lingering forever
+  return daysDiff <= maxDays;
 }
 
 // Check if event is generic recurring (no specific days)
-// RELAXED: For fresh nightlife events (< 7 days old), show them even without explicit date data
+// RELAXED: For fresh nightlife events (< 14 days old), show them even without explicit date data
 // This allows newly ingested events to appear before we backfill event_date
 function isGenericRecurring(event: MusicEvent): boolean {
   // Show fresh nightlife events as fallback when they lack explicit date data
-  // They must have nightlife vertical and be recently ingested
+  // They must have nightlife vertical and be recently ingested (within 14 days)
   const hasNightlifeVertical = event.metadata?.verticals?.includes('nightlife');
-  if (hasNightlifeVertical && isFreshEvent(event)) {
+  if (hasNightlifeVertical && isFreshEvent(event, 14)) {
     return true;
   }
   return false;
@@ -299,9 +298,13 @@ function isLiveMusicEvent(event: MusicEvent): boolean {
   // Accept event if it has music keyword OR clean performer
   if (!hasMusicKeyword && !hasMusicDayPattern && !hasCleanPerformer) return false;
   
-  // For events with music keywords, we don't need additional details
-  // For events without keywords, require performer or time
+  // For events with music keywords, accept but guard against stale undated content
   if (hasMusicKeyword || hasMusicDayPattern) {
+    // If no event_date, require ingestion within 14 days to prevent lingering forever
+    if (!event.event_date && event.created_at) {
+      const ageDays = (Date.now() - new Date(event.created_at).getTime()) / (1000 * 60 * 60 * 24);
+      if (ageDays > 14) return false;
+    }
     return true;
   }
   
