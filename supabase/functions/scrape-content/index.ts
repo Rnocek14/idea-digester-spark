@@ -303,10 +303,12 @@ async function fetchContent(
               console.log(`Firecrawl PDF content too sparse (${md.length} chars) - may be image-based`);
             }
             
-            // Retry on 5xx
-            if (fcRes.status >= 500 && attempt < maxRetries) {
-              const backoffMs = (800 + Math.random() * 700) * attempt;
-              console.log(`Firecrawl PDF ${fcRes.status}, retry in ${Math.round(backoffMs)}ms...`);
+            // Retry on 5xx, 429 (rate limit), 408 (timeout)
+            const isRetryable = fcRes.status >= 500 || fcRes.status === 429 || fcRes.status === 408;
+            if (isRetryable && attempt < maxRetries) {
+              const baseDelay = 800 + Math.random() * 700;
+              const backoffMs = baseDelay * Math.pow(2, attempt - 1);
+              console.log(`Firecrawl PDF ${fcRes.status} (retryable), retry in ${Math.round(backoffMs)}ms...`);
               await new Promise(r => setTimeout(r, backoffMs));
               continue;
             }
@@ -399,9 +401,17 @@ async function fetchContent(
   const firecrawlKey = Deno.env.get('FIRECRAWL_API_KEY');
   if (useFirecrawl && firecrawlKey) {
     const maxRetries = 3;
+    const startTime = Date.now();
+    const MAX_TOTAL_TIME = 25000; // Hard cap at 25s to avoid Edge Function timeout
     let lastError: Error | null = null;
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      // Check total time cap before each attempt
+      if (Date.now() - startTime > MAX_TOTAL_TIME) {
+        console.log(`Total time exceeded ${MAX_TOTAL_TIME}ms, stopping retries`);
+        break;
+      }
+      
       try {
         console.log(`Firecrawl attempt ${attempt}/${maxRetries} for: ${url}`);
         
@@ -435,15 +445,17 @@ async function fetchContent(
           };
         }
         
-        // Retry on 5xx errors
-        if (fcRes.status >= 500 && fcRes.status < 600 && attempt < maxRetries) {
-          const backoffMs = (800 + Math.random() * 700) * attempt; // 800-1500ms * attempt
-          console.log(`Firecrawl ${fcRes.status}, retrying in ${Math.round(backoffMs)}ms...`);
+        // Retry on 5xx, 429 (rate limit), 408 (timeout) - NOT on 4xx client errors
+        const isRetryable = fcRes.status >= 500 || fcRes.status === 429 || fcRes.status === 408;
+        if (isRetryable && attempt < maxRetries) {
+          const baseDelay = 800 + Math.random() * 700;
+          const backoffMs = baseDelay * Math.pow(2, attempt - 1); // Exponential: ~1s, ~2s, ~4s
+          console.log(`Firecrawl ${fcRes.status} (retryable), retry in ${Math.round(backoffMs)}ms...`);
           await new Promise(r => setTimeout(r, backoffMs));
           continue;
         }
         
-        // Non-retryable error
+        // Non-retryable error (400, 401, 403, 404, etc.)
         const errorText = await fcRes.text().catch(() => 'unknown');
         console.log(`Firecrawl failed: HTTP ${fcRes.status} - ${errorText.slice(0, 200)}`);
         lastError = new Error(`Firecrawl HTTP ${fcRes.status}`);

@@ -20,6 +20,7 @@ interface SourceStats {
   breaking_24h: number;
   firecrawl_used: number;
   health_status: 'healthy' | 'warning' | 'critical' | 'dormant';
+  last_error?: { message: string; at: string };
 }
 
 const SourceHealth = () => {
@@ -32,19 +33,76 @@ const SourceHealth = () => {
       const twoHoursAgo = subHours(now, 2).toISOString();
       const fortyEightHoursAgo = subHours(now, 48).toISOString();
 
-      const { data: sourcesData } = await supabase.from("sources").select("id, name, type, status, category, last_fetched_at").order("name");
-      const { data: contentData } = await supabase.from("content_queue").select("source_id, is_breaking, created_at, metadata").gte("created_at", sevenDaysAgo);
+      // Fetch sources only (lightweight)
+      const { data: sourcesData } = await supabase
+        .from("sources")
+        .select("id, name, type, status, category, last_fetched_at")
+        .order("name");
+
+      // Fetch aggregated counts per source using group queries (much more efficient)
+      // Stories in last 7 days with counts
+      const { data: counts7d } = await supabase
+        .from("content_queue")
+        .select("source_id, is_breaking, metadata")
+        .gte("created_at", sevenDaysAgo)
+        .not("source_id", "is", null);
+
+      const { data: counts24h } = await supabase
+        .from("content_queue")
+        .select("source_id, is_breaking")
+        .gte("created_at", twentyFourHoursAgo)
+        .not("source_id", "is", null);
+
+      // Fetch last errors from activity_log (lightweight - only recent sync errors)
+      const { data: recentErrors } = await supabase
+        .from("activity_log")
+        .select("entity_id, details, created_at")
+        .eq("entity_type", "source")
+        .ilike("action", "%sync%")
+        .gte("created_at", sevenDaysAgo)
+        .order("created_at", { ascending: false })
+        .limit(100);
+
+      // Build counts map per source (client-side aggregation on smaller dataset)
+      const countMap7d: Record<string, { total: number; breaking: number; firecrawl: number }> = {};
+      const countMap24h: Record<string, { total: number; breaking: number }> = {};
+      const errorMap: Record<string, { message: string; at: string }> = {};
+
+      (counts7d || []).forEach(c => {
+        const id = c.source_id;
+        if (!countMap7d[id]) countMap7d[id] = { total: 0, breaking: 0, firecrawl: 0 };
+        countMap7d[id].total++;
+        if (c.is_breaking) countMap7d[id].breaking++;
+        if ((c.metadata as any)?.used_firecrawl === true) countMap7d[id].firecrawl++;
+      });
+
+      (counts24h || []).forEach(c => {
+        const id = c.source_id;
+        if (!countMap24h[id]) countMap24h[id] = { total: 0, breaking: 0 };
+        countMap24h[id].total++;
+        if (c.is_breaking) countMap24h[id].breaking++;
+      });
+
+      // Build error map (first error per source)
+      (recentErrors || []).forEach(e => {
+        const id = e.entity_id;
+        if (id && !errorMap[id]) {
+          const details = e.details as any;
+          if (details?.error || details?.status === 'error') {
+            errorMap[id] = { message: details.error || 'Unknown error', at: e.created_at };
+          }
+        }
+      });
 
       const sources: SourceStats[] = (sourcesData || []).map(source => {
-        const sourceContent = (contentData || []).filter(c => c.source_id === source.id);
-        const content24h = sourceContent.filter(c => c.created_at >= twentyFourHoursAgo);
-        const firecrawlUsed = sourceContent.filter(c => (c.metadata as any)?.used_firecrawl === true).length;
+        const c7d = countMap7d[source.id] || { total: 0, breaking: 0, firecrawl: 0 };
+        const c24h = countMap24h[source.id] || { total: 0, breaking: 0 };
         const lastFetched = source.last_fetched_at ? new Date(source.last_fetched_at) : null;
         const isActive = source.status === 'active';
 
         let health_status: SourceStats['health_status'] = 'dormant';
         if (isActive) {
-          if (content24h.length > 0 || (lastFetched && lastFetched >= new Date(twoHoursAgo))) {
+          if (c24h.total > 0 || (lastFetched && lastFetched >= new Date(twoHoursAgo))) {
             health_status = 'healthy';
           } else if (lastFetched && lastFetched >= new Date(fortyEightHoursAgo)) {
             health_status = 'warning';
@@ -53,7 +111,20 @@ const SourceHealth = () => {
           }
         }
 
-        return { id: source.id, name: source.name, type: source.type, status: source.status, category: source.category, last_fetched_at: source.last_fetched_at, stories_24h: content24h.length, stories_7d: sourceContent.length, breaking_24h: content24h.filter(c => c.is_breaking).length, firecrawl_used: firecrawlUsed, health_status };
+        return {
+          id: source.id,
+          name: source.name,
+          type: source.type,
+          status: source.status,
+          category: source.category,
+          last_fetched_at: source.last_fetched_at,
+          stories_24h: c24h.total,
+          stories_7d: c7d.total,
+          breaking_24h: c24h.breaking,
+          firecrawl_used: c7d.firecrawl,
+          health_status,
+          last_error: errorMap[source.id],
+        };
       });
 
       const activeSources = sources.filter(s => s.status === 'active');
@@ -124,8 +195,21 @@ const SourceHealth = () => {
             <TabsContent value="all" className="m-0">
               {sources.map(s => (
                 <div key={s.id} className="flex items-center justify-between p-3 border-b last:border-0 hover:bg-muted/30">
-                  <div className="flex items-center gap-2">{getHealthIcon(s.health_status)}<span className="font-medium">{s.name}</span><Badge variant="outline" className="text-xs">{s.type}</Badge></div>
-                  <div className="flex items-center gap-4 text-sm"><span>{s.stories_24h} / {s.stories_7d}</span><span className="text-xs text-muted-foreground">{s.last_fetched_at ? formatDistanceToNow(new Date(s.last_fetched_at), { addSuffix: true }) : 'Never'}</span></div>
+                  <div className="flex items-center gap-2 min-w-0">
+                    {getHealthIcon(s.health_status)}
+                    <span className="font-medium truncate">{s.name}</span>
+                    <Badge variant="outline" className="text-xs shrink-0">{s.type}</Badge>
+                    {s.firecrawl_used > 0 && <span title={`${s.firecrawl_used} Firecrawl pages`}><Zap className="h-3 w-3 text-orange-500 shrink-0" /></span>}
+                  </div>
+                  <div className="flex items-center gap-4 text-sm shrink-0">
+                    <span title="24h / 7d stories">{s.stories_24h} / {s.stories_7d}</span>
+                    {s.last_error && (
+                      <span className="text-destructive text-xs truncate max-w-[150px]" title={s.last_error.message}>
+                        {s.last_error.message.slice(0, 30)}...
+                      </span>
+                    )}
+                    <span className="text-xs text-muted-foreground">{s.last_fetched_at ? formatDistanceToNow(new Date(s.last_fetched_at), { addSuffix: true }) : 'Never'}</span>
+                  </div>
                 </div>
               ))}
             </TabsContent>
