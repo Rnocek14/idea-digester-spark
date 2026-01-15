@@ -197,11 +197,18 @@ async function fetchContent(
       
       if (res.ok) {
         const html = await res.text();
-        // Check if content is too sparse (likely JS-rendered)
-        if (html.length >= 1000) {
+        // Check if actual text content is sufficient (not just HTML boilerplate)
+        // Extract text and check its length - JS-rendered pages have lots of HTML but little text
+        const textContent = html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+          .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+          .replace(/<[^>]+>/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+        
+        if (textContent.length >= 500) {
           return { html, usedFirecrawl: false };
         }
-        console.log(`Sparse content (${html.length} chars), trying Firecrawl`);
+        console.log(`Sparse text content (${textContent.length} chars from ${html.length} HTML), trying Firecrawl`);
         break;
       }
       

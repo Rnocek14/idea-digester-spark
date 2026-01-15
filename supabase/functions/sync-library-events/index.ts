@@ -21,22 +21,51 @@ function generateDedupeKey(title: string, eventDate: string, eventUrl: string): 
 // Extract event links from HTML
 function extractEventLinks(html: string, baseUrl: string): string[] {
   const links: string[] = [];
-  // Match href links that look like event pages
-  const linkPattern = /href=["']([^"']*(?:event|calendar|program)[^"']*)/gi;
-  let match;
-  while ((match = linkPattern.exec(html)) !== null) {
-    let url = match[1];
-    // Make absolute URL
-    if (url.startsWith('/')) {
-      const base = new URL(baseUrl);
-      url = `${base.origin}${url}`;
-    } else if (!url.startsWith('http')) {
-      url = `${baseUrl}/${url}`;
-    }
-    if (!links.includes(url)) {
-      links.push(url);
+  const seen = new Set<string>();
+  
+  // Multiple patterns for different library calendar systems
+  const patterns = [
+    // LibCal/SpringShare event links (common library platform)
+    /href=["']([^"']*\/event\/\d+[^"']*)/gi,
+    /href=["']([^"']*\/events\/[^"']+)/gi,
+    // Generic event/calendar/program links
+    /href=["']([^"']*(?:event|calendar|program)[^"']*)/gi,
+    // Links with date-like patterns in path
+    /href=["']([^"']*\/\d{4}[-\/]\d{1,2}[-\/]\d{1,2}[^"']*)/gi,
+  ];
+  
+  for (const pattern of patterns) {
+    let match;
+    while ((match = pattern.exec(html)) !== null) {
+      let url = match[1];
+      
+      // Skip anchors, javascript, mailto
+      if (url.startsWith('#') || url.startsWith('javascript:') || url.startsWith('mailto:')) {
+        continue;
+      }
+      
+      // Make absolute URL
+      try {
+        if (url.startsWith('/')) {
+          const base = new URL(baseUrl);
+          url = `${base.origin}${url}`;
+        } else if (!url.startsWith('http')) {
+          url = new URL(url, baseUrl).href;
+        }
+        
+        // Normalize and dedupe
+        const normalized = url.split('?')[0].split('#')[0];
+        if (!seen.has(normalized)) {
+          seen.add(normalized);
+          links.push(url);
+        }
+      } catch {
+        // Invalid URL, skip
+      }
     }
   }
+  
+  console.log(`[extractEventLinks] Found ${links.length} unique event links from ${patterns.length} patterns`);
   return links.slice(0, 20); // Limit to 20 events per run
 }
 
@@ -102,6 +131,7 @@ serve(async (req) => {
     // Step 1: Try static fetch for the main calendar page first
     let html = "";
     let usedFirecrawl = false;
+    let hasUsefulContent = false;
     
     try {
       console.log(`[sync-library-events] Attempting static fetch...`);
@@ -114,15 +144,22 @@ serve(async (req) => {
       
       if (staticRes.ok) {
         html = await staticRes.text();
-        console.log(`[sync-library-events] Static fetch success: ${html.length} chars`);
+        // Check actual text content, not just HTML length (JS-rendered pages have lots of HTML but little text)
+        const textContent = html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+          .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+          .replace(/<[^>]+>/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+        hasUsefulContent = textContent.length >= 500;
+        console.log(`[sync-library-events] Static fetch: ${html.length} HTML chars, ${textContent.length} text chars, useful: ${hasUsefulContent}`);
       }
     } catch (err) {
       console.log(`[sync-library-events] Static fetch failed, will try scrape-content with firecrawl fallback`);
     }
 
-    // Step 2: If static fetch didn't get enough content, use scrape-content with firecrawl
-    if (html.length < 500) {
-      console.log(`[sync-library-events] Content too short, using scrape-content with firecrawl...`);
+    // Step 2: If static fetch didn't get useful content, use scrape-content with firecrawl
+    if (!hasUsefulContent) {
+      console.log(`[sync-library-events] Not enough text content, using scrape-content with firecrawl...`);
       
       const scrapeResponse = await fetch(`${supabaseUrl}/functions/v1/scrape-content`, {
         method: "POST",
