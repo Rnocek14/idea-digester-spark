@@ -122,6 +122,45 @@ Extract details about concerts, festivals, community events, performances, etc.`
     },
   },
   
+  event_list: {
+    system: `You are an expert event data extractor for Lake Geneva, Wisconsin area.
+Extract ALL events visible on this calendar/events page. Return an array of events.
+Today's date is ${new Date().toISOString().split('T')[0]}. Only include events with dates today or in the future.`,
+    tool: {
+      name: "extract_event_list",
+      description: "Extract all events from a calendar or events listing page",
+      parameters: {
+        type: "object",
+        properties: {
+          events: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                title: { type: "string" },
+                venue: { type: "string" },
+                address: { type: "string" },
+                event_date: { type: "string", description: "YYYY-MM-DD format" },
+                start_time: { type: "string", description: "HH:MM AM/PM format" },
+                end_time: { type: "string" },
+                performer: { type: "string" },
+                description: { type: "string" },
+                event_url: { type: "string", description: "Link to event details if available" },
+                is_free: { type: "boolean" },
+                category: { type: "string", enum: ["music", "festival", "sports", "community", "arts", "food", "kids", "nightlife", "outdoor", "library", "other"] },
+              },
+              required: ["title", "event_date"],
+            },
+            description: "Array of all events found on the page",
+          },
+          source_name: { type: "string", description: "Name of the organization/venue" },
+          calendar_month: { type: "string", description: "Month being displayed (if visible)" },
+        },
+        required: ["events"],
+      },
+    },
+  },
+  
   business: {
     system: `You are an expert business data extractor for Lake Geneva, Wisconsin area.
 Extract details about local businesses, including restaurants, shops, services.`,
@@ -160,70 +199,74 @@ const USER_AGENTS = [
 // Fetch with anti-bot evasion and Firecrawl fallback
 async function fetchContent(
   url: string,
-  options: { timeout?: number; useFirecrawl?: boolean } = {}
+  options: { timeout?: number; useFirecrawl?: boolean; forceFirecrawl?: boolean } = {}
 ): Promise<{ html: string; markdown?: string; usedFirecrawl: boolean }> {
-  const { timeout = 10000, useFirecrawl = true } = options;
+  const { timeout = 10000, useFirecrawl = true, forceFirecrawl = false } = options;
   
-  // Try static fetch first
-  for (let attempt = 0; attempt < 2; attempt++) {
-    try {
-      if (attempt > 0) {
-        await new Promise(r => setTimeout(r, 500 + Math.random() * 1000));
-      }
-      
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeout);
-      
-      let referer = '';
-      try { referer = new URL(url).origin; } catch {}
-      
-      const res = await fetch(url, {
-        headers: {
-          'User-Agent': USER_AGENTS[attempt % USER_AGENTS.length],
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-          'Accept-Language': 'en-US,en;q=0.9',
-          'Accept-Encoding': 'gzip, deflate, br',
-          'Sec-Fetch-Dest': 'document',
-          'Sec-Fetch-Mode': 'navigate',
-          'Sec-Fetch-Site': 'none',
-          'Upgrade-Insecure-Requests': '1',
-          'Referer': referer,
-        },
-        redirect: 'follow',
-        signal: controller.signal,
-      });
-      
-      clearTimeout(timeoutId);
-      
-      if (res.ok) {
-        const html = await res.text();
-        // Check if actual text content is sufficient (not just HTML boilerplate)
-        // Extract text and check its length - JS-rendered pages have lots of HTML but little text
-        const textContent = html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-          .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-          .replace(/<[^>]+>/g, ' ')
-          .replace(/\s+/g, ' ')
-          .trim();
-        
-        if (textContent.length >= 500) {
-          return { html, usedFirecrawl: false };
+  // Skip static fetch if forceFirecrawl is set (for SPA calendars that need JS rendering)
+  if (!forceFirecrawl) {
+    // Try static fetch first
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        if (attempt > 0) {
+          await new Promise(r => setTimeout(r, 500 + Math.random() * 1000));
         }
-        console.log(`Sparse text content (${textContent.length} chars from ${html.length} HTML), trying Firecrawl`);
-        break;
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeout);
+        
+        let referer = '';
+        try { referer = new URL(url).origin; } catch {}
+        
+        const res = await fetch(url, {
+          headers: {
+            'User-Agent': USER_AGENTS[attempt % USER_AGENTS.length],
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Upgrade-Insecure-Requests': '1',
+            'Referer': referer,
+          },
+          redirect: 'follow',
+          signal: controller.signal,
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (res.ok) {
+          const html = await res.text();
+          // Check if actual text content is sufficient (not just HTML boilerplate)
+          const textContent = html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+            .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+            .replace(/<[^>]+>/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+          
+          if (textContent.length >= 500) {
+            return { html, usedFirecrawl: false };
+          }
+          console.log(`Sparse text content (${textContent.length} chars from ${html.length} HTML), trying Firecrawl`);
+          break;
+        }
+        
+        if (res.status === 403 || res.status === 429) {
+          console.log(`Got ${res.status}, will try Firecrawl`);
+          break;
+        }
+        
+        throw new Error(`HTTP ${res.status}`);
+      } catch (e: any) {
+        if (attempt === 1 && !useFirecrawl) throw e;
       }
-      
-      if (res.status === 403 || res.status === 429) {
-        console.log(`Got ${res.status}, will try Firecrawl`);
-        break;
-      }
-      
-      throw new Error(`HTTP ${res.status}`);
-    } catch (e: any) {
-      if (attempt === 1 && !useFirecrawl) throw e;
     }
+  } else {
+    console.log(`Force Firecrawl mode for: ${url}`);
   }
   
-  // Firecrawl fallback
+  // Firecrawl fallback (or forced for SPA calendars)
   const firecrawlKey = Deno.env.get('FIRECRAWL_API_KEY');
   if (useFirecrawl && firecrawlKey) {
     try {
@@ -238,7 +281,7 @@ async function fetchContent(
           url,
           formats: ['markdown', 'html'],
           onlyMainContent: true,
-          waitFor: 2000,
+          waitFor: 3000, // Wait longer for SPA content
         }),
       });
       
@@ -386,8 +429,14 @@ Deno.serve(async (req) => {
     
     console.log(`Scraping ${url} for ${extract_type}`);
     
+    // For event_list extraction, prefer Firecrawl since these are typically SPA calendars
+    const forceFirecrawl = extract_type === 'event_list';
+    
     // Fetch content
-    const { html, markdown, usedFirecrawl } = await fetchContent(url, { useFirecrawl: use_firecrawl });
+    const { html, markdown, usedFirecrawl } = await fetchContent(url, { 
+      useFirecrawl: use_firecrawl,
+      forceFirecrawl 
+    });
     
     // Extract main content (prefer markdown if available)
     const content = markdown || extractMainContent(html);

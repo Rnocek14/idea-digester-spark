@@ -193,53 +193,85 @@ serve(async (req) => {
       }
     }
 
-    if (html.length < 200) {
-      console.error(`[sync-library-events] Could not get calendar content`);
-      return new Response(
-        JSON.stringify({ error: "Could not fetch calendar content", results }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Step 3: Extract event links from calendar page
+    // Step 3: Detect calendar type and choose extraction strategy
     const eventLinks = extractEventLinks(html, source.url);
     console.log(`[sync-library-events] Found ${eventLinks.length} event links`);
-
-    // Step 4: For each event link, call scrape-content with extract_type: 'event'
-    const eventDetails = await rateLimitedFetch(
-      eventLinks,
-      async (eventUrl) => {
-        try {
-          const scrapeResponse = await fetch(`${supabaseUrl}/functions/v1/scrape-content`, {
-            method: "POST",
-            headers: {
-              "Authorization": `Bearer ${supabaseKey}`,
-              "apikey": supabaseKey,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              url: eventUrl,
-              extract_type: "event",
-              use_firecrawl: true, // Allow fallback for JS-rendered pages
-            }),
-          });
-
-          if (!scrapeResponse.ok) {
-            return { url: eventUrl, success: false, error: `HTTP ${scrapeResponse.status}` };
-          }
-
-          const data = await scrapeResponse.json();
-          if (data.used_firecrawl) {
-            results.firecrawl_used = true;
-          }
-          return { url: eventUrl, ...data };
-        } catch (err: any) {
-          return { url: eventUrl, success: false, error: err.message };
+    
+    let eventDetails: any[] = [];
+    
+    // Strategy A: If few links found (likely inline calendar/SPA), use event_list extraction
+    if (eventLinks.length < 5) {
+      console.log(`[sync-library-events] Few links found, using event_list extraction (likely SPA/inline calendar)`);
+      
+      const scrapeResponse = await fetch(`${supabaseUrl}/functions/v1/scrape-content`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${supabaseKey}`,
+          "apikey": supabaseKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          url: source.url,
+          extract_type: "event_list",
+          use_firecrawl: true, // Required for SPA calendars like LocalHop
+        }),
+      });
+      
+      if (scrapeResponse.ok) {
+        const scrapeData = await scrapeResponse.json();
+        results.firecrawl_used = scrapeData.used_firecrawl || false;
+        results.static_fetch_used = !results.firecrawl_used;
+        
+        if (scrapeData.success && scrapeData.data?.events) {
+          console.log(`[sync-library-events] Extracted ${scrapeData.data.events.length} events via event_list`);
+          eventDetails = scrapeData.data.events.map((event: any) => ({
+            success: true,
+            url: event.event_url || source.url,
+            data: event,
+          }));
         }
-      },
-      3, // Max 3 concurrent
-      300 // 300ms delay between batches
-    );
+      }
+    }
+    
+    // Strategy B: If we have event links, scrape each detail page
+    if (eventDetails.length === 0 && eventLinks.length > 0) {
+      console.log(`[sync-library-events] Using link-based extraction for ${eventLinks.length} links`);
+      
+      eventDetails = await rateLimitedFetch(
+        eventLinks,
+        async (eventUrl) => {
+          try {
+            const scrapeResponse = await fetch(`${supabaseUrl}/functions/v1/scrape-content`, {
+              method: "POST",
+              headers: {
+                "Authorization": `Bearer ${supabaseKey}`,
+                "apikey": supabaseKey,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                url: eventUrl,
+                extract_type: "event",
+                use_firecrawl: true,
+              }),
+            });
+
+            if (!scrapeResponse.ok) {
+              return { url: eventUrl, success: false, error: `HTTP ${scrapeResponse.status}` };
+            }
+
+            const data = await scrapeResponse.json();
+            if (data.used_firecrawl) {
+              results.firecrawl_used = true;
+            }
+            return { url: eventUrl, ...data };
+          } catch (err: any) {
+            return { url: eventUrl, success: false, error: err.message };
+          }
+        },
+        3, // Max 3 concurrent
+        300 // 300ms delay between batches
+      );
+    }
 
     // Step 5: Process extracted events
     const today = new Date().toISOString().split('T')[0];
@@ -261,15 +293,15 @@ serve(async (req) => {
       results.future++;
 
       const title = event.title || event.performer || "Library Event";
-      const dedupeKey = generateDedupeKey(title, event.event_date, result.url);
+      const eventUrl = event.event_url || result.url || source.url;
+      const dedupeKey = generateDedupeKey(title, event.event_date, eventUrl);
       
-      // Check for existing using normalized_url (safer than .or with JSON paths)
-      const normalizedUrl = result.url.toLowerCase().split('?')[0].replace(/\/+$/, '');
+      // Check for existing - use dedupe_key for inline events since URL may be same for all
       const { data: existing } = await supabase
         .from("content_queue")
         .select("id")
         .eq("source_id", source.id)
-        .eq("normalized_url", normalizedUrl)
+        .contains("metadata", { dedupe_key: dedupeKey })
         .limit(1);
       
       if (existing && existing.length > 0) {
@@ -286,8 +318,8 @@ serve(async (req) => {
           content: event.description || `Library event: ${title}`,
           summary: (event.description || title).substring(0, 200),
           category: "events",
-          original_url: result.url,
-          normalized_url: normalizedUrl, // For faster dedupe
+          original_url: eventUrl,
+          normalized_url: eventUrl.toLowerCase().split('?')[0].split('#')[0].replace(/\/+$/, ''),
           event_date: event.event_date,
           event_time: event.start_time || event.event_time,
           performer: event.performer,
