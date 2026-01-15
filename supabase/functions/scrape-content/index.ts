@@ -196,12 +196,108 @@ const USER_AGENTS = [
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_3) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15',
 ];
 
+// Extract text from PDF using raw stream parsing (same pattern as scrape-restaurant-diy)
+async function extractPdfText(pdfUrl: string): Promise<{ text: string | null; status: string; chars: number }> {
+  try {
+    console.log(`Attempting PDF extraction: ${pdfUrl}`);
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 20000);
+    
+    const response = await fetch(pdfUrl, {
+      headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/pdf,*/*' },
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) {
+      console.log(`PDF fetch failed: ${response.status}`);
+      return { text: null, status: 'fetch_error', chars: 0 };
+    }
+    
+    const arrayBuffer = await response.arrayBuffer();
+    const bytes = new Uint8Array(arrayBuffer);
+    const decoder = new TextDecoder('latin1');
+    const pdfString = decoder.decode(bytes);
+    
+    let text = '';
+    
+    // Extract Tj operators (single text strings)
+    for (const match of pdfString.matchAll(/\(([^)]+)\)\s*Tj/g)) {
+      text += match[1] + ' ';
+    }
+    
+    // Extract TJ operators (text arrays with positioning)
+    for (const match of pdfString.matchAll(/\[((?:[^[\]]+|\[[^\]]*\])*)\]\s*TJ/gi)) {
+      for (const strMatch of match[1].matchAll(/\(([^)]*)\)/g)) {
+        text += strMatch[1] + ' ';
+      }
+    }
+    
+    // Clean up extracted text
+    text = text
+      .replace(/\\[0-9]{3}/g, ' ')
+      .replace(/\\n/g, '\n')
+      .replace(/\\r|\\t/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    
+    // Validate extraction quality
+    if (text.length < 200) {
+      console.log(`PDF text too short (${text.length} chars) - likely image-based`);
+      return { text: null, status: 'image_based', chars: text.length };
+    }
+    
+    console.log(`PDF extraction successful: ${text.length} chars`);
+    return { text, status: 'success', chars: text.length };
+  } catch (err: any) {
+    console.log(`PDF extraction error: ${err.message}`);
+    return { text: null, status: 'error', chars: 0 };
+  }
+}
+
 // Fetch with anti-bot evasion and Firecrawl fallback
 async function fetchContent(
   url: string,
   options: { timeout?: number; useFirecrawl?: boolean; forceFirecrawl?: boolean } = {}
-): Promise<{ html: string; markdown?: string; usedFirecrawl: boolean }> {
+): Promise<{ html: string; markdown?: string; usedFirecrawl: boolean; isPdf?: boolean }> {
   const { timeout = 10000, useFirecrawl = true, forceFirecrawl = false } = options;
+  
+  // Handle PDF URLs directly
+  if (url.toLowerCase().endsWith('.pdf')) {
+    console.log(`PDF URL detected: ${url}`);
+    const pdfResult = await extractPdfText(url);
+    if (pdfResult.text) {
+      return { html: '', markdown: pdfResult.text, usedFirecrawl: false, isPdf: true };
+    }
+    // If basic extraction failed, try Firecrawl for OCR
+    if (useFirecrawl) {
+      const firecrawlKey = Deno.env.get('FIRECRAWL_API_KEY');
+      if (firecrawlKey) {
+        console.log(`PDF extraction failed, trying Firecrawl for OCR`);
+        try {
+          const fcRes = await fetch('https://api.firecrawl.dev/v1/scrape', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${firecrawlKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ url, formats: ['markdown'] }),
+          });
+          if (fcRes.ok) {
+            const data = await fcRes.json();
+            const md = data.data?.markdown || data.markdown || '';
+            if (md.length > 200) {
+              return { html: '', markdown: md, usedFirecrawl: true, isPdf: true };
+            }
+          }
+        } catch (err) {
+          console.log(`Firecrawl PDF failed: ${err}`);
+        }
+      }
+    }
+    throw new Error('Failed to extract PDF content');
+  }
   
   // Skip static fetch if forceFirecrawl is set (for SPA calendars that need JS rendering)
   if (!forceFirecrawl) {
