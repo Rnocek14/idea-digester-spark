@@ -46,30 +46,30 @@ const NON_LOCAL_KEYWORDS = [
   'minneapolis', 'minnesota', 'illinois', 'indiana', 'iowa', 'michigan'
 ];
 
-// Check if an incident is local to Lake Geneva area
+// Check if an incident is local to Lake Geneva area - STRICT MODE
 function isLocalIncident(title: string, location: string | null): boolean {
   const titleLower = title.toLowerCase();
   const locationLower = (location || '').toLowerCase();
   
-  // Priority 1: If location field explicitly mentions local areas, it's local
-  const locationHasLocal = LOCAL_KEYWORDS.some(keyword => locationLower.includes(keyword));
-  if (locationHasLocal) return true;
-  
-  // Priority 2: Check for local keywords in title
-  const titleHasLocal = LOCAL_KEYWORDS.some(keyword => titleLower.includes(keyword));
-  if (titleHasLocal) return true;
-  
-  // Priority 3: Weather alerts from "NWS Milwaukee" are regional and cover our area
-  const isNWSAlert = titleLower.includes('nws milwaukee') || titleLower.includes('nws sullivan');
-  if (isNWSAlert) return true;
-  
-  // Priority 4: Check for non-local keywords in title - exclude if found
+  // Priority 1: Check for non-local keywords FIRST - exclude if found
   const hasNonLocalKeyword = NON_LOCAL_KEYWORDS.some(keyword => titleLower.includes(keyword));
   if (hasNonLocalKeyword) return false;
   
-  // If location is null/empty but title doesn't have non-local keywords, 
-  // be lenient and show it (could be local)
-  return true;
+  // Priority 2: If location field explicitly mentions local areas, it's local
+  const locationHasLocal = LOCAL_KEYWORDS.some(keyword => locationLower.includes(keyword));
+  if (locationHasLocal) return true;
+  
+  // Priority 3: Check for local keywords in title
+  const titleHasLocal = LOCAL_KEYWORDS.some(keyword => titleLower.includes(keyword));
+  if (titleHasLocal) return true;
+  
+  // Priority 4: Weather alerts from "NWS Milwaukee" are regional and cover our area
+  const isNWSAlert = titleLower.includes('nws milwaukee') || titleLower.includes('nws sullivan');
+  if (isNWSAlert) return true;
+  
+  // STRICT MODE: If no positive local signal found, exclude it
+  // This prevents ambiguous/unknown incidents from appearing
+  return false;
 }
 
 const typeIcons: Record<string, React.ReactNode> = {
