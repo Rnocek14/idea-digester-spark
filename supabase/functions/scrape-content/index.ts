@@ -270,39 +270,58 @@ async function fetchContent(
     let bestMarkdown = '';
     let usedFc = false;
     
-    // PRIMARY: Try Firecrawl first - it handles compressed streams, fonts, etc. better
+    // PRIMARY: Try Firecrawl first with retry + backoff - handles compressed streams, fonts, etc.
     if (useFirecrawl) {
       const firecrawlKey = Deno.env.get('FIRECRAWL_API_KEY');
       if (firecrawlKey) {
-        try {
-          console.log(`Trying Firecrawl for PDF: ${url}`);
-          const fcRes = await fetch('https://api.firecrawl.dev/v1/scrape', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${firecrawlKey}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ url, formats: ['markdown', 'html'] }),
-          });
-          if (fcRes.ok) {
-            const data = await fcRes.json();
-            const md = data.data?.markdown || data.markdown || '';
-            console.log(`Firecrawl PDF returned ${md.length} chars: "${md.slice(0, 100)}..."`);
-            if (md.length > 100) {
-              bestMarkdown = md;
-              usedFc = true;
+        const maxRetries = 3;
+        
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+          try {
+            console.log(`Firecrawl PDF attempt ${attempt}/${maxRetries}: ${url}`);
+            const fcRes = await fetch('https://api.firecrawl.dev/v1/scrape', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${firecrawlKey}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ url, formats: ['markdown', 'html'] }),
+            });
+            
+            console.log(`Firecrawl PDF response: HTTP ${fcRes.status}`);
+            
+            if (fcRes.ok) {
+              const data = await fcRes.json();
+              const md = data.data?.markdown || data.markdown || '';
+              console.log(`Firecrawl PDF: ${md.length} chars extracted, preview: "${md.slice(0, 150).replace(/\n/g, ' ')}..."`);
+              
+              if (md.length > 100) {
+                bestMarkdown = md;
+                usedFc = true;
+                break;
+              }
+              console.log(`Firecrawl PDF content too sparse (${md.length} chars) - may be image-based`);
             }
-          } else {
-            console.log(`Firecrawl PDF returned HTTP ${fcRes.status}`);
+            
+            // Retry on 5xx
+            if (fcRes.status >= 500 && attempt < maxRetries) {
+              const backoffMs = (800 + Math.random() * 700) * attempt;
+              console.log(`Firecrawl PDF ${fcRes.status}, retry in ${Math.round(backoffMs)}ms...`);
+              await new Promise(r => setTimeout(r, backoffMs));
+              continue;
+            }
+            
+            break;
+          } catch (err: any) {
+            console.log(`Firecrawl PDF attempt ${attempt} error: ${err.message}`);
+            if (attempt < maxRetries) {
+              const backoffMs = (1000 + Math.random() * 1000) * attempt;
+              await new Promise(r => setTimeout(r, backoffMs));
+            }
           }
-        } catch (err) {
-          console.log(`Firecrawl PDF failed: ${err}`);
         }
       }
     }
-    
-    // SKIP regex fallback - it causes CPU timeout on large PDFs
-    // The library PDF is likely image-based anyway, so Firecrawl is the only option
     
     // Return whatever we got (even if sparse - let AI try to extract)
     if (bestMarkdown.length > 50) {
@@ -310,7 +329,7 @@ async function fetchContent(
       return { html: '', markdown: bestMarkdown, usedFirecrawl: usedFc, isPdf: true };
     }
     
-    throw new Error(`Failed to extract PDF content (firecrawl returned ${bestMarkdown.length} chars - PDF may be image-based)`);
+    throw new Error(`Failed to extract PDF content after retries (${bestMarkdown.length} chars - PDF may be image-based or OCR needed)`);
   }
   
   // Skip static fetch if forceFirecrawl is set (for SPA calendars that need JS rendering)
@@ -376,39 +395,78 @@ async function fetchContent(
     console.log(`Force Firecrawl mode for: ${url}`);
   }
   
-  // Firecrawl fallback (or forced for SPA calendars)
+  // Firecrawl fallback (or forced for SPA calendars) with retry + backoff
   const firecrawlKey = Deno.env.get('FIRECRAWL_API_KEY');
   if (useFirecrawl && firecrawlKey) {
-    try {
-      console.log(`Using Firecrawl for: ${url}`);
-      const fcRes = await fetch('https://api.firecrawl.dev/v1/scrape', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${firecrawlKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          url,
-          formats: ['markdown', 'html'],
-          onlyMainContent: true,
-          waitFor: 3000, // Wait longer for SPA content
-        }),
-      });
-      
-      if (fcRes.ok) {
-        const data = await fcRes.json();
-        return {
-          html: data.data?.html || data.html || '',
-          markdown: data.data?.markdown || data.markdown,
-          usedFirecrawl: true,
-        };
+    const maxRetries = 3;
+    let lastError: Error | null = null;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`Firecrawl attempt ${attempt}/${maxRetries} for: ${url}`);
+        
+        const fcRes = await fetch('https://api.firecrawl.dev/v1/scrape', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${firecrawlKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            url,
+            formats: ['markdown', 'html'],
+            onlyMainContent: true,
+            waitFor: 3000, // Wait longer for SPA content
+          }),
+        });
+        
+        // Log response details for debugging
+        console.log(`Firecrawl response: HTTP ${fcRes.status}`);
+        
+        if (fcRes.ok) {
+          const data = await fcRes.json();
+          const markdownLen = (data.data?.markdown || data.markdown || '').length;
+          const htmlLen = (data.data?.html || data.html || '').length;
+          console.log(`Firecrawl success: markdown=${markdownLen} chars, html=${htmlLen} chars`);
+          
+          return {
+            html: data.data?.html || data.html || '',
+            markdown: data.data?.markdown || data.markdown,
+            usedFirecrawl: true,
+          };
+        }
+        
+        // Retry on 5xx errors
+        if (fcRes.status >= 500 && fcRes.status < 600 && attempt < maxRetries) {
+          const backoffMs = (800 + Math.random() * 700) * attempt; // 800-1500ms * attempt
+          console.log(`Firecrawl ${fcRes.status}, retrying in ${Math.round(backoffMs)}ms...`);
+          await new Promise(r => setTimeout(r, backoffMs));
+          continue;
+        }
+        
+        // Non-retryable error
+        const errorText = await fcRes.text().catch(() => 'unknown');
+        console.log(`Firecrawl failed: HTTP ${fcRes.status} - ${errorText.slice(0, 200)}`);
+        lastError = new Error(`Firecrawl HTTP ${fcRes.status}`);
+        break;
+        
+      } catch (err: any) {
+        lastError = err;
+        console.log(`Firecrawl attempt ${attempt} error: ${err.message}`);
+        
+        // Retry on network errors
+        if (attempt < maxRetries) {
+          const backoffMs = (1000 + Math.random() * 1000) * attempt;
+          console.log(`Retrying in ${Math.round(backoffMs)}ms...`);
+          await new Promise(r => setTimeout(r, backoffMs));
+          continue;
+        }
       }
-    } catch (err) {
-      console.log(`Firecrawl failed: ${err}`);
     }
+    
+    console.log(`Firecrawl failed after ${maxRetries} attempts: ${lastError?.message}`);
   }
   
-  throw new Error('Failed to fetch content');
+  throw new Error('Failed to fetch content after all attempts');
 }
 
 // Extract main content from HTML

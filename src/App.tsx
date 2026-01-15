@@ -37,6 +37,7 @@ import Deals from "./pages/Deals";
 import AdminDeals from "./pages/AdminDeals";
 import SponsorPortal from "./pages/SponsorPortal";
 import BusinessCoverage from "./pages/BusinessCoverage";
+import SourceHealth from "./pages/SourceHealth";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -96,6 +97,7 @@ const App = () => (
               <Route path="engagement" element={<EngagementMonitor />} />
               <Route path="jobs" element={<AdminJobs />} />
               <Route path="deals" element={<AdminDeals />} />
+              <Route path="source-health" element={<SourceHealth />} />
             </Route>
             <Route path="*" element={<NotFound />} />
             </Routes>
