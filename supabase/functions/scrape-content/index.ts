@@ -263,40 +263,54 @@ async function fetchContent(
 ): Promise<{ html: string; markdown?: string; usedFirecrawl: boolean; isPdf?: boolean }> {
   const { timeout = 10000, useFirecrawl = true, forceFirecrawl = false } = options;
   
-  // Handle PDF URLs directly
+  // Handle PDF URLs - try Firecrawl FIRST (better at handling compressed/complex PDFs)
   if (url.toLowerCase().endsWith('.pdf')) {
     console.log(`PDF URL detected: ${url}`);
-    const pdfResult = await extractPdfText(url);
-    if (pdfResult.text) {
-      return { html: '', markdown: pdfResult.text, usedFirecrawl: false, isPdf: true };
-    }
-    // If basic extraction failed, try Firecrawl for OCR
+    
+    let bestMarkdown = '';
+    let usedFc = false;
+    
+    // PRIMARY: Try Firecrawl first - it handles compressed streams, fonts, etc. better
     if (useFirecrawl) {
       const firecrawlKey = Deno.env.get('FIRECRAWL_API_KEY');
       if (firecrawlKey) {
-        console.log(`PDF extraction failed, trying Firecrawl for OCR`);
         try {
+          console.log(`Trying Firecrawl for PDF: ${url}`);
           const fcRes = await fetch('https://api.firecrawl.dev/v1/scrape', {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${firecrawlKey}`,
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ url, formats: ['markdown'] }),
+            body: JSON.stringify({ url, formats: ['markdown', 'html'] }),
           });
           if (fcRes.ok) {
             const data = await fcRes.json();
             const md = data.data?.markdown || data.markdown || '';
-            if (md.length > 200) {
-              return { html: '', markdown: md, usedFirecrawl: true, isPdf: true };
+            console.log(`Firecrawl PDF returned ${md.length} chars: "${md.slice(0, 100)}..."`);
+            if (md.length > 100) {
+              bestMarkdown = md;
+              usedFc = true;
             }
+          } else {
+            console.log(`Firecrawl PDF returned HTTP ${fcRes.status}`);
           }
         } catch (err) {
           console.log(`Firecrawl PDF failed: ${err}`);
         }
       }
     }
-    throw new Error('Failed to extract PDF content');
+    
+    // SKIP regex fallback - it causes CPU timeout on large PDFs
+    // The library PDF is likely image-based anyway, so Firecrawl is the only option
+    
+    // Return whatever we got (even if sparse - let AI try to extract)
+    if (bestMarkdown.length > 50) {
+      console.log(`PDF extraction complete: ${bestMarkdown.length} chars (firecrawl: ${usedFc})`);
+      return { html: '', markdown: bestMarkdown, usedFirecrawl: usedFc, isPdf: true };
+    }
+    
+    throw new Error(`Failed to extract PDF content (firecrawl returned ${bestMarkdown.length} chars - PDF may be image-based)`);
   }
   
   // Skip static fetch if forceFirecrawl is set (for SPA calendars that need JS rendering)
