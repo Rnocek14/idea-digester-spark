@@ -551,22 +551,19 @@ export default function LiveMusicWidget() {
         .limit(30);
 
       // Filter recurring events by day of week using metadata.recurring_days or title fallback
+      // NOTE: We do NOT use isGenericRecurring() here for weekend events
+      // Generic recurring events only show in "Tonight" to prevent duplication across all sections
       const satRecurring: MusicEvent[] = [];
       const sunRecurring: MusicEvent[] = [];
       
       for (const event of (recurringEvents as MusicEvent[]) || []) {
-        // Check for Saturday (day 6)
+        // Only include events that explicitly match the day (via recurring_days or title)
+        // NOT generic "fresh nightlife" events which already show in Tonight
         if (eventMatchesDay(event, 6)) {
           satRecurring.push(event);
         }
-        // Check for Sunday (day 0)
         if (eventMatchesDay(event, 0)) {
           sunRecurring.push(event);
-        }
-        // Generic recurring events (no specific days) - show on both weekend days
-        if (isGenericRecurring(event)) {
-          if (!satRecurring.includes(event)) satRecurring.push(event);
-          if (!sunRecurring.includes(event)) sunRecurring.push(event);
         }
       }
 
