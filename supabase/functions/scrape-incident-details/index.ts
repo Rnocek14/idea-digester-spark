@@ -58,6 +58,7 @@ serve(async (req) => {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${supabaseServiceKey}`,
+        "apikey": supabaseServiceKey, // Include apikey for Edge Function auth compatibility
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
