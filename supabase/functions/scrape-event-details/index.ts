@@ -50,6 +50,7 @@ serve(async (req) => {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${supabaseKey}`,
+        "apikey": supabaseKey, // Include apikey for Edge Function auth compatibility
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -63,10 +64,10 @@ serve(async (req) => {
       const errorText = await scrapeResponse.text();
       console.error(`[scrape-event-details] scrape-content error: ${scrapeResponse.status} - ${errorText}`);
       
-      // Return what we can extract from URL even if API fails
+      // Return partial data with clear error indication
       return new Response(
         JSON.stringify({ 
-          success: true, 
+          success: false, 
           data: {
             performer: null,
             event_time: null,
@@ -76,6 +77,7 @@ serve(async (req) => {
           },
           url,
           fallback: true,
+          error_reason: `scrape-content error: ${scrapeResponse.status} - ${errorText}`,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -87,7 +89,7 @@ serve(async (req) => {
       console.error(`[scrape-event-details] scrape-content failed:`, scrapeData);
       return new Response(
         JSON.stringify({ 
-          success: true, 
+          success: false, 
           data: {
             performer: null,
             event_time: null,
@@ -97,6 +99,7 @@ serve(async (req) => {
           },
           url,
           fallback: true,
+          error_reason: scrapeData.error || "scrape-content extraction failed",
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
