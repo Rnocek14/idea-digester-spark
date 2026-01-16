@@ -51,15 +51,29 @@ function isFreshEvent(event: MusicEvent, maxDays: number = 14): boolean {
 }
 
 // Check if event is generic recurring (no specific days)
-// RELAXED: For fresh nightlife events (< 14 days old), show them even without explicit date data
-// This allows newly ingested events to appear before we backfill event_date
+// STRICT: Only show undated events as "tonight" if title contains "tonight" or "today"
+// This prevents multiple venue events from flooding the Tonight section
 function isGenericRecurring(event: MusicEvent): boolean {
-  // Show fresh nightlife events as fallback when they lack explicit date data
-  // They must have nightlife vertical and be recently ingested (within 14 days)
   const hasNightlifeVertical = event.metadata?.verticals?.includes('nightlife');
-  if (hasNightlifeVertical && isFreshEvent(event, 14)) {
+  if (!hasNightlifeVertical || !isFreshEvent(event, 14)) return false;
+  
+  // Require explicit "tonight" or "today" keywords in title
+  const titleLower = event.title.toLowerCase();
+  if (titleLower.includes('tonight') || titleLower.includes('today')) {
     return true;
   }
+  
+  // Also check for "live music" without a specific day name (generic daily events)
+  // But only if title doesn't mention specific days
+  const dayNames = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+  const hasSpecificDay = dayNames.some(day => titleLower.includes(day));
+  const hasLiveMusic = titleLower.includes('live music') && !hasSpecificDay;
+  
+  // For generic "live music" titles, only show if very fresh (< 3 days)
+  if (hasLiveMusic && isFreshEvent(event, 3)) {
+    return true;
+  }
+  
   return false;
 }
 
