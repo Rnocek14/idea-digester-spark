@@ -124,7 +124,11 @@ async function generateVoiceVariants(
 ): Promise<VoiceVariants> {
   // Add proximity context for Tier-2 (Walworth County) content
   const proximityLine = geoTier === 2 
-    ? `\n\nIMPORTANT: This is Walworth County content (not Lake Geneva proper). Include a brief proximity note like "~15-25 minutes from Lake Geneva" or "a quick trip from Lake Geneva" near the start of website/newsletter variants to make it feel intentionally hyperlocal.`
+    ? `\n\nIMPORTANT (Geo Tier 2 / Walworth County):
+This is near Lake Geneva, not in Lake Geneva proper.
+- Website + Newsletter: Include one brief proximity note in the first 1-2 sentences (e.g., "~15-25 minutes from Lake Geneva" / "a quick trip from Lake Geneva").
+- Social variants (FB/IG/X): Only include a proximity note if it reads naturally and doesn't feel repetitive—otherwise use a light framing like "Lake Geneva friends" or omit entirely.
+- Do NOT describe this as "in Lake Geneva"; use "near Lake Geneva" or similar.`
     : '';
 
   const userPrompt = `Base info:
