@@ -22,14 +22,26 @@ const TIER1_KEYWORDS = [
 ];
 
 const TIER2_KEYWORDS = [
+  // Walworth County core
   "walworth county",
   "walworth",
+  // Towns 15-25 min from Lake Geneva
   "delavan",
   "elkhorn",
   "darien",
   "bloomfield",
   "linn",
-  "south central wisconsin", // NWS regional zone
+  "genoa city",
+  "sharon",
+  "lake como",
+  "como",
+  "twin lakes",
+  "east troy",
+  "burlington",
+  "pell lake",
+  "lyons",
+  // NWS regional zone
+  "south central wisconsin",
 ];
 
 type Locality = { tier: 0 | 1 | 2; label: string | null };
