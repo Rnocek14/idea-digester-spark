@@ -80,7 +80,32 @@ Deno.serve(async (req) => {
       console.log(`[auto-expire-content] Expired ${expiredHolidayCount} holiday items`);
     }
 
-    // 3. Expire very old pending content (> 30 days old with no event_date)
+    // 3. Expire Tier-0 pending from regional sources after 72 hours
+    // This keeps the queue clean without human review time
+    const threeDaysAgo = new Date();
+    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+
+    const { data: expiredTier0, error: tier0Error } = await supabase
+      .from("content_queue")
+      .update({
+        status: "expired",
+        updated_at: now.toISOString(),
+      })
+      .eq("status", "pending")
+      .eq("geo_tier", 0)
+      .lt("created_at", threeDaysAgo.toISOString())
+      .select("id, title, source_id, created_at");
+
+    if (tier0Error) {
+      console.error("[auto-expire-content] Error expiring Tier-0 pending:", tier0Error);
+    } else {
+      console.log(`[auto-expire-content] Expired ${expiredTier0?.length || 0} Tier-0 pending items (>72 hours old)`);
+      expiredTier0?.slice(0, 5).forEach((item) => {
+        console.log(`  - Tier-0 expired: "${item.title?.substring(0, 50)}..."`);
+      });
+    }
+
+    // 4. Expire very old pending content (> 30 days old with no event_date)
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
@@ -92,6 +117,7 @@ Deno.serve(async (req) => {
       })
       .eq("status", "pending")
       .is("event_date", null)
+      .gt("geo_tier", 0) // Only expire non-Tier-0 (Tier-0 handled above with 72h rule)
       .lt("created_at", thirtyDaysAgo.toISOString())
       .select("id, title, created_at");
 
@@ -104,6 +130,7 @@ Deno.serve(async (req) => {
     const totalExpired = 
       (expiredByEventDate?.length || 0) + 
       expiredHolidayCount + 
+      (expiredTier0?.length || 0) +
       (expiredStale?.length || 0);
 
     // Log activity
@@ -116,6 +143,7 @@ Deno.serve(async (req) => {
         details: {
           expired_by_event_date: expiredByEventDate?.length || 0,
           expired_holiday: expiredHolidayCount,
+          expired_tier0_pending: expiredTier0?.length || 0,
           expired_stale: expiredStale?.length || 0,
           run_date: todayStr,
         },
@@ -127,6 +155,7 @@ Deno.serve(async (req) => {
       total_expired: totalExpired,
       by_event_date: expiredByEventDate?.length || 0,
       by_holiday: expiredHolidayCount,
+      by_tier0_pending: expiredTier0?.length || 0,
       by_stale: expiredStale?.length || 0,
       run_date: todayStr,
     };
