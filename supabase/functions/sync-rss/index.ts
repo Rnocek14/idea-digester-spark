@@ -452,13 +452,21 @@ function isNonLocalStory(title: string, summary?: string | null): boolean {
 
 // Hyperlocal tier detection for geo-filtering
 const HYPERLOCAL_TIER_1 = [
-  'lake geneva', 'geneva lake', 'williams bay', 'fontana', 'downtown lake geneva'
+  'lake geneva', 'geneva lake', 'williams bay', 'fontana', 'downtown lake geneva',
+  'riviera', 'big foot beach', 'nws milwaukee', 'sullivan wi'
 ];
 
+// Tier-2: Walworth County area (15-25 min from Lake Geneva)
+// Synced with backfill-geo-tiers edge function
 const HYPERLOCAL_TIER_2 = [
   'walworth county', 'walworth', 'delavan', 'elkhorn', 'linn', 'bloomfield',
-  'darien', 'east troy', 'como', 'big foot', 'badger high school'
+  'darien', 'east troy', 'como', 'lake como', 'big foot', 'badger high school',
+  'genoa city', 'sharon', 'twin lakes', 'burlington', 'pell lake', 'lyons',
+  'south central wisconsin'
 ];
+
+// Categories that allow Tier-2 auto-publish (things locals would drive to)
+const TIER2_ALLOWED_CATEGORIES = ['events', 'eats', 'nightlife', 'community', 'civic'];
 
 type LocalityResult = { tier: 0 | 1 | 2; label: string | null };
 
@@ -949,6 +957,13 @@ function decideStatusForStory(
   // HYPERLOCAL GATE: If rule requires hyperlocal, content must have geo_tier >= 1
   if (rule.requires_hyperlocal && geoTier < 1) {
     console.log(`⚠️ Rule requires hyperlocal but geo_tier=${geoTier}, keeping pending`);
+    return "pending";
+  }
+  
+  // TIER-2 CATEGORY GATE: Tier-2 can only auto-publish for specific categories
+  // This prevents regional "news" from diluting the feed while allowing events/eats/nightlife
+  if (geoTier === 2 && cat && !TIER2_ALLOWED_CATEGORIES.includes(cat)) {
+    console.log(`⚠️ Tier-2 content blocked for category="${cat}", keeping pending`);
     return "pending";
   }
   
