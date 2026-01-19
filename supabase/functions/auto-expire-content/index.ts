@@ -1,5 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+const AUTO_EXPIRE_VERSION = "2026-01-19a-tier0-72h";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -152,6 +154,7 @@ Deno.serve(async (req) => {
 
     const summary = {
       success: true,
+      version: AUTO_EXPIRE_VERSION,
       total_expired: totalExpired,
       by_event_date: expiredByEventDate?.length || 0,
       by_holiday: expiredHolidayCount,
@@ -160,7 +163,7 @@ Deno.serve(async (req) => {
       run_date: todayStr,
     };
 
-    console.log("[auto-expire-content] Complete:", summary);
+    console.log(`[auto-expire-content] [${AUTO_EXPIRE_VERSION}] Complete:`, summary);
 
     return new Response(JSON.stringify(summary), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

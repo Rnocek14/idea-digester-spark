@@ -118,14 +118,22 @@ async function generateVoiceVariants(
   category: string,
   safetyLevel: string,
   summary: string,
-  content: string
+  content: string,
+  geoTier: number = 1,
+  geoLabel: string | null = null
 ): Promise<VoiceVariants> {
+  // Add proximity context for Tier-2 (Walworth County) content
+  const proximityLine = geoTier === 2 
+    ? `\n\nIMPORTANT: This is Walworth County content (not Lake Geneva proper). Include a brief proximity note like "~15-25 minutes from Lake Geneva" or "a quick trip from Lake Geneva" near the start of website/newsletter variants to make it feel intentionally hyperlocal.`
+    : '';
+
   const userPrompt = `Base info:
 Title: ${title}
 Category: ${category}
 Safety level: ${safetyLevel}
+Geo tier: ${geoTier} (${geoLabel || 'Lake Geneva'})
 Summary: ${summary}
-Full content: ${content || summary}
+Full content: ${content || summary}${proximityLine}
 
 Task:
 1) Rewrite in Lake Geneva brand voice (base).
@@ -250,13 +258,15 @@ Deno.serve(async (req) => {
 
     console.log(`[transform-voice] Generating voice for story: ${story.title}`)
 
-    // Generate voice variants
+    // Generate voice variants (pass geo_tier for proximity line)
     const variants = await generateVoiceVariants(
       story.title,
       story.category || 'general',
       story.safety_level || 'safe',
       story.summary || '',
-      story.content || ''
+      story.content || '',
+      story.geo_tier || 1,
+      story.geo_label || null
     )
 
     // Update the story with voice variants
