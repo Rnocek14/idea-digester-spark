@@ -962,13 +962,16 @@ function decideStatusForStory(
   
   // TIER-2 CATEGORY GATE: Tier-2 can only auto-publish for specific categories
   // This prevents regional "news" from diluting the feed while allowing events/eats/nightlife
-  if (geoTier === 2 && cat && !TIER2_ALLOWED_CATEGORIES.includes(cat)) {
-    console.log(`⚠️ Tier-2 content blocked for category="${cat}", keeping pending`);
+  // Only applies when the rule action is auto_publish (manual promotion still allowed)
+  if (rule.action === "auto_publish" && geoTier === 2 && cat && !TIER2_ALLOWED_CATEGORIES.includes(cat)) {
+    console.log(`⚠️ Tier-2 auto-publish blocked | category="${cat}" | source_id=${sourceId} | rule_id=${rule.id || 'unknown'}`);
     return "pending";
   }
   
   switch (rule.action) {
-    case "auto_publish": return "auto_published";
+    case "auto_publish": 
+      console.log(`✅ Auto-publishing | geo_tier=${geoTier} | category="${cat}" | source_id=${sourceId}`);
+      return "auto_published";
     case "flag": return "flagged";
     case "needs_review":
     default: return "pending";
