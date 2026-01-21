@@ -416,8 +416,8 @@ const LakeGenevaV2 = () => {
               </div>
             </div>
 
-            {/* Mobile: Quick "Tonight" teaser */}
-            <div className="mt-6 mb-6 p-5 bg-stone-50 border border-slate-200 rounded-md">
+            {/* Mobile: Quick "Tonight" teaser - hidden on desktop where sidebar handles this */}
+            <div className="xl:hidden mt-6 mb-6 p-5 bg-stone-50 border border-slate-200 rounded-md">
               <div className="flex items-baseline justify-between mb-4">
                 <span className="text-xs font-mono uppercase tracking-wider text-slate-600 font-semibold">[TONIGHT]</span>
                 <a href="#later-mobile" className="text-xs font-mono text-blue-600 hover:underline py-2 -my-2">
