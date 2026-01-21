@@ -4,7 +4,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { XCircle, AlertTriangle } from "lucide-react";
-import { subHours, subDays } from "date-fns";
 
 // Friendly labels for skip reasons
 const SKIP_REASON_LABELS: Record<string, { label: string; color: string }> = {
@@ -36,60 +35,39 @@ export const SkipReasonsCard = () => {
   const { data: skipData, isLoading } = useQuery({
     queryKey: ["skip-reasons"],
     queryFn: async (): Promise<SkipData> => {
-      const now = new Date();
-      const twentyFourHoursAgo = subHours(now, 24).toISOString();
-      const sevenDaysAgo = subDays(now, 7).toISOString();
+      // Use the new RPC for efficient server-side aggregation
+      const { data, error } = await supabase.rpc("get_skip_stats");
 
-      // Query skips from last 24h
-      const { data: skips24h, error: err24h } = await supabase
-        .from("sync_skips")
-        .select("reason, source_name")
-        .gte("created_at", twentyFourHoursAgo);
-
-      if (err24h) {
-        console.error("Error fetching 24h skips:", err24h);
+      if (error) {
+        console.error("Error fetching skip stats:", error);
+        // Fallback to empty data on error
+        return {
+          by24h: {},
+          by7d: {},
+          topSkippedSources: [],
+          total24h: 0,
+          total7d: 0,
+        };
       }
 
-      // Query skips from last 7d
-      const { data: skips7d, error: err7d } = await supabase
-        .from("sync_skips")
-        .select("reason")
-        .gte("created_at", sevenDaysAgo);
-
-      if (err7d) {
-        console.error("Error fetching 7d skips:", err7d);
-      }
-
-      // Aggregate by reason (24h)
-      const by24h: Record<string, number> = {};
-      (skips24h || []).forEach((s: { reason: string }) => {
-        by24h[s.reason] = (by24h[s.reason] || 0) + 1;
-      });
-
-      // Aggregate by reason (7d)
-      const by7d: Record<string, number> = {};
-      (skips7d || []).forEach((s: { reason: string }) => {
-        by7d[s.reason] = (by7d[s.reason] || 0) + 1;
-      });
-
-      // Top skipped sources (24h)
-      const sourceSkipCounts: Record<string, number> = {};
-      (skips24h || []).forEach((s: { source_name: string | null }) => {
-        const name = s.source_name || "Unknown";
-        sourceSkipCounts[name] = (sourceSkipCounts[name] || 0) + 1;
-      });
-
-      const topSkippedSources = Object.entries(sourceSkipCounts)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5)
-        .map(([name, count]) => ({ name, count }));
+      // Parse RPC result
+      const result = data as {
+        total24h: number;
+        total7d: number;
+        byReason24h: Record<string, number>;
+        byReason7d: Record<string, number>;
+        topSources24h: Array<{ source_name: string; count: number }>;
+      };
 
       return {
-        by24h,
-        by7d,
-        topSkippedSources,
-        total24h: skips24h?.length || 0,
-        total7d: skips7d?.length || 0,
+        by24h: result.byReason24h || {},
+        by7d: result.byReason7d || {},
+        topSkippedSources: (result.topSources24h || []).slice(0, 5).map(s => ({ 
+          name: s.source_name, 
+          count: s.count 
+        })),
+        total24h: result.total24h || 0,
+        total7d: result.total7d || 0,
       };
     },
     refetchInterval: 60000,

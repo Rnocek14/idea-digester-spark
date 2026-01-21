@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { 
   Activity, 
   TrendingUp, 
@@ -17,10 +18,12 @@ import {
   BarChart3,
   MapPin,
   Layers,
-  Radio
+  Radio,
+  RefreshCw
 } from "lucide-react";
 import { formatDistanceToNow, subDays, subHours, format } from "date-fns";
 import { SkipReasonsCard } from "@/components/SkipReasonsCard";
+import { toast } from "sonner";
 
 interface StarvingSource {
   id: string;
@@ -85,6 +88,33 @@ interface PipelineMetrics {
 }
 
 const PipelineHealth = () => {
+  const queryClient = useQueryClient();
+  
+  // Mutation for kicking source fetch
+  const kickFetchMutation = useMutation({
+    mutationFn: async (sourceId: string) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error("Not authenticated");
+      
+      const response = await supabase.functions.invoke("kick-source-fetch", {
+        body: { source_id: sourceId },
+      });
+      
+      if (response.error) throw new Error(response.error.message);
+      return response.data;
+    },
+    onSuccess: (data) => {
+      toast.success(`Queued fetch for ${data.source_name}`);
+      // Refresh metrics after a short delay to allow fetch to complete
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["pipeline-health"] });
+      }, 3000);
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to kick fetch: ${error.message}`);
+    },
+  });
+  
   const { data: metrics, isLoading, error } = useQuery({
     queryKey: ["pipeline-health"],
     queryFn: async (): Promise<PipelineMetrics> => {
@@ -682,12 +712,30 @@ const PipelineHealth = () => {
                       source.isCritical ? 'bg-destructive/10' : 'bg-muted/50'
                     }`}
                   >
-                    <span className="text-sm truncate max-w-[200px]">{source.name}</span>
-                    <span className={`text-xs font-medium ${
-                      source.isCritical ? 'text-destructive' : 'text-muted-foreground'
-                    }`}>
-                      {formatStarvingAge(source.hoursSinceLastFetch, source.neverFetched)}
-                    </span>
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <span className="text-sm truncate">{source.name}</span>
+                      <span className={`text-xs font-medium shrink-0 ${
+                        source.isCritical ? 'text-destructive' : 'text-muted-foreground'
+                      }`}>
+                        {source.neverFetched ? '(never)' : formatStarvingAge(source.hoursSinceLastFetch, source.neverFetched)}
+                      </span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2 text-xs shrink-0"
+                      onClick={() => kickFetchMutation.mutate(source.id)}
+                      disabled={kickFetchMutation.isPending && kickFetchMutation.variables === source.id}
+                    >
+                      {kickFetchMutation.isPending && kickFetchMutation.variables === source.id ? (
+                        <RefreshCw className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <>
+                          <RefreshCw className="h-3 w-3 mr-1" />
+                          Fix
+                        </>
+                      )}
+                    </Button>
                   </div>
                 ))}
               </div>

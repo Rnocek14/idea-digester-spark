@@ -2387,6 +2387,7 @@ export type Database = {
       expire_old_restaurant_news: { Args: never; Returns: number }
       generate_invoice_number: { Args: never; Returns: string }
       generate_referral_code: { Args: { email_input: string }; Returns: string }
+      get_skip_stats: { Args: never; Returns: Json }
       get_source_health_stats: {
         Args: never
         Returns: {
