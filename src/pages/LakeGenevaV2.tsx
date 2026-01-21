@@ -10,6 +10,7 @@ import WeatherWidget from "@/components/WeatherWidget";
 import WeatherForecast from "@/components/WeatherForecast";
 import LiveIncidentsSidebar from "@/components/LiveIncidentsSidebar";
 import NightlifeWidget from "@/components/NightlifeWidget";
+import HappeningTodayWidget from "@/components/HappeningTodayWidget";
 import NowHiringWidget from "@/components/NowHiringWidget";
 import { InlineSubscribeCTA } from "@/components/InlineSubscribeCTA";
 import { StickySubscribeBanner } from "@/components/StickySubscribeBanner";
@@ -531,7 +532,12 @@ const LakeGenevaV2 = () => {
 
             {/* Horizontal rule after lead stories */}
             {!storiesLoading && stories.length > 2 && (
-              <div className="border-t border-slate-200 mb-6" />
+              <div className="border-t border-border mb-6" />
+            )}
+
+            {/* HAPPENING TODAY - Commit B: local pulse module */}
+            {!storiesLoading && (
+              <HappeningTodayWidget />
             )}
 
             {/* Dense headline list - "More Today" with improved touch targets */}
@@ -653,13 +659,13 @@ const LakeGenevaV2 = () => {
           {/* ========== RIGHT COLUMN: LATER (LOCKED) ========== */}
           <aside className="hidden xl:block border-l border-slate-200 pl-6 xl:pl-8">
             <div className="sticky top-20 space-y-4 overflow-hidden">
-              {/* LATER Header - editorial style with underline rule */}
-              <div className="pb-3 border-b-2 border-slate-900 mb-4">
+              {/* LATER Header - Commit B: amber accent for Plans */}
+              <div className="pb-3 border-b-2 border-amber-500 mb-4">
                 <div className="flex items-baseline justify-between">
-                  <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-900">LATER</h2>
-                  <span className="text-[10px] font-mono text-slate-500 uppercase">[PLANS]</span>
+                  <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-foreground">LATER</h2>
+                  <span className="text-[10px] font-mono text-amber-600 uppercase">[PLANS]</span>
                 </div>
-                <p className="text-[10px] font-mono text-slate-400 mt-1 uppercase">Tonight → Next 3 Days</p>
+                <p className="text-[10px] font-mono text-muted-foreground mt-1 uppercase">Tonight → Next 3 Days</p>
               </div>
               
               {/* Nightlife Widget - with Tonight/Weekend toggle */}
@@ -670,12 +676,12 @@ const LakeGenevaV2 = () => {
 
         {/* Mobile: LATER section */}
         <div className="xl:hidden mt-10 pt-6 border-t border-slate-200">
-          <div className="pb-3 border-b-2 border-slate-900 mb-4">
+          <div className="pb-3 border-b-2 border-amber-500 mb-4">
             <div className="flex items-baseline justify-between">
-              <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-900">LATER</h2>
-              <span className="text-[10px] font-mono text-slate-500 uppercase">[PLANS]</span>
+              <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-foreground">LATER</h2>
+              <span className="text-[10px] font-mono text-amber-600 uppercase">[PLANS]</span>
             </div>
-            <p className="text-[10px] font-mono text-slate-400 mt-1 uppercase">Tonight → Next 3 Days</p>
+            <p className="text-[10px] font-mono text-muted-foreground mt-1 uppercase">Tonight → Next 3 Days</p>
           </div>
           <NightlifeWidget showLaterPick showModeToggle />
         </div>
