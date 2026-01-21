@@ -370,7 +370,7 @@ const LakeGenevaV2 = () => {
           </aside>
 
           {/* ========== CENTER COLUMN: TODAY (SCROLLABLE) ========== */}
-          <main className="min-w-0 max-w-5xl 2xl:max-w-6xl mx-auto w-full">
+          <main className="min-w-0 w-full">
             {/* Compact Hero Section - reduced to get story above fold */}
             <section className="mb-5">
               <div className="bg-card rounded-xl border border-border shadow-sm px-6 py-5">
@@ -402,7 +402,7 @@ const LakeGenevaV2 = () => {
 
             {/* First 2 stories above the fold */}
             {!storiesLoading && stories.length > 0 && (
-              <div className="grid gap-5 sm:gap-6 sm:grid-cols-2 mb-8">
+              <div className="grid gap-5 sm:gap-6 sm:grid-cols-2 xl:grid-cols-3 mb-8">
                 {stories.slice(0, 2).map((story: Story) => {
                   const time = getRelativeTime(story.publish_date || story.created_at);
                   let source: string | null = (story as any).source?.name || null;
@@ -445,7 +445,7 @@ const LakeGenevaV2 = () => {
                 <p className="text-muted-foreground text-sm">It's a quiet day — and that's usually a good thing.</p>
               </div>
             ) : stories.length > 2 ? (
-              <div className="grid gap-5 sm:gap-6 sm:grid-cols-2">
+              <div className="grid gap-5 sm:gap-6 sm:grid-cols-2 xl:grid-cols-3">
                 {stories.slice(2).map((story: Story, idx: number) => {
                   const time = getRelativeTime(story.publish_date || story.created_at);
                   let source: string | null = (story as any).source?.name || null;
