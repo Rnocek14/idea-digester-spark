@@ -487,45 +487,53 @@ serve(async (req) => {
       }
     }
     
-    // Fetch tonight's schedule (events for today)
+    // Fetch tonight's schedule (events for today) - FIX: Filter to nightlife vertical
     const { data: tonightEvents } = await supabase
       .from("content_queue")
-      .select("id, title, event_date, event_time, original_url")
+      .select("id, title, event_date, event_time, original_url, metadata")
       .in("status", ["approved", "auto_published", "published"])
       .eq("safety_level", "safe")
       .eq("category", "events")
+      .contains("metadata", { verticals: ["nightlife"] }) // FIX: Filter to nightlife vertical
       .eq("event_date", todayChicago)
       .order("event_time", { ascending: true, nullsFirst: false })
       .limit(4);
     
     const tonightSchedule = (tonightEvents || []) as LaterEvent[];
-    console.log(`🌙 Tonight's schedule: ${tonightSchedule.length} events`);
+    console.log(`🌙 Tonight's schedule: ${tonightSchedule.length} nightlife events`);
     
-    // Weekend preview (only on Thu/Fri)
+    // Weekend preview (only on Thu/Fri) - FIX: Use Chicago timezone for date math
     let weekendEvents: LaterEvent[] = [];
     if (isWeekendSendDay) {
-      const saturday = new Date();
-      const daysUntilSat = (6 - saturday.getDay() + 7) % 7 || 7;
-      saturday.setDate(saturday.getDate() + daysUntilSat);
-      const saturdayStr = saturday.toISOString().split('T')[0];
+      // Compute Saturday/Sunday in Chicago timezone
+      const chicagoNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' }));
+      const chicagoDayOfWeek = chicagoNow.getDay();
+      const daysUntilSat = (6 - chicagoDayOfWeek + 7) % 7 || 7;
       
-      const sunday = new Date(saturday);
-      sunday.setDate(sunday.getDate() + 1);
-      const sundayStr = sunday.toISOString().split('T')[0];
+      const saturdayChicago = new Date(chicagoNow);
+      saturdayChicago.setDate(chicagoNow.getDate() + daysUntilSat);
+      const saturdayStr = `${saturdayChicago.getFullYear()}-${String(saturdayChicago.getMonth() + 1).padStart(2, '0')}-${String(saturdayChicago.getDate()).padStart(2, '0')}`;
+      
+      const sundayChicago = new Date(saturdayChicago);
+      sundayChicago.setDate(saturdayChicago.getDate() + 1);
+      const sundayStr = `${sundayChicago.getFullYear()}-${String(sundayChicago.getMonth() + 1).padStart(2, '0')}-${String(sundayChicago.getDate()).padStart(2, '0')}`;
+      
+      console.log(`📅 Weekend dates (Chicago): Sat=${saturdayStr}, Sun=${sundayStr}`);
       
       const { data: weekendData } = await supabase
         .from("content_queue")
-        .select("id, title, event_date, event_time, original_url")
+        .select("id, title, event_date, event_time, original_url, metadata")
         .in("status", ["approved", "auto_published", "published"])
         .eq("safety_level", "safe")
         .eq("category", "events")
+        .contains("metadata", { verticals: ["nightlife"] }) // FIX: Filter to nightlife vertical
         .in("event_date", [saturdayStr, sundayStr])
         .order("event_date", { ascending: true })
         .order("event_time", { ascending: true, nullsFirst: false })
         .limit(6);
       
       weekendEvents = (weekendData || []) as LaterEvent[];
-      console.log(`📅 Weekend preview: ${weekendEvents.length} events`);
+      console.log(`📅 Weekend preview: ${weekendEvents.length} nightlife events`);
     }
 
     // ========== V2: UPDATED MINIMUM CONTENT THRESHOLD ==========
@@ -723,8 +731,11 @@ serve(async (req) => {
       isWeekendSendDay
     });
 
-    // Save newsletter to database
-    console.log("💾 Saving newsletter to database...");
+    // Compute briefingStories for metadata (same logic as buildNewsletterV2)
+    const briefingStories = selectedStories.filter(s => s.category !== "events").slice(0, 5);
+    
+    // Save newsletter to database with V2 versioning
+    console.log("💾 Saving newsletter to database (V2)...");
     const { data: savedNewsletter, error: saveError } = await supabase
       .from("newsletters")
       .insert({
@@ -738,11 +749,21 @@ serve(async (req) => {
         story_count: selectedStories.length,
         auto_send_enabled: sendNow,
         metadata: { 
+          version: "v2_live_latest_later", // FIX: Version tagging
           categories: getCategoryCounts(selectedStories),
           generated_at: new Date().toISOString(),
           evergreen_count: evergreenItems.length,
           evergreen_ids: evergreenItems.map(e => e.id),
-          evergreen_titles: evergreenItems.map(e => e.title)
+          evergreen_titles: evergreenItems.map(e => e.title),
+          // V2 section counts for analytics
+          live_incident_count: incidentCount,
+          live_fetch_failed: liveFetchFailed,
+          latest_story_count: briefingStories.length,
+          later_pick_title: laterPick?.title || null,
+          later_pick_reason: laterPickReason || null,
+          tonight_count: tonightSchedule.length,
+          weekend_count: weekendEvents.length,
+          is_weekend_send: isWeekendSendDay
         }
       })
       .select()
@@ -774,6 +795,25 @@ serve(async (req) => {
       .in("id", storyIds);
 
     if (updateError) throw updateError;
+    
+    // Log newsletter generation to activity log
+    await supabase.from("activity_log").insert({
+      action: "newsletter_generated",
+      entity_type: "newsletter",
+      entity_id: savedNewsletter.id,
+      actor_type: "system",
+      message: `Newsletter V2 generated: ${briefingStories.length} LATEST, ${incidentCount} LIVE, ${tonightSchedule.length + (laterPick ? 1 : 0)} LATER`,
+      details: {
+        version: "v2_live_latest_later",
+        live_count: incidentCount,
+        live_fetch_failed: liveFetchFailed,
+        latest_count: briefingStories.length,
+        later_pick: laterPick?.title || null,
+        tonight_count: tonightSchedule.length,
+        weekend_count: weekendEvents.length,
+        story_ids: storyIds
+      }
+    });
 
     // Check if auto-send is enabled for this newsletter
     const shouldSend = savedNewsletter.auto_send_enabled === true;
@@ -1333,12 +1373,19 @@ function buildNewsletterV2(params: NewsletterV2Params) {
           </p>
           <p style="margin: 4px 0 0 0; font-size: 12px; color: #b91c1c;">
             ${incident.incident_type ? toTitleCase(incident.incident_type) : 'Update'} · 
-            <a href="https://lakegeneva.news/incidents/${incident.id}" style="color: #dc2626; text-decoration: none;">Details →</a>
+            <a href="https://lakegeneva.news/v2/incidents/${incident.id}" style="color: #dc2626; text-decoration: none;">Details →</a>
           </p>
         </div>
       `).join("")}
     </div>
   ` : '';
+
+  // Log LIVE section status for debugging
+  if (liveFetchFailed) {
+    console.log("⚠️ LIVE section omitted due to fetch failure");
+  } else if (liveIncidents.length === 0) {
+    console.log("ℹ️ LIVE section omitted - no active incidents");
+  }
 
   // ========== LATEST SECTION (The Briefing) ==========
   // Filter to non-event stories for the briefing (max 5)
@@ -1607,7 +1654,7 @@ function buildNewsletterV2(params: NewsletterV2Params) {
 
   // ========== PLAIN TEXT VERSION ==========
   const liveText = liveIncidents.length > 0 
-    ? `== LIVE UPDATES ==\n\n${liveIncidents.map(i => `• ${i.title}`).join("\n")}\n\n` 
+    ? `== LIVE UPDATES ==\n\n${liveIncidents.map(i => `• ${i.title}\n  Details: https://lakegeneva.news/v2/incidents/${i.id}`).join("\n")}\n\n` 
     : '';
 
   const latestText = briefingStories.length > 0

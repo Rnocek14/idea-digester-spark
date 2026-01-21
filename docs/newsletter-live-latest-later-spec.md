@@ -1,7 +1,7 @@
 # Newsletter: LIVE · LATEST · LATER Architecture
 
 **Version**: 2.0
-**Status**: Specification (not yet implemented)
+**Status**: ✅ IMPLEMENTED (2026-01-21)
 **Last Updated**: January 2026
 
 ## Overview
@@ -202,20 +202,20 @@ LIMIT 4;
 
 ## Implementation Checklist
 
-### Phase 1: Restructure buildNewsletter()
-- [ ] Add `fetchActiveIncidents()` query
-- [ ] Add `fetchLaterPick()` query (reuse homepage scoring logic)
-- [ ] Add `fetchTonightSchedule()` query
-- [ ] Modify `buildNewsletter()` to accept new section data
-- [ ] Create `buildLiveSection()` HTML helper
-- [ ] Create `buildLatestSection()` HTML helper (replaces category grouping)
-- [ ] Create `buildLaterSection()` HTML helper
+### Phase 1: Restructure buildNewsletter() ✅
+- [x] Add `fetchActiveIncidents()` query
+- [x] Add `fetchLaterPick()` query (reuse homepage scoring logic)
+- [x] Add `fetchTonightSchedule()` query
+- [x] Modify `buildNewsletter()` to accept new section data
+- [x] Create `buildLiveSection()` HTML helper
+- [x] Create `buildLatestSection()` HTML helper (replaces category grouping)
+- [x] Create `buildLaterSection()` HTML helper
 
-### Phase 2: Template Update
-- [ ] Replace At-a-Glance with LIVE section (conditional)
-- [ ] Replace category-grouped content with LATEST section
-- [ ] Add LATER section before Jobs
-- [ ] Keep NOW HIRING and COMMUNITY sections unchanged
+### Phase 2: Template Update ✅
+- [x] Replace At-a-Glance with LIVE section (conditional)
+- [x] Replace category-grouped content with LATEST section
+- [x] Add LATER section before Jobs
+- [x] Keep NOW HIRING and COMMUNITY sections unchanged
 
 ### Phase 3: Testing
 - [ ] Test with active incident → LIVE appears
