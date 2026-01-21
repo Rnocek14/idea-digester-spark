@@ -13,10 +13,12 @@ type PageShellProps = {
   title?: string;
   description?: string;
   children: React.ReactNode;
+  fullWidth?: boolean;
 };
 
 const PageShell: React.FC<PageShellProps> = ({
   children,
+  fullWidth = false,
 }) => {
   const today = format(new Date(), "EEEE, MMMM d, yyyy");
 
@@ -95,7 +97,10 @@ const PageShell: React.FC<PageShellProps> = ({
       </header>
 
       {/* Main content */}
-      <main className="mx-auto max-w-6xl px-4 pb-10 pt-6 sm:px-6 lg:px-8">
+      <main className={fullWidth 
+        ? "pb-10 pt-6" 
+        : "mx-auto max-w-6xl px-4 pb-10 pt-6 sm:px-6 lg:px-8"
+      }>
         {children}
       </main>
 
