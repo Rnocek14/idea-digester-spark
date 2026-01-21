@@ -2291,6 +2291,50 @@ export type Database = {
         }
         Relationships: []
       }
+      sync_skips: {
+        Row: {
+          created_at: string
+          id: string
+          metadata: Json | null
+          reason: string
+          run_id: string | null
+          source_id: string | null
+          source_name: string | null
+          title: string | null
+          url: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          reason: string
+          run_id?: string | null
+          source_id?: string | null
+          source_name?: string | null
+          title?: string | null
+          url?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          reason?: string
+          run_id?: string | null
+          source_id?: string | null
+          source_name?: string | null
+          title?: string | null
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sync_skips_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       system_settings: {
         Row: {
           key: string
@@ -2339,6 +2383,7 @@ export type Database = {
         Args: { p_restaurant_id: string }
         Returns: Json
       }
+      cleanup_old_sync_skips: { Args: never; Returns: number }
       expire_old_restaurant_news: { Args: never; Returns: number }
       generate_invoice_number: { Args: never; Returns: string }
       generate_referral_code: { Args: { email_input: string }; Returns: string }
