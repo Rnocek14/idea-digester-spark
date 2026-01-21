@@ -64,24 +64,15 @@ const LiveColumnHeader = () => {
   const updateTime = getRelativeUpdateTime();
 
   return (
-    <div className="px-1 pb-3 border-b border-border">
+    <div className="pb-3 border-b-2 border-slate-900 mb-4">
       <div className="flex items-center gap-2">
-        <span className="relative flex h-2.5 w-2.5">
-          {isActive ? (
-            <>
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-destructive"></span>
-            </>
-          ) : (
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-          )}
-        </span>
-        <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Live</h2>
+        <span className="text-[10px] font-mono uppercase tracking-widest text-slate-500">[LIVE]</span>
+        <span className={`w-1.5 h-1.5 ${isActive ? 'bg-red-500' : 'bg-emerald-500'}`} />
         {!isActive && (
-          <span className="text-xs text-emerald-600/80">· All clear</span>
+          <span className="text-[10px] font-mono text-emerald-600 uppercase">All Clear</span>
         )}
       </div>
-      <p className="text-[10px] text-muted-foreground/70 mt-1">
+      <p className="text-[10px] font-mono text-slate-400 mt-1 uppercase tracking-wider">
         {updateTime ? `Updated ${updateTime}` : 'Real-time status'}
       </p>
     </div>
@@ -378,18 +369,18 @@ const LakeGenevaV2 = () => {
 
       {/* Three-Column Layout - Full width responsive with generous spacing */}
       <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-16 py-6">
-        <div className="grid grid-cols-1 xl:grid-cols-[280px_1fr_280px] 2xl:grid-cols-[340px_1fr_340px] gap-6 xl:gap-12 2xl:gap-20">
+        <div className="grid grid-cols-1 xl:grid-cols-[280px_1fr_280px] 2xl:grid-cols-[340px_1fr_340px] gap-0">
           
           {/* ========== LEFT COLUMN: LIVE (LOCKED) ========== */}
-          <aside className="hidden xl:block">
-            <div className="sticky top-20 space-y-5 overflow-hidden">
+          <aside className="hidden xl:block border-r border-slate-200 pr-6 xl:pr-8">
+            <div className="sticky top-20 space-y-4 overflow-hidden">
               {/* LIVE Header with dynamic indicator */}
               <LiveColumnHeader />
               
               {/* Weather at top of LIVE */}
-              <div className="bg-card rounded-xl border border-border p-4 shadow-sm">
+              <div className="bg-white rounded-sm border border-slate-200 p-3">
                 <WeatherWidget />
-                <div className="mt-3">
+                <div className="mt-3 pt-3 border-t border-slate-100">
                   <WeatherForecast />
                 </div>
               </div>
@@ -400,26 +391,26 @@ const LakeGenevaV2 = () => {
           </aside>
 
           {/* ========== CENTER COLUMN: LATEST (SCROLLABLE) ========== */}
-          <main className="min-w-0 w-full">
+          <main className="min-w-0 w-full px-6 xl:px-10">
             {/* Mobile: LIVE section */}
             <div className="xl:hidden mb-8">
               <LiveColumnHeader />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-4">
-                <div className="bg-card rounded-xl border border-border p-4 shadow-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                <div className="bg-white rounded-sm border border-slate-200 p-3">
                   <WeatherWidget />
                 </div>
                 <LiveIncidentsSidebar />
               </div>
             </div>
 
-            {/* LATEST Header - matches sidebar header style */}
-            <div className="px-1 pb-3 border-b border-border mb-5">
-              <div className="flex items-center gap-2">
-                <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Latest</h2>
-                <span className="text-xs text-muted-foreground/70">· Your daily briefing</span>
+            {/* LATEST Header - editorial style with underline rule */}
+            <div className="pb-3 border-b-2 border-slate-900 mb-6">
+              <div className="flex items-baseline justify-between">
+                <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-900">LATEST</h2>
+                <span className="text-[10px] font-mono text-slate-500 uppercase">[LOCAL EDITION]</span>
               </div>
-              <p className="text-[10px] text-muted-foreground/70 mt-1">
-                {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+              <p className="text-[10px] font-mono text-slate-400 mt-1">
+                {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }).toUpperCase()}
               </p>
             </div>
 
@@ -531,15 +522,15 @@ const LakeGenevaV2 = () => {
           </main>
 
           {/* ========== RIGHT COLUMN: LATER (LOCKED) ========== */}
-          <aside className="hidden xl:block">
-            <div className="sticky top-20 space-y-5 overflow-hidden">
-              {/* LATER Header with intent sublabel */}
-              <div className="px-1 pb-3 border-b border-border">
-                <div className="flex items-center gap-2">
-                  <span className="text-base">📅</span>
-                  <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Later</h2>
+          <aside className="hidden xl:block border-l border-slate-200 pl-6 xl:pl-8">
+            <div className="sticky top-20 space-y-4 overflow-hidden">
+              {/* LATER Header - editorial style with underline rule */}
+              <div className="pb-3 border-b-2 border-slate-900 mb-4">
+                <div className="flex items-baseline justify-between">
+                  <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-900">LATER</h2>
+                  <span className="text-[10px] font-mono text-slate-500 uppercase">[PLANS]</span>
                 </div>
-                <p className="text-[10px] text-muted-foreground/70 mt-1">Tonight & the next 3 days</p>
+                <p className="text-[10px] font-mono text-slate-400 mt-1 uppercase">Tonight → Next 3 Days</p>
               </div>
               
               {/* Nightlife Widget - with Tonight/Weekend toggle */}
@@ -549,13 +540,13 @@ const LakeGenevaV2 = () => {
         </div>
 
         {/* Mobile: LATER section */}
-        <div className="xl:hidden mt-10">
-          <div className="mb-4 pb-3 border-b border-border">
-            <div className="flex items-center gap-2">
-              <span className="text-base">📅</span>
-              <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Later</h2>
+        <div className="xl:hidden mt-10 pt-6 border-t border-slate-200">
+          <div className="pb-3 border-b-2 border-slate-900 mb-4">
+            <div className="flex items-baseline justify-between">
+              <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-900">LATER</h2>
+              <span className="text-[10px] font-mono text-slate-500 uppercase">[PLANS]</span>
             </div>
-            <p className="text-[10px] text-muted-foreground/70 mt-1">Tonight & the next 3 days</p>
+            <p className="text-[10px] font-mono text-slate-400 mt-1 uppercase">Tonight → Next 3 Days</p>
           </div>
           <NightlifeWidget showLaterPick showModeToggle />
         </div>

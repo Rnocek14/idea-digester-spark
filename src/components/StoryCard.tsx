@@ -147,14 +147,14 @@ export const StoryCard = ({
   const isDataJournalism = sourceType === 'data_journalism' || trustLabels?.includes('data_journalism');
   
   return (
-    <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow">
-      <div className="relative aspect-[3/2] overflow-hidden bg-slate-100">
+    <article className="group flex h-full flex-col overflow-hidden rounded-sm border border-slate-300 bg-white hover:border-slate-400 transition-colors">
+      <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
         {url ? (
           <a href={url} target="_blank" rel="noopener noreferrer" className="block h-full w-full">
             <img
               src={imgSrc}
               alt={title}
-              className="h-full w-full object-cover object-top transition-transform duration-300 group-hover:scale-[1.03]"
+              className="h-full w-full object-cover object-top transition-transform duration-300 group-hover:scale-[1.02]"
               loading="lazy"
               onError={handleImageError}
             />
@@ -163,20 +163,20 @@ export const StoryCard = ({
           <img
             src={imgSrc}
             alt={title}
-            className="h-full w-full object-cover object-top transition-transform duration-300 group-hover:scale-[1.03]"
+            className="h-full w-full object-cover object-top transition-transform duration-300 group-hover:scale-[1.02]"
             loading="lazy"
             onError={handleImageError}
           />
         )}
         {category && (
-          <span className="absolute bottom-3 left-3 rounded-full bg-black/60 px-2.5 py-1 text-xs text-white backdrop-blur pointer-events-none">
+          <span className="absolute bottom-2 left-2 rounded-sm bg-black/70 px-2 py-0.5 text-[11px] text-white backdrop-blur pointer-events-none">
             {getCategoryEmoji(category)}{" "}
-            <span className="capitalize">{category.replace('_', ' ')}</span>
+            <span className="uppercase tracking-wide">{category.replace('_', ' ')}</span>
           </span>
         )}
       </div>
 
-      <div className="flex flex-1 flex-col gap-2 p-4">
+      <div className="flex flex-1 flex-col gap-1.5 p-3">
         <div className="flex items-center gap-2 flex-wrap">
           {sponsored && (
             <span className="text-[11px] font-medium uppercase tracking-[0.16em] text-amber-700">
