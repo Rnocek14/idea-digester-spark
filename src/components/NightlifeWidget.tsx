@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { getRecentPickVenues, recordPickedVenue } from "@/lib/recentVenuePersistence";
 import { Link } from "react-router-dom";
 import { PartyPopper } from "lucide-react";
 
@@ -775,6 +776,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
   });
 
   // Pick of the Next 72 Hours - query for best upcoming event using scoring
+  // Uses persisted recent venues for diversity penalty
   const { data: laterPickData } = useQuery({
     queryKey: ["later-pick-72h", todayStr],
     queryFn: async () => {
@@ -782,6 +784,9 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
       const in72Hours = new Date(now.getTime() + 72 * 60 * 60 * 1000);
       const nowStr = now.toISOString().split('T')[0];
       const in72HoursStr = in72Hours.toISOString().split('T')[0];
+      
+      // Get recently picked venues for diversity penalty
+      const recentVenues = getRecentPickVenues();
       
       // Fetch multiple candidates and score them
       const { data: candidates, error } = await supabase
@@ -794,17 +799,16 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
         .gte("event_date", nowStr)
         .lte("event_date", in72HoursStr)
         .order("event_date", { ascending: true })
-        .limit(10);
+        .limit(15); // Increased to have more diversity candidates
       
       if (error || !candidates?.length) {
         console.error("[NightlifeWidget] Error loading 72h pick", error);
         return null;
       }
       
-      // Score candidates and pick the best one
-      // Pass empty recent venues for now (could be enhanced to track recent picks)
+      // Score candidates with recent venue diversity penalty
       const scored = (candidates as NightlifeEvent[]).map(e => {
-        const result = calculatePickScore(e, []);
+        const result = calculatePickScore(e, recentVenues);
         return {
           event: e,
           score: result.score,
@@ -822,6 +826,14 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
       });
       
       const best = scored[0];
+      if (best) {
+        // Record this venue as recently picked for future diversity
+        const venue = extractVenue(best.event.title);
+        if (venue) {
+          recordPickedVenue(venue);
+        }
+      }
+      
       return best ? { event: best.event, reason: best.reason } : null;
     },
     staleTime: 300000,
