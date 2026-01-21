@@ -347,8 +347,8 @@ const LakeGenevaV2 = () => {
       </div>
 
       {/* Three-Column Layout - Full width responsive with generous spacing */}
-      <div className="w-full px-4 sm:px-6 lg:px-10 xl:px-12 2xl:px-20 py-6">
-        <div className="grid grid-cols-1 xl:grid-cols-[minmax(240px,320px)_1fr_minmax(240px,320px)] gap-6 xl:gap-8 2xl:gap-14">
+      <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-16 py-6">
+        <div className="grid grid-cols-1 xl:grid-cols-[280px_1fr_280px] 2xl:grid-cols-[320px_1fr_320px] gap-6 xl:gap-10 2xl:gap-16">
           
           {/* ========== LEFT COLUMN: NOW (LOCKED) ========== */}
           <aside className="hidden xl:block">
@@ -402,7 +402,7 @@ const LakeGenevaV2 = () => {
 
             {/* First 2 stories above the fold */}
             {!storiesLoading && stories.length > 0 && (
-              <div className="grid gap-5 sm:gap-6 sm:grid-cols-2 xl:grid-cols-3 mb-8">
+              <div className="grid gap-6 sm:grid-cols-2 mb-8">
                 {stories.slice(0, 2).map((story: Story) => {
                   const time = getRelativeTime(story.publish_date || story.created_at);
                   let source: string | null = (story as any).source?.name || null;
@@ -445,7 +445,7 @@ const LakeGenevaV2 = () => {
                 <p className="text-muted-foreground text-sm">It's a quiet day — and that's usually a good thing.</p>
               </div>
             ) : stories.length > 2 ? (
-              <div className="grid gap-5 sm:gap-6 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid gap-6 sm:grid-cols-2">
                 {stories.slice(2).map((story: Story, idx: number) => {
                   const time = getRelativeTime(story.publish_date || story.created_at);
                   let source: string | null = (story as any).source?.name || null;
