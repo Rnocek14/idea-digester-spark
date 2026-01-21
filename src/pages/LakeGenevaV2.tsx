@@ -451,7 +451,7 @@ const LakeGenevaV2 = () => {
             {/* Dense headline list - "More Today" */}
             {!storiesLoading && stories.length > 2 && (
               <div className="mb-8">
-                <h3 className="text-[10px] font-mono uppercase tracking-widest text-slate-500 mb-3">[MORE TODAY]</h3>
+                <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-3">More Today</h3>
                 <div className="space-y-0">
                   {stories.slice(2, 8).map((story: Story) => {
                     const time = getRelativeTime(story.publish_date || story.created_at);
