@@ -1,4 +1,4 @@
-import { FileText, Radio, Megaphone, LayoutDashboard, Mail, CalendarDays, Building2, BarChart3, Users, Image, Heart, Briefcase, Gift, Database } from "lucide-react";
+import { FileText, Radio, Megaphone, LayoutDashboard, Mail, CalendarDays, Building2, BarChart3, Users, Image, Heart, Briefcase, Gift, Database, Activity } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import {
@@ -16,10 +16,12 @@ import {
 
 const menuItems = [
   { title: "Overview", url: "/dashboard", icon: LayoutDashboard },
+  { title: "Pipeline Health", url: "/dashboard/pipeline", icon: Activity },
   { title: "Content Queue", url: "/dashboard/content", icon: FileText },
   { title: "Newsletter", url: "/dashboard/newsletter", icon: Mail },
   { title: "Social Queue", url: "/dashboard/social-queue", icon: CalendarDays },
   { title: "Sources", url: "/dashboard/sources", icon: Radio },
+  { title: "Source Health", url: "/dashboard/source-health", icon: Database },
   { title: "Sponsors", url: "/dashboard/sponsors", icon: Megaphone },
   { title: "Leads", url: "/dashboard/leads", icon: Users },
   { title: "Directory", url: "/dashboard/directory", icon: Building2 },

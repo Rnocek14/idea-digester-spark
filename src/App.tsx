@@ -39,6 +39,7 @@ import AdminDeals from "./pages/AdminDeals";
 import SponsorPortal from "./pages/SponsorPortal";
 import BusinessCoverage from "./pages/BusinessCoverage";
 import SourceHealth from "./pages/SourceHealth";
+import PipelineHealth from "./pages/PipelineHealth";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -86,6 +87,7 @@ const App = () => (
             <Route path="/sponsor-portal" element={<SponsorPortal />} />
             <Route path="/dashboard" element={<DashboardLayout />}>
               <Route index element={<Dashboard />} />
+              <Route path="pipeline" element={<PipelineHealth />} />
               <Route path="content" element={<ContentQueue />} />
               <Route path="sources" element={<Sources />} />
               <Route path="sponsors" element={<Sponsors />} />

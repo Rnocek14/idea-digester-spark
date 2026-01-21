@@ -614,6 +614,7 @@ const LakeGenevaV2 = () => {
                 <div className="space-y-0">
                   {stories.slice(2, 12).map((story: Story) => {
                     const time = getRelativeTime(story.publish_date || story.created_at);
+                    const geoLabel = story.geo_tier === 1 ? 'LG' : story.geo_tier === 2 ? 'County' : story.geo_tier === 0 ? 'WI' : null;
                     return (
                       <a 
                         key={story.id}
@@ -624,6 +625,11 @@ const LakeGenevaV2 = () => {
                       >
                         <span className="text-base shrink-0">{getCategoryEmoji(story.category)}</span>
                         <span className="text-sm text-slate-900 line-clamp-1 flex-1">{story.title}</span>
+                        {geoLabel && (
+                          <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground shrink-0">
+                            {geoLabel}
+                          </span>
+                        )}
                         <span className="text-xs font-mono text-slate-500 shrink-0">
                           {time}
                         </span>
