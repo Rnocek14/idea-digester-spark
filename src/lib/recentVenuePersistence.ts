@@ -18,8 +18,11 @@ interface RecentVenueEntry {
   pickedAt: string; // ISO date string
 }
 
+const TTL_DAYS = 7;
+
 /**
  * Get the list of recently picked venues (normalized, lowercase)
+ * Filters out entries older than 7 days
  */
 export function getRecentPickVenues(): string[] {
   try {
@@ -27,8 +30,13 @@ export function getRecentPickVenues(): string[] {
     if (!stored) return [];
     
     const entries: RecentVenueEntry[] = JSON.parse(stored);
-    // Return just the venue names, already normalized
-    return entries.map(e => e.venue);
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - TTL_DAYS);
+    
+    // Filter to entries within TTL and return venue names
+    return entries
+      .filter(e => new Date(e.pickedAt) >= cutoff)
+      .map(e => e.venue);
   } catch (error) {
     console.warn('[RecentVenues] Error reading from localStorage:', error);
     return [];

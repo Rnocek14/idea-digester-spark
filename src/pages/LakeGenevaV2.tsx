@@ -21,8 +21,9 @@ import { Link } from "react-router-dom";
 import { Home, Star, Phone } from "lucide-react";
 
 // Dynamic LIVE column header - shows green when all clear, red when active incidents
+// Includes freshness timestamp for credibility
 const LiveColumnHeader = () => {
-  const { data: hasActiveIncidents } = useQuery({
+  const { data: incidentStatus, dataUpdatedAt } = useQuery({
     queryKey: ["has-active-incidents"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -30,13 +31,37 @@ const LiveColumnHeader = () => {
         .select("id")
         .eq("status", "active")
         .limit(1);
-      if (error) return false;
-      return (data?.length || 0) > 0;
+      if (error) return { hasActive: false };
+      return { hasActive: (data?.length || 0) > 0 };
     },
     refetchInterval: 30000,
   });
 
-  const isActive = hasActiveIncidents === true;
+  const isActive = incidentStatus?.hasActive === true;
+  
+  // Calculate relative time since last update
+  const getRelativeUpdateTime = () => {
+    if (!dataUpdatedAt) return null;
+    const now = Date.now();
+    const diffMs = now - dataUpdatedAt;
+    const diffMins = Math.floor(diffMs / 60000);
+    
+    if (diffMins < 1) return 'Just now';
+    if (diffMins === 1) return '1 min ago';
+    if (diffMins < 60) return `${diffMins} min ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours === 1) return '1 hr ago';
+    return `${diffHours} hrs ago`;
+  };
+
+  // Re-render every minute to keep timestamp fresh
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => setTick(t => t + 1), 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const updateTime = getRelativeUpdateTime();
 
   return (
     <div className="px-1 pb-3 border-b border-border">
@@ -56,7 +81,9 @@ const LiveColumnHeader = () => {
           <span className="text-xs text-emerald-600/80">· All clear</span>
         )}
       </div>
-      <p className="text-[10px] text-muted-foreground/70 mt-1">Real-time status</p>
+      <p className="text-[10px] text-muted-foreground/70 mt-1">
+        {updateTime ? `Updated ${updateTime}` : 'Real-time status'}
+      </p>
     </div>
   );
 };
