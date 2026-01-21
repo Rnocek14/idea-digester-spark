@@ -14,7 +14,7 @@ import WeatherForecast from "@/components/WeatherForecast";
 import LiveIncidentsSidebar from "@/components/LiveIncidentsSidebar";
 import WeekendSidebarWidget from "@/components/WeekendSidebarWidget";
 import NowHiringWidget from "@/components/NowHiringWidget";
-import LiveMusicWidget from "@/components/LiveMusicWidget";
+import NightlifeWidget from "@/components/NightlifeWidget";
 import AlsoTodayCard from "@/components/AlsoTodayCard";
 import { InlineSubscribeCTA } from "@/components/InlineSubscribeCTA";
 import { StickySubscribeBanner } from "@/components/StickySubscribeBanner";
@@ -1208,19 +1208,19 @@ const LakeGeneva = () => {
               <LiveIncidentsSidebar />
               <NowHiringWidget />
               <WeekendSidebarWidget />
-              <LiveMusicWidget />
+              <NightlifeWidget />
             </div>
           </main>
 
         </div>
 
-        {/* Left shoulder - Live Music - 2xl screens only (avoid overlap on smaller xl screens) */}
+        {/* Left shoulder - Nightlife - 2xl screens only (avoid overlap on smaller xl screens) */}
         <aside 
           className="hidden 2xl:block fixed top-40 left-6"
           style={{ width: '240px', maxWidth: '260px' }}
         >
           <div className="max-h-[calc(100vh-12rem)] overflow-y-auto">
-            <LiveMusicWidget />
+            <NightlifeWidget />
           </div>
         </aside>
 
