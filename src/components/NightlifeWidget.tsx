@@ -456,35 +456,70 @@ function formatLaterPickDate(dateStr: string | null): string {
 }
 
 // Calculate pick score for an event - higher is better
-function calculatePickScore(event: NightlifeEvent): number {
+// Returns { score, reason } for "why this pick" label
+function calculatePickScore(event: NightlifeEvent, recentVenues?: string[]): { score: number; reason: string } {
   let score = 0;
+  const reasons: string[] = [];
   const title = event.title.toLowerCase();
   
   // +3 if has performer (real performer field or extracted from title)
   const hasPerformer = event.performer || extractPerformerFromTitle(event.title);
-  if (hasPerformer) score += 3;
+  if (hasPerformer) {
+    score += 3;
+    reasons.push('confirmed performer');
+  }
   
   // +2 if has event_time
-  if (event.event_time) score += 2;
+  if (event.event_time) {
+    score += 2;
+    reasons.push('start time');
+  }
+  
+  // +2 if has original_url (higher confidence)
+  if (event.original_url) {
+    score += 2;
+  }
   
   // +2 if title has specific venue name (not just generic "live music")
   const hasSpecificVenue = KNOWN_VENUES.some(v => title.includes(v.toLowerCase()));
-  if (hasSpecificVenue) score += 2;
+  if (hasSpecificVenue) {
+    score += 2;
+    reasons.push('known venue');
+  }
   
   // -5 if title matches common low-value patterns
   const lowValuePatterns = [
     'live music at', 'live music every', 'featuring live', 
-    'music every', 'live entertainment'
+    'music every', 'live entertainment', 'every friday', 'every saturday'
   ];
   if (lowValuePatterns.some(p => title.includes(p) && !hasPerformer)) score -= 5;
   
   // -3 if title is too generic (no performer, no specific details)
   if (!hasPerformer && title.length < 30) score -= 3;
   
+  // -3 if event_date is null (recurring without specific date)
+  if (!event.event_date) score -= 3;
+  
   // +1 for events with more complete metadata
   if (event.metadata?.content_tags?.length) score += 1;
   
-  return score;
+  // Venue diversity penalty: -4 if this venue appeared recently
+  if (recentVenues && recentVenues.length > 0) {
+    const eventVenue = extractVenue(event.title).toLowerCase();
+    if (eventVenue && recentVenues.includes(eventVenue)) {
+      score -= 4;
+    }
+  }
+  
+  // Build reason string
+  let reason = 'Upcoming event';
+  if (reasons.length > 0) {
+    reason = reasons.length === 1 
+      ? `Has ${reasons[0]}` 
+      : `Has ${reasons.slice(0, -1).join(', ')} + ${reasons[reasons.length - 1]}`;
+  }
+  
+  return { score, reason };
 }
 
 // Mode for the toggle: tonight (default) or weekend
@@ -740,7 +775,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
   });
 
   // Pick of the Next 72 Hours - query for best upcoming event using scoring
-  const { data: laterPick } = useQuery({
+  const { data: laterPickData } = useQuery({
     queryKey: ["later-pick-72h", todayStr],
     queryFn: async () => {
       const now = new Date();
@@ -767,10 +802,15 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
       }
       
       // Score candidates and pick the best one
-      const scored = (candidates as NightlifeEvent[]).map(e => ({
-        event: e,
-        score: calculatePickScore(e)
-      }));
+      // Pass empty recent venues for now (could be enhanced to track recent picks)
+      const scored = (candidates as NightlifeEvent[]).map(e => {
+        const result = calculatePickScore(e, []);
+        return {
+          event: e,
+          score: result.score,
+          reason: result.reason
+        };
+      });
       
       // Sort by score (highest first), then by date (soonest first)
       scored.sort((a, b) => {
@@ -781,11 +821,15 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
         return aDate.localeCompare(bDate);
       });
       
-      return scored[0]?.event || null;
+      const best = scored[0];
+      return best ? { event: best.event, reason: best.reason } : null;
     },
     staleTime: 300000,
     enabled: showLaterPick,
   });
+
+  const laterPick = laterPickData?.event || null;
+  const laterPickReason = laterPickData?.reason || null;
 
   const hasTonight = tonightEvents && tonightEvents.length > 0;
   const hasWeekdays = !tonightOnly && weekdayEvents && Object.keys(weekdayEvents).length > 0;
@@ -840,10 +884,13 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
       {/* Pick of the Next 72 Hours - Featured slot for TONIGHT column */}
       {hasLaterPick && showTonightContent && (
         <div className="mb-4 pb-3 border-b border-border">
-          <div className="flex items-center gap-1.5 mb-2">
+          <div className="flex items-center gap-1.5 mb-1">
             <span className="text-sm">⭐</span>
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-amber-600">Pick of the Next 72 Hours</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-amber-600">Pick of the Next 3 Days</p>
           </div>
+          {laterPickReason && (
+            <p className="text-[9px] text-muted-foreground/70 mb-2 ml-5">{laterPickReason}</p>
+          )}
           <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-3 border border-amber-100">
             {(() => {
               const venue = extractVenue(laterPick!.title);
@@ -972,14 +1019,15 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
             })}
           </ul>
         </>
-      ) : showTonightContent && tonightOnly && !tonightsPick ? (
-        <div className="text-center py-4">
-          <p className="text-sm text-muted-foreground">Nothing scheduled tonight</p>
+      ) : showTonightContent && !hasLaterPick && remainingTonightEvents.length === 0 && !tonightsPick ? (
+        <div className="text-center py-6">
+          <p className="text-sm text-muted-foreground mb-1">Nothing scheduled tonight</p>
+          <p className="text-[11px] text-muted-foreground/70 mb-3">Check back later or browse the full calendar</p>
           <Link 
-            to="/nightlife" 
-            className="text-xs text-primary hover:underline mt-1 inline-block"
+            to="/lake-geneva?category=events" 
+            className="text-xs text-primary hover:underline inline-block font-medium"
           >
-            Browse all nightlife →
+            Browse full calendar →
           </Link>
         </div>
       ) : null}

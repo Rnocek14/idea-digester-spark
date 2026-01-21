@@ -511,7 +511,7 @@ const LakeGenevaV2 = () => {
                 <div className="flex items-center gap-2">
                   <span className="text-base">🌙</span>
                   <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Tonight</h2>
-                  <span className="text-[10px] text-muted-foreground/60">· Next 72 hours</span>
+                  <span className="text-[10px] text-muted-foreground/60" title="Tonight + the next 72 hours">· Next 3 days</span>
                 </div>
               </div>
               
@@ -527,7 +527,7 @@ const LakeGenevaV2 = () => {
             <div className="flex items-center gap-2">
               <span className="text-base">🌙</span>
               <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Tonight</h2>
-              <span className="text-[10px] text-muted-foreground/60">· Next 72 hours</span>
+              <span className="text-[10px] text-muted-foreground/60" title="Tonight + the next 72 hours">· Next 3 days</span>
             </div>
           </div>
           <NightlifeWidget showLaterPick showModeToggle />
