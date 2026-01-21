@@ -210,10 +210,12 @@ serve(async (req) => {
     const automationEnabled = settings?.value?.enabled !== false;
     const newsletterEnabled = settings?.value?.newsletter_enabled !== false;
     
-    // Feature flag for V2 newsletter (default to v2 since it's now implemented)
-    const newsletterVersion = settings?.value?.newsletter_version || 'v2';
-    const useV2 = newsletterVersion === 'v2';
-    console.log(`📧 Newsletter version: ${newsletterVersion} (useV2=${useV2})`);
+    // Feature flag for V2 newsletter
+    // Explicit default: missing/null/malformed → v2, explicit "v1" → v1
+    const rawVersion = settings?.value?.newsletter_version;
+    const newsletterVersion = rawVersion === "v1" ? "v1" : "v2";
+    const useV2 = newsletterVersion === "v2";
+    console.log(`📧 Newsletter version resolved: ${newsletterVersion} (raw=${rawVersion}, useV2=${useV2})`);
     
     if (!automationEnabled || !newsletterEnabled) {
       console.log("⛔ Newsletter automation is disabled via kill switch");
@@ -505,7 +507,7 @@ serve(async (req) => {
       .limit(4);
     
     const tonightSchedule = (tonightEvents || []) as LaterEvent[];
-    console.log(`🌙 Tonight's schedule: ${tonightSchedule.length} nightlife events`);
+    console.log(`🌙 Tonight's schedule: ${tonightSchedule.length} nightlife events (nightlife strict=true)`);
     
     // Weekend preview (only on Thu/Fri) - FIX: Use Chicago timezone for date math
     let weekendEvents: LaterEvent[] = [];
@@ -538,7 +540,7 @@ serve(async (req) => {
         .limit(6);
       
       weekendEvents = (weekendData || []) as LaterEvent[];
-      console.log(`📅 Weekend preview: ${weekendEvents.length} nightlife events`);
+      console.log(`📅 Weekend preview: ${weekendEvents.length} nightlife events (nightlife strict=true)`);
     }
 
     // ========== V2: UPDATED MINIMUM CONTENT THRESHOLD ==========
@@ -821,6 +823,7 @@ serve(async (req) => {
       .in("id", storyIds);
 
     if (updateError) throw updateError;
+    console.log(`🔒 Stamped ${storyIds.length} story_ids with last_newsletter_id=${savedNewsletter.id}`);
     
     // Log newsletter generation to activity log
     const versionLabel = useV2 ? 'V2' : 'V1';
