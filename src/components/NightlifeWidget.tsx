@@ -871,26 +871,26 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
   const showTonightContent = viewMode === 'tonight';
 
   return (
-    <aside className="rounded-2xl bg-card p-4 shadow-sm ring-1 ring-border">
+    <aside className="rounded-sm border border-slate-200 bg-white p-4">
       {/* Tonight | Weekend Toggle */}
       {showModeToggle && hasWeekend && (
-        <div className="flex items-center gap-1 mb-4 pb-3 border-b border-border">
+        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-200">
           <button
             onClick={() => setViewMode('tonight')}
-            className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
+            className={`px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider transition-colors rounded-sm ${
               viewMode === 'tonight' 
-                ? 'bg-primary text-primary-foreground' 
-                : 'bg-muted text-muted-foreground hover:text-foreground'
+                ? 'bg-slate-900 text-white' 
+                : 'text-slate-500 hover:text-slate-900'
             }`}
           >
             Tonight
           </button>
           <button
             onClick={() => setViewMode('weekend')}
-            className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
+            className={`px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider transition-colors rounded-sm ${
               viewMode === 'weekend' 
-                ? 'bg-primary text-primary-foreground' 
-                : 'bg-muted text-muted-foreground hover:text-foreground'
+                ? 'bg-slate-900 text-white' 
+                : 'text-slate-500 hover:text-slate-900'
             }`}
           >
             Weekend
@@ -900,21 +900,19 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
 
       {/* Pick of the Next 72 Hours - Featured slot for TONIGHT column */}
       {hasLaterPick && showTonightContent && (
-        <div className="mb-4 pb-3 border-b border-border">
-          <div className="flex items-center gap-1.5 mb-1">
-            <span className="text-sm">⭐</span>
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-amber-600">Pick of the Next 3 Days</p>
+        <div className="mb-4 pb-3 border-b border-slate-200">
+          <div className="flex items-baseline justify-between mb-2">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-slate-900">[PICK]</span>
+            {laterPick?.event_date && (
+              <span className="text-[10px] font-mono text-slate-400">{formatLaterPickDate(laterPick.event_date)}</span>
+            )}
           </div>
-          {laterPickReason && (
-            <p className="text-[9px] text-muted-foreground/70 mb-2 ml-5">{laterPickReason}</p>
-          )}
-          <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-3 border border-amber-100">
+          <div className="border-2 border-slate-900 rounded-sm p-3">
             {(() => {
               const venue = extractVenue(laterPick!.title);
               const displayName = venue || laterPick!.title;
               const displayPerformer = getDisplayPerformer(laterPick!);
               const showPerformer = shouldShowPerformer(displayName, displayPerformer);
-              const dateLabel = formatLaterPickDate(laterPick!.event_date);
               return (
                 <>
                   {laterPick!.original_url ? (
@@ -922,19 +920,22 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
                       href={laterPick!.original_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm font-semibold text-foreground leading-snug hover:text-amber-700 transition-colors block"
+                      className="text-sm font-semibold text-slate-900 leading-snug hover:text-slate-600 transition-colors block"
                     >
                       {displayName}
                     </a>
                   ) : (
-                    <p className="text-sm font-semibold text-foreground leading-snug">{displayName}</p>
+                    <p className="text-sm font-semibold text-slate-900 leading-snug">{displayName}</p>
                   )}
-                  <p className="text-[11px] text-muted-foreground mt-1">
-                    {showPerformer && displayPerformer}
-                    {showPerformer && ' · '}
-                    {dateLabel}
-                    {laterPick!.event_time && ` at ${laterPick!.event_time}`}
-                  </p>
+                  {showPerformer && displayPerformer && (
+                    <p className="text-xs text-slate-600 mt-1">{displayPerformer}</p>
+                  )}
+                  {laterPick!.event_time && (
+                    <p className="text-[10px] font-mono text-slate-400 mt-1">{laterPick!.event_time}</p>
+                  )}
+                  {laterPickReason && (
+                    <p className="text-[10px] font-mono text-slate-400 mt-2 uppercase">Why: {laterPickReason}</p>
+                  )}
                 </>
               );
             })()}
@@ -986,55 +987,48 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
         </div>
       )}
 
-      {/* Tonight Section - only show when in tonight mode */}
+      {/* Tonight Section - agenda style with mono times */}
       {showTonightContent && remainingTonightEvents.length > 0 ? (
         <>
           {!tonightsPick && (
-            <div className="flex items-center gap-2 mb-3">
-              <PartyPopper className="h-4 w-4 text-primary" />
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                Tonight
-              </p>
+            <div className="mb-3">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-slate-500">[TONIGHT]</span>
             </div>
           )}
           
-          <ul className="space-y-2.5">
+          <div className="space-y-1">
             {remainingTonightEvents.map((e) => {
               const venue = extractVenue(e.title);
               const displayName = venue || e.title;
               const displayPerformer = getDisplayPerformer(e);
               const showPerformer = shouldShowPerformer(displayName, displayPerformer);
               return (
-                <li key={e.id} className="flex gap-2 items-start">
-                  <span className="mt-0.5 text-sm">{getEventEmoji(e.title, e.metadata?.content_tags)}</span>
+                <div key={e.id} className="flex items-baseline gap-3 py-1.5 border-b border-slate-100 last:border-0">
+                  <span className="text-[11px] font-mono text-slate-400 w-12 shrink-0">
+                    {e.event_time || '—'}
+                  </span>
                   <div className="flex-1 min-w-0">
                     {e.original_url ? (
                       <a 
                         href={e.original_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm font-medium text-foreground leading-snug hover:text-primary transition-colors"
+                        className="text-sm text-slate-900 leading-snug hover:text-slate-600 transition-colors"
                         title={displayName}
                       >
                         {displayName}
                       </a>
                     ) : (
-                      <p className="text-sm font-medium text-foreground leading-snug" title={displayName}>
-                        {displayName}
-                      </p>
+                      <span className="text-sm text-slate-900 leading-snug">{displayName}</span>
                     )}
-                    {(showPerformer || e.event_time) && (
-                      <p className="text-[11px] text-muted-foreground mt-0.5">
-                        {showPerformer && displayPerformer}
-                        {showPerformer && e.event_time && ' · '}
-                        {e.event_time || 'Tonight'}
-                      </p>
+                    {showPerformer && displayPerformer && (
+                      <span className="text-xs text-slate-500 ml-1">· {displayPerformer}</span>
                     )}
                   </div>
-                </li>
+                </div>
               );
             })}
-          </ul>
+          </div>
         </>
       ) : showTonightContent && !hasLaterPick && remainingTonightEvents.length === 0 && !tonightsPick ? (
         <div className="text-center py-6">
@@ -1051,12 +1045,9 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
 
       {/* This Week Section (Weekday events) - only in tonight mode */}
       {showTonightContent && hasWeekdays && (
-        <div className={hasTonight ? "mt-4 pt-4 border-t border-border" : ""}>
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-sm">📅</span>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              This Week
-            </p>
+        <div className={hasTonight ? "mt-4 pt-4 border-t border-slate-200" : ""}>
+          <div className="mb-3">
+            <span className="text-[10px] font-mono uppercase tracking-widest text-slate-500">[THIS WEEK]</span>
           </div>
 
           {upcomingWeekdays.map(({ dayName }) => {
@@ -1065,44 +1056,40 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
             
             return (
               <div key={dayName} className="mb-3">
-                <p className="text-[11px] font-medium text-muted-foreground/70 mb-1.5">{dayName}</p>
-                <ul className="space-y-2">
+                <p className="text-[10px] font-mono text-slate-400 mb-1 uppercase">{dayName}</p>
+                <div className="space-y-1">
                   {dayEvents.map((e) => {
                     const venue = extractVenue(e.title);
                     const displayName = venue || e.title;
                     const displayPerformer = getDisplayPerformer(e);
                     const showPerformer = shouldShowPerformer(displayName, displayPerformer);
                     return (
-                      <li key={e.id} className="flex gap-2 items-start">
-                        <span className="mt-0.5 text-sm">{getEventEmoji(e.title, e.metadata?.content_tags)}</span>
+                      <div key={e.id} className="flex items-baseline gap-3 py-1 border-b border-slate-100 last:border-0">
+                        <span className="text-[11px] font-mono text-slate-400 w-12 shrink-0">
+                          {e.event_time || '—'}
+                        </span>
                         <div className="flex-1 min-w-0">
                           {e.original_url ? (
                             <a 
                               href={e.original_url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-sm font-medium text-foreground leading-snug hover:text-primary transition-colors"
+                              className="text-sm text-slate-900 leading-snug hover:text-slate-600 transition-colors"
                               title={displayName}
                             >
                               {displayName}
                             </a>
                           ) : (
-                            <p className="text-sm font-medium text-foreground leading-snug" title={displayName}>
-                              {displayName}
-                            </p>
+                            <span className="text-sm text-slate-900 leading-snug">{displayName}</span>
                           )}
-                          {(showPerformer || e.event_time) && (
-                            <p className="text-[11px] text-muted-foreground mt-0.5">
-                              {showPerformer && displayPerformer}
-                              {showPerformer && e.event_time && ' · '}
-                              {e.event_time}
-                            </p>
+                          {showPerformer && displayPerformer && (
+                            <span className="text-xs text-slate-500 ml-1">· {displayPerformer}</span>
                           )}
                         </div>
-                      </li>
+                      </div>
                     );
                   })}
-                </ul>
+                </div>
               </div>
             );
           })}
@@ -1111,97 +1098,86 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
 
       {/* Weekend Section - show in tonight mode (below other content) OR exclusively in weekend mode */}
       {((showTonightContent && hasWeekend && !showModeToggle) || showWeekendContent) && (
-        <div className={(showTonightContent && (hasTonight || hasWeekdays)) ? "mt-4 pt-4 border-t border-border" : ""}>
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-sm">🎸</span>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              This Weekend
-            </p>
+        <div className={(showTonightContent && (hasTonight || hasWeekdays)) ? "mt-4 pt-4 border-t border-slate-200" : ""}>
+          <div className="mb-3">
+            <span className="text-[10px] font-mono uppercase tracking-widest text-slate-500">[WEEKEND]</span>
           </div>
 
           {weekendEvents!.saturday.length > 0 && (
             <div className="mb-3">
-              <p className="text-[11px] font-medium text-muted-foreground/70 mb-1.5">Saturday</p>
-              <ul className="space-y-2">
+              <p className="text-[10px] font-mono text-slate-400 mb-1 uppercase">Saturday</p>
+              <div className="space-y-1">
                 {weekendEvents!.saturday.map((e) => {
                   const venue = extractVenue(e.title);
                   const displayName = venue || e.title;
                   const displayPerformer = getDisplayPerformer(e);
                   const showPerformer = shouldShowPerformer(displayName, displayPerformer);
                   return (
-                    <li key={e.id} className="flex gap-2 items-start">
-                      <span className="mt-0.5 text-sm">{getEventEmoji(e.title, e.metadata?.content_tags)}</span>
+                    <div key={e.id} className="flex items-baseline gap-3 py-1 border-b border-slate-100 last:border-0">
+                      <span className="text-[11px] font-mono text-slate-400 w-12 shrink-0">
+                        {e.event_time || '—'}
+                      </span>
                       <div className="flex-1 min-w-0">
                         {e.original_url ? (
                           <a 
                             href={e.original_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-sm font-medium text-foreground leading-snug hover:text-primary transition-colors"
+                            className="text-sm text-slate-900 leading-snug hover:text-slate-600 transition-colors"
                             title={displayName}
                           >
                             {displayName}
                           </a>
                         ) : (
-                          <p className="text-sm font-medium text-foreground leading-snug" title={displayName}>
-                            {displayName}
-                          </p>
+                          <span className="text-sm text-slate-900 leading-snug">{displayName}</span>
                         )}
-                        {(showPerformer || e.event_time) && (
-                          <p className="text-[11px] text-muted-foreground mt-0.5">
-                            {showPerformer && displayPerformer}
-                            {showPerformer && e.event_time && ' · '}
-                            {e.event_time}
-                          </p>
+                        {showPerformer && displayPerformer && (
+                          <span className="text-xs text-slate-500 ml-1">· {displayPerformer}</span>
                         )}
                       </div>
-                    </li>
+                    </div>
                   );
                 })}
-              </ul>
+              </div>
             </div>
           )}
 
           {weekendEvents!.sunday.length > 0 && (
             <div>
-              <p className="text-[11px] font-medium text-muted-foreground/70 mb-1.5">Sunday</p>
-              <ul className="space-y-2">
+              <p className="text-[10px] font-mono text-slate-400 mb-1 uppercase">Sunday</p>
+              <div className="space-y-1">
                 {weekendEvents!.sunday.map((e) => {
                   const venue = extractVenue(e.title);
                   const displayName = venue || e.title;
                   const displayPerformer = getDisplayPerformer(e);
                   const showPerformer = shouldShowPerformer(displayName, displayPerformer);
                   return (
-                    <li key={e.id} className="flex gap-2 items-start">
-                      <span className="mt-0.5 text-sm">{getEventEmoji(e.title, e.metadata?.content_tags)}</span>
+                    <div key={e.id} className="flex items-baseline gap-3 py-1 border-b border-slate-100 last:border-0">
+                      <span className="text-[11px] font-mono text-slate-400 w-12 shrink-0">
+                        {e.event_time || '—'}
+                      </span>
                       <div className="flex-1 min-w-0">
                         {e.original_url ? (
                           <a 
                             href={e.original_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-sm font-medium text-foreground leading-snug hover:text-primary transition-colors"
+                            className="text-sm text-slate-900 leading-snug hover:text-slate-600 transition-colors"
                             title={displayName}
                           >
                             {displayName}
                           </a>
                         ) : (
-                          <p className="text-sm font-medium text-foreground leading-snug" title={displayName}>
-                            {displayName}
-                          </p>
+                          <span className="text-sm text-slate-900 leading-snug">{displayName}</span>
                         )}
-                        {(showPerformer || e.event_time) && (
-                          <p className="text-[11px] text-muted-foreground mt-0.5">
-                            {showPerformer && displayPerformer}
-                            {showPerformer && e.event_time && ' · '}
-                            {e.event_time}
-                          </p>
+                        {showPerformer && displayPerformer && (
+                          <span className="text-xs text-slate-500 ml-1">· {displayPerformer}</span>
                         )}
                       </div>
-                    </li>
+                    </div>
                   );
                 })}
-              </ul>
+              </div>
             </div>
           )}
         </div>
@@ -1210,14 +1186,14 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
       {tonightOnly ? (
         <Link
           to="/nightlife"
-          className="mt-3 block text-xs text-primary hover:underline font-medium"
+          className="mt-3 block text-xs text-slate-600 hover:text-slate-900 transition-colors"
         >
           More happening tonight →
         </Link>
       ) : (
         <Link
           to="/lake-geneva?category=events"
-          className="mt-3 block text-xs text-primary hover:underline font-medium"
+          className="mt-3 block text-xs text-slate-600 hover:text-slate-900 transition-colors"
         >
           All events →
         </Link>

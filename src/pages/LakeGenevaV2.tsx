@@ -416,7 +416,7 @@ const LakeGenevaV2 = () => {
 
             {/* First 2 stories above the fold */}
             {!storiesLoading && stories.length > 0 && (
-              <div className="grid gap-6 sm:grid-cols-2 mb-8">
+              <div className="grid gap-5 sm:grid-cols-2 mb-6">
                 {stories.slice(0, 2).map((story: Story) => {
                   const time = getRelativeTime(story.publish_date || story.created_at);
                   let source: string | null = (story as any).source?.name || null;
@@ -443,24 +443,56 @@ const LakeGenevaV2 = () => {
               </div>
             )}
 
-            {/* Sponsor Section - NOW below first 2 stories */}
+            {/* Horizontal rule after lead stories */}
+            {!storiesLoading && stories.length > 2 && (
+              <div className="border-t border-slate-200 mb-6" />
+            )}
+
+            {/* Dense headline list - "More Today" */}
+            {!storiesLoading && stories.length > 2 && (
+              <div className="mb-8">
+                <h3 className="text-[10px] font-mono uppercase tracking-widest text-slate-500 mb-3">[MORE TODAY]</h3>
+                <div className="space-y-0">
+                  {stories.slice(2, 8).map((story: Story) => {
+                    const time = getRelativeTime(story.publish_date || story.created_at);
+                    return (
+                      <a 
+                        key={story.id}
+                        href={story.original_url || '#'}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-baseline gap-2 py-2 border-b border-slate-100 last:border-0 hover:bg-slate-50 -mx-2 px-2 transition-colors"
+                      >
+                        <span className="text-sm shrink-0">{getCategoryEmoji(story.category)}</span>
+                        <span className="text-sm text-slate-900 line-clamp-1 flex-1">{story.title}</span>
+                        <span className="text-[10px] font-mono text-slate-400 shrink-0">
+                          {time}
+                        </span>
+                      </a>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Sponsor Section - NOW below headline list */}
             {sponsor && (
               <div className="mb-8">
                 <PresentedBySectionCompact sponsor={sponsor} marketData={marketData} />
               </div>
             )}
 
-            {/* Remaining Stories Grid (after first 2) */}
+            {/* Full Story Cards (stories 9+) */}
             {storiesLoading ? (
-              <div className="text-center py-16 text-muted-foreground">Loading today's stories...</div>
+              <div className="text-center py-16 text-slate-500">Loading today's stories...</div>
             ) : stories.length === 0 ? (
               <div className="text-center py-16">
-                <p className="text-foreground font-medium mb-2">No new stories today</p>
-                <p className="text-muted-foreground text-sm">It's a quiet day — and that's usually a good thing.</p>
+                <p className="text-slate-900 font-medium mb-2">No new stories today</p>
+                <p className="text-slate-500 text-sm">It's a quiet day — and that's usually a good thing.</p>
               </div>
-            ) : stories.length > 2 ? (
-              <div className="grid gap-6 sm:grid-cols-2">
-                {stories.slice(2).map((story: Story, idx: number) => {
+            ) : stories.length > 8 ? (
+              <div className="grid gap-5 sm:grid-cols-2">
+                {stories.slice(8).map((story: Story, idx: number) => {
                   const time = getRelativeTime(story.publish_date || story.created_at);
                   let source: string | null = (story as any).source?.name || null;
                   if (!source && story.original_url) {
@@ -481,8 +513,8 @@ const LakeGenevaV2 = () => {
                         geoLabel={story.geo_label}
                         meta={{ time, source }}
                       />
-                      {/* Inline subscribe CTA after every 6th story (accounting for first 2) */}
-                      {(idx + 3) % 6 === 0 && idx < stories.length - 3 && (
+                      {/* Inline subscribe CTA after every 6th story */}
+                      {(idx + 1) % 6 === 0 && idx < stories.length - 9 && (
                         <div className="mt-5 sm:col-span-2">
                           <InlineSubscribeCTA />
                         </div>
