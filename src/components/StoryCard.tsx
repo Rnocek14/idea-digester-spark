@@ -148,13 +148,13 @@ export const StoryCard = ({
   
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-sm border border-slate-300 bg-white hover:border-slate-400 transition-colors">
-      <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
+      <div className="relative aspect-[2/1] overflow-hidden bg-slate-100">
         {url ? (
           <a href={url} target="_blank" rel="noopener noreferrer" className="block h-full w-full">
             <img
               src={imgSrc}
               alt={title}
-              className="h-full w-full object-cover object-top transition-transform duration-300 group-hover:scale-[1.02]"
+              className="h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-[1.02]"
               loading="lazy"
               onError={handleImageError}
             />
@@ -163,15 +163,14 @@ export const StoryCard = ({
           <img
             src={imgSrc}
             alt={title}
-            className="h-full w-full object-cover object-top transition-transform duration-300 group-hover:scale-[1.02]"
+            className="h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-[1.02]"
             loading="lazy"
             onError={handleImageError}
           />
         )}
         {category && (
-          <span className="absolute bottom-2 left-2 rounded-sm bg-black/70 px-2 py-0.5 text-[11px] text-white backdrop-blur pointer-events-none">
-            {getCategoryEmoji(category)}{" "}
-            <span className="uppercase tracking-wide">{category.replace('_', ' ')}</span>
+          <span className="absolute bottom-2 left-2 rounded-sm bg-black/70 px-2 py-0.5 text-[10px] text-white backdrop-blur pointer-events-none uppercase tracking-wider">
+            {getCategoryEmoji(category)} {category.replace('_', ' ')}
           </span>
         )}
       </div>
@@ -205,18 +204,18 @@ export const StoryCard = ({
             rel="noopener noreferrer"
             className="block"
           >
-            <h3 className="text-base sm:text-lg text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-2 leading-tight font-semibold">
+            <h3 className="text-base sm:text-lg text-slate-900 group-hover:text-slate-600 transition-colors line-clamp-2 leading-snug font-bold">
               {title}
             </h3>
           </a>
         ) : (
-          <h3 className="text-base sm:text-lg text-slate-900 line-clamp-2 leading-tight font-semibold">
+          <h3 className="text-base sm:text-lg text-slate-900 line-clamp-2 leading-snug font-bold">
             {title}
           </h3>
         )}
 
         {summary && (
-          <p className="mt-1 text-sm text-slate-600 line-clamp-3 leading-relaxed">
+          <p className="mt-1 text-[13px] text-slate-600 line-clamp-2 leading-relaxed">
             {summary}
           </p>
         )}

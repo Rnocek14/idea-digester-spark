@@ -902,7 +902,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
       {hasLaterPick && showTonightContent && (
         <div className="mb-4 pb-3 border-b border-slate-200">
           <div className="flex items-baseline justify-between mb-2">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-slate-900">[PICK]</span>
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-900">Pick</span>
             {laterPick?.event_date && (
               <span className="text-[10px] font-mono text-slate-400">{formatLaterPickDate(laterPick.event_date)}</span>
             )}
@@ -992,7 +992,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
         <>
           {!tonightsPick && (
             <div className="mb-3">
-              <span className="text-[10px] font-mono uppercase tracking-widest text-slate-500">[TONIGHT]</span>
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Tonight</span>
             </div>
           )}
           
@@ -1047,7 +1047,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
       {showTonightContent && hasWeekdays && (
         <div className={hasTonight ? "mt-4 pt-4 border-t border-slate-200" : ""}>
           <div className="mb-3">
-            <span className="text-[10px] font-mono uppercase tracking-widest text-slate-500">[THIS WEEK]</span>
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">This Week</span>
           </div>
 
           {upcomingWeekdays.map(({ dayName }) => {
@@ -1100,7 +1100,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
       {((showTonightContent && hasWeekend && !showModeToggle) || showWeekendContent) && (
         <div className={(showTonightContent && (hasTonight || hasWeekdays)) ? "mt-4 pt-4 border-t border-slate-200" : ""}>
           <div className="mb-3">
-            <span className="text-[10px] font-mono uppercase tracking-widest text-slate-500">[WEEKEND]</span>
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Weekend</span>
           </div>
 
           {weekendEvents!.saturday.length > 0 && (
