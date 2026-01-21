@@ -236,7 +236,7 @@ const LakeGenevaV2 = () => {
     getReferralSource();
   }, []);
 
-  // Fetch stories
+  // Fetch stories with freshness prioritization
   const { data: stories = [], isLoading: storiesLoading } = useQuery({
     queryKey: ["public-stories-v2"],
     queryFn: async () => {
@@ -256,22 +256,32 @@ const LakeGenevaV2 = () => {
         .gte("publish_date", fourteenDaysAgo)
         .lte("publish_date", now)
         .order("created_at", { ascending: false })
-        .limit(30);
+        .limit(40);
 
       if (error) throw error;
 
-      // Filter out past events and add fallback images
-      return (data || [])
+      const nowMs = Date.now();
+      const freshThresholdMs = 48 * 60 * 60 * 1000; // 48 hours
+
+      // Filter out past events, add fallback images, compute freshness
+      const processed = (data || [])
         .filter((story: any) => {
           if (story.event_date && story.event_date < todayStr) return false;
           return true;
         })
         .map((story: any) => {
-          if (!story.image_url) {
-            return { ...story, image_url: getCategoryFallbackImage(story.id, story.category) };
-          }
-          return story;
+          const createdMs = new Date(story.created_at).getTime();
+          const isFresh = (nowMs - createdMs) < freshThresholdMs;
+          const imageUrl = story.image_url || getCategoryFallbackImage(story.id, story.category);
+          return { ...story, image_url: imageUrl, _isFresh: isFresh };
         });
+
+      // Sort: fresh stories first, then by created_at
+      return processed.sort((a: any, b: any) => {
+        if (a._isFresh && !b._isFresh) return -1;
+        if (!a._isFresh && b._isFresh) return 1;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
     },
     staleTime: 60000,
   });
@@ -403,6 +413,17 @@ const LakeGenevaV2 = () => {
               </div>
             </div>
 
+            {/* Mobile: Quick "Tonight" teaser */}
+            <div className="mt-6 mb-6 p-4 bg-slate-50 border border-slate-200 rounded-sm">
+              <div className="flex items-baseline justify-between mb-3">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-slate-500">[TONIGHT]</span>
+                <a href="#later-mobile" className="text-[10px] font-mono text-blue-600 hover:underline">
+                  See all plans →
+                </a>
+              </div>
+              <NightlifeWidget tonightOnly />
+            </div>
+
             {/* LATEST Header - editorial style with underline rule */}
             <div className="pb-3 border-b-2 border-slate-900 mb-6">
               <div className="flex items-baseline justify-between">
@@ -482,13 +503,24 @@ const LakeGenevaV2 = () => {
               </div>
             )}
 
+            {/* Quiet day notice - shows when lead stories are stale */}
+            {!storiesLoading && stories.length > 0 && stories.filter((s: any) => s._isFresh).length < 2 && (
+              <div className="text-center py-8 mb-6 bg-slate-50 border border-slate-200 rounded-sm">
+                <p className="text-slate-600 text-sm mb-1">It's a quiet day in Lake Geneva</p>
+                <p className="text-slate-400 text-xs">— and that's usually a good thing.</p>
+                <p className="text-[10px] font-mono text-slate-400 mt-4 uppercase tracking-wider">
+                  Recent stories below ↓
+                </p>
+              </div>
+            )}
+
             {/* Full Story Cards (stories 9+) */}
             {storiesLoading ? (
               <div className="text-center py-16 text-slate-500">Loading today's stories...</div>
             ) : stories.length === 0 ? (
               <div className="text-center py-16">
-                <p className="text-slate-900 font-medium mb-2">No new stories today</p>
-                <p className="text-slate-500 text-sm">It's a quiet day — and that's usually a good thing.</p>
+                <p className="text-slate-900 font-medium mb-2">No stories yet</p>
+                <p className="text-slate-500 text-sm">Check back later for updates.</p>
               </div>
             ) : stories.length > 8 ? (
               <div className="grid gap-5 sm:grid-cols-2">
