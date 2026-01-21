@@ -274,10 +274,19 @@ const LakeGenevaV2 = () => {
           // Exclude nightlife vertical - belongs in LATER column
           const vertical = (story.metadata?.vertical || '').toLowerCase();
           if (vertical === 'nightlife') return false;
-          // Exclude pure events category without news value (music, concerts, etc.)
+          // Exclude pure events category without news value (music, concerts, nightlife, etc.)
           const category = (story.category || '').toLowerCase();
           const title = (story.title || '').toLowerCase();
-          if (category === 'events' && (title.includes('live music') || title.includes('concert') || title.includes('karaoke') || title.includes('trivia'))) return false;
+          // Filter entertainment events that belong in LATER column
+          const isNightlifeEvent = title.includes('live music') || 
+            title.includes('concert') || 
+            title.includes('karaoke') || 
+            title.includes('trivia') ||
+            title.includes("ladie's night") ||
+            title.includes("ladies night") ||
+            title.includes("dueling pianos") ||
+            title.includes("dinner and concert");
+          if (category === 'events' && isNightlifeEvent) return false;
           return true;
         })
         .map((story: any) => {
