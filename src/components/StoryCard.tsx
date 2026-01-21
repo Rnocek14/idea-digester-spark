@@ -37,9 +37,10 @@ const getCategoryEmoji = (category: string | null) => {
   }
 };
 
-const getGeoIcon = (tier: number | null | undefined) => {
-  if (tier === 1) return "🏙️";
-  if (tier === 2) return "🗺️";
+const getGeoInfo = (tier: number | null | undefined, label?: string | null) => {
+  if (tier === 1) return { icon: "🏙️", label: label || "Lake Geneva" };
+  if (tier === 2) return { icon: "🗺️", label: label || "County" };
+  if (tier === 0) return { icon: "📍", label: label || "WI" };
   return null;
 };
 
@@ -134,7 +135,7 @@ export const StoryCard = ({
   trustLabels,
   meta,
 }: StoryCardProps) => {
-  const geoIcon = getGeoIcon(geoTier);
+  const geoInfo = getGeoInfo(geoTier, geoLabel);
   const fallbackImage = getFallbackImage(category, title, id);
   const [imgSrc, setImgSrc] = useState(imageUrl || fallbackImage);
   
@@ -223,15 +224,15 @@ export const StoryCard = ({
           </p>
         )}
 
-        {(meta?.time || meta?.source || geoIcon) && (
+        {(meta?.time || meta?.source || geoInfo) && (
           <p className="mt-2 text-[13px] text-slate-600 flex flex-wrap items-center gap-x-1.5">
-            {geoIcon && geoLabel && (
-              <span className="inline-flex items-center gap-0.5 text-slate-500">
-                <span>{geoIcon}</span>
-                <span className="text-xs">{geoLabel}</span>
+            {geoInfo && (
+              <span className="inline-flex items-center gap-0.5">
+                <span>{geoInfo.icon}</span>
+                <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">{geoInfo.label}</span>
               </span>
             )}
-            {geoIcon && geoLabel && (meta?.source || meta?.time) && <span className="text-slate-400">•</span>}
+            {geoInfo && (meta?.source || meta?.time) && <span className="text-slate-400">•</span>}
             {meta?.source && <span>{meta.source}</span>}
             {meta?.source && meta?.time && <span className="text-slate-400">•</span>}
             {meta?.time && <span className="text-slate-500">{meta.time}</span>}
