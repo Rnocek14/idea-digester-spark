@@ -240,79 +240,146 @@ const LakeGenevaV2 = () => {
     getReferralSource();
   }, []);
 
-  // Fetch stories with freshness prioritization
+  // Phase 1 Config: Smart geo_tier expansion with caps
+  const TIER_0_CAP_PERCENT = 0.30; // Max 30% regional content
+  const MIN_FEED_ITEMS = 12; // Thin-feed threshold
+  const EXTENDED_WINDOW_DAYS = 21; // Fallback window
+
+  // Fetch stories with priority ordering + tier-0 cap + thin-feed fallback
   const { data: stories = [], isLoading: storiesLoading } = useQuery({
     queryKey: ["public-stories-v2"],
     queryFn: async () => {
-      // Commit A: Extended window (14 days) + higher limit (60)
-      const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
+      const nowMs = Date.now();
+      const twoWeeksAgo = new Date(nowMs - 14 * 24 * 60 * 60 * 1000).toISOString();
+      const threeWeeksAgo = new Date(nowMs - EXTENDED_WINDOW_DAYS * 24 * 60 * 60 * 1000).toISOString();
       const now = new Date().toISOString();
       const todayStr = new Date().toISOString().split('T')[0];
+      const freshThresholdMs = 48 * 60 * 60 * 1000; // 48 hours
 
+      // Helper: filter and process stories
+      const processStories = (data: any[]) => {
+        return data
+          .filter((story: any) => {
+            // Exclude past events
+            if (story.event_date && story.event_date < todayStr) return false;
+            // Exclude nightlife vertical
+            const vertical = (story.metadata?.vertical || '').toLowerCase();
+            if (vertical === 'nightlife') return false;
+            
+            const category = (story.category || '').toLowerCase();
+            // Normalize curly apostrophes to straight
+            const title = (story.title || '').toLowerCase().replace(/['']/g, "'");
+            
+            // Pure entertainment patterns → LATER column only
+            const isPureEntertainment = 
+              title.includes('live music') || 
+              title.includes('concert at') ||
+              title.includes('music at') ||
+              title.includes('music @') ||
+              title.includes('band at') ||
+              title.includes('karaoke') || 
+              title.includes('trivia') ||
+              title.includes('open mic') ||
+              title.includes('dj at') ||
+              title.includes("ladies' night") ||
+              title.includes("ladies night") ||
+              title.includes("dueling pianos");
+            
+            if (category === 'events' && isPureEntertainment) return false;
+            return true;
+          })
+          .map((story: any) => {
+            const createdMs = new Date(story.created_at).getTime();
+            const isFresh = (nowMs - createdMs) < freshThresholdMs;
+            const imageUrl = story.image_url || getCategoryFallbackImage(story.id, story.category);
+            // Normalize title - fix HTML entities + curly quotes
+            const normalizedTitle = (story.title || '')
+              .replace(/&#8217;/g, "'")
+              .replace(/&#8216;/g, "'")
+              .replace(/['']/g, "'")
+              .replace(/&#8220;/g, '"')
+              .replace(/&#8221;/g, '"')
+              .replace(/[""]/g, '"');
+            return { ...story, title: normalizedTitle, image_url: imageUrl, _isFresh: isFresh };
+          });
+      };
+
+      // Fetch: include geo_tier 0-2 (was 1-2)
       const { data, error } = await supabase
         .from("content_queue")
         .select("*, source:sources(name)")
         .in("status", ["published", "auto_published"])
         .eq("safety_level", "safe")
-        .gte("geo_tier", 1)
+        .gte("geo_tier", 0)  // Phase 1: Include regional
         .lte("geo_tier", 2)
         .gte("created_at", twoWeeksAgo)
         .gte("publish_date", twoWeeksAgo)
         .lte("publish_date", now)
+        .order("geo_tier", { ascending: true })  // Tier 1 first, then 2, then 0 (but 0 comes after in sort below)
         .order("created_at", { ascending: false })
-        .limit(60);
+        .limit(80);  // Fetch more to allow filtering
 
       if (error) throw error;
 
-      const nowMs = Date.now();
-      const freshThresholdMs = 48 * 60 * 60 * 1000; // 48 hours
+      let processed = processStories(data || []);
 
-      // Filter out past events AND nightlife/events content (those go to LATER column)
-      const processed = (data || [])
-        .filter((story: any) => {
-          // Exclude past events
-          if (story.event_date && story.event_date < todayStr) return false;
-          // Commit A: "Updates vs Plans" filter - default SHOW, exclude only pure entertainment
-          const vertical = (story.metadata?.vertical || '').toLowerCase();
-          if (vertical === 'nightlife') return false;
-          
-          const category = (story.category || '').toLowerCase();
-          const title = (story.title || '').toLowerCase().replace(/[']/g, "'");
-          
-          // Pure entertainment patterns → LATER column only
-          const isPureEntertainment = 
-            title.includes('live music') || 
-            title.includes('concert at') ||
-            title.includes('music at') ||
-            title.includes('music @') ||
-            title.includes('band at') ||
-            title.includes('karaoke') || 
-            title.includes('trivia') ||
-            title.includes('open mic') ||
-            title.includes('dj at') ||
-            title.includes("ladies' night") ||
-            title.includes("ladies night") ||
-            title.includes("dueling pianos");
-          
-          // Only exclude if it's an event AND pure entertainment
-          // This allows Winterfest, Spelling Bee, Council Meetings, etc. to stay
-          if (category === 'events' && isPureEntertainment) return false;
-          
-          return true;
-        })
-        .map((story: any) => {
-          const createdMs = new Date(story.created_at).getTime();
-          const isFresh = (nowMs - createdMs) < freshThresholdMs;
-          const imageUrl = story.image_url || getCategoryFallbackImage(story.id, story.category);
-          return { ...story, image_url: imageUrl, _isFresh: isFresh };
-        });
+      // Thin-feed fallback: if under threshold, expand window
+      if (processed.length < MIN_FEED_ITEMS) {
+        console.log(`[PHASE1] Thin feed (${processed.length} items), expanding to ${EXTENDED_WINDOW_DAYS}-day window`);
+        const { data: extendedData, error: extError } = await supabase
+          .from("content_queue")
+          .select("*, source:sources(name)")
+          .in("status", ["published", "auto_published"])
+          .eq("safety_level", "safe")
+          .gte("geo_tier", 0)
+          .lte("geo_tier", 2)
+          .gte("created_at", threeWeeksAgo)
+          .gte("publish_date", threeWeeksAgo)
+          .lte("publish_date", now)
+          .order("geo_tier", { ascending: true })
+          .order("created_at", { ascending: false })
+          .limit(100);
 
-      // Sort: fresh stories first, then by created_at
-      return processed.sort((a: any, b: any) => {
+        if (!extError && extendedData) {
+          processed = processStories(extendedData);
+        }
+      }
+
+      // Sort: hyperlocal (tier 1-2) first, then fresh, then recency
+      // Custom sort: tier 1 → tier 2 → tier 0, within each: fresh first, then by date
+      const sorted = processed.sort((a: any, b: any) => {
+        // Tier priority: 1 < 2 < 0 (we want 1 first, then 2, then 0)
+        const tierPriority = (t: number | null) => {
+          if (t === 1) return 0;
+          if (t === 2) return 1;
+          return 2; // tier 0 or null goes last
+        };
+        const tierDiff = tierPriority(a.geo_tier) - tierPriority(b.geo_tier);
+        if (tierDiff !== 0) return tierDiff;
+        
+        // Within same tier: fresh first
         if (a._isFresh && !b._isFresh) return -1;
         if (!a._isFresh && b._isFresh) return 1;
+        
+        // Then by recency
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
+
+      // Apply tier-0 cap: max 30% of feed can be regional
+      const hyperlocal = sorted.filter((s: any) => s.geo_tier === 1 || s.geo_tier === 2);
+      const regional = sorted.filter((s: any) => s.geo_tier === 0 || s.geo_tier === null);
+      
+      const maxRegional = Math.floor(hyperlocal.length * (TIER_0_CAP_PERCENT / (1 - TIER_0_CAP_PERCENT)));
+      const cappedRegional = regional.slice(0, Math.max(maxRegional, 3)); // At least 3 regional if available
+      
+      const finalFeed = [...hyperlocal, ...cappedRegional];
+
+      // Dev logging
+      if (import.meta.env.DEV) {
+        console.log(`[PHASE1] Feed composition: ${hyperlocal.length} hyperlocal + ${cappedRegional.length}/${regional.length} regional (${Math.round(cappedRegional.length / finalFeed.length * 100)}% tier-0)`);
+      }
+
+      return finalFeed;
     },
     staleTime: 60000,
   });
