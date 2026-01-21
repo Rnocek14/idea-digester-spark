@@ -266,10 +266,18 @@ const LakeGenevaV2 = () => {
       const nowMs = Date.now();
       const freshThresholdMs = 48 * 60 * 60 * 1000; // 48 hours
 
-      // Filter out past events, add fallback images, compute freshness
+      // Filter out past events AND nightlife/events content (those go to LATER column)
       const processed = (data || [])
         .filter((story: any) => {
+          // Exclude past events
           if (story.event_date && story.event_date < todayStr) return false;
+          // Exclude nightlife vertical - belongs in LATER column
+          const vertical = (story.metadata?.vertical || '').toLowerCase();
+          if (vertical === 'nightlife') return false;
+          // Exclude pure events category without news value (music, concerts, etc.)
+          const category = (story.category || '').toLowerCase();
+          const title = (story.title || '').toLowerCase();
+          if (category === 'events' && (title.includes('live music') || title.includes('concert') || title.includes('karaoke') || title.includes('trivia'))) return false;
           return true;
         })
         .map((story: any) => {
