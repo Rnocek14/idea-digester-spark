@@ -65,8 +65,8 @@ const LiveColumnHeader = () => {
 
   return (
     <div className="mb-4">
-      {/* Bold black LIVE header */}
-      <div className="bg-slate-900 text-white px-3 py-2 mb-3">
+      {/* Bold dark LIVE header - warmer than pure black */}
+      <div className="bg-slate-800 text-white px-3 py-2.5 mb-3 rounded-sm">
         <div className="flex items-center gap-2">
           <span className="text-[10px] font-mono uppercase tracking-widest">[LIVE]</span>
           <span className={`w-1.5 h-1.5 ${isActive ? 'bg-red-500 animate-pulse' : 'bg-emerald-400'}`} />
@@ -391,9 +391,9 @@ const LakeGenevaV2 = () => {
               <LiveColumnHeader />
               
               {/* Weather at top of LIVE */}
-              <div className="bg-white rounded-sm border border-slate-200 p-3">
+              <div className="bg-stone-50 rounded-md border border-slate-200 p-4">
                 <WeatherWidget />
-                <div className="mt-3 pt-3 border-t border-slate-100">
+                <div className="mt-4 pt-4 border-t border-slate-100">
                   <WeatherForecast />
                 </div>
               </div>
@@ -417,10 +417,10 @@ const LakeGenevaV2 = () => {
             </div>
 
             {/* Mobile: Quick "Tonight" teaser */}
-            <div className="mt-6 mb-6 p-4 bg-slate-50 border border-slate-200 rounded-sm">
-              <div className="flex items-baseline justify-between mb-3">
-                <span className="text-[10px] font-mono uppercase tracking-wider text-slate-500">[TONIGHT]</span>
-                <a href="#later-mobile" className="text-[10px] font-mono text-blue-600 hover:underline">
+            <div className="mt-6 mb-6 p-5 bg-stone-50 border border-slate-200 rounded-md">
+              <div className="flex items-baseline justify-between mb-4">
+                <span className="text-xs font-mono uppercase tracking-wider text-slate-600 font-semibold">[TONIGHT]</span>
+                <a href="#later-mobile" className="text-xs font-mono text-blue-600 hover:underline py-2 -my-2">
                   See all plans →
                 </a>
               </div>
@@ -507,10 +507,10 @@ const LakeGenevaV2 = () => {
               <div className="border-t border-slate-200 mb-6" />
             )}
 
-            {/* Dense headline list - "More Today" */}
+            {/* Dense headline list - "More Today" with improved touch targets */}
             {!storiesLoading && stories.length > 2 && (
               <div className="mb-8">
-                <h3 className="text-[10px] font-mono uppercase tracking-wider text-slate-500 mb-3">More Today</h3>
+                <h3 className="text-xs font-mono uppercase tracking-wider text-slate-600 mb-4 font-semibold">More Today</h3>
                 <div className="space-y-0">
                   {stories.slice(2, 8).map((story: Story) => {
                     const time = getRelativeTime(story.publish_date || story.created_at);
@@ -520,11 +520,11 @@ const LakeGenevaV2 = () => {
                         href={story.original_url || '#'}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-baseline gap-2 py-2 border-b border-slate-100 last:border-0 hover:bg-slate-50 -mx-2 px-2 transition-colors"
+                        className="flex items-baseline gap-3 py-2.5 border-b border-slate-100 last:border-0 hover:bg-stone-50 -mx-3 px-3 transition-colors min-h-[44px]"
                       >
-                        <span className="text-sm shrink-0">{getCategoryEmoji(story.category)}</span>
+                        <span className="text-base shrink-0">{getCategoryEmoji(story.category)}</span>
                         <span className="text-sm text-slate-900 line-clamp-1 flex-1">{story.title}</span>
-                        <span className="text-[10px] font-mono text-slate-400 shrink-0">
+                        <span className="text-xs font-mono text-slate-500 shrink-0">
                           {time}
                         </span>
                       </a>
@@ -543,10 +543,10 @@ const LakeGenevaV2 = () => {
 
             {/* Quiet day notice - shows when lead stories are stale */}
             {!storiesLoading && stories.length > 0 && stories.filter((s: any) => s._isFresh).length < 2 && (
-              <div className="text-center py-8 mb-6 bg-slate-50 border border-slate-200 rounded-sm">
-                <p className="text-slate-600 text-sm mb-1">It's a quiet day in Lake Geneva</p>
-                <p className="text-slate-400 text-xs">— and that's usually a good thing.</p>
-                <p className="text-[10px] font-mono text-slate-400 mt-4 uppercase tracking-wider">
+              <div className="text-center py-10 mb-6 bg-stone-50 border border-slate-200 rounded-md">
+                <p className="text-slate-700 text-base mb-1">It's a quiet day in Lake Geneva</p>
+                <p className="text-slate-500 text-sm">— and that's usually a good thing.</p>
+                <p className="text-xs font-mono text-slate-500 mt-5 uppercase tracking-wider">
                   Recent stories below ↓
                 </p>
               </div>

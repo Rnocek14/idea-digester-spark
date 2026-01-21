@@ -877,7 +877,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
   const showTonightContent = viewMode === 'tonight';
 
   return (
-    <aside className="rounded-sm border border-slate-200 bg-white p-4">
+    <aside className="rounded-md border border-slate-200 bg-white p-5">
       {/* Tonight | Weekend Toggle */}
       {showModeToggle && hasWeekend && (
         <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-200">
@@ -913,7 +913,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
               <span className="text-[10px] font-mono text-slate-400">{formatLaterPickDate(laterPick.event_date)}</span>
             )}
           </div>
-          <div className="border-2 border-black rounded-sm p-3 bg-slate-50">
+          <div className="border-2 border-black rounded-md p-4 bg-stone-50">
             {(() => {
               const venue = extractVenue(laterPick!.title);
               const displayName = venue || laterPick!.title;
@@ -926,21 +926,21 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
                       href={laterPick!.original_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm font-semibold text-slate-900 leading-snug hover:text-slate-600 transition-colors block"
+                      className="text-base font-semibold text-slate-900 leading-snug hover:text-slate-600 transition-colors block py-1"
                     >
                       {displayName}
                     </a>
                   ) : (
-                    <p className="text-sm font-semibold text-slate-900 leading-snug">{displayName}</p>
+                    <p className="text-base font-semibold text-slate-900 leading-snug">{displayName}</p>
                   )}
                   {showPerformer && displayPerformer && (
-                    <p className="text-xs text-slate-600 mt-1">{displayPerformer}</p>
+                    <p className="text-sm text-slate-600 mt-1.5">{displayPerformer}</p>
                   )}
                   {laterPick!.event_time && (
-                    <p className="text-[10px] font-mono text-slate-400 mt-1">{laterPick!.event_time}</p>
+                    <p className="text-xs font-mono text-slate-500 mt-1.5">{laterPick!.event_time}</p>
                   )}
                   {laterPickReason && (
-                    <p className="text-[10px] font-mono text-slate-400 mt-2 uppercase">Why: {laterPickReason}</p>
+                    <p className="text-xs font-mono text-slate-500 mt-2.5 uppercase">Why: {laterPickReason}</p>
                   )}
                 </>
               );
@@ -1019,8 +1019,8 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
               const displayPerformer = getDisplayPerformer(e);
               const showPerformer = shouldShowPerformer(displayName, displayPerformer);
               return (
-                <div key={e.id} className="flex items-baseline gap-3 py-1.5 border-b border-slate-100 last:border-0">
-                  <span className="text-[11px] font-mono text-slate-400 w-12 shrink-0">
+              <div key={e.id} className="flex items-baseline gap-3 py-2.5 border-b border-slate-100 last:border-0 min-h-[44px]">
+                  <span className="text-sm font-mono text-slate-500 w-14 shrink-0">
                     {e.event_time || '—'}
                   </span>
                   <div className="flex-1 min-w-0">
@@ -1029,16 +1029,16 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
                         href={e.original_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm text-slate-900 leading-snug hover:text-slate-600 transition-colors"
+                        className="text-base text-slate-900 leading-snug hover:text-slate-600 transition-colors"
                         title={displayName}
                       >
                         {displayName}
                       </a>
                     ) : (
-                      <span className="text-sm text-slate-900 leading-snug">{displayName}</span>
+                      <span className="text-base text-slate-900 leading-snug">{displayName}</span>
                     )}
                     {showPerformer && displayPerformer && (
-                      <span className="text-xs text-slate-500 ml-1">· {displayPerformer}</span>
+                      <span className="text-sm text-slate-600 ml-1.5">· {displayPerformer}</span>
                     )}
                   </div>
                 </div>
@@ -1080,8 +1080,8 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
                     const displayPerformer = getDisplayPerformer(e);
                     const showPerformer = shouldShowPerformer(displayName, displayPerformer);
                     return (
-                      <div key={e.id} className="flex items-baseline gap-3 py-1 border-b border-slate-100 last:border-0">
-                        <span className="text-[11px] font-mono text-slate-400 w-12 shrink-0">
+                      <div key={e.id} className="flex items-baseline gap-3 py-2 border-b border-slate-100 last:border-0 min-h-[40px]">
+                        <span className="text-sm font-mono text-slate-500 w-14 shrink-0">
                           {e.event_time || '—'}
                         </span>
                         <div className="flex-1 min-w-0">
@@ -1090,13 +1090,13 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
                               href={e.original_url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-sm text-slate-900 leading-snug hover:text-slate-600 transition-colors"
+                              className="text-base text-slate-900 leading-snug hover:text-slate-600 transition-colors"
                               title={displayName}
                             >
                               {displayName}
                             </a>
                           ) : (
-                            <span className="text-sm text-slate-900 leading-snug">{displayName}</span>
+                            <span className="text-base text-slate-900 leading-snug">{displayName}</span>
                           )}
                           {showPerformer && displayPerformer && (
                             <span className="text-xs text-slate-500 ml-1">· {displayPerformer}</span>
