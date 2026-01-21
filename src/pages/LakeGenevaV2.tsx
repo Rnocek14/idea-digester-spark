@@ -47,7 +47,7 @@ const NowColumnHeader = () => {
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-destructive"></span>
           </>
         ) : (
-          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
         )}
       </span>
       <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Now</h2>
@@ -114,7 +114,7 @@ const PresentedBySectionCompact = ({ sponsor, marketData }: { sponsor: any; mark
         <p className="text-[10px] text-muted-foreground mt-2 pt-2 border-t border-border">
           Lake Geneva homes
           {medianPriceText && <> · <span className="text-foreground font-medium">{medianPriceText}</span> median</>}
-          {yoyChangeText && <> · <span className={marketData?.yoy_change > 0 ? 'text-green-600' : ''}>{yoyChangeText}</span> YoY</>}
+          {yoyChangeText && <> · <span className={marketData?.yoy_change > 0 ? 'text-emerald-600' : ''}>{yoyChangeText}</span> YoY</>}
         </p>
       )}
     </div>
@@ -338,7 +338,7 @@ const LakeGenevaV2 = () => {
       <StickySubscribeBanner />
       
       {/* V2 Layout Toggle Banner */}
-      <div className="bg-blue-600 text-white text-center py-2 text-sm">
+      <div className="bg-primary text-primary-foreground text-center py-2 text-sm">
         <span className="font-medium">🧪 Experimental Layout</span>
         <span className="mx-2">·</span>
         <NavLink to="/" className="underline hover:no-underline">
@@ -346,20 +346,20 @@ const LakeGenevaV2 = () => {
         </NavLink>
       </div>
 
-      {/* Three-Column Layout - Full width with edge-to-edge on large screens */}
-      <div className="w-full max-w-[1600px] mx-auto px-4 lg:px-8 py-6">
-        <div className="grid grid-cols-1 xl:grid-cols-[300px_1fr_300px] gap-8">
+      {/* Three-Column Layout - Full width responsive with generous spacing */}
+      <div className="w-full px-4 sm:px-6 lg:px-10 xl:px-12 2xl:px-20 py-6">
+        <div className="grid grid-cols-1 xl:grid-cols-[minmax(240px,320px)_1fr_minmax(240px,320px)] gap-6 xl:gap-8 2xl:gap-14">
           
           {/* ========== LEFT COLUMN: NOW (LOCKED) ========== */}
           <aside className="hidden xl:block">
-            <div className="sticky top-20 space-y-4 overflow-hidden">
+            <div className="sticky top-20 space-y-5 overflow-hidden">
               {/* NOW Header with dynamic indicator */}
               <NowColumnHeader />
               
               {/* Weather at top of NOW */}
-              <div className="bg-white rounded-xl border border-slate-200 p-4">
+              <div className="bg-card rounded-xl border border-border p-4 shadow-sm">
                 <WeatherWidget />
-                <div className="mt-2">
+                <div className="mt-3">
                   <WeatherForecast />
                 </div>
               </div>
@@ -370,24 +370,24 @@ const LakeGenevaV2 = () => {
           </aside>
 
           {/* ========== CENTER COLUMN: TODAY (SCROLLABLE) ========== */}
-          <main className="min-w-0">
+          <main className="min-w-0 max-w-5xl 2xl:max-w-6xl mx-auto w-full">
             {/* Compact Hero Section - reduced to get story above fold */}
-            <section className="mb-4">
-              <div className="bg-white rounded-xl border border-slate-100 shadow-sm px-5 py-4">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 mb-0.5">
+            <section className="mb-5">
+              <div className="bg-card rounded-xl border border-border shadow-sm px-6 py-5">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground mb-1">
                   Good morning, Lake Geneva
                 </p>
-                <h1 className="font-semibold text-xl sm:text-2xl text-slate-900 leading-tight">
+                <h1 className="font-semibold text-xl sm:text-2xl text-foreground leading-tight">
                   Here's what's happening today
                 </h1>
               </div>
             </section>
 
             {/* Mobile: NOW section */}
-            <div className="xl:hidden mb-6">
+            <div className="xl:hidden mb-8">
               <NowColumnHeader />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-3">
-                <div className="bg-white rounded-xl border border-slate-200 p-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-4">
+                <div className="bg-card rounded-xl border border-border p-4 shadow-sm">
                   <WeatherWidget />
                 </div>
                 <LiveIncidentsSidebar />
@@ -395,14 +395,14 @@ const LakeGenevaV2 = () => {
             </div>
 
             {/* TODAY Header + First 2 Stories BEFORE sponsor */}
-            <div className="flex items-center gap-2 mb-4">
-              <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500">Today</h2>
-              <span className="text-xs text-slate-400">· Curated local news</span>
+            <div className="flex items-center gap-2 mb-5">
+              <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Today</h2>
+              <span className="text-xs text-muted-foreground/70">· Curated local news</span>
             </div>
 
             {/* First 2 stories above the fold */}
             {!storiesLoading && stories.length > 0 && (
-              <div className="grid gap-5 sm:grid-cols-2 mb-6">
+              <div className="grid gap-5 sm:gap-6 sm:grid-cols-2 mb-8">
                 {stories.slice(0, 2).map((story: Story) => {
                   const time = getRelativeTime(story.publish_date || story.created_at);
                   let source: string | null = (story as any).source?.name || null;
@@ -431,21 +431,21 @@ const LakeGenevaV2 = () => {
 
             {/* Sponsor Section - NOW below first 2 stories */}
             {sponsor && (
-              <div className="mb-6">
+              <div className="mb-8">
                 <PresentedBySectionCompact sponsor={sponsor} marketData={marketData} />
               </div>
             )}
 
             {/* Remaining Stories Grid (after first 2) */}
             {storiesLoading ? (
-              <div className="text-center py-16 text-slate-500">Loading today's stories...</div>
+              <div className="text-center py-16 text-muted-foreground">Loading today's stories...</div>
             ) : stories.length === 0 ? (
               <div className="text-center py-16">
-                <p className="text-slate-600 font-medium mb-2">No new stories today</p>
-                <p className="text-slate-500 text-sm">It's a quiet day — and that's usually a good thing.</p>
+                <p className="text-foreground font-medium mb-2">No new stories today</p>
+                <p className="text-muted-foreground text-sm">It's a quiet day — and that's usually a good thing.</p>
               </div>
             ) : stories.length > 2 ? (
-              <div className="grid gap-5 sm:grid-cols-2">
+              <div className="grid gap-5 sm:gap-6 sm:grid-cols-2">
                 {stories.slice(2).map((story: Story, idx: number) => {
                   const time = getRelativeTime(story.publish_date || story.created_at);
                   let source: string | null = (story as any).source?.name || null;
@@ -485,13 +485,13 @@ const LakeGenevaV2 = () => {
             </div>
 
             {/* Subscribe Section */}
-            <section id="subscribe" className="mt-12 py-10 border-t border-slate-200">
+            <section id="subscribe" className="mt-14 py-12 border-t border-border">
               <div className="max-w-md mx-auto text-center">
-                <h2 className="text-xl font-semibold text-slate-900 mb-2">Get the Brief in your inbox</h2>
-                <p className="text-sm text-slate-600 mb-4">
+                <h2 className="text-xl font-semibold text-foreground mb-2">Get the Brief in your inbox</h2>
+                <p className="text-sm text-muted-foreground mb-5">
                   Join locals who start their day with Lake Geneva Brief — free, 5-minute read.
                 </p>
-                <form onSubmit={handleSubscribe} className="flex gap-2">
+                <form onSubmit={handleSubscribe} className="flex gap-3">
                   <Input
                     type="email"
                     placeholder="you@example.com"
@@ -509,11 +509,11 @@ const LakeGenevaV2 = () => {
 
           {/* ========== RIGHT COLUMN: TONIGHT (LOCKED) ========== */}
           <aside className="hidden xl:block">
-            <div className="sticky top-20 space-y-4 overflow-hidden">
+            <div className="sticky top-20 space-y-5 overflow-hidden">
               {/* TONIGHT Header with divider */}
-              <div className="flex items-center gap-2 px-1 pb-2 border-b border-slate-100">
+              <div className="flex items-center gap-2 px-1 pb-3 border-b border-border">
                 <span className="text-base">🌙</span>
-                <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500">Tonight</h2>
+                <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Tonight</h2>
               </div>
               
               {/* Nightlife Widget - Tonight Only with Tonight's Pick */}
@@ -523,10 +523,10 @@ const LakeGenevaV2 = () => {
         </div>
 
         {/* Mobile: TONIGHT section */}
-        <div className="xl:hidden mt-8">
-          <div className="flex items-center gap-2 mb-3 pb-2 border-b border-slate-100">
+        <div className="xl:hidden mt-10">
+          <div className="flex items-center gap-2 mb-4 pb-3 border-b border-border">
             <span className="text-base">🌙</span>
-            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500">Tonight</h2>
+            <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Tonight</h2>
           </div>
           <NightlifeWidget tonightOnly showTonightsPick />
         </div>
