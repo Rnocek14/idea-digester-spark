@@ -243,8 +243,8 @@ const LakeGenevaV2 = () => {
   const { data: stories = [], isLoading: storiesLoading } = useQuery({
     queryKey: ["public-stories-v2"],
     queryFn: async () => {
-      const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-      const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
+      // Commit A: Extended window (14 days) + higher limit (60)
+      const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
       const now = new Date().toISOString();
       const todayStr = new Date().toISOString().split('T')[0];
 
@@ -255,11 +255,11 @@ const LakeGenevaV2 = () => {
         .eq("safety_level", "safe")
         .gte("geo_tier", 1)
         .lte("geo_tier", 2)
-        .gte("created_at", weekAgo)
-        .gte("publish_date", fourteenDaysAgo)
+        .gte("created_at", twoWeeksAgo)
+        .gte("publish_date", twoWeeksAgo)
         .lte("publish_date", now)
         .order("created_at", { ascending: false })
-        .limit(40);
+        .limit(60);
 
       if (error) throw error;
 
@@ -271,23 +271,32 @@ const LakeGenevaV2 = () => {
         .filter((story: any) => {
           // Exclude past events
           if (story.event_date && story.event_date < todayStr) return false;
-          // Exclude nightlife vertical - belongs in LATER column
+          // Commit A: "Updates vs Plans" filter - default SHOW, exclude only pure entertainment
           const vertical = (story.metadata?.vertical || '').toLowerCase();
           if (vertical === 'nightlife') return false;
-          // Exclude pure events category without news value (music, concerts, nightlife, etc.)
+          
           const category = (story.category || '').toLowerCase();
-          // Normalize title: lowercase and replace curly apostrophes with straight ones
           const title = (story.title || '').toLowerCase().replace(/[']/g, "'");
-          // Filter entertainment events that belong in LATER column
-          const isNightlifeEvent = title.includes('live music') || 
-            title.includes('concert') || 
+          
+          // Pure entertainment patterns → LATER column only
+          const isPureEntertainment = 
+            title.includes('live music') || 
+            title.includes('concert at') ||
+            title.includes('music at') ||
+            title.includes('music @') ||
+            title.includes('band at') ||
             title.includes('karaoke') || 
             title.includes('trivia') ||
-            title.includes("ladie's night") ||
+            title.includes('open mic') ||
+            title.includes('dj at') ||
+            title.includes("ladies' night") ||
             title.includes("ladies night") ||
-            title.includes("dueling pianos") ||
-            title.includes("dinner and concert");
-          if (category === 'events' && isNightlifeEvent) return false;
+            title.includes("dueling pianos");
+          
+          // Only exclude if it's an event AND pure entertainment
+          // This allows Winterfest, Spelling Bee, Council Meetings, etc. to stay
+          if (category === 'events' && isPureEntertainment) return false;
+          
           return true;
         })
         .map((story: any) => {
@@ -445,14 +454,14 @@ const LakeGenevaV2 = () => {
               <NightlifeWidget tonightOnly />
             </div>
 
-            {/* LATEST Header - editorial style with bold black underline */}
-            <div className="pb-3 border-b-4 border-black mb-6">
+            {/* TOP UPDATES Header - Commit A rename + blue accent */}
+            <div className="pb-3 border-b-4 border-blue-600 mb-6">
               <div className="flex items-baseline justify-between">
-                <h2 className="text-sm font-black uppercase tracking-[0.15em] text-black">LATEST</h2>
+                <h2 className="text-sm font-black uppercase tracking-[0.15em] text-black">TOP UPDATES</h2>
                 <span className="text-[10px] font-mono text-slate-500 uppercase">[LOCAL EDITION]</span>
               </div>
               <p className="text-[10px] font-mono text-slate-400 mt-1">
-                {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }).toUpperCase()}
+                What locals should know · {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).toUpperCase()}
               </p>
             </div>
 
@@ -530,7 +539,7 @@ const LakeGenevaV2 = () => {
               <div className="mb-8">
                 <h3 className="text-xs font-mono uppercase tracking-wider text-slate-600 mb-4 font-semibold">More Today</h3>
                 <div className="space-y-0">
-                  {stories.slice(2, 8).map((story: Story) => {
+                  {stories.slice(2, 12).map((story: Story) => {
                     const time = getRelativeTime(story.publish_date || story.created_at);
                     return (
                       <a 
@@ -578,9 +587,9 @@ const LakeGenevaV2 = () => {
                 <p className="text-slate-900 font-medium mb-2">No stories yet</p>
                 <p className="text-slate-500 text-sm">Check back later for updates.</p>
               </div>
-            ) : stories.length > 8 ? (
+            ) : stories.length > 12 ? (
               <div className="grid gap-5 sm:grid-cols-2">
-                {stories.slice(8).map((story: Story, idx: number) => {
+                {stories.slice(12).map((story: Story, idx: number) => {
                   const time = getRelativeTime(story.publish_date || story.created_at);
                   let source: string | null = (story as any).source?.name || null;
                   if (!source && story.original_url) {
@@ -602,7 +611,7 @@ const LakeGenevaV2 = () => {
                         meta={{ time, source }}
                       />
                       {/* Inline subscribe CTA after every 6th story */}
-                      {(idx + 1) % 6 === 0 && idx < stories.length - 9 && (
+                      {(idx + 1) % 6 === 0 && idx < stories.length - 13 && (
                         <div className="mt-5 sm:col-span-2">
                           <InlineSubscribeCTA />
                         </div>
