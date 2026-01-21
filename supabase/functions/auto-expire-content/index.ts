@@ -135,7 +135,7 @@ Deno.serve(async (req) => {
       (expiredTier0?.length || 0) +
       (expiredStale?.length || 0);
 
-    // Log activity
+    // Log activity with version canary for scheduler verification
     if (totalExpired > 0) {
       await supabase.from("activity_log").insert({
         actor_type: "system",
@@ -143,6 +143,7 @@ Deno.serve(async (req) => {
         action: "auto_expire",
         message: `Auto-expired ${totalExpired} content items`,
         details: {
+          version: AUTO_EXPIRE_VERSION,
           expired_by_event_date: expiredByEventDate?.length || 0,
           expired_holiday: expiredHolidayCount,
           expired_tier0_pending: expiredTier0?.length || 0,
