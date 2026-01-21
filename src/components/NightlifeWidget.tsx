@@ -436,9 +436,24 @@ function deduplicateByVenue(events: NightlifeEvent[], limit: number): NightlifeE
 interface NightlifeWidgetProps {
   tonightOnly?: boolean;
   showTonightsPick?: boolean;
+  showLaterPick?: boolean; // Show "Pick of the Next 72 Hours" for LATER column
 }
 
-export default function NightlifeWidget({ tonightOnly = false, showTonightsPick = false }: NightlifeWidgetProps) {
+// Helper to format event date for display
+function formatLaterPickDate(dateStr: string | null): string {
+  if (!dateStr) return 'Soon';
+  const eventDate = new Date(dateStr + 'T12:00:00');
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  
+  if (eventDate.toDateString() === today.toDateString()) return 'Today';
+  if (eventDate.toDateString() === tomorrow.toDateString()) return 'Tomorrow';
+  return eventDate.toLocaleDateString('en-US', { weekday: 'long' });
+}
+
+export default function NightlifeWidget({ tonightOnly = false, showTonightsPick = false, showLaterPick = false }: NightlifeWidgetProps) {
   const todayStr = getTodayDateString();
   const { saturday: saturdayStr, sunday: sundayStr } = getUpcomingWeekendDates();
 
@@ -686,18 +701,70 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
     enabled: upcomingWeekdays.length > 0,
   });
 
+  // Pick of the Next 72 Hours - query for best upcoming event across all days
+  const { data: laterPick } = useQuery({
+    queryKey: ["later-pick-72h", todayStr],
+    queryFn: async () => {
+      const now = new Date();
+      const in72Hours = new Date(now.getTime() + 72 * 60 * 60 * 1000);
+      const nowStr = now.toISOString().split('T')[0];
+      const in72HoursStr = in72Hours.toISOString().split('T')[0];
+      
+      // First try: events with performer data (higher quality)
+      const { data: withPerformer, error: perfError } = await supabase
+        .from("content_queue")
+        .select("id, title, event_date, event_time, performer, original_url, metadata, created_at")
+        .in("status", ["approved", "auto_published", "published"])
+        .eq("safety_level", "safe")
+        .eq("category", "events")
+        .contains("metadata", { verticals: ["nightlife"] })
+        .gte("event_date", nowStr)
+        .lte("event_date", in72HoursStr)
+        .not("performer", "is", null)
+        .order("event_date", { ascending: true })
+        .limit(1);
+      
+      if (!perfError && withPerformer && withPerformer.length > 0) {
+        return withPerformer[0] as NightlifeEvent;
+      }
+      
+      // Fallback: Get soonest event even without performer
+      const { data: fallback, error: fallbackError } = await supabase
+        .from("content_queue")
+        .select("id, title, event_date, event_time, performer, original_url, metadata, created_at")
+        .in("status", ["approved", "auto_published", "published"])
+        .eq("safety_level", "safe")
+        .eq("category", "events")
+        .contains("metadata", { verticals: ["nightlife"] })
+        .gte("event_date", nowStr)
+        .lte("event_date", in72HoursStr)
+        .order("event_date", { ascending: true })
+        .limit(1);
+      
+      if (fallbackError) {
+        console.error("[NightlifeWidget] Error loading 72h pick", fallbackError);
+        return null;
+      }
+      
+      return fallback?.[0] as NightlifeEvent || null;
+    },
+    staleTime: 300000,
+    enabled: showLaterPick,
+  });
+
   const hasTonight = tonightEvents && tonightEvents.length > 0;
   const hasWeekdays = !tonightOnly && weekdayEvents && Object.keys(weekdayEvents).length > 0;
   const hasWeekend = !tonightOnly && weekendEvents && (weekendEvents.saturday.length > 0 || weekendEvents.sunday.length > 0);
+  const hasLaterPick = showLaterPick && laterPick;
 
   // For tonightOnly mode, show component even if tonight is empty (with "nothing scheduled" message)
-  if (!tonightOnly && !hasTonight && !hasWeekdays && !hasWeekend) return null;
+  if (!tonightOnly && !hasLaterPick && !hasTonight && !hasWeekdays && !hasWeekend) return null;
 
   // Get Tonight's Pick - the "best" event for tonight (first one with a performer, or just first one)
   const tonightsPick = showTonightsPick && tonightEvents && tonightEvents.length > 0
     ? tonightEvents.find(e => e.performer || extractPerformerFromTitle(e.title)) || tonightEvents[0]
     : null;
-  
+
   // Remaining tonight events (excluding Tonight's Pick if showing)
   const remainingTonightEvents = showTonightsPick && tonightsPick
     ? tonightEvents?.filter(e => e.id !== tonightsPick.id) || []
@@ -705,7 +772,48 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
 
   return (
     <aside className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
-      {/* Tonight's Pick - Featured slot at top */}
+      {/* Pick of the Next 72 Hours - Featured slot for LATER column */}
+      {hasLaterPick && (
+        <div className="mb-4 pb-3 border-b border-slate-100">
+          <div className="flex items-center gap-1.5 mb-2">
+            <span className="text-sm">⭐</span>
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-amber-600">Pick of the Next 72 Hours</p>
+          </div>
+          <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-3 border border-amber-100">
+            {(() => {
+              const venue = extractVenue(laterPick!.title);
+              const displayName = venue || laterPick!.title;
+              const displayPerformer = getDisplayPerformer(laterPick!);
+              const showPerformer = shouldShowPerformer(displayName, displayPerformer);
+              const dateLabel = formatLaterPickDate(laterPick!.event_date);
+              return (
+                <>
+                  {laterPick!.original_url ? (
+                    <a 
+                      href={laterPick!.original_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm font-semibold text-slate-900 leading-snug hover:text-amber-700 transition-colors block"
+                    >
+                      {displayName}
+                    </a>
+                  ) : (
+                    <p className="text-sm font-semibold text-slate-900 leading-snug">{displayName}</p>
+                  )}
+                  <p className="text-[11px] text-slate-600 mt-1">
+                    {showPerformer && displayPerformer}
+                    {showPerformer && ' · '}
+                    {dateLabel}
+                    {laterPick!.event_time && ` at ${laterPick!.event_time}`}
+                  </p>
+                </>
+              );
+            })()}
+          </div>
+        </div>
+      )}
+
+      {/* Tonight's Pick - Featured slot at top (for tonightOnly mode) */}
       {tonightsPick && (
         <div className="mb-4 pb-3 border-b border-slate-100">
           <div className="flex items-center gap-1.5 mb-2">
