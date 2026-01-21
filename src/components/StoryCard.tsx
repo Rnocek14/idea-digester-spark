@@ -12,6 +12,7 @@ type StoryCardProps = {
   category: string | null;
   url: string | null;
   sponsored?: boolean;
+  featured?: boolean; // New: for lead story styling
   geoTier?: number | null;
   geoLabel?: string | null;
   sourceType?: 'sourced' | 'data_journalism' | 'original_reporting' | 'sponsored' | 'user_submitted' | null;
@@ -126,6 +127,7 @@ export const StoryCard = ({
   category,
   url,
   sponsored = false,
+  featured = false,
   geoTier,
   geoLabel,
   sourceType,
@@ -146,9 +148,10 @@ export const StoryCard = ({
   const isVerified = trustLabels?.includes('verified');
   const isDataJournalism = sourceType === 'data_journalism' || trustLabels?.includes('data_journalism');
   
+  // Remove card border, add subtle image radius for warmth
   return (
-    <article className="group flex h-full flex-col overflow-hidden rounded-sm border border-slate-300 bg-white hover:border-slate-400 transition-colors">
-      <div className="relative aspect-[2/1] overflow-hidden bg-slate-100">
+    <article className="group flex h-full flex-col overflow-hidden bg-white">
+      <div className={`relative overflow-hidden bg-slate-100 rounded ${featured ? 'aspect-[16/9]' : 'aspect-[2/1]'}`}>
         {url ? (
           <a href={url} target="_blank" rel="noopener noreferrer" className="block h-full w-full">
             <img
@@ -175,7 +178,7 @@ export const StoryCard = ({
         )}
       </div>
 
-      <div className="flex flex-1 flex-col gap-1.5 p-3">
+      <div className="flex flex-1 flex-col gap-1.5 pt-3">
         <div className="flex items-center gap-2 flex-wrap">
           {sponsored && (
             <span className="text-[11px] font-medium uppercase tracking-[0.16em] text-amber-700">
@@ -204,12 +207,12 @@ export const StoryCard = ({
             rel="noopener noreferrer"
             className="block"
           >
-            <h3 className="text-base sm:text-lg text-slate-900 group-hover:text-slate-600 transition-colors line-clamp-2 leading-snug font-bold">
+            <h3 className={`text-slate-900 group-hover:text-slate-600 transition-colors line-clamp-2 leading-snug font-bold ${featured ? 'text-xl sm:text-2xl' : 'text-base sm:text-lg'}`}>
               {title}
             </h3>
           </a>
         ) : (
-          <h3 className="text-base sm:text-lg text-slate-900 line-clamp-2 leading-snug font-bold">
+          <h3 className={`text-slate-900 line-clamp-2 leading-snug font-bold ${featured ? 'text-xl sm:text-2xl' : 'text-base sm:text-lg'}`}>
             {title}
           </h3>
         )}
