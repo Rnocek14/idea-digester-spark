@@ -191,8 +191,8 @@ const PipelineHealth = () => {
         .sort((a, b) => b.count - a.count)
         .slice(0, 10);
 
-      // Process source health - sources without consecutive_failures column
-      const sources = sourcesResult.data || [];
+      // Process source health
+      const sources = (sourcesResult.data || []) as Array<{ id: string; name: string; last_fetched_at: string | null; status: string }>;
       
       // Find stale sources (no content in 3+ days)
       const staleSources = sources
