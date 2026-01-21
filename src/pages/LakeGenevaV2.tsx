@@ -20,8 +20,8 @@ import { NavLink } from "@/components/NavLink";
 import { Link } from "react-router-dom";
 import { Home, Star, Phone } from "lucide-react";
 
-// Dynamic NOW column header - shows green when all clear, red when active incidents
-const NowColumnHeader = () => {
+// Dynamic LIVE column header - shows green when all clear, red when active incidents
+const LiveColumnHeader = () => {
   const { data: hasActiveIncidents } = useQuery({
     queryKey: ["has-active-incidents"],
     queryFn: async () => {
@@ -50,7 +50,7 @@ const NowColumnHeader = () => {
           <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
         )}
       </span>
-      <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Now</h2>
+      <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Live</h2>
     </div>
   );
 };
@@ -347,13 +347,13 @@ const LakeGenevaV2 = () => {
       <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-16 py-6">
         <div className="grid grid-cols-1 xl:grid-cols-[280px_1fr_280px] 2xl:grid-cols-[340px_1fr_340px] gap-6 xl:gap-12 2xl:gap-20">
           
-          {/* ========== LEFT COLUMN: NOW (LOCKED) ========== */}
+          {/* ========== LEFT COLUMN: LIVE (LOCKED) ========== */}
           <aside className="hidden xl:block">
             <div className="sticky top-20 space-y-5 overflow-hidden">
-              {/* NOW Header with dynamic indicator */}
-              <NowColumnHeader />
+              {/* LIVE Header with dynamic indicator */}
+              <LiveColumnHeader />
               
-              {/* Weather at top of NOW */}
+              {/* Weather at top of LIVE */}
               <div className="bg-card rounded-xl border border-border p-4 shadow-sm">
                 <WeatherWidget />
                 <div className="mt-3">
@@ -366,7 +366,7 @@ const LakeGenevaV2 = () => {
             </div>
           </aside>
 
-          {/* ========== CENTER COLUMN: TODAY (SCROLLABLE) ========== */}
+          {/* ========== CENTER COLUMN: LATEST (SCROLLABLE) ========== */}
           <main className="min-w-0 w-full">
             {/* Compact Hero Section - reduced to get story above fold */}
             <section className="mb-5">
@@ -375,14 +375,14 @@ const LakeGenevaV2 = () => {
                   Good morning, Lake Geneva
                 </p>
                 <h1 className="font-semibold text-xl sm:text-2xl text-foreground leading-tight">
-                  Here's what's happening today
+                  Here's what's happening
                 </h1>
               </div>
             </section>
 
-            {/* Mobile: NOW section */}
+            {/* Mobile: LIVE section */}
             <div className="xl:hidden mb-8">
-              <NowColumnHeader />
+              <LiveColumnHeader />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-4">
                 <div className="bg-card rounded-xl border border-border p-4 shadow-sm">
                   <WeatherWidget />
@@ -392,9 +392,10 @@ const LakeGenevaV2 = () => {
             </div>
 
             {/* TODAY Header + First 2 Stories BEFORE sponsor */}
+            {/* LATEST Header */}
             <div className="flex items-center gap-2 mb-5">
-              <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Today</h2>
-              <span className="text-xs text-muted-foreground/70">· Curated local news</span>
+              <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Latest</h2>
+              <span className="text-xs text-muted-foreground/70">· Your daily briefing</span>
             </div>
 
             {/* First 2 stories above the fold */}
@@ -504,28 +505,34 @@ const LakeGenevaV2 = () => {
             </section>
           </main>
 
-          {/* ========== RIGHT COLUMN: TONIGHT (LOCKED) ========== */}
+          {/* ========== RIGHT COLUMN: LATER (LOCKED) ========== */}
           <aside className="hidden xl:block">
             <div className="sticky top-20 space-y-5 overflow-hidden">
-              {/* TONIGHT Header with divider */}
-              <div className="flex items-center gap-2 px-1 pb-3 border-b border-border">
-                <span className="text-base">🌙</span>
-                <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Tonight</h2>
+              {/* LATER Header with time window */}
+              <div className="px-1 pb-3 border-b border-border">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">📅</span>
+                  <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Later</h2>
+                </div>
+                <p className="text-[10px] text-muted-foreground/70 mt-1 ml-6">Next 72 hours</p>
               </div>
               
-              {/* Nightlife Widget - Tonight Only with Tonight's Pick */}
-              <NightlifeWidget tonightOnly showTonightsPick />
+              {/* Nightlife Widget - Extended window */}
+              <NightlifeWidget />
             </div>
           </aside>
         </div>
 
-        {/* Mobile: TONIGHT section */}
+        {/* Mobile: LATER section */}
         <div className="xl:hidden mt-10">
-          <div className="flex items-center gap-2 mb-4 pb-3 border-b border-border">
-            <span className="text-base">🌙</span>
-            <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Tonight</h2>
+          <div className="mb-4 pb-3 border-b border-border">
+            <div className="flex items-center gap-2">
+              <span className="text-base">📅</span>
+              <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Later</h2>
+            </div>
+            <p className="text-[10px] text-muted-foreground/70 mt-1 ml-6">Next 72 hours</p>
           </div>
-          <NightlifeWidget tonightOnly showTonightsPick />
+          <NightlifeWidget />
         </div>
       </div>
     </PageShell>
