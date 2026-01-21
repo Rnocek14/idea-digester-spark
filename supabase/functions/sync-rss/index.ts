@@ -1068,6 +1068,7 @@ serve(async (req) => {
     // Skip tracking for diagnostics
     const skips: SkipEvent[] = [];
     const runId = crypto.randomUUID();
+    const cappedSourceIds = new Set<string>(); // Track sources that hit event cap (record once per run)
     
     function recordSkip(
       source: { id: string; name: string },
@@ -1178,7 +1179,11 @@ serve(async (req) => {
           
           if (remainingEventSlots <= 0) {
             console.log(`⏸️ Daily event cap reached for ${source.name}, skipping source entirely`);
-            recordSkip(source, "daily_event_cap_reached");
+            // Record once per source per run (guard against duplicates)
+            if (!cappedSourceIds.has(source.id)) {
+              cappedSourceIds.add(source.id);
+              recordSkip(source, "daily_event_cap_reached");
+            }
             continue;
           }
         }
@@ -1421,7 +1426,13 @@ serve(async (req) => {
           const rawContent = item.description || item.content || item.summary || "";
           const pubDate = item.pubDate || item.published || item.updated || new Date().toISOString();
 
-          if (!originalUrl || !title) {
+          if (!title) {
+            recordSkip(source, 'empty_title', { url: originalUrl });
+            result.skipped++;
+            continue;
+          }
+
+          if (!originalUrl) {
             recordSkip(source, 'missing_fields', { url: originalUrl, title });
             result.skipped++;
             continue;
