@@ -506,12 +506,13 @@ const LakeGenevaV2 = () => {
           {/* ========== RIGHT COLUMN: LATER (LOCKED) ========== */}
           <aside className="hidden xl:block">
             <div className="sticky top-20 space-y-5 overflow-hidden">
-              {/* LATER Header */}
+              {/* LATER Header with intent sublabel */}
               <div className="px-1 pb-3 border-b border-border">
                 <div className="flex items-center gap-2">
                   <span className="text-base">📅</span>
                   <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Later</h2>
                 </div>
+                <p className="text-[10px] text-muted-foreground/70 mt-1">Tonight & the next 3 days</p>
               </div>
               
               {/* Nightlife Widget - with Tonight/Weekend toggle */}
@@ -527,6 +528,7 @@ const LakeGenevaV2 = () => {
               <span className="text-base">📅</span>
               <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Later</h2>
             </div>
+            <p className="text-[10px] text-muted-foreground/70 mt-1">Tonight & the next 3 days</p>
           </div>
           <NightlifeWidget showLaterPick showModeToggle />
         </div>
