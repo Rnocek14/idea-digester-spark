@@ -60,19 +60,19 @@ export default function WeatherWidget() {
   if (!weather) return null;
 
   return (
-    <div className="flex items-center gap-3 rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 px-4 py-2.5 shadow-sm w-full">
+    <div className="flex items-center gap-3 w-full">
       <div className="flex items-center gap-2 shrink-0">
         {getWeatherIcon(weather.code)}
-        <span className="text-2xl font-semibold text-foreground">
+        <span className="text-xl font-semibold text-foreground font-mono">
           {Math.round(weather.temp)}°
         </span>
       </div>
-      <div className="h-6 w-px bg-border shrink-0" />
+      <div className="h-5 w-px bg-slate-200 shrink-0" />
       <div className="flex flex-col text-xs min-w-0">
-        <span className="text-muted-foreground truncate">{getWeatherLabel(weather.code)}</span>
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <span className="text-blue-600 font-medium">L: {Math.round(weather.low)}°</span>
-          <span className="text-orange-600 font-medium">H: {Math.round(weather.high)}°</span>
+        <span className="text-slate-600 truncate text-[11px]">{getWeatherLabel(weather.code)}</span>
+        <div className="flex items-center gap-2 font-mono text-[10px]">
+          <span className="text-blue-600">L:{Math.round(weather.low)}°</span>
+          <span className="text-orange-600">H:{Math.round(weather.high)}°</span>
         </div>
       </div>
     </div>
