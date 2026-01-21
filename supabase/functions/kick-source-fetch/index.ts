@@ -91,33 +91,31 @@ Deno.serve(async (req) => {
     });
 
     // Trigger the appropriate sync function based on source type
-    // For RSS sources, call sync-rss with source_id filter
+    // For RSS/scrape sources, fire-and-forget call to sync-rss (don't block on response)
     if (source.type === "rss" || source.type === "scrape") {
-      // Call sync-rss with the specific source_id
-      const syncResponse = await fetch(`${supabaseUrl}/functions/v1/sync-rss`, {
+      // Fire sync-rss without awaiting full response (non-blocking)
+      // The sync function itself will update last_fetched_at on success
+      fetch(`${supabaseUrl}/functions/v1/sync-rss`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${supabaseServiceKey}`,
         },
         body: JSON.stringify({ source_id: source_id }),
+      }).catch((err) => {
+        // Log but don't fail - the sync is fire-and-forget
+        console.warn(`sync-rss call failed for ${source_id}:`, err);
       });
 
-      const syncResult = await syncResponse.json();
-
-      // Update last_fetched_at on the source
-      await supabase
-        .from("sources")
-        .update({ last_fetched_at: new Date().toISOString() })
-        .eq("id", source_id);
-
+      // Return immediately - don't wait for sync to complete
+      // DO NOT update last_fetched_at here - only the actual sync should do that on success
       return new Response(
         JSON.stringify({ 
           ok: true, 
           source_id, 
           source_name: source.name,
           queued: true,
-          sync_result: syncResult,
+          message: "Fetch triggered (async)",
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );

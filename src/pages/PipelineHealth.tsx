@@ -124,7 +124,7 @@ const PipelineHealth = () => {
       const sevenDaysAgo = subDays(now, 7).toISOString();
       const threeDaysAgo = subDays(now, 3).toISOString();
 
-      // Parallel fetch all data
+      // Parallel fetch all data (skip stats via RPC for server-side aggregation)
       const [
         created1hResult,
         created24hResult,
@@ -136,8 +136,7 @@ const PipelineHealth = () => {
         topSourcesResult,
         sourcesResult,
         recentApprovalsResult,
-        // Skip data for causal hints (lightweight aggregate)
-        skips24hResult,
+        skipStatsResult,
       ] = await Promise.all([
         // Throughput: created counts
         supabase.from("content_queue").select("id", { count: "exact", head: true })
@@ -187,10 +186,8 @@ const PipelineHealth = () => {
           .gte("reviewed_at", twentyFourHoursAgo)
           .limit(100),
         
-        // Skip reasons for causal hints (24h only, just reason)
-        supabase.from("sync_skips")
-          .select("reason")
-          .gte("created_at", twentyFourHoursAgo),
+        // Skip stats via RPC (server-side aggregation - single source of truth)
+        supabase.rpc("get_skip_stats"),
       ]);
 
       // Process throughput
@@ -326,44 +323,52 @@ const PipelineHealth = () => {
         .sort((a, b) => b.hoursSinceLastFetch - a.hoursSinceLastFetch);
       
       // Compute totals BEFORE slicing for accurate badge counts
-      const criticalStarvingTotal = allStarvingSources.filter(s => s.isCritical).length;
+      // Split critical into "never fetched" vs "stale" for actionable messaging
+      const neverFetchedTotal = allStarvingSources.filter(s => s.neverFetched).length;
+      const criticalStaleTotal = allStarvingSources.filter(s => s.isCritical && !s.neverFetched).length;
+      const criticalStarvingTotal = neverFetchedTotal + criticalStaleTotal;
       const starvingTotal = allStarvingSources.length;
       const starvingSourcesTop = allStarvingSources.slice(0, 10);
 
-      // Process skip data for causal hints
-      // Defensive: handle both row-per-skip and aggregated {reason, count} formats
-      const skipsData = skips24hResult.data || [];
-      const skipTotal24h = skipsData.reduce((sum: number, s: any) => sum + (s.count ?? 1), 0);
-      const aiFailedCount = skipsData
-        .filter((s: any) => s.reason === 'ai_failed')
-        .reduce((sum: number, s: any) => sum + (s.count ?? 1), 0);
-      const eventCapCount = skipsData
-        .filter((s: any) => s.reason === 'daily_event_cap_reached')
-        .reduce((sum: number, s: any) => sum + (s.count ?? 1), 0);
+      // Process skip data from RPC (single source of truth)
+      const skipStats = (skipStatsResult.data || {}) as {
+        total24h?: number;
+        total7d?: number;
+        byReason24h?: Record<string, number>;
+        byReason7d?: Record<string, number>;
+        topSources24h?: Array<{ source_name: string; count: number }>;
+      };
+      const skipTotal24h = skipStats.total24h ?? 0;
+      const aiFailedCount = skipStats.byReason24h?.ai_failed ?? 0;
+      const eventCapCount = skipStats.byReason24h?.daily_event_cap_reached ?? 0;
       const aiFailedPct = safePct(aiFailedCount, skipTotal24h);
       const eventCapPct = safePct(eventCapCount, skipTotal24h);
 
       // Generate alerts
       const alerts: Array<{ type: 'critical' | 'warning' | 'info'; message: string }> = [];
       
-      // Per-source starvation alerts (more actionable than global)
-      // Use total counts (not sliced) for accurate thresholds
-      if (criticalStarvingTotal >= 1 && created24h >= 20) {
-        alerts.push({ type: 'critical', message: `${criticalStarvingTotal} source${criticalStarvingTotal > 1 ? 's' : ''} starving (24h+ without fetch)` });
-      } else if (starvingTotal >= 3 && created24h >= 20) {
+      // Per-source starvation alerts - distinguish "never fetched" from "stopped fetching"
+      if (neverFetchedTotal >= 1 && created24h >= 20) {
+        alerts.push({ type: 'critical', message: `${neverFetchedTotal} source${neverFetchedTotal > 1 ? 's' : ''} never fetched (check setup/URL/auth)` });
+      }
+      if (criticalStaleTotal >= 1 && created24h >= 20) {
+        alerts.push({ type: 'critical', message: `${criticalStaleTotal} source${criticalStaleTotal > 1 ? 's' : ''} starving (24h+ without fetch)` });
+      } else if (starvingTotal >= 3 && created24h >= 20 && neverFetchedTotal === 0) {
         alerts.push({ type: 'warning', message: `${starvingTotal} sources starving (6h+ without fetch)` });
       }
       
       // Global ingestion starvation: fire only when high 24h volume but sudden stop
-      // Add causal hint based on skip data and starving sources
       // Use consistent `now` for time checks (avoid drift, easier testing)
       const currentHour = now.getHours();
       const isBusinessHours = currentHour >= 8 && currentHour <= 22;
       
       if (created1h === 0 && created24h >= 20 && isBusinessHours) {
+        // Ordered causal hint selection for actionable messaging
         let causalHint = '';
-        if (criticalStarvingTotal >= 1) {
-          causalHint = ' (likely upstream: starving sources)';
+        if (criticalStaleTotal >= 1) {
+          causalHint = ' (likely upstream: sources stopped fetching)';
+        } else if (neverFetchedTotal >= 1) {
+          causalHint = ' (likely setup: sources never fetched)';
         } else if (aiFailedPct > 20) {
           causalHint = ' (likely AI failures)';
         } else if (eventCapPct > 15) {
