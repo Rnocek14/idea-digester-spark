@@ -21,6 +21,7 @@ const SKIP_REASON_LABELS: Record<string, { label: string; color: string }> = {
   missing_fields: { label: "Missing Fields", color: "bg-red-100 text-red-800" },
   daily_event_cap_reached: { label: "Event Cap Hit", color: "bg-amber-100 text-amber-800" },
   ai_failed: { label: "AI Failed", color: "bg-red-100 text-red-800" },
+  empty_title: { label: "Empty Title", color: "bg-red-100 text-red-800" },
 };
 
 interface SkipData {
@@ -127,13 +128,22 @@ export const SkipReasonsCard = () => {
                         (skipData.by24h.regional_nonlocal || 0);
   const junkCount = (skipData.by24h.junk_url || 0) + (skipData.by24h.blocked_title || 0);
 
+  const eventCapCount = skipData.by24h.daily_event_cap_reached || 0;
+  const aiFailedCount = skipData.by24h.ai_failed || 0;
+
   let dominantIssue = "";
   if (skipData.total24h > 0) {
     const duplicatePct = (duplicateCount / skipData.total24h) * 100;
     const nonlocalPct = (nonlocalCount / skipData.total24h) * 100;
     const junkPct = (junkCount / skipData.total24h) * 100;
+    const eventCapPct = (eventCapCount / skipData.total24h) * 100;
+    const aiFailedPct = (aiFailedCount / skipData.total24h) * 100;
 
-    if (duplicatePct > 50) {
+    if (eventCapPct > 15) {
+      dominantIssue = "Event cap engaged (expected on high-volume calendars)";
+    } else if (aiFailedPct > 20) {
+      dominantIssue = "AI processing failing - check OpenAI key/quota";
+    } else if (duplicatePct > 50) {
       dominantIssue = "Dedupe working - sources overlap";
     } else if (nonlocalPct > 40) {
       dominantIssue = "Geo-filters aggressive or sources noisy";
