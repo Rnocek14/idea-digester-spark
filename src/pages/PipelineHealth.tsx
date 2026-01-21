@@ -288,7 +288,7 @@ const PipelineHealth = () => {
             id: s.id,
             name: s.name,
             hoursSinceLastFetch,
-            isCritical: hoursSinceLastFetch >= 24,
+            isCritical: neverFetched || hoursSinceLastFetch >= 24, // Never fetched = always critical
             neverFetched,
           };
         })
@@ -301,10 +301,15 @@ const PipelineHealth = () => {
       const starvingSourcesTop = allStarvingSources.slice(0, 10);
 
       // Process skip data for causal hints
+      // Defensive: handle both row-per-skip and aggregated {reason, count} formats
       const skipsData = skips24hResult.data || [];
-      const skipTotal24h = skipsData.length;
-      const aiFailedCount = skipsData.filter((s: { reason: string }) => s.reason === 'ai_failed').length;
-      const eventCapCount = skipsData.filter((s: { reason: string }) => s.reason === 'daily_event_cap_reached').length;
+      const skipTotal24h = skipsData.reduce((sum: number, s: any) => sum + (s.count ?? 1), 0);
+      const aiFailedCount = skipsData
+        .filter((s: any) => s.reason === 'ai_failed')
+        .reduce((sum: number, s: any) => sum + (s.count ?? 1), 0);
+      const eventCapCount = skipsData
+        .filter((s: any) => s.reason === 'daily_event_cap_reached')
+        .reduce((sum: number, s: any) => sum + (s.count ?? 1), 0);
       const aiFailedPct = safePct(aiFailedCount, skipTotal24h);
       const eventCapPct = safePct(eventCapCount, skipTotal24h);
 
@@ -321,7 +326,11 @@ const PipelineHealth = () => {
       
       // Global ingestion starvation: fire only when high 24h volume but sudden stop
       // Add causal hint based on skip data and starving sources
-      if (created1h === 0 && created24h >= 20 && new Date().getHours() >= 8 && new Date().getHours() <= 22) {
+      // Use consistent `now` for time checks (avoid drift, easier testing)
+      const currentHour = now.getHours();
+      const isBusinessHours = currentHour >= 8 && currentHour <= 22;
+      
+      if (created1h === 0 && created24h >= 20 && isBusinessHours) {
         let causalHint = '';
         if (criticalStarvingTotal >= 1) {
           causalHint = ' (likely upstream: starving sources)';
@@ -336,7 +345,7 @@ const PipelineHealth = () => {
       }
       
       // Low volume info (not critical, just informational)
-      if (created1h === 0 && created24h < 20 && new Date().getHours() >= 8 && new Date().getHours() <= 22) {
+      if (created1h === 0 && created24h < 20 && isBusinessHours) {
         alerts.push({ type: 'info', message: 'Low ingestion pace today (24h volume < 20)' });
       }
       
