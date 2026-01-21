@@ -526,6 +526,9 @@ function calculatePickScore(event: NightlifeEvent, recentVenues?: string[]): { s
 // Mode for the toggle: tonight (default) or weekend
 type ViewMode = 'tonight' | 'weekend';
 
+// Shared styling for secondary section labels
+const secondaryLabel = "text-[10px] font-mono uppercase tracking-wider text-slate-500";
+
 export default function NightlifeWidget({ tonightOnly = false, showTonightsPick = false, showLaterPick = false, showModeToggle = false }: NightlifeWidgetProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('tonight');
   const todayStr = getTodayDateString();
@@ -900,9 +903,9 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
 
       {/* Pick of the Next 72 Hours - Featured slot for TONIGHT column */}
       {hasLaterPick && showTonightContent && (
-        <div className="mb-4 pb-4 border-b border-slate-200">
+        <div className="mb-3 pb-3">
           <div className="flex items-baseline justify-between mb-2">
-            <span className="text-[10px] font-mono uppercase tracking-wider text-slate-500">Pick</span>
+            <span className={secondaryLabel}>Pick</span>
             {laterPick?.event_date && (
               <span className="text-[10px] font-mono text-slate-400">{formatLaterPickDate(laterPick.event_date)}</span>
             )}
@@ -941,6 +944,11 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
             })()}
           </div>
         </div>
+      )}
+
+      {/* Divider between Pick and Tonight */}
+      {hasLaterPick && showTonightContent && remainingTonightEvents.length > 0 && (
+        <div className="my-3 border-t border-slate-200" />
       )}
 
       {/* Tonight's Pick - Featured slot at top (for tonightOnly mode) */}
@@ -992,7 +1000,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
         <>
           {!tonightsPick && (
             <div className="mb-3">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-slate-500">Tonight</span>
+              <span className={secondaryLabel}>Tonight</span>
             </div>
           )}
           
@@ -1047,7 +1055,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
       {showTonightContent && hasWeekdays && (
         <div className={hasTonight ? "mt-4 pt-4 border-t border-slate-200" : ""}>
           <div className="mb-3">
-            <span className="text-[10px] font-mono uppercase tracking-wider text-slate-500">This Week</span>
+            <span className={secondaryLabel}>This Week</span>
           </div>
 
           {upcomingWeekdays.map(({ dayName }) => {
@@ -1100,7 +1108,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
       {((showTonightContent && hasWeekend && !showModeToggle) || showWeekendContent) && (
         <div className={(showTonightContent && (hasTonight || hasWeekdays)) ? "mt-4 pt-4 border-t border-slate-200" : ""}>
           <div className="mb-3">
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Weekend</span>
+            <span className={secondaryLabel}>Weekend</span>
           </div>
 
           {weekendEvents!.saturday.length > 0 && (
