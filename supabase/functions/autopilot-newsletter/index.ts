@@ -210,6 +210,11 @@ serve(async (req) => {
     const automationEnabled = settings?.value?.enabled !== false;
     const newsletterEnabled = settings?.value?.newsletter_enabled !== false;
     
+    // Feature flag for V2 newsletter (default to v2 since it's now implemented)
+    const newsletterVersion = settings?.value?.newsletter_version || 'v2';
+    const useV2 = newsletterVersion === 'v2';
+    console.log(`📧 Newsletter version: ${newsletterVersion} (useV2=${useV2})`);
+    
     if (!automationEnabled || !newsletterEnabled) {
       console.log("⛔ Newsletter automation is disabled via kill switch");
       return new Response(
@@ -711,31 +716,47 @@ serve(async (req) => {
 
     console.log(`✅ Found ${advocates?.length || 0} advocates for newsletter`);
 
-    // Build newsletter using V2 structure (LIVE · LATEST · LATER)
-    console.log("📝 Building newsletter content (V2 structure)...");
-    const newsletter = buildNewsletterV2({
-      latestStories: selectedStories,
-      optimizedStories,
-      editionDate,
-      sponsor: headerSponsor,
-      evergreen: evergreenItems,
-      jobs: jobListings || [],
-      advocates: advocates || [],
-      // V2 additions
-      liveIncidents,
-      liveFetchFailed,
-      laterPick,
-      laterPickReason,
-      tonightSchedule,
-      weekendEvents,
-      isWeekendSendDay
-    });
+    // Build newsletter - route based on feature flag
+    let newsletter: { subject: string; preheader: string; htmlBody: string; textBody: string };
+    
+    if (useV2) {
+      console.log("📝 Building newsletter content (V2: LIVE · LATEST · LATER)...");
+      newsletter = buildNewsletterV2({
+        latestStories: selectedStories,
+        optimizedStories,
+        editionDate,
+        sponsor: headerSponsor,
+        evergreen: evergreenItems,
+        jobs: jobListings || [],
+        advocates: advocates || [],
+        // V2 additions
+        liveIncidents,
+        liveFetchFailed,
+        laterPick,
+        laterPickReason,
+        tonightSchedule,
+        weekendEvents,
+        isWeekendSendDay
+      });
+    } else {
+      console.log("📝 Building newsletter content (V1: legacy structure)...");
+      newsletter = buildNewsletter(
+        selectedStories,
+        optimizedStories,
+        editionDate,
+        headerSponsor,
+        evergreenItems,
+        jobListings || [],
+        advocates || []
+      );
+    }
 
     // Compute briefingStories for metadata (same logic as buildNewsletterV2)
     const briefingStories = selectedStories.filter(s => s.category !== "events").slice(0, 5);
     
-    // Save newsletter to database with V2 versioning
-    console.log("💾 Saving newsletter to database (V2)...");
+    // Save newsletter to database with version tagging
+    const versionTag = useV2 ? "v2_live_latest_later" : "v1_legacy";
+    console.log(`💾 Saving newsletter to database (${versionTag})...`);
     const { data: savedNewsletter, error: saveError } = await supabase
       .from("newsletters")
       .insert({
@@ -748,8 +769,8 @@ serve(async (req) => {
         story_ids: storyIds,
         story_count: selectedStories.length,
         auto_send_enabled: sendNow,
-        metadata: { 
-          version: "v2_live_latest_later", // FIX: Version tagging
+        metadata: useV2 ? { 
+          version: versionTag,
           categories: getCategoryCounts(selectedStories),
           generated_at: new Date().toISOString(),
           evergreen_count: evergreenItems.length,
@@ -764,6 +785,11 @@ serve(async (req) => {
           tonight_count: tonightSchedule.length,
           weekend_count: weekendEvents.length,
           is_weekend_send: isWeekendSendDay
+        } : {
+          version: versionTag,
+          categories: getCategoryCounts(selectedStories),
+          generated_at: new Date().toISOString(),
+          evergreen_count: evergreenItems.length
         }
       })
       .select()
@@ -797,20 +823,29 @@ serve(async (req) => {
     if (updateError) throw updateError;
     
     // Log newsletter generation to activity log
+    const versionLabel = useV2 ? 'V2' : 'V1';
+    const logMessage = useV2 
+      ? `Newsletter ${versionLabel} generated: ${briefingStories.length} LATEST, ${incidentCount} LIVE, ${tonightSchedule.length + (laterPick ? 1 : 0)} LATER`
+      : `Newsletter ${versionLabel} generated: ${selectedStories.length} stories`;
+    
     await supabase.from("activity_log").insert({
       action: "newsletter_generated",
       entity_type: "newsletter",
       entity_id: savedNewsletter.id,
       actor_type: "system",
-      message: `Newsletter V2 generated: ${briefingStories.length} LATEST, ${incidentCount} LIVE, ${tonightSchedule.length + (laterPick ? 1 : 0)} LATER`,
-      details: {
-        version: "v2_live_latest_later",
+      message: logMessage,
+      details: useV2 ? {
+        version: versionTag,
         live_count: incidentCount,
         live_fetch_failed: liveFetchFailed,
         latest_count: briefingStories.length,
         later_pick: laterPick?.title || null,
         tonight_count: tonightSchedule.length,
         weekend_count: weekendEvents.length,
+        story_ids: storyIds
+      } : {
+        version: versionTag,
+        story_count: selectedStories.length,
         story_ids: storyIds
       }
     });
