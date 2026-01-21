@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
-import { Music } from "lucide-react";
+import { PartyPopper } from "lucide-react";
 
-type MusicEvent = {
+type NightlifeEvent = {
   id: string;
   title: string;
   publish_date: string | null;
@@ -27,7 +27,7 @@ const DAY_NAME_TO_NUMBER: Record<string, number> = {
 };
 
 // Check if event matches a day using metadata.recurring_days (preferred) or title fallback
-function eventMatchesDay(event: MusicEvent, dayOfWeek: number): boolean {
+function eventMatchesDay(event: NightlifeEvent, dayOfWeek: number): boolean {
   const recurringDays = event.metadata?.recurring_days;
   
   // Use recurring_days from metadata if available
@@ -41,7 +41,7 @@ function eventMatchesDay(event: MusicEvent, dayOfWeek: number): boolean {
 
 // Check if event is fresh enough to show (for undated events without recurring_days)
 // Uses created_at (when ingested) rather than publish_date
-function isFreshEvent(event: MusicEvent, maxDays: number = 14): boolean {
+function isFreshEvent(event: NightlifeEvent, maxDays: number = 14): boolean {
   if (!event.created_at) return false;
   const createdAt = new Date(event.created_at);
   const now = new Date();
@@ -53,7 +53,7 @@ function isFreshEvent(event: MusicEvent, maxDays: number = 14): boolean {
 // Check if event is generic recurring (no specific days)
 // STRICT: Only show undated events as "tonight" if title contains "tonight" or "today"
 // This prevents multiple venue events from flooding the Tonight section
-function isGenericRecurring(event: MusicEvent): boolean {
+function isGenericRecurring(event: NightlifeEvent): boolean {
   const hasNightlifeVertical = event.metadata?.verticals?.includes('nightlife');
   if (!hasNightlifeVertical || !isFreshEvent(event, 14)) return false;
   
@@ -250,7 +250,7 @@ function isCleanPerformer(performer: string | null, title?: string): boolean {
 }
 
 // Get clean performer for display
-function getDisplayPerformer(event: MusicEvent): string | null {
+function getDisplayPerformer(event: NightlifeEvent): string | null {
   // First try to extract from title (most reliable for our data)
   const fromTitle = extractPerformerFromTitle(event.title);
   if (fromTitle) return fromTitle;
@@ -283,52 +283,28 @@ function shouldShowPerformer(displayedVenue: string, performer: string | null): 
   return true;
 }
 
-// Filter to only include actual live music events with useful info
-function isLiveMusicEvent(event: MusicEvent): boolean {
+// Filter to include all nightlife events (broadened from music-only)
+function isValidNightlifeEvent(event: NightlifeEvent): boolean {
   const title = event.title.toLowerCase();
   
-  // Hard exclude non-music events by title (ladies night kept - valid nightlife entertainment)
+  // Hard exclude low-value or non-entertainment events
   const excludeTitleKeywords = [
-    'trivia', 'comedy', 'penn & teller', 'penn and teller',
-    'bingo', 'game night', 'wine tasting', 'wine night', 'paint night',
-    'yoga', 'brunch', 'wonderful!', 'magic show', 'poker', 'fish fry',
+    'penn & teller', 'penn and teller', 'wonderful!', 'magic show',
     'new year', 'happy new year', 'thank you for attending', 'casino',
     'skeptics', 'las vegas headliners', 'carson hall', 'thank you',
-    'dance away winter blues', 'kids can dance'
+    'dance away winter blues', 'kids can dance', 'yoga', 'brunch'
   ];
   
   if (excludeTitleKeywords.some(kw => title.includes(kw))) return false;
   
-  // Check for music-related keywords in title (expanded list)
-  const musicKeywords = [
-    'live music', 'live:', 'band', 'dueling pianos', 'concert', 
-    'dj', 'karaoke', 'open mic', 'acoustic', 'jazz', 'blues',
-    'duo', 'trio', 'quartet', 'live @', 'live at'
-  ];
-  const hasMusicKeyword = musicKeywords.some(kw => title.includes(kw));
-  const hasMusicDayPattern = /music (monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i.test(title);
-  const hasCleanPerformer = getDisplayPerformer(event) !== null;
-  
-  // Accept event if it has music keyword OR clean performer
-  if (!hasMusicKeyword && !hasMusicDayPattern && !hasCleanPerformer) return false;
-  
-  // For events with music keywords, accept but guard against stale undated content
-  if (hasMusicKeyword || hasMusicDayPattern) {
-    // If no event_date, require ingestion within 14 days to prevent lingering forever
-    if (!event.event_date && event.created_at) {
-      const ageDays = (Date.now() - new Date(event.created_at).getTime()) / (1000 * 60 * 60 * 24);
-      if (ageDays > 14) return false;
-    }
-    return true;
+  // For undated events, require freshness to prevent lingering forever
+  if (!event.event_date && event.created_at) {
+    const ageDays = (Date.now() - new Date(event.created_at).getTime()) / (1000 * 60 * 60 * 24);
+    if (ageDays > 14) return false;
   }
   
-  // Fallback: require at least performer OR specific time
-  const displayPerformer = getDisplayPerformer(event);
-  const hasSpecificTime = event.event_time && 
-    !event.event_time.toLowerCase().includes('all day') &&
-    event.event_time.trim().length > 0;
-  
-  return displayPerformer !== null || hasSpecificTime;
+  // Accept all nightlife vertical events that pass the exclusion filter
+  return true;
 }
 
 function getEventEmoji(title: string, tags?: string[]): string {
@@ -417,9 +393,9 @@ function matchesRecurringDay(title: string, targetDayOfWeek: number): boolean {
   return targetNames.some(name => t.includes(name));
 }
 
-function deduplicateByVenue(events: MusicEvent[], limit: number): MusicEvent[] {
+function deduplicateByVenue(events: NightlifeEvent[], limit: number): NightlifeEvent[] {
   // Group events by normalized venue name
-  const eventsByVenue = new Map<string, MusicEvent[]>();
+  const eventsByVenue = new Map<string, NightlifeEvent[]>();
   
   for (const event of events) {
     const venue = extractVenue(event.title);
@@ -432,7 +408,7 @@ function deduplicateByVenue(events: MusicEvent[], limit: number): MusicEvent[] {
   }
   
   // For each venue, pick the event with most complete data
-  const uniqueEvents: MusicEvent[] = [];
+  const uniqueEvents: NightlifeEvent[] = [];
   for (const venueEvents of eventsByVenue.values()) {
     // Sort by data completeness: prefer events with performer AND time
     // Also consider if performer can be extracted from title
@@ -457,7 +433,7 @@ function deduplicateByVenue(events: MusicEvent[], limit: number): MusicEvent[] {
     .slice(0, limit);
 }
 
-export default function LiveMusicWidget() {
+export default function NightlifeWidget() {
   const todayStr = getTodayDateString();
   const { saturday: saturdayStr, sunday: sundayStr } = getUpcomingWeekendDates();
 
@@ -478,7 +454,7 @@ export default function LiveMusicWidget() {
         .limit(10);
 
       if (dateError) {
-        console.error("[LiveMusicWidget] Error loading tonight events by date", dateError);
+        console.error("[NightlifeWidget] Error loading tonight events by date", dateError);
       }
 
       // Also fetch recurring events (no event_date) that might match today's day of week
@@ -500,13 +476,13 @@ export default function LiveMusicWidget() {
 
       // Filter recurring events that match today's day of week
       const todayDayOfWeek = getTodayDayOfWeek();
-      const matchingRecurring = (recurringEvents as MusicEvent[] || []).filter(e => {
+      const matchingRecurring = (recurringEvents as NightlifeEvent[] || []).filter(e => {
         // Use metadata.recurring_days if available, fallback to title parsing
         return eventMatchesDay(e, todayDayOfWeek) || isGenericRecurring(e);
       });
 
       // Merge and deduplicate
-      const allEvents = [...(dateEvents || []), ...matchingRecurring] as MusicEvent[];
+      const allEvents = [...(dateEvents || []), ...matchingRecurring] as NightlifeEvent[];
       const seenIds = new Set<string>();
       const uniqueEvents = allEvents.filter(e => {
         if (seenIds.has(e.id)) return false;
@@ -514,9 +490,9 @@ export default function LiveMusicWidget() {
         return true;
       });
 
-      // Filter to only actual live music events
-      const musicOnly = uniqueEvents.filter(isLiveMusicEvent);
-      return deduplicateByVenue(musicOnly, 5);
+      // Filter to valid nightlife events
+      const filtered = uniqueEvents.filter(isValidNightlifeEvent);
+      return deduplicateByVenue(filtered, 5);
     },
     staleTime: 300000,
   });
@@ -580,10 +556,10 @@ export default function LiveMusicWidget() {
       // Filter recurring events by day of week using metadata.recurring_days or title fallback
       // NOTE: We do NOT use isGenericRecurring() here for weekend events
       // Generic recurring events only show in "Tonight" to prevent duplication across all sections
-      const satRecurring: MusicEvent[] = [];
-      const sunRecurring: MusicEvent[] = [];
+      const satRecurring: NightlifeEvent[] = [];
+      const sunRecurring: NightlifeEvent[] = [];
       
-      for (const event of (recurringEvents as MusicEvent[]) || []) {
+      for (const event of (recurringEvents as NightlifeEvent[]) || []) {
         // Only include events that explicitly match the day (via recurring_days or title)
         // NOT generic "fresh nightlife" events which already show in Tonight
         if (eventMatchesDay(event, 6)) {
@@ -595,11 +571,11 @@ export default function LiveMusicWidget() {
       }
 
       // Merge dated events with recurring events
-      const allSat = [...(satEvents as MusicEvent[] || []), ...satRecurring];
-      const allSun = [...(sunEvents as MusicEvent[] || []), ...sunRecurring];
+      const allSat = [...(satEvents as NightlifeEvent[] || []), ...satRecurring];
+      const allSun = [...(sunEvents as NightlifeEvent[] || []), ...sunRecurring];
 
       // Deduplicate by ID
-      const dedupeById = (events: MusicEvent[]): MusicEvent[] => {
+      const dedupeById = (events: NightlifeEvent[]): NightlifeEvent[] => {
         const seen = new Set<string>();
         return events.filter(e => {
           if (seen.has(e.id)) return false;
@@ -608,12 +584,12 @@ export default function LiveMusicWidget() {
         });
       };
 
-      const satMusic = dedupeById(allSat).filter(isLiveMusicEvent);
-      const sunMusic = dedupeById(allSun).filter(isLiveMusicEvent);
+      const satFiltered = dedupeById(allSat).filter(isValidNightlifeEvent);
+      const sunFiltered = dedupeById(allSun).filter(isValidNightlifeEvent);
 
       return {
-        saturday: deduplicateByVenue(satMusic, 4),
-        sunday: deduplicateByVenue(sunMusic, 4)
+        saturday: deduplicateByVenue(satFiltered, 4),
+        sunday: deduplicateByVenue(sunFiltered, 4)
       };
     },
     staleTime: 300000,
@@ -663,20 +639,20 @@ export default function LiveMusicWidget() {
       }
 
       // Group events by day of week
-      const eventsByDay: Record<string, MusicEvent[]> = {};
+      const eventsByDay: Record<string, NightlifeEvent[]> = {};
       
       for (const weekday of upcomingWeekdays) {
-        const matchingEvents: MusicEvent[] = [];
+        const matchingEvents: NightlifeEvent[] = [];
         
         // Add recurring events that match this day
-        for (const event of (recurringEvents as MusicEvent[]) || []) {
+        for (const event of (recurringEvents as NightlifeEvent[]) || []) {
           if (eventMatchesDay(event, weekday.dayOfWeek)) {
             matchingEvents.push(event);
           }
         }
         
         // Add one-off events with event_date matching this day
-        for (const event of (datedEvents as MusicEvent[]) || []) {
+        for (const event of (datedEvents as NightlifeEvent[]) || []) {
           if (event.event_date === weekday.dateStr) {
             matchingEvents.push(event);
           }
@@ -690,9 +666,9 @@ export default function LiveMusicWidget() {
           return true;
         });
         
-        // Filter to music events and deduplicate by venue
-        const musicOnly = uniqueEvents.filter(isLiveMusicEvent);
-        const deduped = deduplicateByVenue(musicOnly, 3);
+        // Filter to valid nightlife events and deduplicate by venue
+        const filtered = uniqueEvents.filter(isValidNightlifeEvent);
+        const deduped = deduplicateByVenue(filtered, 3);
         
         if (deduped.length > 0) {
           eventsByDay[weekday.dayName] = deduped;
@@ -717,9 +693,9 @@ export default function LiveMusicWidget() {
       {hasTonight && (
         <>
           <div className="flex items-center gap-2 mb-3">
-            <Music className="h-4 w-4 text-purple-600" />
+            <PartyPopper className="h-4 w-4 text-purple-600" />
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-              Live Tonight
+              Tonight
             </p>
           </div>
           
