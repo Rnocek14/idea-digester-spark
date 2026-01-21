@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
@@ -436,7 +437,8 @@ function deduplicateByVenue(events: NightlifeEvent[], limit: number): NightlifeE
 interface NightlifeWidgetProps {
   tonightOnly?: boolean;
   showTonightsPick?: boolean;
-  showLaterPick?: boolean; // Show "Pick of the Next 72 Hours" for LATER column
+  showLaterPick?: boolean; // Show "Pick of the Next 72 Hours" for TONIGHT column
+  showModeToggle?: boolean; // Show Tonight | Weekend toggle
 }
 
 // Helper to format event date for display
@@ -453,7 +455,43 @@ function formatLaterPickDate(dateStr: string | null): string {
   return eventDate.toLocaleDateString('en-US', { weekday: 'long' });
 }
 
-export default function NightlifeWidget({ tonightOnly = false, showTonightsPick = false, showLaterPick = false }: NightlifeWidgetProps) {
+// Calculate pick score for an event - higher is better
+function calculatePickScore(event: NightlifeEvent): number {
+  let score = 0;
+  const title = event.title.toLowerCase();
+  
+  // +3 if has performer (real performer field or extracted from title)
+  const hasPerformer = event.performer || extractPerformerFromTitle(event.title);
+  if (hasPerformer) score += 3;
+  
+  // +2 if has event_time
+  if (event.event_time) score += 2;
+  
+  // +2 if title has specific venue name (not just generic "live music")
+  const hasSpecificVenue = KNOWN_VENUES.some(v => title.includes(v.toLowerCase()));
+  if (hasSpecificVenue) score += 2;
+  
+  // -5 if title matches common low-value patterns
+  const lowValuePatterns = [
+    'live music at', 'live music every', 'featuring live', 
+    'music every', 'live entertainment'
+  ];
+  if (lowValuePatterns.some(p => title.includes(p) && !hasPerformer)) score -= 5;
+  
+  // -3 if title is too generic (no performer, no specific details)
+  if (!hasPerformer && title.length < 30) score -= 3;
+  
+  // +1 for events with more complete metadata
+  if (event.metadata?.content_tags?.length) score += 1;
+  
+  return score;
+}
+
+// Mode for the toggle: tonight (default) or weekend
+type ViewMode = 'tonight' | 'weekend';
+
+export default function NightlifeWidget({ tonightOnly = false, showTonightsPick = false, showLaterPick = false, showModeToggle = false }: NightlifeWidgetProps) {
+  const [viewMode, setViewMode] = useState<ViewMode>('tonight');
   const todayStr = getTodayDateString();
   const { saturday: saturdayStr, sunday: sundayStr } = getUpcomingWeekendDates();
 
@@ -701,7 +739,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
     enabled: upcomingWeekdays.length > 0,
   });
 
-  // Pick of the Next 72 Hours - query for best upcoming event across all days
+  // Pick of the Next 72 Hours - query for best upcoming event using scoring
   const { data: laterPick } = useQuery({
     queryKey: ["later-pick-72h", todayStr],
     queryFn: async () => {
@@ -710,26 +748,8 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
       const nowStr = now.toISOString().split('T')[0];
       const in72HoursStr = in72Hours.toISOString().split('T')[0];
       
-      // First try: events with performer data (higher quality)
-      const { data: withPerformer, error: perfError } = await supabase
-        .from("content_queue")
-        .select("id, title, event_date, event_time, performer, original_url, metadata, created_at")
-        .in("status", ["approved", "auto_published", "published"])
-        .eq("safety_level", "safe")
-        .eq("category", "events")
-        .contains("metadata", { verticals: ["nightlife"] })
-        .gte("event_date", nowStr)
-        .lte("event_date", in72HoursStr)
-        .not("performer", "is", null)
-        .order("event_date", { ascending: true })
-        .limit(1);
-      
-      if (!perfError && withPerformer && withPerformer.length > 0) {
-        return withPerformer[0] as NightlifeEvent;
-      }
-      
-      // Fallback: Get soonest event even without performer
-      const { data: fallback, error: fallbackError } = await supabase
+      // Fetch multiple candidates and score them
+      const { data: candidates, error } = await supabase
         .from("content_queue")
         .select("id, title, event_date, event_time, performer, original_url, metadata, created_at")
         .in("status", ["approved", "auto_published", "published"])
@@ -739,14 +759,29 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
         .gte("event_date", nowStr)
         .lte("event_date", in72HoursStr)
         .order("event_date", { ascending: true })
-        .limit(1);
+        .limit(10);
       
-      if (fallbackError) {
-        console.error("[NightlifeWidget] Error loading 72h pick", fallbackError);
+      if (error || !candidates?.length) {
+        console.error("[NightlifeWidget] Error loading 72h pick", error);
         return null;
       }
       
-      return fallback?.[0] as NightlifeEvent || null;
+      // Score candidates and pick the best one
+      const scored = (candidates as NightlifeEvent[]).map(e => ({
+        event: e,
+        score: calculatePickScore(e)
+      }));
+      
+      // Sort by score (highest first), then by date (soonest first)
+      scored.sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        // If same score, prefer soonest
+        const aDate = a.event.event_date || '';
+        const bDate = b.event.event_date || '';
+        return aDate.localeCompare(bDate);
+      });
+      
+      return scored[0]?.event || null;
     },
     staleTime: 300000,
     enabled: showLaterPick,
@@ -770,11 +805,41 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
     ? tonightEvents?.filter(e => e.id !== tonightsPick.id) || []
     : tonightEvents || [];
 
+  // Determine if we should show weekend content based on toggle
+  const showWeekendContent = viewMode === 'weekend' && hasWeekend;
+  const showTonightContent = viewMode === 'tonight';
+
   return (
-    <aside className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
-      {/* Pick of the Next 72 Hours - Featured slot for LATER column */}
-      {hasLaterPick && (
-        <div className="mb-4 pb-3 border-b border-slate-100">
+    <aside className="rounded-2xl bg-card p-4 shadow-sm ring-1 ring-border">
+      {/* Tonight | Weekend Toggle */}
+      {showModeToggle && hasWeekend && (
+        <div className="flex items-center gap-1 mb-4 pb-3 border-b border-border">
+          <button
+            onClick={() => setViewMode('tonight')}
+            className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
+              viewMode === 'tonight' 
+                ? 'bg-primary text-primary-foreground' 
+                : 'bg-muted text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            Tonight
+          </button>
+          <button
+            onClick={() => setViewMode('weekend')}
+            className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
+              viewMode === 'weekend' 
+                ? 'bg-primary text-primary-foreground' 
+                : 'bg-muted text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            Weekend
+          </button>
+        </div>
+      )}
+
+      {/* Pick of the Next 72 Hours - Featured slot for TONIGHT column */}
+      {hasLaterPick && showTonightContent && (
+        <div className="mb-4 pb-3 border-b border-border">
           <div className="flex items-center gap-1.5 mb-2">
             <span className="text-sm">⭐</span>
             <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-amber-600">Pick of the Next 72 Hours</p>
@@ -793,14 +858,14 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
                       href={laterPick!.original_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm font-semibold text-slate-900 leading-snug hover:text-amber-700 transition-colors block"
+                      className="text-sm font-semibold text-foreground leading-snug hover:text-amber-700 transition-colors block"
                     >
                       {displayName}
                     </a>
                   ) : (
-                    <p className="text-sm font-semibold text-slate-900 leading-snug">{displayName}</p>
+                    <p className="text-sm font-semibold text-foreground leading-snug">{displayName}</p>
                   )}
-                  <p className="text-[11px] text-slate-600 mt-1">
+                  <p className="text-[11px] text-muted-foreground mt-1">
                     {showPerformer && displayPerformer}
                     {showPerformer && ' · '}
                     {dateLabel}
@@ -814,8 +879,8 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
       )}
 
       {/* Tonight's Pick - Featured slot at top (for tonightOnly mode) */}
-      {tonightsPick && (
-        <div className="mb-4 pb-3 border-b border-slate-100">
+      {tonightsPick && showTonightContent && (
+        <div className="mb-4 pb-3 border-b border-border">
           <div className="flex items-center gap-1.5 mb-2">
             <span className="text-sm">⭐</span>
             <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-amber-600">Tonight's Pick</p>
@@ -833,22 +898,22 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
                       href={tonightsPick.original_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm font-semibold text-slate-900 leading-snug hover:text-amber-700 transition-colors block"
+                      className="text-sm font-semibold text-foreground leading-snug hover:text-amber-700 transition-colors block"
                     >
                       {displayName}
                     </a>
                   ) : (
-                    <p className="text-sm font-semibold text-slate-900 leading-snug">{displayName}</p>
+                    <p className="text-sm font-semibold text-foreground leading-snug">{displayName}</p>
                   )}
                   {(showPerformer || tonightsPick.event_time) && (
-                    <p className="text-[11px] text-slate-600 mt-1">
+                    <p className="text-[11px] text-muted-foreground mt-1">
                       {showPerformer && displayPerformer}
                       {showPerformer && tonightsPick.event_time && ' · '}
                       {tonightsPick.event_time || 'Tonight'}
                     </p>
                   )}
                   {!showPerformer && !tonightsPick.event_time && (
-                    <p className="text-[11px] text-slate-600 mt-1">Tonight</p>
+                    <p className="text-[11px] text-muted-foreground mt-1">Tonight</p>
                   )}
                 </>
               );
@@ -857,13 +922,13 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
         </div>
       )}
 
-      {/* Tonight Section */}
-      {remainingTonightEvents.length > 0 ? (
+      {/* Tonight Section - only show when in tonight mode */}
+      {showTonightContent && remainingTonightEvents.length > 0 ? (
         <>
           {!tonightsPick && (
             <div className="flex items-center gap-2 mb-3">
-              <PartyPopper className="h-4 w-4 text-purple-600" />
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+              <PartyPopper className="h-4 w-4 text-primary" />
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                 Tonight
               </p>
             </div>
@@ -884,18 +949,18 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
                         href={e.original_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm font-medium text-slate-900 leading-snug hover:text-blue-600 transition-colors"
+                        className="text-sm font-medium text-foreground leading-snug hover:text-primary transition-colors"
                         title={displayName}
                       >
                         {displayName}
                       </a>
                     ) : (
-                      <p className="text-sm font-medium text-slate-900 leading-snug" title={displayName}>
+                      <p className="text-sm font-medium text-foreground leading-snug" title={displayName}>
                         {displayName}
                       </p>
                     )}
                     {(showPerformer || e.event_time) && (
-                      <p className="text-[11px] text-slate-500 mt-0.5">
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
                         {showPerformer && displayPerformer}
                         {showPerformer && e.event_time && ' · '}
                         {e.event_time || 'Tonight'}
@@ -907,24 +972,24 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
             })}
           </ul>
         </>
-      ) : tonightOnly && !tonightsPick ? (
+      ) : showTonightContent && tonightOnly && !tonightsPick ? (
         <div className="text-center py-4">
-          <p className="text-sm text-slate-500">Nothing scheduled tonight</p>
+          <p className="text-sm text-muted-foreground">Nothing scheduled tonight</p>
           <Link 
             to="/nightlife" 
-            className="text-xs text-purple-600 hover:underline mt-1 inline-block"
+            className="text-xs text-primary hover:underline mt-1 inline-block"
           >
             Browse all nightlife →
           </Link>
         </div>
       ) : null}
 
-      {/* This Week Section (Weekday events) */}
-      {hasWeekdays && (
-        <div className={hasTonight ? "mt-4 pt-4 border-t border-slate-100" : ""}>
+      {/* This Week Section (Weekday events) - only in tonight mode */}
+      {showTonightContent && hasWeekdays && (
+        <div className={hasTonight ? "mt-4 pt-4 border-t border-border" : ""}>
           <div className="flex items-center gap-2 mb-3">
             <span className="text-sm">📅</span>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
               This Week
             </p>
           </div>
@@ -935,7 +1000,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
             
             return (
               <div key={dayName} className="mb-3">
-                <p className="text-[11px] font-medium text-slate-400 mb-1.5">{dayName}</p>
+                <p className="text-[11px] font-medium text-muted-foreground/70 mb-1.5">{dayName}</p>
                 <ul className="space-y-2">
                   {dayEvents.map((e) => {
                     const venue = extractVenue(e.title);
@@ -951,18 +1016,18 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
                               href={e.original_url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-sm font-medium text-slate-900 leading-snug hover:text-blue-600 transition-colors"
+                              className="text-sm font-medium text-foreground leading-snug hover:text-primary transition-colors"
                               title={displayName}
                             >
                               {displayName}
                             </a>
                           ) : (
-                            <p className="text-sm font-medium text-slate-900 leading-snug" title={displayName}>
+                            <p className="text-sm font-medium text-foreground leading-snug" title={displayName}>
                               {displayName}
                             </p>
                           )}
                           {(showPerformer || e.event_time) && (
-                            <p className="text-[11px] text-slate-500 mt-0.5">
+                            <p className="text-[11px] text-muted-foreground mt-0.5">
                               {showPerformer && displayPerformer}
                               {showPerformer && e.event_time && ' · '}
                               {e.event_time}
@@ -979,19 +1044,19 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
         </div>
       )}
 
-      {/* Weekend Section */}
-      {hasWeekend && (
-        <div className={(hasTonight || hasWeekdays) ? "mt-4 pt-4 border-t border-slate-100" : ""}>
+      {/* Weekend Section - show in tonight mode (below other content) OR exclusively in weekend mode */}
+      {((showTonightContent && hasWeekend && !showModeToggle) || showWeekendContent) && (
+        <div className={(showTonightContent && (hasTonight || hasWeekdays)) ? "mt-4 pt-4 border-t border-border" : ""}>
           <div className="flex items-center gap-2 mb-3">
             <span className="text-sm">🎸</span>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
               This Weekend
             </p>
           </div>
 
           {weekendEvents!.saturday.length > 0 && (
             <div className="mb-3">
-              <p className="text-[11px] font-medium text-slate-400 mb-1.5">Saturday</p>
+              <p className="text-[11px] font-medium text-muted-foreground/70 mb-1.5">Saturday</p>
               <ul className="space-y-2">
                 {weekendEvents!.saturday.map((e) => {
                   const venue = extractVenue(e.title);
@@ -1007,18 +1072,18 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
                             href={e.original_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-sm font-medium text-slate-900 leading-snug hover:text-blue-600 transition-colors"
+                            className="text-sm font-medium text-foreground leading-snug hover:text-primary transition-colors"
                             title={displayName}
                           >
                             {displayName}
                           </a>
                         ) : (
-                          <p className="text-sm font-medium text-slate-900 leading-snug" title={displayName}>
+                          <p className="text-sm font-medium text-foreground leading-snug" title={displayName}>
                             {displayName}
                           </p>
                         )}
                         {(showPerformer || e.event_time) && (
-                          <p className="text-[11px] text-slate-500 mt-0.5">
+                          <p className="text-[11px] text-muted-foreground mt-0.5">
                             {showPerformer && displayPerformer}
                             {showPerformer && e.event_time && ' · '}
                             {e.event_time}
@@ -1034,7 +1099,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
 
           {weekendEvents!.sunday.length > 0 && (
             <div>
-              <p className="text-[11px] font-medium text-slate-400 mb-1.5">Sunday</p>
+              <p className="text-[11px] font-medium text-muted-foreground/70 mb-1.5">Sunday</p>
               <ul className="space-y-2">
                 {weekendEvents!.sunday.map((e) => {
                   const venue = extractVenue(e.title);
@@ -1050,18 +1115,18 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
                             href={e.original_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-sm font-medium text-slate-900 leading-snug hover:text-blue-600 transition-colors"
+                            className="text-sm font-medium text-foreground leading-snug hover:text-primary transition-colors"
                             title={displayName}
                           >
                             {displayName}
                           </a>
                         ) : (
-                          <p className="text-sm font-medium text-slate-900 leading-snug" title={displayName}>
+                          <p className="text-sm font-medium text-foreground leading-snug" title={displayName}>
                             {displayName}
                           </p>
                         )}
                         {(showPerformer || e.event_time) && (
-                          <p className="text-[11px] text-slate-500 mt-0.5">
+                          <p className="text-[11px] text-muted-foreground mt-0.5">
                             {showPerformer && displayPerformer}
                             {showPerformer && e.event_time && ' · '}
                             {e.event_time}
@@ -1080,14 +1145,14 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
       {tonightOnly ? (
         <Link
           to="/nightlife"
-          className="mt-3 block text-xs text-purple-600 hover:underline font-medium"
+          className="mt-3 block text-xs text-primary hover:underline font-medium"
         >
           More happening tonight →
         </Link>
       ) : (
         <Link
           to="/lake-geneva?category=events"
-          className="mt-3 block text-xs text-purple-600 hover:underline font-medium"
+          className="mt-3 block text-xs text-primary hover:underline font-medium"
         >
           All events →
         </Link>

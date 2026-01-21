@@ -503,34 +503,34 @@ const LakeGenevaV2 = () => {
             </section>
           </main>
 
-          {/* ========== RIGHT COLUMN: LATER (LOCKED) ========== */}
+          {/* ========== RIGHT COLUMN: TONIGHT (LOCKED) ========== */}
           <aside className="hidden xl:block">
             <div className="sticky top-20 space-y-5 overflow-hidden">
-              {/* LATER Header with time window */}
+              {/* TONIGHT Header with time window sublabel */}
               <div className="px-1 pb-3 border-b border-border">
                 <div className="flex items-center gap-2">
-                  <span className="text-base">📅</span>
-                  <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Later</h2>
+                  <span className="text-base">🌙</span>
+                  <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Tonight</h2>
+                  <span className="text-[10px] text-muted-foreground/60">· Next 72 hours</span>
                 </div>
-                <p className="text-[10px] text-muted-foreground/70 mt-1 ml-6">Next 72 hours</p>
               </div>
               
-              {/* Nightlife Widget - Extended window with Pick */}
-              <NightlifeWidget showLaterPick />
+              {/* Nightlife Widget - Extended window with Pick and Toggle */}
+              <NightlifeWidget showLaterPick showModeToggle />
             </div>
           </aside>
         </div>
 
-        {/* Mobile: LATER section */}
+        {/* Mobile: TONIGHT section */}
         <div className="xl:hidden mt-10">
           <div className="mb-4 pb-3 border-b border-border">
             <div className="flex items-center gap-2">
-              <span className="text-base">📅</span>
-              <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Later</h2>
+              <span className="text-base">🌙</span>
+              <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Tonight</h2>
+              <span className="text-[10px] text-muted-foreground/60">· Next 72 hours</span>
             </div>
-            <p className="text-[10px] text-muted-foreground/70 mt-1 ml-6">Next 72 hours</p>
           </div>
-          <NightlifeWidget showLaterPick />
+          <NightlifeWidget showLaterPick showModeToggle />
         </div>
       </div>
     </PageShell>
