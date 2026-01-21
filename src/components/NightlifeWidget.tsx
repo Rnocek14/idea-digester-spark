@@ -900,9 +900,9 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
 
       {/* Pick of the Next 72 Hours - Featured slot for TONIGHT column */}
       {hasLaterPick && showTonightContent && (
-        <div className="mb-4 pb-3 border-b border-slate-200">
+        <div className="mb-4 pb-4 border-b border-slate-200">
           <div className="flex items-baseline justify-between mb-2">
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-900">Pick</span>
+            <span className="text-[10px] font-mono uppercase tracking-wider text-slate-500">Pick</span>
             {laterPick?.event_date && (
               <span className="text-[10px] font-mono text-slate-400">{formatLaterPickDate(laterPick.event_date)}</span>
             )}
@@ -992,7 +992,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
         <>
           {!tonightsPick && (
             <div className="mb-3">
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Tonight</span>
+              <span className="text-[10px] font-mono uppercase tracking-wider text-slate-500">Tonight</span>
             </div>
           )}
           
@@ -1047,7 +1047,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
       {showTonightContent && hasWeekdays && (
         <div className={hasTonight ? "mt-4 pt-4 border-t border-slate-200" : ""}>
           <div className="mb-3">
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">This Week</span>
+            <span className="text-[10px] font-mono uppercase tracking-wider text-slate-500">This Week</span>
           </div>
 
           {upcomingWeekdays.map(({ dayName }) => {
