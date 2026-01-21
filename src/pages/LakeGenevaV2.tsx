@@ -503,31 +503,29 @@ const LakeGenevaV2 = () => {
             </section>
           </main>
 
-          {/* ========== RIGHT COLUMN: TONIGHT (LOCKED) ========== */}
+          {/* ========== RIGHT COLUMN: LATER (LOCKED) ========== */}
           <aside className="hidden xl:block">
             <div className="sticky top-20 space-y-5 overflow-hidden">
-              {/* TONIGHT Header with time window sublabel */}
+              {/* LATER Header */}
               <div className="px-1 pb-3 border-b border-border">
                 <div className="flex items-center gap-2">
-                  <span className="text-base">🌙</span>
-                  <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Tonight</h2>
-                  <span className="text-[10px] text-muted-foreground/60" title="Tonight + the next 72 hours">· Next 3 days</span>
+                  <span className="text-base">📅</span>
+                  <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Later</h2>
                 </div>
               </div>
               
-              {/* Nightlife Widget - Extended window with Pick and Toggle */}
+              {/* Nightlife Widget - with Tonight/Weekend toggle */}
               <NightlifeWidget showLaterPick showModeToggle />
             </div>
           </aside>
         </div>
 
-        {/* Mobile: TONIGHT section */}
+        {/* Mobile: LATER section */}
         <div className="xl:hidden mt-10">
           <div className="mb-4 pb-3 border-b border-border">
             <div className="flex items-center gap-2">
-              <span className="text-base">🌙</span>
-              <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Tonight</h2>
-              <span className="text-[10px] text-muted-foreground/60" title="Tonight + the next 72 hours">· Next 3 days</span>
+              <span className="text-base">📅</span>
+              <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Later</h2>
             </div>
           </div>
           <NightlifeWidget showLaterPick showModeToggle />
