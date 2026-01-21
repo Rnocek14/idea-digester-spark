@@ -17,6 +17,109 @@ import { WelcomeModal } from "@/components/WelcomeModal";
 import { PresentedBySection } from "@/components/PresentedBySection";
 import { getSubscribeSource, getReferralSource } from "@/lib/referralTracking";
 import { NavLink } from "@/components/NavLink";
+import { Link } from "react-router-dom";
+import { Home, Star, Phone } from "lucide-react";
+
+// Dynamic NOW column header - shows green when all clear, red when active incidents
+const NowColumnHeader = () => {
+  const { data: hasActiveIncidents } = useQuery({
+    queryKey: ["has-active-incidents"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("incidents")
+        .select("id")
+        .eq("status", "active")
+        .limit(1);
+      if (error) return false;
+      return (data?.length || 0) > 0;
+    },
+    refetchInterval: 30000,
+  });
+
+  const isActive = hasActiveIncidents === true;
+
+  return (
+    <div className="flex items-center gap-2 px-1 pb-2 border-b border-border">
+      <span className="relative flex h-2.5 w-2.5">
+        {isActive ? (
+          <>
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-destructive"></span>
+          </>
+        ) : (
+          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+        )}
+      </span>
+      <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Now</h2>
+    </div>
+  );
+};
+
+// Compact sponsor section - half height version for V2
+const PresentedBySectionCompact = ({ sponsor, marketData }: { sponsor: any; marketData: any }) => {
+  const yoyChangeText = marketData?.yoy_change 
+    ? `${marketData.yoy_change > 0 ? '+' : ''}${marketData.yoy_change.toFixed(1)}%`
+    : null;
+  const medianPriceText = marketData?.median_price
+    ? `$${Math.round(marketData.median_price / 1000)}K`
+    : null;
+
+  return (
+    <div className="rounded-xl bg-gradient-to-r from-muted/30 via-background to-primary/5 border border-border px-4 py-3">
+      <div className="flex items-center justify-between gap-4">
+        {/* Left: Photo + Name */}
+        <Link 
+          to="/selling-lake-geneva"
+          className="flex items-center gap-3 group"
+        >
+          <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center overflow-hidden border-2 border-background shadow-sm">
+            {sponsor.logo_url ? (
+              <img src={sponsor.logo_url} alt={sponsor.name} className="w-full h-full object-cover" />
+            ) : (
+              <Home className="w-4 h-4 text-muted-foreground" />
+            )}
+          </div>
+          <div>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Presented by</p>
+            <h3 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+              {sponsor.name}
+            </h3>
+            {sponsor.zillow_rating && (
+              <div className="flex items-center gap-1">
+                <div className="flex">
+                  {Array.from({ length: 5 }, (_, i) => (
+                    <Star key={i} className={`w-2.5 h-2.5 ${i < Math.round(sponsor.zillow_rating) ? "fill-yellow-400 text-yellow-400" : "text-muted"}`} />
+                  ))}
+                </div>
+                <span className="text-[10px] text-muted-foreground">{sponsor.zillow_review_count} reviews</span>
+              </div>
+            )}
+          </div>
+        </Link>
+
+        {/* Right: Phone */}
+        {sponsor.phone && (
+          <a
+            href={`tel:+1${sponsor.phone.replace(/\D/g, '')}`}
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
+          >
+            <Phone className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">{sponsor.phone.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3')}</span>
+          </a>
+        )}
+      </div>
+      
+      {/* Market data footer - optional, very compact */}
+      {(yoyChangeText || medianPriceText) && (
+        <p className="text-[10px] text-muted-foreground mt-2 pt-2 border-t border-border">
+          Lake Geneva homes
+          {medianPriceText && <> · <span className="text-foreground font-medium">{medianPriceText}</span> median</>}
+          {yoyChangeText && <> · <span className={marketData?.yoy_change > 0 ? 'text-green-600' : ''}>{yoyChangeText}</span> YoY</>}
+        </p>
+      )}
+    </div>
+  );
+};
 
 type Story = {
   id: string;
@@ -243,21 +346,15 @@ const LakeGenevaV2 = () => {
         </NavLink>
       </div>
 
-      {/* Three-Column Layout */}
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 xl:grid-cols-[280px_1fr_280px] gap-6">
+      {/* Three-Column Layout - Full width with edge-to-edge on large screens */}
+      <div className="w-full max-w-[1600px] mx-auto px-4 lg:px-8 py-6">
+        <div className="grid grid-cols-1 xl:grid-cols-[300px_1fr_300px] gap-8">
           
           {/* ========== LEFT COLUMN: NOW (LOCKED) ========== */}
           <aside className="hidden xl:block">
             <div className="sticky top-20 space-y-4 overflow-hidden">
-              {/* NOW Header */}
-              <div className="flex items-center gap-2 px-1">
-                <span className="relative flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
-                </span>
-                <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500">Now</h2>
-              </div>
+              {/* NOW Header with dynamic indicator */}
+              <NowColumnHeader />
               
               {/* Weather at top of NOW */}
               <div className="bg-white rounded-xl border border-slate-200 p-4">
@@ -274,31 +371,22 @@ const LakeGenevaV2 = () => {
 
           {/* ========== CENTER COLUMN: TODAY (SCROLLABLE) ========== */}
           <main className="min-w-0">
-            {/* Hero Section */}
-            <section className="mb-8">
-              <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 mb-1">
+            {/* Compact Hero Section - reduced to get story above fold */}
+            <section className="mb-4">
+              <div className="bg-white rounded-xl border border-slate-100 shadow-sm px-5 py-4">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 mb-0.5">
                   Good morning, Lake Geneva
                 </p>
-                <h1 className="font-semibold text-2xl sm:text-3xl text-slate-900 mb-2">
+                <h1 className="font-semibold text-xl sm:text-2xl text-slate-900 leading-tight">
                   Here's what's happening today
                 </h1>
-                <p className="text-sm text-slate-600 max-w-xl">
-                  Short, trustworthy updates on city hall, schools, events, and real estate — in under 5 minutes.
-                </p>
               </div>
             </section>
 
             {/* Mobile: NOW section */}
             <div className="xl:hidden mb-6">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="relative flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
-                </span>
-                <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500">Now</h2>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <NowColumnHeader />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-3">
                 <div className="bg-white rounded-xl border border-slate-200 p-4">
                   <WeatherWidget />
                 </div>
@@ -306,20 +394,49 @@ const LakeGenevaV2 = () => {
               </div>
             </div>
 
-            {/* Sponsor Section */}
-            {sponsor && (
-              <div className="mb-8">
-                <PresentedBySection sponsor={sponsor} marketData={marketData} />
-              </div>
-            )}
-
-            {/* TODAY Header */}
+            {/* TODAY Header + First 2 Stories BEFORE sponsor */}
             <div className="flex items-center gap-2 mb-4">
               <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500">Today</h2>
               <span className="text-xs text-slate-400">· Curated local news</span>
             </div>
 
-            {/* Stories Grid */}
+            {/* First 2 stories above the fold */}
+            {!storiesLoading && stories.length > 0 && (
+              <div className="grid gap-5 sm:grid-cols-2 mb-6">
+                {stories.slice(0, 2).map((story: Story) => {
+                  const time = getRelativeTime(story.publish_date || story.created_at);
+                  let source: string | null = (story as any).source?.name || null;
+                  if (!source && story.original_url) {
+                    try {
+                      const url = new URL(story.original_url);
+                      source = url.hostname.replace(/^www\./, '');
+                    } catch {}
+                  }
+                  return (
+                    <StoryCard
+                      key={story.id}
+                      title={story.title}
+                      summary={story.content_website || story.content_lg_base || story.summary}
+                      imageUrl={story.image_url}
+                      category={story.category}
+                      url={story.original_url}
+                      geoTier={story.geo_tier}
+                      geoLabel={story.geo_label}
+                      meta={{ time, source }}
+                    />
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Sponsor Section - NOW below first 2 stories */}
+            {sponsor && (
+              <div className="mb-6">
+                <PresentedBySectionCompact sponsor={sponsor} marketData={marketData} />
+              </div>
+            )}
+
+            {/* Remaining Stories Grid (after first 2) */}
             {storiesLoading ? (
               <div className="text-center py-16 text-slate-500">Loading today's stories...</div>
             ) : stories.length === 0 ? (
@@ -327,9 +444,9 @@ const LakeGenevaV2 = () => {
                 <p className="text-slate-600 font-medium mb-2">No new stories today</p>
                 <p className="text-slate-500 text-sm">It's a quiet day — and that's usually a good thing.</p>
               </div>
-            ) : (
+            ) : stories.length > 2 ? (
               <div className="grid gap-5 sm:grid-cols-2">
-                {stories.map((story: Story, idx: number) => {
+                {stories.slice(2).map((story: Story, idx: number) => {
                   const time = getRelativeTime(story.publish_date || story.created_at);
                   let source: string | null = (story as any).source?.name || null;
                   if (!source && story.original_url) {
@@ -350,8 +467,8 @@ const LakeGenevaV2 = () => {
                         geoLabel={story.geo_label}
                         meta={{ time, source }}
                       />
-                      {/* Inline subscribe CTA after every 6th story */}
-                      {(idx + 1) % 6 === 0 && idx < stories.length - 1 && (
+                      {/* Inline subscribe CTA after every 6th story (accounting for first 2) */}
+                      {(idx + 3) % 6 === 0 && idx < stories.length - 3 && (
                         <div className="mt-5 sm:col-span-2">
                           <InlineSubscribeCTA />
                         </div>
@@ -360,7 +477,7 @@ const LakeGenevaV2 = () => {
                   );
                 })}
               </div>
-            )}
+            ) : null}
 
             {/* Now Hiring (moved to bottom of TODAY) */}
             <div className="mt-10">
@@ -393,25 +510,25 @@ const LakeGenevaV2 = () => {
           {/* ========== RIGHT COLUMN: TONIGHT (LOCKED) ========== */}
           <aside className="hidden xl:block">
             <div className="sticky top-20 space-y-4 overflow-hidden">
-              {/* TONIGHT Header */}
-              <div className="flex items-center gap-2 px-1">
+              {/* TONIGHT Header with divider */}
+              <div className="flex items-center gap-2 px-1 pb-2 border-b border-slate-100">
                 <span className="text-base">🌙</span>
                 <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500">Tonight</h2>
               </div>
               
-              {/* Nightlife Widget - Tonight Only */}
-              <NightlifeWidget tonightOnly />
+              {/* Nightlife Widget - Tonight Only with Tonight's Pick */}
+              <NightlifeWidget tonightOnly showTonightsPick />
             </div>
           </aside>
         </div>
 
         {/* Mobile: TONIGHT section */}
         <div className="xl:hidden mt-8">
-          <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center gap-2 mb-3 pb-2 border-b border-slate-100">
             <span className="text-base">🌙</span>
             <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500">Tonight</h2>
           </div>
-          <NightlifeWidget tonightOnly />
+          <NightlifeWidget tonightOnly showTonightsPick />
         </div>
       </div>
     </PageShell>

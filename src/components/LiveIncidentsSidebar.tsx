@@ -161,8 +161,8 @@ export default function LiveIncidentsSidebar({ onHide, showCloseButton = false }
   // Calculate incident-free streak
   const getIncidentFreeMessage = () => {
     // In a real implementation, we'd check the last resolved incident date
-    // For now, show encouraging "all clear" message
-    return "✓ No active incidents in Lake Geneva";
+    // For now, show encouraging "all clear" message with correct proximity language
+    return "✓ No active incidents near Lake Geneva";
   };
 
   return (
