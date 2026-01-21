@@ -64,15 +64,18 @@ const LiveColumnHeader = () => {
   const updateTime = getRelativeUpdateTime();
 
   return (
-    <div className="pb-3 border-b-2 border-slate-900 mb-4">
-      <div className="flex items-center gap-2">
-        <span className="text-[10px] font-mono uppercase tracking-widest text-slate-500">[LIVE]</span>
-        <span className={`w-1.5 h-1.5 ${isActive ? 'bg-red-500' : 'bg-emerald-500'}`} />
-        {!isActive && (
-          <span className="text-[10px] font-mono text-emerald-600 uppercase">All Clear</span>
-        )}
+    <div className="mb-4">
+      {/* Bold black LIVE header */}
+      <div className="bg-slate-900 text-white px-3 py-2 mb-3">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-mono uppercase tracking-widest">[LIVE]</span>
+          <span className={`w-1.5 h-1.5 ${isActive ? 'bg-red-500 animate-pulse' : 'bg-emerald-400'}`} />
+          {!isActive && (
+            <span className="text-[10px] font-mono text-emerald-400 uppercase">All Clear</span>
+          )}
+        </div>
       </div>
-      <p className="text-[10px] font-mono text-slate-400 mt-1 uppercase tracking-wider">
+      <p className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">
         {updateTime ? `Updated ${updateTime}` : 'Real-time status'}
       </p>
     </div>
@@ -424,10 +427,10 @@ const LakeGenevaV2 = () => {
               <NightlifeWidget tonightOnly />
             </div>
 
-            {/* LATEST Header - editorial style with underline rule */}
-            <div className="pb-3 border-b-2 border-slate-900 mb-6">
+            {/* LATEST Header - editorial style with bold black underline */}
+            <div className="pb-3 border-b-4 border-black mb-6">
               <div className="flex items-baseline justify-between">
-                <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-900">LATEST</h2>
+                <h2 className="text-sm font-black uppercase tracking-[0.15em] text-black">LATEST</h2>
                 <span className="text-[10px] font-mono text-slate-500 uppercase">[LOCAL EDITION]</span>
               </div>
               <p className="text-[10px] font-mono text-slate-400 mt-1">
@@ -435,10 +438,12 @@ const LakeGenevaV2 = () => {
               </p>
             </div>
 
-            {/* First 2 stories above the fold */}
+            {/* Lead stories - first one full width, second half */}
             {!storiesLoading && stories.length > 0 && (
-              <div className="grid gap-5 sm:grid-cols-2 mb-6">
-                {stories.slice(0, 2).map((story: Story) => {
+              <div className="mb-6 space-y-5">
+                {/* First story - FULL WIDTH, dominant */}
+                {stories[0] && (() => {
+                  const story = stories[0];
                   const time = getRelativeTime(story.publish_date || story.created_at);
                   let source: string | null = (story as any).source?.name || null;
                   if (!source && story.original_url) {
@@ -450,6 +455,7 @@ const LakeGenevaV2 = () => {
                   return (
                     <StoryCard
                       key={story.id}
+                      id={story.id}
                       title={story.title}
                       summary={story.content_website || story.content_lg_base || story.summary}
                       imageUrl={story.image_url}
@@ -458,9 +464,41 @@ const LakeGenevaV2 = () => {
                       geoTier={story.geo_tier}
                       geoLabel={story.geo_label}
                       meta={{ time, source }}
+                      featured
                     />
                   );
-                })}
+                })()}
+
+                {/* Second story - half width on desktop */}
+                {stories[1] && (
+                  <div className="sm:w-1/2">
+                    {(() => {
+                      const story = stories[1];
+                      const time = getRelativeTime(story.publish_date || story.created_at);
+                      let source: string | null = (story as any).source?.name || null;
+                      if (!source && story.original_url) {
+                        try {
+                          const url = new URL(story.original_url);
+                          source = url.hostname.replace(/^www\./, '');
+                        } catch {}
+                      }
+                      return (
+                        <StoryCard
+                          key={story.id}
+                          id={story.id}
+                          title={story.title}
+                          summary={story.content_website || story.content_lg_base || story.summary}
+                          imageUrl={story.image_url}
+                          category={story.category}
+                          url={story.original_url}
+                          geoTier={story.geo_tier}
+                          geoLabel={story.geo_label}
+                          meta={{ time, source }}
+                        />
+                      );
+                    })()}
+                  </div>
+                )}
               </div>
             )}
 

@@ -913,7 +913,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
               <span className="text-[10px] font-mono text-slate-400">{formatLaterPickDate(laterPick.event_date)}</span>
             )}
           </div>
-          <div className="border-2 border-slate-900 rounded-sm p-3">
+          <div className="border-2 border-black rounded-sm p-3 bg-slate-50">
             {(() => {
               const venue = extractVenue(laterPick!.title);
               const displayName = venue || laterPick!.title;
