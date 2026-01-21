@@ -1178,6 +1178,7 @@ serve(async (req) => {
           
           if (remainingEventSlots <= 0) {
             console.log(`⏸️ Daily event cap reached for ${source.name}, skipping source entirely`);
+            recordSkip(source, "daily_event_cap_reached");
             continue;
           }
         }
@@ -1741,6 +1742,8 @@ When in doubt between safe and sensitive, choose sensitive. Only use blocked for
           if (!aiResponse.ok) {
             console.error(`AI request failed: ${aiResponse.status}`);
             result.errors.push(`AI failed for: ${title.substring(0, 50)}`);
+            recordSkip(source, "ai_failed", { url: originalUrl, title });
+            result.skipped++;
             continue;
           }
 

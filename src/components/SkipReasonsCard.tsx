@@ -19,6 +19,8 @@ const SKIP_REASON_LABELS: Record<string, { label: string; color: string }> = {
   stale_content: { label: "Stale (>14d)", color: "bg-gray-100 text-gray-800" },
   invalid_url: { label: "Invalid URL", color: "bg-red-100 text-red-800" },
   missing_fields: { label: "Missing Fields", color: "bg-red-100 text-red-800" },
+  daily_event_cap_reached: { label: "Event Cap Hit", color: "bg-amber-100 text-amber-800" },
+  ai_failed: { label: "AI Failed", color: "bg-red-100 text-red-800" },
 };
 
 interface SkipData {
