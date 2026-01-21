@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { getRecentPickVenues, recordPickedVenue } from "@/lib/recentVenuePersistence";
@@ -826,14 +826,6 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
       });
       
       const best = scored[0];
-      if (best) {
-        // Record this venue as recently picked for future diversity
-        const venue = extractVenue(best.event.title);
-        if (venue) {
-          recordPickedVenue(venue);
-        }
-      }
-      
       return best ? { event: best.event, reason: best.reason } : null;
     },
     staleTime: 300000,
@@ -843,10 +835,23 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
   const laterPick = laterPickData?.event || null;
   const laterPickReason = laterPickData?.reason || null;
 
+  // Record picked venue in useEffect to avoid duplicate recordings from React Query refetches
+  const lastRecordedPickId = useRef<string | null>(null);
+  useEffect(() => {
+    if (laterPick && laterPick.id !== lastRecordedPickId.current) {
+      const venue = extractVenue(laterPick.title);
+      if (venue) {
+        recordPickedVenue(venue);
+        lastRecordedPickId.current = laterPick.id;
+      }
+    }
+  }, [laterPick]);
+
   const hasTonight = tonightEvents && tonightEvents.length > 0;
   const hasWeekdays = !tonightOnly && weekdayEvents && Object.keys(weekdayEvents).length > 0;
   const hasWeekend = !tonightOnly && weekendEvents && (weekendEvents.saturday.length > 0 || weekendEvents.sunday.length > 0);
   const hasLaterPick = showLaterPick && laterPick;
+
 
   // For tonightOnly mode, show component even if tonight is empty (with "nothing scheduled" message)
   if (!tonightOnly && !hasLaterPick && !hasTonight && !hasWeekdays && !hasWeekend) return null;
