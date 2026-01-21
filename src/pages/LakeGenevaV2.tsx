@@ -330,10 +330,7 @@ const LakeGenevaV2 = () => {
   };
 
   return (
-    <PageShell
-      title="Lake Geneva Brief – V2 Layout"
-      description="Experimental NOW / TODAY / TONIGHT layout"
-    >
+    <PageShell fullWidth>
       <WelcomeModal />
       <StickySubscribeBanner />
       
@@ -348,7 +345,7 @@ const LakeGenevaV2 = () => {
 
       {/* Three-Column Layout - Full width responsive with generous spacing */}
       <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-16 py-6">
-        <div className="grid grid-cols-1 xl:grid-cols-[280px_1fr_280px] 2xl:grid-cols-[320px_1fr_320px] gap-6 xl:gap-10 2xl:gap-16">
+        <div className="grid grid-cols-1 xl:grid-cols-[280px_1fr_280px] 2xl:grid-cols-[340px_1fr_340px] gap-6 xl:gap-12 2xl:gap-20">
           
           {/* ========== LEFT COLUMN: NOW (LOCKED) ========== */}
           <aside className="hidden xl:block">
