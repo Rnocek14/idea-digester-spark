@@ -69,8 +69,8 @@ function isGenericRecurring(event: MusicEvent): boolean {
   const hasSpecificDay = dayNames.some(day => titleLower.includes(day));
   const hasLiveMusic = titleLower.includes('live music') && !hasSpecificDay;
   
-  // For generic "live music" titles, only show if very fresh (< 3 days)
-  if (hasLiveMusic && isFreshEvent(event, 3)) {
+  // For generic "live music" titles, only show if fresh (< 7 days)
+  if (hasLiveMusic && isFreshEvent(event, 7)) {
     return true;
   }
   
@@ -287,9 +287,9 @@ function shouldShowPerformer(displayedVenue: string, performer: string | null): 
 function isLiveMusicEvent(event: MusicEvent): boolean {
   const title = event.title.toLowerCase();
   
-  // Hard exclude non-music events by title
+  // Hard exclude non-music events by title (ladies night kept - valid nightlife entertainment)
   const excludeTitleKeywords = [
-    'ladies night', 'trivia', 'comedy', 'penn & teller', 'penn and teller',
+    'trivia', 'comedy', 'penn & teller', 'penn and teller',
     'bingo', 'game night', 'wine tasting', 'wine night', 'paint night',
     'yoga', 'brunch', 'wonderful!', 'magic show', 'poker', 'fish fry',
     'new year', 'happy new year', 'thank you for attending', 'casino',
