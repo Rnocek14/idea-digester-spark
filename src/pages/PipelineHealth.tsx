@@ -38,6 +38,11 @@ interface PipelineMetrics {
     rejected7d: number;
     blocked7d: number;
   };
+  pendingAge: {
+    under6h: number;
+    from6to24h: number;
+    over24h: number;
+  };
   sourceHealth: {
     topProducers: Array<{ name: string; count: number; id: string }>;
     failingSources: Array<{ name: string; failures: number; lastError?: string }>;
@@ -132,7 +137,8 @@ const PipelineHealth = () => {
 
       // Process status breakdown
       const statusData = statusBreakdownResult.data || [];
-      const pendingTotal = statusData.filter(s => s.status === 'pending').length;
+      const pendingItems = statusData.filter(s => s.status === 'pending');
+      const pendingTotal = pendingItems.length;
       const pending7d = pendingTotal; // Same query window
       const expired7d = statusData.filter(s => s.status === 'expired').length;
       const rejected7d = statusData.filter(s => s.status === 'rejected').length;
@@ -140,6 +146,23 @@ const PipelineHealth = () => {
       const autoPublished24h = statusData.filter(s => 
         s.status === 'auto_published' && new Date(s.created_at) >= new Date(twentyFourHoursAgo)
       ).length;
+
+      // Calculate pending age breakdown
+      const sixHoursAgo = subHours(now, 6);
+      let under6h = 0;
+      let from6to24h = 0;
+      let over24h = 0;
+      
+      pendingItems.forEach(item => {
+        const createdAt = new Date(item.created_at);
+        if (createdAt >= sixHoursAgo) {
+          under6h++;
+        } else if (createdAt >= new Date(twentyFourHoursAgo)) {
+          from6to24h++;
+        } else {
+          over24h++;
+        }
+      });
 
       // Calculate approval lag
       const approvals = recentApprovalsResult.data || [];
@@ -243,6 +266,11 @@ const PipelineHealth = () => {
           rejected7d,
           blocked7d,
         },
+        pendingAge: {
+          under6h,
+          from6to24h,
+          over24h,
+        },
         sourceHealth: {
           topProducers,
           failingSources: notProducingSources,
@@ -291,7 +319,7 @@ const PipelineHealth = () => {
     );
   }
 
-  const { throughput, bottlenecks, sourceHealth, mix, alerts } = metrics;
+  const { throughput, bottlenecks, pendingAge, sourceHealth, mix, alerts } = metrics;
 
   // Calculate rates
   const autoPublishRate = throughput.created24h > 0 
@@ -442,6 +470,45 @@ const PipelineHealth = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Pending Age Breakdown */}
+      {bottlenecks.pendingTotal > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Clock className="h-5 w-5 text-muted-foreground" />
+              Pending Age Breakdown
+            </CardTitle>
+            <CardDescription>
+              {pendingAge.over24h > 5 
+                ? "⚠️ Backlog accumulating — moderation may be stuck"
+                : pendingAge.under6h > pendingAge.from6to24h + pendingAge.over24h
+                  ? "✓ Queue is fresh — ingestion healthy"
+                  : "Items aging normally"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="text-center p-4 rounded-lg bg-secondary/50">
+                <div className="text-2xl font-bold text-primary">{pendingAge.under6h}</div>
+                <div className="text-xs text-muted-foreground">&lt;6 hours</div>
+              </div>
+              <div className="text-center p-4 rounded-lg bg-secondary/50">
+                <div className={`text-2xl font-bold ${pendingAge.from6to24h > 10 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                  {pendingAge.from6to24h}
+                </div>
+                <div className="text-xs text-muted-foreground">6–24 hours</div>
+              </div>
+              <div className="text-center p-4 rounded-lg bg-secondary/50">
+                <div className={`text-2xl font-bold ${pendingAge.over24h > 5 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                  {pendingAge.over24h}
+                </div>
+                <div className="text-xs text-muted-foreground">&gt;24 hours</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Skip Reasons - Diagnostic Section */}
       <SkipReasonsCard />
