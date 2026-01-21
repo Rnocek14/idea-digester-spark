@@ -27,11 +27,19 @@ interface StarvingSource {
   name: string;
   hoursSinceLastFetch: number;
   isCritical: boolean; // >= 24h
+  neverFetched: boolean; // last_fetched_at is null
 }
 
 // Zero-safe percentage calculation helper
 const safePct = (n: number, total: number): number => 
   total > 0 ? Math.round((n / total) * 100) : 0;
+
+// Format hours for display, handling Infinity/"never"
+const formatStarvingAge = (hours: number, neverFetched: boolean): string => {
+  if (neverFetched || !isFinite(hours)) return 'never';
+  if (hours >= 24) return `${Math.round(hours / 24)}d ago`;
+  return `${Math.round(hours)}h ago`;
+};
 
 interface PipelineMetrics {
   throughput: {
@@ -58,7 +66,14 @@ interface PipelineMetrics {
     topProducers: Array<{ name: string; count: number; id: string }>;
     failingSources: Array<{ name: string; failures: number; lastError?: string }>;
     staleSources: Array<{ name: string; lastContent: string | null }>;
-    starvingSources: StarvingSource[];
+    starvingSourcesTop: StarvingSource[]; // Top 10 for display
+    starvingTotal: number; // Total count before slice
+    criticalStarvingTotal: number; // Critical count before slice
+  };
+  skipSummary: {
+    aiFailedPct: number;
+    eventCapPct: number;
+    total24h: number;
   };
   mix: {
     categories24h: Record<string, number>;
@@ -91,6 +106,8 @@ const PipelineHealth = () => {
         topSourcesResult,
         sourcesResult,
         recentApprovalsResult,
+        // Skip data for causal hints (lightweight aggregate)
+        skips24hResult,
       ] = await Promise.all([
         // Throughput: created counts
         supabase.from("content_queue").select("id", { count: "exact", head: true })
@@ -139,6 +156,11 @@ const PipelineHealth = () => {
           .not("reviewed_at", "is", null)
           .gte("reviewed_at", twentyFourHoursAgo)
           .limit(100),
+        
+        // Skip reasons for causal hints (24h only, just reason)
+        supabase.from("sync_skips")
+          .select("reason")
+          .gte("created_at", twentyFourHoursAgo),
       ]);
 
       // Process throughput
@@ -254,42 +276,63 @@ const PipelineHealth = () => {
 
       // Calculate starving sources: per-source starvation based on fetch recency
       // RSS/scrape sources: 6h threshold (high-freq), 24h critical
-      const starvingSources: StarvingSource[] = sources
+      const allStarvingSources: StarvingSource[] = sources
         .filter(s => s.type === 'rss' || s.type === 'scrape')
         .map(s => {
           const lastFetched = s.last_fetched_at ? new Date(s.last_fetched_at) : null;
+          const neverFetched = lastFetched === null;
           const hoursSinceLastFetch = lastFetched 
             ? (now.getTime() - lastFetched.getTime()) / (1000 * 60 * 60)
             : Infinity;
           return {
             id: s.id,
             name: s.name,
-            hoursSinceLastFetch: Math.round(hoursSinceLastFetch),
+            hoursSinceLastFetch,
             isCritical: hoursSinceLastFetch >= 24,
+            neverFetched,
           };
         })
         .filter(s => s.hoursSinceLastFetch >= 6) // Starving = 6+ hours
-        .sort((a, b) => b.hoursSinceLastFetch - a.hoursSinceLastFetch)
-        .slice(0, 10);
+        .sort((a, b) => b.hoursSinceLastFetch - a.hoursSinceLastFetch);
+      
+      // Compute totals BEFORE slicing for accurate badge counts
+      const criticalStarvingTotal = allStarvingSources.filter(s => s.isCritical).length;
+      const starvingTotal = allStarvingSources.length;
+      const starvingSourcesTop = allStarvingSources.slice(0, 10);
+
+      // Process skip data for causal hints
+      const skipsData = skips24hResult.data || [];
+      const skipTotal24h = skipsData.length;
+      const aiFailedCount = skipsData.filter((s: { reason: string }) => s.reason === 'ai_failed').length;
+      const eventCapCount = skipsData.filter((s: { reason: string }) => s.reason === 'daily_event_cap_reached').length;
+      const aiFailedPct = safePct(aiFailedCount, skipTotal24h);
+      const eventCapPct = safePct(eventCapCount, skipTotal24h);
 
       // Generate alerts
       const alerts: Array<{ type: 'critical' | 'warning' | 'info'; message: string }> = [];
       
       // Per-source starvation alerts (more actionable than global)
-      const criticalStarvingCount = starvingSources.filter(s => s.isCritical).length;
-      const starvingCount = starvingSources.length;
-      
-      // Source starvation: only alert if we're not on a naturally slow day
-      if (criticalStarvingCount >= 1 && created24h >= 20) {
-        alerts.push({ type: 'critical', message: `${criticalStarvingCount} source${criticalStarvingCount > 1 ? 's' : ''} starving (24h+ without fetch)` });
-      } else if (starvingCount >= 3 && created24h >= 20) {
-        alerts.push({ type: 'warning', message: `${starvingCount} sources starving (6h+ without fetch)` });
+      // Use total counts (not sliced) for accurate thresholds
+      if (criticalStarvingTotal >= 1 && created24h >= 20) {
+        alerts.push({ type: 'critical', message: `${criticalStarvingTotal} source${criticalStarvingTotal > 1 ? 's' : ''} starving (24h+ without fetch)` });
+      } else if (starvingTotal >= 3 && created24h >= 20) {
+        alerts.push({ type: 'warning', message: `${starvingTotal} sources starving (6h+ without fetch)` });
       }
       
       // Global ingestion starvation: fire only when high 24h volume but sudden stop
-      // (If 24h volume is low, it's a slow day - don't alarm)
+      // Add causal hint based on skip data and starving sources
       if (created1h === 0 && created24h >= 20 && new Date().getHours() >= 8 && new Date().getHours() <= 22) {
-        alerts.push({ type: 'critical', message: 'No new content in the last hour (unexpected vs 24h volume)' });
+        let causalHint = '';
+        if (criticalStarvingTotal >= 1) {
+          causalHint = ' (likely upstream: starving sources)';
+        } else if (aiFailedPct > 20) {
+          causalHint = ' (likely AI failures)';
+        } else if (eventCapPct > 15) {
+          causalHint = ' (likely event cap)';
+        } else {
+          causalHint = ' (likely filtering/dedupe)';
+        }
+        alerts.push({ type: 'critical', message: `No new content in the last hour${causalHint}` });
       }
       
       // Low volume info (not critical, just informational)
@@ -337,7 +380,14 @@ const PipelineHealth = () => {
           topProducers,
           failingSources: notProducingSources,
           staleSources,
-          starvingSources,
+          starvingSourcesTop,
+          starvingTotal,
+          criticalStarvingTotal,
+        },
+        skipSummary: {
+          aiFailedPct,
+          eventCapPct,
+          total24h: skipTotal24h,
         },
         mix: {
           categories24h,
@@ -594,7 +644,7 @@ const PipelineHealth = () => {
       <SkipReasonsCard />
 
       {/* Starving Sources Panel */}
-      {sourceHealth.starvingSources.length > 0 && (
+      {sourceHealth.starvingTotal > 0 && (
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
@@ -603,9 +653,10 @@ const PipelineHealth = () => {
                 Starving Sources
               </CardTitle>
               <Badge 
-                variant={sourceHealth.starvingSources.some(s => s.isCritical) ? 'destructive' : 'outline'}
+                variant={sourceHealth.criticalStarvingTotal > 0 ? 'destructive' : 'outline'}
               >
-                {sourceHealth.starvingSources.filter(s => s.isCritical).length} critical
+                {sourceHealth.criticalStarvingTotal} critical
+                {sourceHealth.starvingTotal > 10 && ` (showing top 10 of ${sourceHealth.starvingTotal})`}
               </Badge>
             </div>
             <CardDescription>
@@ -615,7 +666,7 @@ const PipelineHealth = () => {
           <CardContent>
             <ScrollArea className="max-h-[180px]">
               <div className="space-y-2">
-                {sourceHealth.starvingSources.map((source) => (
+                {sourceHealth.starvingSourcesTop.map((source) => (
                   <div 
                     key={source.id} 
                     className={`flex items-center justify-between p-2 rounded-md ${
@@ -626,9 +677,7 @@ const PipelineHealth = () => {
                     <span className={`text-xs font-medium ${
                       source.isCritical ? 'text-destructive' : 'text-muted-foreground'
                     }`}>
-                      {source.hoursSinceLastFetch >= 24 
-                        ? `${Math.round(source.hoursSinceLastFetch / 24)}d ago`
-                        : `${source.hoursSinceLastFetch}h ago`}
+                      {formatStarvingAge(source.hoursSinceLastFetch, source.neverFetched)}
                     </span>
                   </div>
                 ))}
