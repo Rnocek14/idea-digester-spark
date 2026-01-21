@@ -151,7 +151,7 @@ export const StoryCard = ({
   // Remove card border, add subtle image radius for warmth
   return (
     <article className="group flex h-full flex-col overflow-hidden bg-white">
-      <div className={`relative overflow-hidden bg-slate-100 rounded ${featured ? 'aspect-[16/9]' : 'aspect-[2/1]'}`}>
+      <div className={`relative overflow-hidden bg-stone-100 rounded-md ${featured ? 'aspect-[16/9]' : 'aspect-[2/1]'}`}>
         {url ? (
           <a href={url} target="_blank" rel="noopener noreferrer" className="block h-full w-full">
             <img
@@ -172,7 +172,7 @@ export const StoryCard = ({
           />
         )}
         {category && (
-          <span className="absolute bottom-2 left-2 rounded-sm bg-white/90 px-1.5 py-0.5 text-[9px] font-mono text-slate-700 pointer-events-none uppercase tracking-wider">
+          <span className="absolute bottom-2 left-2 rounded-sm bg-white/90 px-2 py-1 text-[11px] font-mono text-slate-700 pointer-events-none uppercase tracking-wider">
             {category.replace('_', ' ')}
           </span>
         )}
@@ -218,36 +218,36 @@ export const StoryCard = ({
         )}
 
         {summary && (
-          <p className="mt-1 text-[13px] text-slate-600 line-clamp-2 leading-relaxed">
+          <p className="mt-1.5 text-sm text-slate-600 line-clamp-2 sm:line-clamp-3 leading-relaxed">
             {summary}
           </p>
         )}
 
         {(meta?.time || meta?.source || geoIcon) && (
-          <p className="mt-1 text-xs text-slate-500 flex flex-wrap items-center gap-x-1">
+          <p className="mt-2 text-[13px] text-slate-600 flex flex-wrap items-center gap-x-1.5">
             {geoIcon && geoLabel && (
-              <span className="inline-flex items-center gap-0.5 text-slate-400">
+              <span className="inline-flex items-center gap-0.5 text-slate-500">
                 <span>{geoIcon}</span>
-                <span className="text-[10px]">{geoLabel}</span>
+                <span className="text-xs">{geoLabel}</span>
               </span>
             )}
-            {geoIcon && geoLabel && (meta?.source || meta?.time) && <span>•</span>}
+            {geoIcon && geoLabel && (meta?.source || meta?.time) && <span className="text-slate-400">•</span>}
             {meta?.source && <span>{meta.source}</span>}
-            {meta?.source && meta?.time && <span>•</span>}
-            {meta?.time && <span>{meta.time}</span>}
+            {meta?.source && meta?.time && <span className="text-slate-400">•</span>}
+            {meta?.time && <span className="text-slate-500">{meta.time}</span>}
           </p>
         )}
 
-        <div className="mt-auto pt-3 flex items-center justify-between">
+        <div className="mt-auto pt-4 flex items-center justify-between">
           {url ? (
             <a
               href={url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:underline"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:underline py-2 -my-2 pr-4"
             >
               Read more
-              <ExternalLink className="h-3 w-3" />
+              <ExternalLink className="h-3.5 w-3.5" />
             </a>
           ) : (
             <span />
