@@ -433,7 +433,11 @@ function deduplicateByVenue(events: NightlifeEvent[], limit: number): NightlifeE
     .slice(0, limit);
 }
 
-export default function NightlifeWidget() {
+interface NightlifeWidgetProps {
+  tonightOnly?: boolean;
+}
+
+export default function NightlifeWidget({ tonightOnly = false }: NightlifeWidgetProps) {
   const todayStr = getTodayDateString();
   const { saturday: saturdayStr, sunday: sundayStr } = getUpcomingWeekendDates();
 
@@ -682,15 +686,16 @@ export default function NightlifeWidget() {
   });
 
   const hasTonight = tonightEvents && tonightEvents.length > 0;
-  const hasWeekdays = weekdayEvents && Object.keys(weekdayEvents).length > 0;
-  const hasWeekend = weekendEvents && (weekendEvents.saturday.length > 0 || weekendEvents.sunday.length > 0);
+  const hasWeekdays = !tonightOnly && weekdayEvents && Object.keys(weekdayEvents).length > 0;
+  const hasWeekend = !tonightOnly && weekendEvents && (weekendEvents.saturday.length > 0 || weekendEvents.sunday.length > 0);
 
-  if (!hasTonight && !hasWeekdays && !hasWeekend) return null;
+  // For tonightOnly mode, show component even if tonight is empty (with "nothing scheduled" message)
+  if (!tonightOnly && !hasTonight && !hasWeekdays && !hasWeekend) return null;
 
   return (
     <aside className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
       {/* Tonight Section */}
-      {hasTonight && (
+      {hasTonight ? (
         <>
           <div className="flex items-center gap-2 mb-3">
             <PartyPopper className="h-4 w-4 text-purple-600" />
@@ -737,7 +742,17 @@ export default function NightlifeWidget() {
             })}
           </ul>
         </>
-      )}
+      ) : tonightOnly ? (
+        <div className="text-center py-4">
+          <p className="text-sm text-slate-500">Nothing scheduled tonight</p>
+          <a 
+            href="/nightlife" 
+            className="text-xs text-purple-600 hover:underline mt-1 inline-block"
+          >
+            Browse all nightlife →
+          </a>
+        </div>
+      ) : null}
 
       {/* This Week Section (Weekday events) */}
       {hasWeekdays && (
