@@ -79,6 +79,33 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Check for recent kick (5-minute cooldown)
+    const cooldownMinutes = 5;
+    const { data: recentKick } = await supabase
+      .from("activity_log")
+      .select("created_at")
+      .eq("entity_type", "source")
+      .eq("entity_id", source_id)
+      .eq("action", "kick_fetch")
+      .gte("created_at", new Date(Date.now() - cooldownMinutes * 60 * 1000).toISOString())
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (recentKick) {
+      const lastKickTime = new Date(recentKick.created_at);
+      const minutesAgo = Math.round((Date.now() - lastKickTime.getTime()) / 60000);
+      return new Response(
+        JSON.stringify({ 
+          ok: false, 
+          error: `Source was kicked ${minutesAgo}m ago. Please wait ${cooldownMinutes - minutesAgo}m before retrying.`,
+          cooldown: true,
+          lastKickAt: recentKick.created_at,
+        }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Log the kick action
     await supabase.from("activity_log").insert({
       entity_type: "source",

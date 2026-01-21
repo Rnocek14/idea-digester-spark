@@ -642,22 +642,27 @@ const PipelineHealth = () => {
         const over24hPct = safePct(pendingAge.over24h, total);
         
         // Smart diagnostics
-        const isBacklogAccumulating = pendingAge.over24h >= 10 || (over24hPct >= 25 && pendingAge.over24h >= 3);
+        // Escalate to critical if over24hPct >= 50%
+        const isBacklogCritical = over24hPct >= 50;
+        const isBacklogAccumulating = !isBacklogCritical && (pendingAge.over24h >= 10 || (over24hPct >= 25 && pendingAge.over24h >= 3));
         const isQueueFresh = under6hPct >= 65 && pendingAge.over24h === 0;
         
         return (
-          <Card>
+          <Card className={isBacklogCritical ? 'border-destructive' : ''}>
             <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center gap-2">
-                <Clock className="h-5 w-5 text-muted-foreground" />
+                <Clock className={`h-5 w-5 ${isBacklogCritical ? 'text-destructive' : 'text-muted-foreground'}`} />
                 Pending Age Breakdown
+                {isBacklogCritical && <Badge variant="destructive">Critical</Badge>}
               </CardTitle>
               <CardDescription>
-                {isBacklogAccumulating 
-                  ? "⚠️ Backlog accumulating — moderation may be stuck"
-                  : isQueueFresh
-                    ? "✓ Queue is fresh — ingestion healthy"
-                    : "Items aging normally"}
+                {isBacklogCritical
+                  ? "🚨 Critical backlog — majority of queue is 24h+ old"
+                  : isBacklogAccumulating 
+                    ? "⚠️ Backlog accumulating — moderation may be stuck"
+                    : isQueueFresh
+                      ? "✓ Queue is fresh — ingestion healthy"
+                      : "Items aging normally"}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -687,67 +692,106 @@ const PipelineHealth = () => {
       {/* Skip Reasons - Diagnostic Section */}
       <SkipReasonsCard />
 
-      {/* Starving Sources Panel */}
-      {sourceHealth.starvingTotal > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Radio className="h-5 w-5 text-destructive" />
-                Starving Sources
-              </CardTitle>
-              <Badge 
-                variant={sourceHealth.criticalStarvingTotal > 0 ? 'destructive' : 'outline'}
-              >
-                {sourceHealth.criticalStarvingTotal} critical
-                {sourceHealth.starvingTotal > 10 && ` (showing top 10 of ${sourceHealth.starvingTotal})`}
-              </Badge>
+      {/* Starving Sources Panel - Split into Never Fetched vs Stopped Fetching */}
+      {sourceHealth.starvingTotal > 0 && (() => {
+        const neverFetchedSources = sourceHealth.starvingSourcesTop.filter(s => s.neverFetched);
+        const staleSources = sourceHealth.starvingSourcesTop.filter(s => !s.neverFetched);
+        
+        const renderSourceRow = (source: StarvingSource) => (
+          <div 
+            key={source.id} 
+            className={`flex items-center justify-between p-2 rounded-md ${
+              source.isCritical ? 'bg-destructive/10' : 'bg-muted/50'
+            }`}
+          >
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <span className="text-sm truncate">{source.name}</span>
+              <span className={`text-xs font-medium shrink-0 ${
+                source.isCritical ? 'text-destructive' : 'text-muted-foreground'
+              }`}>
+                {source.neverFetched ? '(never)' : formatStarvingAge(source.hoursSinceLastFetch, source.neverFetched)}
+              </span>
             </div>
-            <CardDescription>
-              Sources not fetched in 6+ hours (RSS/scrape only)
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ScrollArea className="max-h-[180px]">
-              <div className="space-y-2">
-                {sourceHealth.starvingSourcesTop.map((source) => (
-                  <div 
-                    key={source.id} 
-                    className={`flex items-center justify-between p-2 rounded-md ${
-                      source.isCritical ? 'bg-destructive/10' : 'bg-muted/50'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <span className="text-sm truncate">{source.name}</span>
-                      <span className={`text-xs font-medium shrink-0 ${
-                        source.isCritical ? 'text-destructive' : 'text-muted-foreground'
-                      }`}>
-                        {source.neverFetched ? '(never)' : formatStarvingAge(source.hoursSinceLastFetch, source.neverFetched)}
-                      </span>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 px-2 text-xs shrink-0"
-                      onClick={() => kickFetchMutation.mutate(source.id)}
-                      disabled={kickFetchMutation.isPending && kickFetchMutation.variables === source.id}
-                    >
-                      {kickFetchMutation.isPending && kickFetchMutation.variables === source.id ? (
-                        <RefreshCw className="h-3 w-3 animate-spin" />
-                      ) : (
-                        <>
-                          <RefreshCw className="h-3 w-3 mr-1" />
-                          Fix
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                ))}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs shrink-0"
+              onClick={() => kickFetchMutation.mutate(source.id)}
+              disabled={kickFetchMutation.isPending && kickFetchMutation.variables === source.id}
+            >
+              {kickFetchMutation.isPending && kickFetchMutation.variables === source.id ? (
+                <RefreshCw className="h-3 w-3 animate-spin" />
+              ) : (
+                <>
+                  <RefreshCw className="h-3 w-3 mr-1" />
+                  Fix
+                </>
+              )}
+            </Button>
+          </div>
+        );
+        
+        return (
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Radio className="h-5 w-5 text-destructive" />
+                  Starving Sources
+                </CardTitle>
+                <div className="flex gap-2">
+                  {neverFetchedSources.length > 0 && (
+                    <Badge variant="secondary">
+                      {neverFetchedSources.length} setup
+                    </Badge>
+                  )}
+                  {staleSources.filter(s => s.isCritical).length > 0 && (
+                    <Badge variant="destructive">
+                      {staleSources.filter(s => s.isCritical).length} stale
+                    </Badge>
+                  )}
+                  {sourceHealth.starvingTotal > 10 && (
+                    <Badge variant="outline">
+                      top 10 of {sourceHealth.starvingTotal}
+                    </Badge>
+                  )}
+                </div>
               </div>
-            </ScrollArea>
-          </CardContent>
-        </Card>
-      )}
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Never Fetched Section */}
+              {neverFetchedSources.length > 0 && (
+                <div>
+                  <div className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
+                    <AlertTriangle className="h-3 w-3" />
+                    Never Fetched (check setup/URL/auth)
+                  </div>
+                  <ScrollArea className="max-h-[100px]">
+                    <div className="space-y-2">
+                      {neverFetchedSources.map(renderSourceRow)}
+                    </div>
+                  </ScrollArea>
+                </div>
+              )}
+              
+              {/* Stopped Fetching Section */}
+              {staleSources.length > 0 && (
+                <div>
+                  <div className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
+                    <XCircle className="h-3 w-3" />
+                    Stopped Fetching (runtime issue)
+                  </div>
+                  <ScrollArea className="max-h-[100px]">
+                    <div className="space-y-2">
+                      {staleSources.map(renderSourceRow)}
+                    </div>
+                  </ScrollArea>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        );
+      })()}
 
       <div className="grid gap-4 md:grid-cols-2">
         {/* Top Producing Sources */}
