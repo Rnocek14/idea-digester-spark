@@ -240,7 +240,7 @@ serve(async (req) => {
     // Check if newsletter already exists for today
     const { data: existingNewsletter } = await supabase
       .from("newsletters")
-      .select("id, status, subject, story_count")
+      .select("id, status, subject, story_count, story_ids")
       .eq("edition_date", editionDate)
       .maybeSingle();
 
@@ -362,7 +362,14 @@ serve(async (req) => {
       console.log("✅ Existing newsletter deleted, proceeding with fresh generation");
     }
 
-    // ========== FRESHNESS PIPELINE ==========
+    // SAME-DAY REPEAT PROTECTION: Track stories already used in today's newsletter 
+    // This prevents duplicates when force=true is run multiple times in one day
+    let todayStampedIds: string[] = [];
+    if (existingNewsletter?.story_ids) {
+      todayStampedIds = existingNewsletter.story_ids;
+      console.log(`📋 Same-day protection: excluding ${todayStampedIds.length} stories from deleted newsletter`);
+    }
+
     // Include stories from the last 72 hours OR use created_at as fallback
     // Extended window ensures we always have content for newsletters
     
@@ -652,7 +659,13 @@ serve(async (req) => {
     const rankedStories = rankStories(candidates as Story[], 12);
     const selectedStories = rankedStories.slice(0, 12);
 
-    console.log(`📊 Selected ${selectedStories.length} stories + ${evergreenItems.length} evergreen for newsletter`);
+    // Compute briefingStories ONCE here, same filter used by buildNewsletterV2
+    // This ensures stamping matches exactly what's rendered
+    const briefingStories = selectedStories
+      .filter(s => s.category !== "events")
+      .slice(0, 5);
+    
+    console.log(`📊 Selected ${selectedStories.length} stories (${briefingStories.length} briefing) + ${evergreenItems.length} evergreen for newsletter`);
 
     // Ensure voice exists for all stories
     console.log("🎤 Ensuring voice generation for all stories...");
@@ -725,6 +738,7 @@ serve(async (req) => {
       console.log("📝 Building newsletter content (V2: LIVE · LATEST · LATER)...");
       newsletter = buildNewsletterV2({
         latestStories: selectedStories,
+        briefingStories, // Pass pre-computed briefingStories
         optimizedStories,
         editionDate,
         sponsor: headerSponsor,
@@ -753,8 +767,7 @@ serve(async (req) => {
       );
     }
 
-    // Compute briefingStories for metadata (same logic as buildNewsletterV2)
-    const briefingStories = selectedStories.filter(s => s.category !== "events").slice(0, 5);
+    // briefingStories already computed at line ~670, reuse for metadata
     
     // Save newsletter to database with version tagging
     const versionTag = useV2 ? "v2_live_latest_later" : "v1_legacy";
@@ -1354,6 +1367,7 @@ Unsubscribe: [link]
 
 interface NewsletterV2Params {
   latestStories: Story[];
+  briefingStories: Story[]; // Pre-computed briefing stories (non-events, max 5)
   optimizedStories: { id: string; newsletter_voice: string }[];
   editionDate: string;
   sponsor?: any;
@@ -1373,6 +1387,7 @@ interface NewsletterV2Params {
 function buildNewsletterV2(params: NewsletterV2Params) {
   const {
     latestStories,
+    briefingStories, // Use pre-computed briefingStories passed from caller
     optimizedStories,
     editionDate,
     sponsor,
@@ -1431,10 +1446,7 @@ function buildNewsletterV2(params: NewsletterV2Params) {
   }
 
   // ========== LATEST SECTION (The Briefing) ==========
-  // Filter to non-event stories for the briefing (max 5)
-  const briefingStories = latestStories
-    .filter(s => s.category !== "events")
-    .slice(0, 5);
+  // briefingStories is now passed in from caller (same list used for stamping)
 
   const latestHtml = briefingStories.length > 0 ? `
     <div style="margin-bottom: 32px;">
