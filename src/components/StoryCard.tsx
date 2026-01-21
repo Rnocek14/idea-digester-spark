@@ -169,8 +169,8 @@ export const StoryCard = ({
           />
         )}
         {category && (
-          <span className="absolute bottom-2 left-2 rounded-sm bg-black/70 px-2 py-0.5 text-[10px] text-white backdrop-blur pointer-events-none uppercase tracking-wider">
-            {getCategoryEmoji(category)} {category.replace('_', ' ')}
+          <span className="absolute bottom-2 left-2 rounded-sm bg-white/90 px-1.5 py-0.5 text-[9px] font-mono text-slate-700 pointer-events-none uppercase tracking-wider">
+            {category.replace('_', ' ')}
           </span>
         )}
       </div>

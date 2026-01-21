@@ -89,7 +89,10 @@ const GARBAGE_PERFORMER_KEYWORDS = [
   'the first', 'the second', 'the third', 'of each', 'during the',
   'such as', 'songs of', 'your meal', 'afternoon', 'evening',
   'contemporaries', 'menu', 'dinner', 'lunch', 'brunch',
-  'wednesday', 'thursday', 'friday', 'saturday', 'sunday', 'monday', 'tuesday'
+  'wednesday', 'thursday', 'friday', 'saturday', 'sunday', 'monday', 'tuesday',
+  // Age/status confirmations that leak from scraping
+  'no age confirmed', 'age confirmed', 'tbd', 'to be determined', 
+  'various artists', 'special guest', 'live entertainment', 'coming soon'
 ];
 
 // Patterns that indicate truncated sentences or garbage
