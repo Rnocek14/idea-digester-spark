@@ -435,9 +435,10 @@ function deduplicateByVenue(events: NightlifeEvent[], limit: number): NightlifeE
 
 interface NightlifeWidgetProps {
   tonightOnly?: boolean;
+  showTonightsPick?: boolean;
 }
 
-export default function NightlifeWidget({ tonightOnly = false }: NightlifeWidgetProps) {
+export default function NightlifeWidget({ tonightOnly = false, showTonightsPick = false }: NightlifeWidgetProps) {
   const todayStr = getTodayDateString();
   const { saturday: saturdayStr, sunday: sundayStr } = getUpcomingWeekendDates();
 
@@ -692,20 +693,76 @@ export default function NightlifeWidget({ tonightOnly = false }: NightlifeWidget
   // For tonightOnly mode, show component even if tonight is empty (with "nothing scheduled" message)
   if (!tonightOnly && !hasTonight && !hasWeekdays && !hasWeekend) return null;
 
+  // Get Tonight's Pick - the "best" event for tonight (first one with a performer, or just first one)
+  const tonightsPick = showTonightsPick && tonightEvents && tonightEvents.length > 0
+    ? tonightEvents.find(e => e.performer || extractPerformerFromTitle(e.title)) || tonightEvents[0]
+    : null;
+  
+  // Remaining tonight events (excluding Tonight's Pick if showing)
+  const remainingTonightEvents = showTonightsPick && tonightsPick
+    ? tonightEvents?.filter(e => e.id !== tonightsPick.id) || []
+    : tonightEvents || [];
+
   return (
     <aside className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
-      {/* Tonight Section */}
-      {hasTonight ? (
-        <>
-          <div className="flex items-center gap-2 mb-3">
-            <PartyPopper className="h-4 w-4 text-purple-600" />
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-              Tonight
-            </p>
+      {/* Tonight's Pick - Featured slot at top */}
+      {tonightsPick && (
+        <div className="mb-4 pb-3 border-b border-slate-100">
+          <div className="flex items-center gap-1.5 mb-2">
+            <span className="text-sm">⭐</span>
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-amber-600">Tonight's Pick</p>
           </div>
+          <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-3 border border-amber-100">
+            {(() => {
+              const venue = extractVenue(tonightsPick.title);
+              const displayName = venue || tonightsPick.title;
+              const displayPerformer = getDisplayPerformer(tonightsPick);
+              const showPerformer = shouldShowPerformer(displayName, displayPerformer);
+              return (
+                <>
+                  {tonightsPick.original_url ? (
+                    <a 
+                      href={tonightsPick.original_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm font-semibold text-slate-900 leading-snug hover:text-amber-700 transition-colors block"
+                    >
+                      {displayName}
+                    </a>
+                  ) : (
+                    <p className="text-sm font-semibold text-slate-900 leading-snug">{displayName}</p>
+                  )}
+                  {(showPerformer || tonightsPick.event_time) && (
+                    <p className="text-[11px] text-slate-600 mt-1">
+                      {showPerformer && displayPerformer}
+                      {showPerformer && tonightsPick.event_time && ' · '}
+                      {tonightsPick.event_time || 'Tonight'}
+                    </p>
+                  )}
+                  {!showPerformer && !tonightsPick.event_time && (
+                    <p className="text-[11px] text-slate-600 mt-1">Tonight</p>
+                  )}
+                </>
+              );
+            })()}
+          </div>
+        </div>
+      )}
+
+      {/* Tonight Section */}
+      {remainingTonightEvents.length > 0 ? (
+        <>
+          {!tonightsPick && (
+            <div className="flex items-center gap-2 mb-3">
+              <PartyPopper className="h-4 w-4 text-purple-600" />
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                Tonight
+              </p>
+            </div>
+          )}
           
           <ul className="space-y-2.5">
-            {tonightEvents.map((e) => {
+            {remainingTonightEvents.map((e) => {
               const venue = extractVenue(e.title);
               const displayName = venue || e.title;
               const displayPerformer = getDisplayPerformer(e);
@@ -733,7 +790,7 @@ export default function NightlifeWidget({ tonightOnly = false }: NightlifeWidget
                       <p className="text-[11px] text-slate-500 mt-0.5">
                         {showPerformer && displayPerformer}
                         {showPerformer && e.event_time && ' · '}
-                        {e.event_time}
+                        {e.event_time || 'Tonight'}
                       </p>
                     )}
                   </div>
@@ -742,15 +799,15 @@ export default function NightlifeWidget({ tonightOnly = false }: NightlifeWidget
             })}
           </ul>
         </>
-      ) : tonightOnly ? (
+      ) : tonightOnly && !tonightsPick ? (
         <div className="text-center py-4">
           <p className="text-sm text-slate-500">Nothing scheduled tonight</p>
-          <a 
-            href="/nightlife" 
+          <Link 
+            to="/nightlife" 
             className="text-xs text-purple-600 hover:underline mt-1 inline-block"
           >
             Browse all nightlife →
-          </a>
+          </Link>
         </div>
       ) : null}
 
@@ -912,12 +969,21 @@ export default function NightlifeWidget({ tonightOnly = false }: NightlifeWidget
         </div>
       )}
 
-      <Link
-        to="/lake-geneva?category=events"
-        className="mt-3 block text-xs text-purple-600 hover:underline font-medium"
-      >
-        All events →
-      </Link>
+      {tonightOnly ? (
+        <Link
+          to="/nightlife"
+          className="mt-3 block text-xs text-purple-600 hover:underline font-medium"
+        >
+          More happening tonight →
+        </Link>
+      ) : (
+        <Link
+          to="/lake-geneva?category=events"
+          className="mt-3 block text-xs text-purple-600 hover:underline font-medium"
+        >
+          All events →
+        </Link>
+      )}
     </aside>
   );
 }
