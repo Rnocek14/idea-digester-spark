@@ -39,18 +39,24 @@ const LiveColumnHeader = () => {
   const isActive = hasActiveIncidents === true;
 
   return (
-    <div className="flex items-center gap-2 px-1 pb-2 border-b border-border">
-      <span className="relative flex h-2.5 w-2.5">
-        {isActive ? (
-          <>
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-destructive"></span>
-          </>
-        ) : (
-          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+    <div className="px-1 pb-3 border-b border-border">
+      <div className="flex items-center gap-2">
+        <span className="relative flex h-2.5 w-2.5">
+          {isActive ? (
+            <>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-destructive"></span>
+            </>
+          ) : (
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+          )}
+        </span>
+        <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Live</h2>
+        {!isActive && (
+          <span className="text-xs text-emerald-600/80">· All clear</span>
         )}
-      </span>
-      <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Live</h2>
+      </div>
+      <p className="text-[10px] text-muted-foreground/70 mt-1">Real-time status</p>
     </div>
   );
 };
@@ -368,18 +374,6 @@ const LakeGenevaV2 = () => {
 
           {/* ========== CENTER COLUMN: LATEST (SCROLLABLE) ========== */}
           <main className="min-w-0 w-full">
-            {/* Compact Hero Section - reduced to get story above fold */}
-            <section className="mb-5">
-              <div className="bg-card rounded-xl border border-border shadow-sm px-6 py-5">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground mb-1">
-                  Good morning, Lake Geneva
-                </p>
-                <h1 className="font-semibold text-xl sm:text-2xl text-foreground leading-tight">
-                  Here's what's happening
-                </h1>
-              </div>
-            </section>
-
             {/* Mobile: LIVE section */}
             <div className="xl:hidden mb-8">
               <LiveColumnHeader />
@@ -391,11 +385,15 @@ const LakeGenevaV2 = () => {
               </div>
             </div>
 
-            {/* TODAY Header + First 2 Stories BEFORE sponsor */}
-            {/* LATEST Header */}
-            <div className="flex items-center gap-2 mb-5">
-              <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Latest</h2>
-              <span className="text-xs text-muted-foreground/70">· Your daily briefing</span>
+            {/* LATEST Header - matches sidebar header style */}
+            <div className="px-1 pb-3 border-b border-border mb-5">
+              <div className="flex items-center gap-2">
+                <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Latest</h2>
+                <span className="text-xs text-muted-foreground/70">· Your daily briefing</span>
+              </div>
+              <p className="text-[10px] text-muted-foreground/70 mt-1">
+                {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+              </p>
             </div>
 
             {/* First 2 stories above the fold */}
@@ -517,8 +515,8 @@ const LakeGenevaV2 = () => {
                 <p className="text-[10px] text-muted-foreground/70 mt-1 ml-6">Next 72 hours</p>
               </div>
               
-              {/* Nightlife Widget - Extended window */}
-              <NightlifeWidget />
+              {/* Nightlife Widget - Extended window with Pick */}
+              <NightlifeWidget showLaterPick />
             </div>
           </aside>
         </div>
@@ -532,7 +530,7 @@ const LakeGenevaV2 = () => {
             </div>
             <p className="text-[10px] text-muted-foreground/70 mt-1 ml-6">Next 72 hours</p>
           </div>
-          <NightlifeWidget />
+          <NightlifeWidget showLaterPick />
         </div>
       </div>
     </PageShell>
