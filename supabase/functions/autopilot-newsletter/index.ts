@@ -813,17 +813,22 @@ serve(async (req) => {
     }
 
     // Update stories with newsletter reference (dedupe marker) + auto-mark as published
-    console.log("🔗 Updating stories with newsletter reference + marking as auto_published...");
-    const { error: updateError } = await supabase
-      .from("content_queue")
-      .update({ 
-        last_newsletter_id: savedNewsletter.id,
-        status: "auto_published"
-      })
-      .in("id", storyIds);
+    // REFINED: Only stamp briefingStories (what's actually rendered in LATEST) to preserve content pool
+    const briefingStoryIds = briefingStories.map(s => s.id);
+    console.log(`🔗 Stamping ${briefingStoryIds.length} briefing stories (of ${storyIds.length} candidates)...`);
+    
+    if (briefingStoryIds.length > 0) {
+      const { error: updateError } = await supabase
+        .from("content_queue")
+        .update({ 
+          last_newsletter_id: savedNewsletter.id,
+          status: "auto_published"
+        })
+        .in("id", briefingStoryIds);
 
-    if (updateError) throw updateError;
-    console.log(`🔒 Stamped ${storyIds.length} story_ids with last_newsletter_id=${savedNewsletter.id}`);
+      if (updateError) throw updateError;
+    }
+    console.log(`🔒 Stamped ${briefingStoryIds.length} briefing_story_ids (candidates_considered=${storyIds.length}, remaining_unstamped=${storyIds.length - briefingStoryIds.length})`);
     
     // Log newsletter generation to activity log
     const versionLabel = useV2 ? 'V2' : 'V1';
