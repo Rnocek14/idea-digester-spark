@@ -522,11 +522,11 @@ const LakeGenevaV2 = () => {
               <NightlifeWidget tonightOnly />
             </div>
 
-            {/* TOP UPDATES Header - Commit A rename + blue accent */}
+            {/* LATEST Header - L-L-L mnemonic consistency */}
             <div className="pb-3 border-b-4 border-blue-600 mb-6">
               <div className="flex items-baseline justify-between">
-                <h2 className="text-sm font-black uppercase tracking-[0.15em] text-black">TOP UPDATES</h2>
-                <span className="text-[10px] font-mono text-slate-500 uppercase">[LOCAL EDITION]</span>
+                <h2 className="text-sm font-black uppercase tracking-[0.15em] text-black">LATEST</h2>
+                <span className="text-[10px] font-mono text-blue-600 uppercase">[LOCAL BRIEFING]</span>
               </div>
               <p className="text-[10px] font-mono text-slate-400 mt-1">
                 What locals should know · {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).toUpperCase()}
