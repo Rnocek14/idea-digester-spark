@@ -208,3 +208,6 @@ verify_jwt = false
 
 [functions.sync-facebook-local]
 verify_jwt = false
+
+[functions.kick-source-fetch]
+verify_jwt = false
