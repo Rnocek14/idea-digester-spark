@@ -240,14 +240,20 @@ const PipelineHealth = () => {
       if (pendingTotal > 20) {
         alerts.push({ type: 'warning', message: `${pendingTotal} items pending approval` });
       }
-      if (created1h < 1 && new Date().getHours() >= 8 && new Date().getHours() <= 22) {
-        alerts.push({ type: 'critical', message: 'No new content in the last hour' });
+      // Starvation alert: guard with created24h >= 20 to avoid slow-hour false alarms
+      if (created1h === 0 && created24h < 20 && new Date().getHours() >= 8 && new Date().getHours() <= 22) {
+        alerts.push({ type: 'critical', message: 'No new content in the last hour (and low 24h volume)' });
       }
       if (staleSources.length > 5) {
         alerts.push({ type: 'warning', message: `${staleSources.length} sources haven't fetched in 3+ days` });
       }
       if (expired7d > created7d * 0.3) {
         alerts.push({ type: 'warning', message: `High expiration rate: ${expired7d} expired vs ${created7d} created` });
+      }
+      // Backlog alert: over24h >= 10 OR (over24h >= 25% of pending AND over24h >= 3)
+      const over24hPct = pendingTotal > 0 ? (over24h / pendingTotal) : 0;
+      if (over24h >= 10 || (over24hPct >= 0.25 && over24h >= 3)) {
+        alerts.push({ type: 'warning', message: `Backlog accumulating: ${over24h} items pending >24h` });
       }
 
       return {
@@ -472,43 +478,54 @@ const PipelineHealth = () => {
       </Card>
 
       {/* Pending Age Breakdown */}
-      {bottlenecks.pendingTotal > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Clock className="h-5 w-5 text-muted-foreground" />
-              Pending Age Breakdown
-            </CardTitle>
-            <CardDescription>
-              {pendingAge.over24h > 5 
-                ? "⚠️ Backlog accumulating — moderation may be stuck"
-                : pendingAge.under6h > pendingAge.from6to24h + pendingAge.over24h
-                  ? "✓ Queue is fresh — ingestion healthy"
-                  : "Items aging normally"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="text-center p-4 rounded-lg bg-secondary/50">
-                <div className="text-2xl font-bold text-primary">{pendingAge.under6h}</div>
-                <div className="text-xs text-muted-foreground">&lt;6 hours</div>
-              </div>
-              <div className="text-center p-4 rounded-lg bg-secondary/50">
-                <div className={`text-2xl font-bold ${pendingAge.from6to24h > 10 ? 'text-destructive' : 'text-muted-foreground'}`}>
-                  {pendingAge.from6to24h}
+      {bottlenecks.pendingTotal > 0 && (() => {
+        const total = bottlenecks.pendingTotal;
+        const under6hPct = Math.round((pendingAge.under6h / total) * 100);
+        const from6to24hPct = Math.round((pendingAge.from6to24h / total) * 100);
+        const over24hPct = Math.round((pendingAge.over24h / total) * 100);
+        
+        // Smart diagnostics
+        const isBacklogAccumulating = pendingAge.over24h >= 10 || (over24hPct >= 25 && pendingAge.over24h >= 3);
+        const isQueueFresh = under6hPct >= 65 && pendingAge.over24h === 0;
+        
+        return (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Clock className="h-5 w-5 text-muted-foreground" />
+                Pending Age Breakdown
+              </CardTitle>
+              <CardDescription>
+                {isBacklogAccumulating 
+                  ? "⚠️ Backlog accumulating — moderation may be stuck"
+                  : isQueueFresh
+                    ? "✓ Queue is fresh — ingestion healthy"
+                    : "Items aging normally"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center p-4 rounded-lg bg-secondary/50">
+                  <div className="text-2xl font-bold text-primary">{pendingAge.under6h}</div>
+                  <div className="text-xs text-muted-foreground">&lt;6h ({under6hPct}%)</div>
                 </div>
-                <div className="text-xs text-muted-foreground">6–24 hours</div>
-              </div>
-              <div className="text-center p-4 rounded-lg bg-secondary/50">
-                <div className={`text-2xl font-bold ${pendingAge.over24h > 5 ? 'text-destructive' : 'text-muted-foreground'}`}>
-                  {pendingAge.over24h}
+                <div className="text-center p-4 rounded-lg bg-secondary/50">
+                  <div className={`text-2xl font-bold ${from6to24hPct > 40 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                    {pendingAge.from6to24h}
+                  </div>
+                  <div className="text-xs text-muted-foreground">6–24h ({from6to24hPct}%)</div>
                 </div>
-                <div className="text-xs text-muted-foreground">&gt;24 hours</div>
+                <div className="text-center p-4 rounded-lg bg-secondary/50">
+                  <div className={`text-2xl font-bold ${isBacklogAccumulating ? 'text-destructive' : 'text-muted-foreground'}`}>
+                    {pendingAge.over24h}
+                  </div>
+                  <div className="text-xs text-muted-foreground">&gt;24h ({over24hPct}%)</div>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+            </CardContent>
+          </Card>
+        );
+      })()}
 
       {/* Skip Reasons - Diagnostic Section */}
       <SkipReasonsCard />
