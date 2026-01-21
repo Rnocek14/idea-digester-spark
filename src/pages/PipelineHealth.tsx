@@ -9,7 +9,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { 
   Activity, 
   TrendingUp, 
-  TrendingDown, 
   Clock, 
   AlertTriangle, 
   CheckCircle, 
@@ -17,10 +16,22 @@ import {
   Zap,
   BarChart3,
   MapPin,
-  Layers
+  Layers,
+  Radio
 } from "lucide-react";
 import { formatDistanceToNow, subDays, subHours, format } from "date-fns";
 import { SkipReasonsCard } from "@/components/SkipReasonsCard";
+
+interface StarvingSource {
+  id: string;
+  name: string;
+  hoursSinceLastFetch: number;
+  isCritical: boolean; // >= 24h
+}
+
+// Zero-safe percentage calculation helper
+const safePct = (n: number, total: number): number => 
+  total > 0 ? Math.round((n / total) * 100) : 0;
 
 interface PipelineMetrics {
   throughput: {
@@ -47,6 +58,7 @@ interface PipelineMetrics {
     topProducers: Array<{ name: string; count: number; id: string }>;
     failingSources: Array<{ name: string; failures: number; lastError?: string }>;
     staleSources: Array<{ name: string; lastContent: string | null }>;
+    starvingSources: StarvingSource[];
   };
   mix: {
     categories24h: Record<string, number>;
@@ -54,7 +66,7 @@ interface PipelineMetrics {
     geoTiers24h: Record<number, number>;
     geoTiers7d: Record<number, number>;
   };
-  alerts: Array<{ type: 'critical' | 'warning'; message: string }>;
+  alerts: Array<{ type: 'critical' | 'warning' | 'info'; message: string }>;
 }
 
 const PipelineHealth = () => {
@@ -116,9 +128,9 @@ const PipelineHealth = () => {
           .gte("created_at", sevenDaysAgo)
           .not("source_id", "is", null),
         
-        // Sources status
+        // Sources status (include type for frequency-based starvation thresholds)
         supabase.from("sources")
-          .select("id, name, last_fetched_at, status")
+          .select("id, name, last_fetched_at, status, type")
           .eq("status", "active"),
         
         // Recent approvals for lag calculation
@@ -216,7 +228,13 @@ const PipelineHealth = () => {
         .slice(0, 10);
 
       // Process source health
-      const sources = (sourcesResult.data || []) as Array<{ id: string; name: string; last_fetched_at: string | null; status: string }>;
+      const sources = (sourcesResult.data || []) as Array<{ 
+        id: string; 
+        name: string; 
+        last_fetched_at: string | null; 
+        status: string;
+        type?: string;
+      }>;
       
       // Find stale sources (no content in 3+ days)
       const staleSources = sources
@@ -234,15 +252,53 @@ const PipelineHealth = () => {
         .map(s => ({ name: s.name, failures: 0, lastError: 'No content in 7 days' }))
         .slice(0, 5);
 
+      // Calculate starving sources: per-source starvation based on fetch recency
+      // RSS/scrape sources: 6h threshold (high-freq), 24h critical
+      const starvingSources: StarvingSource[] = sources
+        .filter(s => s.type === 'rss' || s.type === 'scrape')
+        .map(s => {
+          const lastFetched = s.last_fetched_at ? new Date(s.last_fetched_at) : null;
+          const hoursSinceLastFetch = lastFetched 
+            ? (now.getTime() - lastFetched.getTime()) / (1000 * 60 * 60)
+            : Infinity;
+          return {
+            id: s.id,
+            name: s.name,
+            hoursSinceLastFetch: Math.round(hoursSinceLastFetch),
+            isCritical: hoursSinceLastFetch >= 24,
+          };
+        })
+        .filter(s => s.hoursSinceLastFetch >= 6) // Starving = 6+ hours
+        .sort((a, b) => b.hoursSinceLastFetch - a.hoursSinceLastFetch)
+        .slice(0, 10);
+
       // Generate alerts
-      const alerts: Array<{ type: 'critical' | 'warning'; message: string }> = [];
+      const alerts: Array<{ type: 'critical' | 'warning' | 'info'; message: string }> = [];
+      
+      // Per-source starvation alerts (more actionable than global)
+      const criticalStarvingCount = starvingSources.filter(s => s.isCritical).length;
+      const starvingCount = starvingSources.length;
+      
+      // Source starvation: only alert if we're not on a naturally slow day
+      if (criticalStarvingCount >= 1 && created24h >= 20) {
+        alerts.push({ type: 'critical', message: `${criticalStarvingCount} source${criticalStarvingCount > 1 ? 's' : ''} starving (24h+ without fetch)` });
+      } else if (starvingCount >= 3 && created24h >= 20) {
+        alerts.push({ type: 'warning', message: `${starvingCount} sources starving (6h+ without fetch)` });
+      }
+      
+      // Global ingestion starvation: fire only when high 24h volume but sudden stop
+      // (If 24h volume is low, it's a slow day - don't alarm)
+      if (created1h === 0 && created24h >= 20 && new Date().getHours() >= 8 && new Date().getHours() <= 22) {
+        alerts.push({ type: 'critical', message: 'No new content in the last hour (unexpected vs 24h volume)' });
+      }
+      
+      // Low volume info (not critical, just informational)
+      if (created1h === 0 && created24h < 20 && new Date().getHours() >= 8 && new Date().getHours() <= 22) {
+        alerts.push({ type: 'info', message: 'Low ingestion pace today (24h volume < 20)' });
+      }
       
       if (pendingTotal > 20) {
         alerts.push({ type: 'warning', message: `${pendingTotal} items pending approval` });
-      }
-      // Starvation alert: guard with created24h >= 20 to avoid slow-hour false alarms
-      if (created1h === 0 && created24h < 20 && new Date().getHours() >= 8 && new Date().getHours() <= 22) {
-        alerts.push({ type: 'critical', message: 'No new content in the last hour (and low 24h volume)' });
       }
       if (staleSources.length > 5) {
         alerts.push({ type: 'warning', message: `${staleSources.length} sources haven't fetched in 3+ days` });
@@ -281,6 +337,7 @@ const PipelineHealth = () => {
           topProducers,
           failingSources: notProducingSources,
           staleSources,
+          starvingSources,
         },
         mix: {
           categories24h,
@@ -360,9 +417,15 @@ const PipelineHealth = () => {
       {alerts.length > 0 && (
         <div className="space-y-2">
           {alerts.map((alert, i) => (
-            <Alert key={i} variant={alert.type === 'critical' ? 'destructive' : 'default'}>
+            <Alert 
+              key={i} 
+              variant={alert.type === 'critical' ? 'destructive' : 'default'}
+              className={alert.type === 'info' ? 'border-muted bg-muted/30' : ''}
+            >
               {alert.type === 'critical' ? (
                 <XCircle className="h-4 w-4" />
+              ) : alert.type === 'info' ? (
+                <Activity className="h-4 w-4" />
               ) : (
                 <AlertTriangle className="h-4 w-4" />
               )}
@@ -480,9 +543,9 @@ const PipelineHealth = () => {
       {/* Pending Age Breakdown */}
       {bottlenecks.pendingTotal > 0 && (() => {
         const total = bottlenecks.pendingTotal;
-        const under6hPct = Math.round((pendingAge.under6h / total) * 100);
-        const from6to24hPct = Math.round((pendingAge.from6to24h / total) * 100);
-        const over24hPct = Math.round((pendingAge.over24h / total) * 100);
+        const under6hPct = safePct(pendingAge.under6h, total);
+        const from6to24hPct = safePct(pendingAge.from6to24h, total);
+        const over24hPct = safePct(pendingAge.over24h, total);
         
         // Smart diagnostics
         const isBacklogAccumulating = pendingAge.over24h >= 10 || (over24hPct >= 25 && pendingAge.over24h >= 3);
@@ -529,6 +592,51 @@ const PipelineHealth = () => {
 
       {/* Skip Reasons - Diagnostic Section */}
       <SkipReasonsCard />
+
+      {/* Starving Sources Panel */}
+      {sourceHealth.starvingSources.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Radio className="h-5 w-5 text-destructive" />
+                Starving Sources
+              </CardTitle>
+              <Badge 
+                variant={sourceHealth.starvingSources.some(s => s.isCritical) ? 'destructive' : 'outline'}
+              >
+                {sourceHealth.starvingSources.filter(s => s.isCritical).length} critical
+              </Badge>
+            </div>
+            <CardDescription>
+              Sources not fetched in 6+ hours (RSS/scrape only)
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="max-h-[180px]">
+              <div className="space-y-2">
+                {sourceHealth.starvingSources.map((source) => (
+                  <div 
+                    key={source.id} 
+                    className={`flex items-center justify-between p-2 rounded-md ${
+                      source.isCritical ? 'bg-destructive/10' : 'bg-muted/50'
+                    }`}
+                  >
+                    <span className="text-sm truncate max-w-[200px]">{source.name}</span>
+                    <span className={`text-xs font-medium ${
+                      source.isCritical ? 'text-destructive' : 'text-muted-foreground'
+                    }`}>
+                      {source.hoursSinceLastFetch >= 24 
+                        ? `${Math.round(source.hoursSinceLastFetch / 24)}d ago`
+                        : `${source.hoursSinceLastFetch}h ago`}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-4 md:grid-cols-2">
         {/* Top Producing Sources */}
