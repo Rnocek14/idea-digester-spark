@@ -18,12 +18,167 @@ interface Story {
   status: string;
   created_at: string;
   original_url: string | null;
+  event_date?: string | null;
+  event_time?: string | null;
+  performer?: string | null;
+  metadata?: any;
 }
 
 interface Subscriber {
   id: string;
   email: string;
   unsubscribe_token: string;
+}
+
+interface Incident {
+  id: string;
+  title: string;
+  severity: string;
+  incident_type: string;
+  updated_at: string;
+}
+
+interface LaterEvent {
+  id: string;
+  title: string;
+  event_date: string | null;
+  event_time: string | null;
+  performer: string | null;
+  original_url: string | null;
+  metadata?: any;
+}
+
+// ============= VENUE EXTRACTION (ported from NightlifeWidget) =============
+
+const KNOWN_VENUES = [
+  'Geneva Tap House', 'PIER 290', 'Mars Resort', 'The Lookout Bar', 'The Lookout',
+  'Evolve', 'Baker House', 'Hogs & Kisses', 'Topsy Turvy', 'The Cat',
+  'Maxwell Mansion', 'Abbey Resort', 'Lake Lawn Resort', 'Grand Geneva',
+  'Pier 290', 'Lookout Bar', 'The Getaway', 'Harpoon Willies', "Harpoon Willie's"
+];
+
+const VENUE_ALIASES: Record<string, string> = {
+  'the lookout': 'The Lookout Bar',
+  'lookout bar': 'The Lookout Bar',
+  'the lookout bar': 'The Lookout Bar',
+  'pier 290': 'PIER 290',
+  'the cat': 'The Cat',
+  'topsy turvy': 'Topsy Turvy',
+  'at topsy turvy': 'Topsy Turvy',
+  'the getaway': 'The Getaway',
+  "harpoon willie's": "Harpoon Willie's",
+  'harpoon willies': "Harpoon Willie's",
+};
+
+function normalizeVenueName(venue: string): string {
+  const lower = venue.toLowerCase().trim();
+  return VENUE_ALIASES[lower] || venue;
+}
+
+function extractVenue(title: string): string {
+  const atVenueMatch = title.match(/(?:@|at\s+(?:the\s+)?)([\w\s']+?)(?:\s*[:\-–]|$)/i);
+  if (atVenueMatch) {
+    const venue = atVenueMatch[1].trim();
+    const normalized = normalizeVenueName(venue);
+    if (normalized !== venue) return normalized;
+    for (const known of KNOWN_VENUES) {
+      if (known.toLowerCase().includes(venue.toLowerCase()) || 
+          venue.toLowerCase().includes(known.toLowerCase().replace('the ', ''))) {
+        return known;
+      }
+    }
+    return venue;
+  }
+  for (const venue of KNOWN_VENUES) {
+    if (title.toLowerCase().includes(venue.toLowerCase())) {
+      return normalizeVenueName(venue);
+    }
+  }
+  return '';
+}
+
+function extractPerformerFromTitle(title: string): string | null {
+  const colonMatch = title.match(/:\s*([^:]+?)\s*$/i);
+  if (colonMatch) {
+    let performer = colonMatch[1].trim();
+    const liveAsMatch = performer.match(/^(.+?)\s+LIVE\s+(?:as|performing|plays)/i);
+    if (liveAsMatch) performer = liveAsMatch[1].trim();
+    if (performer.includes(' - ')) {
+      const parts = performer.split(' - ');
+      performer = parts[parts.length - 1].trim();
+    }
+    if (performer.length >= 3 && performer.length <= 50) {
+      return performer;
+    }
+  }
+  return null;
+}
+
+// Calculate pick score (ported from NightlifeWidget)
+function calculatePickScore(event: LaterEvent): { score: number; reason: string } {
+  let score = 0;
+  const reasons: string[] = [];
+  const title = event.title.toLowerCase();
+  
+  const hasPerformer = event.performer || extractPerformerFromTitle(event.title);
+  if (hasPerformer) {
+    score += 3;
+    reasons.push('confirmed performer');
+  }
+  
+  if (event.event_time) {
+    score += 2;
+    reasons.push('start time');
+  }
+  
+  if (event.original_url) {
+    score += 2;
+  }
+  
+  const hasSpecificVenue = KNOWN_VENUES.some(v => title.includes(v.toLowerCase()));
+  if (hasSpecificVenue) {
+    score += 2;
+    reasons.push('known venue');
+  }
+  
+  const lowValuePatterns = [
+    'live music at', 'live music every', 'featuring live', 
+    'music every', 'live entertainment', 'every friday', 'every saturday'
+  ];
+  if (lowValuePatterns.some(p => title.includes(p) && !hasPerformer)) score -= 5;
+  
+  if (!hasPerformer && title.length < 30) score -= 3;
+  if (!event.event_date) score -= 3;
+  
+  let reason = 'Upcoming event';
+  if (reasons.length > 0) {
+    reason = reasons.length === 1 
+      ? `Has ${reasons[0]}` 
+      : `Has ${reasons.slice(0, -1).join(', ')} + ${reasons[reasons.length - 1]}`;
+  }
+  
+  return { score, reason };
+}
+
+// Get Chicago timezone date info
+function getChicagoDate(): { dateStr: string; dayOfWeek: number; dayName: string } {
+  const now = new Date();
+  // Format in Chicago timezone
+  const chicagoStr = now.toLocaleString('en-US', { timeZone: 'America/Chicago' });
+  const chicagoDate = new Date(chicagoStr);
+  const dayOfWeek = chicagoDate.getDay();
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  
+  // Get YYYY-MM-DD in Chicago timezone
+  const year = chicagoDate.getFullYear();
+  const month = String(chicagoDate.getMonth() + 1).padStart(2, '0');
+  const day = String(chicagoDate.getDate()).padStart(2, '0');
+  
+  return {
+    dateStr: `${year}-${month}-${day}`,
+    dayOfWeek,
+    dayName: days[dayOfWeek]
+  };
 }
 
 serve(async (req) => {
@@ -250,35 +405,147 @@ serve(async (req) => {
 
     console.log(`✅ Found ${candidates.length} fresh hyperlocal candidates (${freshStories?.length || 0} before filters)`);
 
-    // Also fetch active incidents for content threshold check
+    // ========== V2: LIVE SECTION DATA ==========
+    // Fetch active incidents for LIVE section (includes details for rendering)
     const sixHoursAgo = new Date();
     sixHoursAgo.setHours(sixHoursAgo.getHours() - 6);
     
-    const { data: activeIncidents } = await supabase
-      .from("incidents")
-      .select("id")
-      .eq("status", "active")
-      .gte("updated_at", sixHoursAgo.toISOString());
+    let liveIncidents: Incident[] = [];
+    let liveFetchFailed = false;
+    
+    try {
+      const { data: activeIncidents, error: incidentError } = await supabase
+        .from("incidents")
+        .select("id, title, severity, incident_type, updated_at")
+        .eq("status", "active")
+        .gte("updated_at", sixHoursAgo.toISOString())
+        .order("severity", { ascending: false })
+        .order("updated_at", { ascending: false })
+        .limit(3);
+      
+      if (incidentError) {
+        console.error("⚠️ LIVE fetch failed:", incidentError);
+        liveFetchFailed = true;
+      } else {
+        liveIncidents = activeIncidents || [];
+      }
+    } catch (err) {
+      console.error("⚠️ LIVE fetch exception:", err);
+      liveFetchFailed = true;
+    }
 
-    const incidentCount = activeIncidents?.length || 0;
-    console.log(`📢 Active incidents in last 6h: ${incidentCount}`);
+    const incidentCount = liveIncidents.length;
+    console.log(`📢 Active incidents for LIVE section: ${incidentCount}${liveFetchFailed ? ' (fetch failed)' : ''}`);
 
-    // ========== MINIMUM CONTENT THRESHOLD ==========
-    // Skip newsletter if not enough fresh content
-    // Rules: 
-    //   - At least 3 fresh stories, OR
-    //   - At least 2 fresh stories + 1 active incident
-    const storyCount = candidates.length;
+    // ========== V2: LATER SECTION DATA ==========
+    // Fetch candidates for Pick of the Day and Tonight's Schedule
+    const chicagoInfo = getChicagoDate();
+    const todayChicago = chicagoInfo.dateStr;
+    const isWeekendSendDay = chicagoInfo.dayOfWeek === 4 || chicagoInfo.dayOfWeek === 5; // Thu or Fri
+    
+    console.log(`📅 Chicago date: ${todayChicago}, day: ${chicagoInfo.dayName}, weekend preview: ${isWeekendSendDay}`);
+    
+    // Calculate dates for next 3 days
+    const in72Hours = new Date();
+    in72Hours.setDate(in72Hours.getDate() + 3);
+    const in72HoursStr = in72Hours.toISOString().split('T')[0];
+    
+    // Fetch pick candidates (nightlife events in next 72h)
+    let laterPick: LaterEvent | null = null;
+    let laterPickReason = '';
+    
+    const { data: pickCandidates } = await supabase
+      .from("content_queue")
+      .select("id, title, event_date, event_time, performer, original_url, metadata")
+      .in("status", ["approved", "auto_published", "published"])
+      .eq("safety_level", "safe")
+      .eq("category", "events")
+      .contains("metadata", { verticals: ["nightlife"] })
+      .gte("event_date", todayChicago)
+      .lte("event_date", in72HoursStr)
+      .order("event_date", { ascending: true })
+      .limit(15);
+    
+    if (pickCandidates && pickCandidates.length > 0) {
+      // Score candidates using the same algorithm as homepage
+      const scored = (pickCandidates as LaterEvent[]).map(e => {
+        const result = calculatePickScore(e);
+        return { event: e, score: result.score, reason: result.reason };
+      });
+      
+      scored.sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        const aDate = a.event.event_date || '';
+        const bDate = b.event.event_date || '';
+        return aDate.localeCompare(bDate);
+      });
+      
+      if (scored[0] && scored[0].score > 0) {
+        laterPick = scored[0].event;
+        laterPickReason = scored[0].reason;
+        console.log(`⭐ Pick of the Day: ${laterPick.title} (score: ${scored[0].score})`);
+      }
+    }
+    
+    // Fetch tonight's schedule (events for today)
+    const { data: tonightEvents } = await supabase
+      .from("content_queue")
+      .select("id, title, event_date, event_time, original_url")
+      .in("status", ["approved", "auto_published", "published"])
+      .eq("safety_level", "safe")
+      .eq("category", "events")
+      .eq("event_date", todayChicago)
+      .order("event_time", { ascending: true, nullsFirst: false })
+      .limit(4);
+    
+    const tonightSchedule = (tonightEvents || []) as LaterEvent[];
+    console.log(`🌙 Tonight's schedule: ${tonightSchedule.length} events`);
+    
+    // Weekend preview (only on Thu/Fri)
+    let weekendEvents: LaterEvent[] = [];
+    if (isWeekendSendDay) {
+      const saturday = new Date();
+      const daysUntilSat = (6 - saturday.getDay() + 7) % 7 || 7;
+      saturday.setDate(saturday.getDate() + daysUntilSat);
+      const saturdayStr = saturday.toISOString().split('T')[0];
+      
+      const sunday = new Date(saturday);
+      sunday.setDate(sunday.getDate() + 1);
+      const sundayStr = sunday.toISOString().split('T')[0];
+      
+      const { data: weekendData } = await supabase
+        .from("content_queue")
+        .select("id, title, event_date, event_time, original_url")
+        .in("status", ["approved", "auto_published", "published"])
+        .eq("safety_level", "safe")
+        .eq("category", "events")
+        .in("event_date", [saturdayStr, sundayStr])
+        .order("event_date", { ascending: true })
+        .order("event_time", { ascending: true, nullsFirst: false })
+        .limit(6);
+      
+      weekendEvents = (weekendData || []) as LaterEvent[];
+      console.log(`📅 Weekend preview: ${weekendEvents.length} events`);
+    }
+
+    // ========== V2: UPDATED MINIMUM CONTENT THRESHOLD ==========
+    // Send if: LATEST ≥ 2 OR LIVE exists OR LATER has ≥ 2 items
+    // This gives resilience on slow news days but busy nightlife days
+    const latestStoryCount = candidates.filter(s => s.category !== "events").length;
+    const laterItemCount = tonightSchedule.length + (laterPick ? 1 : 0);
+    
     const hasEnoughContent = 
-      storyCount >= 3 || 
-      (storyCount >= 2 && incidentCount >= 1);
+      latestStoryCount >= 2 || 
+      incidentCount >= 1 ||
+      laterItemCount >= 2;
 
     if (!hasEnoughContent) {
-      const skipReason = storyCount === 0 
+      const totalContent = latestStoryCount + laterItemCount;
+      const skipReason = totalContent === 0 
         ? "no_fresh_content" 
         : "not_enough_fresh_content";
       
-      console.log(`⚠️ Not enough fresh content (stories=${storyCount}, incidents=${incidentCount}), skipping newsletter`);
+      console.log(`⚠️ Not enough fresh content (latest=${latestStoryCount}, later=${laterItemCount}, incidents=${incidentCount}), skipping newsletter`);
       
       const { data: skippedNewsletter, error: skipError } = await supabase
         .from("newsletters")
@@ -293,9 +560,11 @@ serve(async (req) => {
           story_count: 0,
           metadata: { 
             skipped_reason: skipReason,
-            story_count: storyCount,
+            latest_story_count: latestStoryCount,
+            later_item_count: laterItemCount,
             incident_count: incidentCount,
-            freshness_window_hours: freshnessWindowHours
+            freshness_window_hours: freshnessWindowHours,
+            live_fetch_failed: liveFetchFailed
           }
         })
         .select()
@@ -309,7 +578,8 @@ serve(async (req) => {
           message: `Newsletter skipped: ${skipReason}`,
           newsletter_id: skippedNewsletter.id,
           status: "skipped",
-          story_count: storyCount,
+          latest_story_count: latestStoryCount,
+          later_item_count: laterItemCount,
           incident_count: incidentCount,
           freshness_window_hours: freshnessWindowHours
         }),
@@ -433,9 +703,25 @@ serve(async (req) => {
 
     console.log(`✅ Found ${advocates?.length || 0} advocates for newsletter`);
 
-    // Build newsletter
-    console.log("📝 Building newsletter content...");
-    const newsletter = buildNewsletter(selectedStories, optimizedStories, editionDate, headerSponsor, evergreenItems, jobListings || [], advocates || []);
+    // Build newsletter using V2 structure (LIVE · LATEST · LATER)
+    console.log("📝 Building newsletter content (V2 structure)...");
+    const newsletter = buildNewsletterV2({
+      latestStories: selectedStories,
+      optimizedStories,
+      editionDate,
+      sponsor: headerSponsor,
+      evergreen: evergreenItems,
+      jobs: jobListings || [],
+      advocates: advocates || [],
+      // V2 additions
+      liveIncidents,
+      liveFetchFailed,
+      laterPick,
+      laterPickReason,
+      tonightSchedule,
+      weekendEvents,
+      isWeekendSendDay
+    });
 
     // Save newsletter to database
     console.log("💾 Saving newsletter to database...");
@@ -976,6 +1262,395 @@ ${jobsText}
 ---
 You're receiving this because you subscribed to Lake Geneva Local.
 Unsubscribe: [link]
+  `.trim();
+
+  return { subject, preheader, htmlBody, textBody };
+}
+
+// ============= V2 NEWSLETTER BUILDER (LIVE · LATEST · LATER) =============
+
+interface NewsletterV2Params {
+  latestStories: Story[];
+  optimizedStories: { id: string; newsletter_voice: string }[];
+  editionDate: string;
+  sponsor?: any;
+  evergreen?: { id: string; title: string; content: string; category: string }[];
+  jobs?: any[];
+  advocates?: { email: string; referral_count: number }[];
+  // V2 additions
+  liveIncidents: Incident[];
+  liveFetchFailed: boolean;
+  laterPick: LaterEvent | null;
+  laterPickReason: string;
+  tonightSchedule: LaterEvent[];
+  weekendEvents: LaterEvent[];
+  isWeekendSendDay: boolean;
+}
+
+function buildNewsletterV2(params: NewsletterV2Params) {
+  const {
+    latestStories,
+    optimizedStories,
+    editionDate,
+    sponsor,
+    evergreen,
+    jobs,
+    advocates,
+    liveIncidents,
+    liveFetchFailed,
+    laterPick,
+    laterPickReason,
+    tonightSchedule,
+    weekendEvents,
+    isWeekendSendDay
+  } = params;
+
+  const optimizedMap = new Map(optimizedStories.map(o => [o.id, o.newsletter_voice]));
+
+  // Format date
+  const date = new Date(editionDate);
+  const dateLabel = date.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric"
+  });
+
+  const subject = `Lake Geneva Brief – ${dateLabel}`;
+  const preheader = latestStories[0]?.title || "Your daily Lake Geneva update";
+
+  // ========== LIVE SECTION (Conditional) ==========
+  // Only include if there are active incidents
+  const liveHtml = liveIncidents.length > 0 ? `
+    <div style="margin-bottom: 24px; padding: 16px; background-color: #fef2f2; border-left: 4px solid #dc2626; border-radius: 4px;">
+      <h2 style="margin: 0 0 12px 0; font-size: 16px; font-weight: 700; color: #dc2626;">
+        🔴 LIVE Updates
+      </h2>
+      ${liveIncidents.map(incident => `
+        <div style="margin-bottom: 12px;">
+          <p style="margin: 0; font-size: 14px; font-weight: 600; color: #991b1b;">
+            ${escapeHtml(incident.title)}
+          </p>
+          <p style="margin: 4px 0 0 0; font-size: 12px; color: #b91c1c;">
+            ${incident.incident_type ? toTitleCase(incident.incident_type) : 'Update'} · 
+            <a href="https://lakegeneva.news/incidents/${incident.id}" style="color: #dc2626; text-decoration: none;">Details →</a>
+          </p>
+        </div>
+      `).join("")}
+    </div>
+  ` : '';
+
+  // ========== LATEST SECTION (The Briefing) ==========
+  // Filter to non-event stories for the briefing (max 5)
+  const briefingStories = latestStories
+    .filter(s => s.category !== "events")
+    .slice(0, 5);
+
+  const latestHtml = briefingStories.length > 0 ? `
+    <div style="margin-bottom: 32px;">
+      <h2 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 700; color: #2d3748; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">
+        📰 LATEST
+      </h2>
+      ${briefingStories.map(s => {
+        const rawContent = s.content ?? "";
+        const body = optimizedMap.get(s.id) || s.content_newsletter || s.summary || rawContent.substring(0, 150);
+        const linkHtml = s.original_url 
+          ? ` <a href="${escapeHtml(s.original_url)}" style="color: #667eea; text-decoration: none; font-weight: 500;">Read more →</a>`
+          : '';
+        return `
+          <div style="margin-bottom: 20px;">
+            <h3 style="margin: 0 0 6px 0; font-size: 16px; font-weight: 600; color: #1a202c;">${escapeHtml(s.title)}</h3>
+            <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #4a5568;">${escapeHtml(body)}${linkHtml}</p>
+          </div>
+        `;
+      }).join("")}
+    </div>
+  ` : '';
+
+  // ========== LATER SECTION (Decision Support) ==========
+  let laterHtml = '';
+  
+  // Pick of the Day
+  const pickHtml = laterPick ? (() => {
+    const venue = extractVenue(laterPick.title) || laterPick.title;
+    const performer = laterPick.performer || extractPerformerFromTitle(laterPick.title);
+    const eventDate = laterPick.event_date;
+    
+    // Format day label
+    let dayLabel = 'Soon';
+    if (eventDate) {
+      const eventDateObj = new Date(eventDate + 'T12:00:00');
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      
+      if (eventDateObj.toDateString() === today.toDateString()) dayLabel = 'Today';
+      else if (eventDateObj.toDateString() === tomorrow.toDateString()) dayLabel = 'Tomorrow';
+      else dayLabel = eventDateObj.toLocaleDateString('en-US', { weekday: 'long' });
+    }
+    
+    const timeLabel = laterPick.event_time ? ` at ${laterPick.event_time}` : '';
+    
+    return `
+      <div style="margin-bottom: 20px; padding: 16px; background: linear-gradient(135deg, #fef3c7 0%, #fed7aa 100%); border-radius: 8px;">
+        <p style="margin: 0 0 8px 0; font-size: 11px; font-weight: 700; color: #92400e; text-transform: uppercase; letter-spacing: 0.1em;">
+          ⭐ PICK OF THE DAY
+        </p>
+        ${laterPick.original_url ? `
+          <a href="${escapeHtml(laterPick.original_url)}" style="text-decoration: none;">
+            <h3 style="margin: 0 0 4px 0; font-size: 18px; font-weight: 600; color: #78350f;">${escapeHtml(venue)}</h3>
+          </a>
+        ` : `
+          <h3 style="margin: 0 0 4px 0; font-size: 18px; font-weight: 600; color: #78350f;">${escapeHtml(venue)}</h3>
+        `}
+        <p style="margin: 0; font-size: 14px; color: #92400e;">
+          ${performer ? escapeHtml(performer) + ' · ' : ''}${dayLabel}${timeLabel}
+        </p>
+      </div>
+    `;
+  })() : '';
+
+  // Tonight's Schedule
+  const tonightHtml = tonightSchedule.length > 0 ? `
+    <div style="margin-bottom: 16px;">
+      <p style="margin: 0 0 10px 0; font-size: 13px; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.05em;">
+        🌙 Tonight
+      </p>
+      ${tonightSchedule.map(event => {
+        const venue = extractVenue(event.title) || event.title;
+        const time = event.event_time || '';
+        return `
+          <p style="margin: 0 0 6px 0; font-size: 14px; color: #4a5568;">
+            ${time ? `<span style="color: #667eea; font-weight: 500;">${time}</span> – ` : '• '}
+            ${event.original_url 
+              ? `<a href="${escapeHtml(event.original_url)}" style="color: #1a202c; text-decoration: none;">${escapeHtml(venue)}</a>`
+              : escapeHtml(venue)
+            }
+          </p>
+        `;
+      }).join("")}
+    </div>
+  ` : '';
+
+  // Weekend Preview (Thu/Fri only)
+  const weekendHtml = isWeekendSendDay && weekendEvents.length > 0 ? `
+    <div style="margin-bottom: 16px;">
+      <p style="margin: 0 0 10px 0; font-size: 13px; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.05em;">
+        📅 This Weekend
+      </p>
+      ${weekendEvents.slice(0, 4).map(event => {
+        const venue = extractVenue(event.title) || event.title;
+        const dayName = event.event_date ? new Date(event.event_date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short' }) : '';
+        const time = event.event_time || '';
+        return `
+          <p style="margin: 0 0 6px 0; font-size: 14px; color: #4a5568;">
+            ${dayName ? `<span style="color: #667eea; font-weight: 500;">${dayName}</span> ` : ''}
+            ${time ? `${time} – ` : ''}
+            ${event.original_url 
+              ? `<a href="${escapeHtml(event.original_url)}" style="color: #1a202c; text-decoration: none;">${escapeHtml(venue)}</a>`
+              : escapeHtml(venue)
+            }
+          </p>
+        `;
+      }).join("")}
+    </div>
+  ` : '';
+
+  // Combine LATER section
+  if (pickHtml || tonightHtml || weekendHtml) {
+    laterHtml = `
+      <div style="margin-bottom: 32px;">
+        <h2 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 700; color: #2d3748; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">
+          📅 LATER
+        </h2>
+        ${pickHtml}
+        ${tonightHtml}
+        ${weekendHtml}
+      </div>
+    `;
+  }
+
+  // ========== EXISTING SECTIONS (Jobs, Evergreen, Advocates) ==========
+  // Build evergreen section
+  const evergreenHtml = evergreen && evergreen.length > 0 ? `
+    <div style="margin-bottom: 32px; background-color: #f0fdf4; border-radius: 8px; padding: 20px;">
+      <h2 style="margin: 0 0 16px 0; font-size: 16px; font-weight: 700; color: #166534;">
+        ✨ Local Favorites
+      </h2>
+      ${evergreen.map(item => `
+        <div style="margin-bottom: 12px;">
+          <h3 style="margin: 0 0 4px 0; font-size: 14px; font-weight: 600; color: #15803d;">${escapeHtml(item.title)}</h3>
+          <p style="margin: 0; font-size: 13px; line-height: 1.4; color: #166534;">${escapeHtml(item.content)}</p>
+        </div>
+      `).join("")}
+    </div>
+  ` : "";
+
+  // Build jobs section
+  const jobsHtml = jobs && jobs.length > 0 ? `
+    <div style="margin-bottom: 32px; background-color: #e0f2fe; border-radius: 8px; padding: 20px;">
+      <h2 style="margin: 0 0 16px 0; font-size: 16px; font-weight: 700; color: #0369a1;">
+        💼 Now Hiring
+      </h2>
+      ${jobs.map((job: any) => {
+        const applyUrl = job.apply_url || `mailto:${job.contact_email}`;
+        return `
+          <div style="margin-bottom: 12px;">
+            <p style="margin: 0; font-size: 14px; font-weight: 600; color: #0c4a6e;">
+              ${escapeHtml(job.title)} 
+              <span style="font-weight: 400; color: #0369a1;">at ${escapeHtml(job.business_name)}</span>
+            </p>
+            <p style="margin: 4px 0 0 0; font-size: 12px; color: #0284c7;">
+              <a href="${escapeHtml(applyUrl)}" data-job-id="${job.id}" style="color: #0369a1; text-decoration: none;">Apply →</a>
+            </p>
+          </div>
+        `;
+      }).join("")}
+    </div>
+  ` : "";
+
+  // Build advocates section
+  const advocatesHtml = advocates && advocates.length > 0 ? (() => {
+    const advocateNames = advocates.map(a => {
+      const emailLocal = a.email.split("@")[0];
+      const parts = emailLocal.split(/[._-]/).filter(Boolean);
+      if (parts.length >= 2) {
+        const firstName = parts[0].charAt(0).toUpperCase() + parts[0].slice(1).toLowerCase();
+        const lastInitial = parts[parts.length - 1].charAt(0).toUpperCase();
+        return `${firstName} ${lastInitial}.`;
+      } else if (parts.length === 1 && parts[0].length > 2) {
+        return parts[0].charAt(0).toUpperCase() + parts[0].slice(1, 3).toLowerCase() + ".";
+      }
+      return "Reader";
+    }).filter((name, index, self) => self.indexOf(name) === index);
+
+    return `
+      <div style="margin-bottom: 24px; padding: 16px; background-color: #fef3c7; border-radius: 8px;">
+        <p style="margin: 0; font-size: 13px; color: #92400e;">
+          🌟 <strong>Community Advocates:</strong> ${advocateNames.join(", ")}
+          <a href="https://lakegeneva.news?ref=newsletter" style="color: #92400e; text-decoration: underline; margin-left: 8px;">Join them →</a>
+        </p>
+      </div>
+    `;
+  })() : "";
+
+  // Build sponsor block
+  const sponsorBlock = sponsor ? `
+    <div style="background-color: #f8f9fa; border-left: 4px solid #667eea; padding: 16px; margin: 16px 0; border-radius: 4px;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        ${sponsor.business_profiles?.logo_url ? `
+          <img src="${sponsor.business_profiles.logo_url}" 
+               alt="${sponsor.business_profiles.name}" 
+               style="width: 48px; height: 48px; object-fit: contain; border-radius: 4px;" />
+        ` : ''}
+        <div>
+          <p style="margin: 0; font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">Presented By</p>
+          <p style="margin: 4px 0 0 0; font-size: 16px; font-weight: 600; color: #1a1a1a;">
+            ${sponsor.label || sponsor.business_profiles?.name || 'Sponsor'}
+          </p>
+          ${sponsor.business_profiles?.website ? `
+            <a href="https://mzumvkrpnxhkvhdyzgqa.supabase.co/functions/v1/track-click?url=${encodeURIComponent(sponsor.business_profiles.website)}&source=newsletter_sponsor&bid=${sponsor.business_id}&pid=${sponsor.id}&nid={{NEWSLETTER_ID}}" 
+               style="color: #667eea; text-decoration: none; font-size: 13px;">Visit Website →</a>
+          ` : ''}
+        </div>
+      </div>
+    </div>
+  ` : '';
+
+  // ========== FINAL HTML ==========
+  const htmlBody = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${subject}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f7fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+  <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+    <div style="padding: 24px 20px; background: linear-gradient(135deg, #1e293b 0%, #334155 100%); color: white; text-align: center;">
+      <h1 style="margin: 0; font-size: 24px; font-weight: 700;">Lake Geneva Brief</h1>
+      <p style="margin: 6px 0 0 0; font-size: 14px; opacity: 0.9;">${dateLabel}</p>
+    </div>
+    
+    <div style="padding: 24px 20px;">
+      <p style="margin: 0 0 20px 0; font-size: 15px; line-height: 1.5; color: #4a5568;">
+        Good morning, Lake Geneva! 👋
+      </p>
+      
+      ${sponsorBlock}
+      
+      ${liveHtml}
+      
+      ${latestHtml}
+      
+      ${laterHtml}
+      
+      ${evergreenHtml}
+      
+      ${jobsHtml}
+      
+      ${advocatesHtml}
+      
+      <div style="margin-top: 32px; padding-top: 20px; border-top: 1px solid #e2e8f0; text-align: center;">
+        <p style="margin: 0; font-size: 12px; color: #718096;">
+          You subscribed to Lake Geneva Brief.<br>
+          <a href="[UNSUBSCRIBE_URL]" style="color: #667eea; text-decoration: none;">Unsubscribe</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+
+  // ========== PLAIN TEXT VERSION ==========
+  const liveText = liveIncidents.length > 0 
+    ? `== LIVE UPDATES ==\n\n${liveIncidents.map(i => `• ${i.title}`).join("\n")}\n\n` 
+    : '';
+
+  const latestText = briefingStories.length > 0
+    ? `== LATEST ==\n\n${briefingStories.map(s => {
+        const body = optimizedMap.get(s.id) || s.content_newsletter || s.summary || '';
+        return `${s.title}\n${body}${s.original_url ? `\n${s.original_url}` : ''}\n`;
+      }).join("\n")}\n`
+    : '';
+
+  const laterText = (() => {
+    let text = '';
+    if (laterPick || tonightSchedule.length > 0 || weekendEvents.length > 0) {
+      text += '== LATER ==\n\n';
+      if (laterPick) {
+        const venue = extractVenue(laterPick.title) || laterPick.title;
+        text += `⭐ PICK: ${venue}${laterPick.event_time ? ` at ${laterPick.event_time}` : ''}\n\n`;
+      }
+      if (tonightSchedule.length > 0) {
+        text += 'TONIGHT:\n';
+        text += tonightSchedule.map(e => `• ${e.event_time || ''} ${extractVenue(e.title) || e.title}`).join("\n");
+        text += '\n\n';
+      }
+      if (isWeekendSendDay && weekendEvents.length > 0) {
+        text += 'THIS WEEKEND:\n';
+        text += weekendEvents.slice(0, 4).map(e => `• ${extractVenue(e.title) || e.title}`).join("\n");
+        text += '\n\n';
+      }
+    }
+    return text;
+  })();
+
+  const jobsText = jobs && jobs.length > 0 
+    ? `== NOW HIRING ==\n\n${jobs.map((j: any) => `• ${j.title} at ${j.business_name}`).join("\n")}\n\n`
+    : '';
+
+  const textBody = `
+LAKE GENEVA BRIEF
+${dateLabel}
+
+Good morning, Lake Geneva! 👋
+
+${liveText}${latestText}${laterText}${jobsText}---
+Unsubscribe: [UNSUBSCRIBE_URL]
   `.trim();
 
   return { subject, preheader, htmlBody, textBody };
