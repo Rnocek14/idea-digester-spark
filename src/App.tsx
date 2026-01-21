@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import HostnameRouter from "./components/HostnameRouter";
 import LakeGeneva from "./pages/LakeGeneva";
+import LakeGenevaV2 from "./pages/LakeGenevaV2";
 import LakeGenevaNightlife from "./pages/LakeGenevaNightlife";
 import LakeGenevaEats from "./pages/LakeGenevaEats";
 import FishFryGuide from "./pages/FishFryGuide";
@@ -67,6 +68,7 @@ const App = () => (
           <HostnameRouter>
             <Routes>
             <Route path="/" element={<LakeGeneva />} />
+            <Route path="/v2" element={<LakeGenevaV2 />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/lake-geneva" element={<Navigate to="/" replace />} />
             <Route path="/selling-lake-geneva" element={<SellingLakeGeneva />} />
