@@ -276,7 +276,8 @@ const LakeGenevaV2 = () => {
           if (vertical === 'nightlife') return false;
           // Exclude pure events category without news value (music, concerts, nightlife, etc.)
           const category = (story.category || '').toLowerCase();
-          const title = (story.title || '').toLowerCase();
+          // Normalize title: lowercase and replace curly apostrophes with straight ones
+          const title = (story.title || '').toLowerCase().replace(/[']/g, "'");
           // Filter entertainment events that belong in LATER column
           const isNightlifeEvent = title.includes('live music') || 
             title.includes('concert') || 
