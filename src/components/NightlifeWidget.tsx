@@ -996,7 +996,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
       )}
 
       {/* Divider between Pick and Tonight */}
-      {hasLaterPick && showTonightContent && remainingTonightEvents.length > 0 && (
+      {hasLaterPick && showTonightContent && (
         <div className="my-3 border-t border-slate-200" />
       )}
 
