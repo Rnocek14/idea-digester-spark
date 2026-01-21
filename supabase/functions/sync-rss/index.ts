@@ -24,7 +24,18 @@ interface SyncResult {
   sourcesProcessed: number;
   articlesInserted: number;
   skipped: number;
+  skipsByReason: Record<string, number>;
   errors: string[];
+}
+
+// Skip event tracking for diagnostics
+interface SkipEvent {
+  source_id: string;
+  source_name: string;
+  reason: string;
+  url?: string;
+  title?: string;
+  run_id: string;
 }
 
 type AutoPublishRule = {
@@ -1050,8 +1061,29 @@ serve(async (req) => {
       sourcesProcessed: 0,
       articlesInserted: 0,
       skipped: 0,
+      skipsByReason: {},
       errors: [],
     };
+
+    // Skip tracking for diagnostics
+    const skips: SkipEvent[] = [];
+    const runId = crypto.randomUUID();
+    
+    function recordSkip(
+      source: { id: string; name: string },
+      reason: string,
+      opts: { url?: string; title?: string } = {}
+    ) {
+      skips.push({
+        source_id: source.id,
+        source_name: source.name,
+        reason,
+        url: opts.url?.substring(0, 500),
+        title: opts.title?.substring(0, 200),
+        run_id: runId,
+      });
+      result.skipsByReason[reason] = (result.skipsByReason[reason] || 0) + 1;
+    }
 
     // Daily cap for events per source (prevents flood from high-volume event scrapers)
     const MAX_EVENTS_PER_SOURCE_PER_DAY = 15;
@@ -1389,6 +1421,7 @@ serve(async (req) => {
           const pubDate = item.pubDate || item.published || item.updated || new Date().toISOString();
 
           if (!originalUrl || !title) {
+            recordSkip(source, 'missing_fields', { url: originalUrl, title });
             result.skipped++;
             continue;
           }
@@ -1396,6 +1429,7 @@ serve(async (req) => {
           // HTTP-ONLY FILTER: Skip non-HTTP URLs (tel:, mailto:, javascript:, urn:, etc.)
           if (!isValidHttpUrl(originalUrl)) {
             console.log(`⏭️ Skipping non-HTTP URL: "${originalUrl.substring(0, 40)}..." - not a valid article URL`);
+            recordSkip(source, 'invalid_url', { url: originalUrl, title });
             result.skipped++;
             continue;
           }
@@ -1403,6 +1437,7 @@ serve(async (req) => {
           // JUNK URL FILTER: Skip category pages, tag pages, navigation pages
           if (isJunkUrl(originalUrl)) {
             console.log(`⏭️ Skipping junk URL: "${title.substring(0, 50)}..." - URL pattern blocked`);
+            recordSkip(source, 'junk_url', { url: originalUrl, title });
             result.skipped++;
             continue;
           }
@@ -1410,6 +1445,7 @@ serve(async (req) => {
           // BLOCKED TITLE FILTER: Skip meta-page titles like "Home", "About", "Categories"
           if (isBlockedTitle(title)) {
             console.log(`⏭️ Skipping blocked title: "${title}" - appears to be a meta-page`);
+            recordSkip(source, 'blocked_title', { url: originalUrl, title });
             result.skipped++;
             continue;
           }
@@ -1417,6 +1453,7 @@ serve(async (req) => {
           // NON-LOCAL DESTINATION FILTER: Skip articles about Wisconsin Dells, Milwaukee, etc.
           if (isNonLocalTitle(title)) {
             console.log(`⏭️ Skipping non-local destination: "${title.substring(0, 50)}..."`);
+            recordSkip(source, 'nonlocal_destination', { url: originalUrl, title });
             result.skipped++;
             continue;
           }
@@ -1425,6 +1462,7 @@ serve(async (req) => {
           if (isRegionalSource) {
             if (!isLocalToCoverageArea({ title, summary: rawContent, content: rawContent }, coverageKeywords)) {
               console.log(`⏭️ Skipping non-local story from regional source: "${title.substring(0, 50)}..."`);
+              recordSkip(source, 'regional_nonlocal', { url: originalUrl, title });
               result.skipped++;
               continue;
             }
@@ -1448,6 +1486,7 @@ serve(async (req) => {
           
           if (existingByUrlCore?.length) {
             console.log(`⏭️ Skipping duplicate URL (cross-source): "${title.substring(0, 50)}..." - URL already exists`);
+            recordSkip(source, 'duplicate_url', { url: originalUrl, title });
             result.skipped++;
             continue;
           }
@@ -1467,6 +1506,7 @@ serve(async (req) => {
 
             if (existingByTitleSource?.length) {
               console.log(`⏭️ Skipping duplicate event (same title+source): "${title.substring(0, 50)}..."`);
+              recordSkip(source, 'duplicate_event', { url: originalUrl, title });
               result.skipped++;
               continue;
             }
@@ -1494,6 +1534,7 @@ serve(async (req) => {
           
           if (daysOld > MAX_STORY_AGE_DAYS && !isRecurringEvent(title)) {
             console.log(`⏭️ Skipping stale story (${Math.floor(daysOld)} days old): "${title.substring(0, 50)}..."`);
+            recordSkip(source, 'stale_content', { url: originalUrl, title });
             result.skipped++;
             continue;
           }
@@ -1519,6 +1560,7 @@ serve(async (req) => {
             
             if (existingByExactTitle?.length) {
               console.log(`⏭️ Skipping duplicate title (cross-source): "${title.substring(0, 50)}..."`);
+              recordSkip(source, 'duplicate_title', { url: originalUrl, title });
               result.skipped++;
               continue;
             }
@@ -1536,6 +1578,7 @@ serve(async (req) => {
 
           if (existingBySourceTitleDate) {
             console.log(`Skipping duplicate: "${title}" on ${publishDateOnly}`);
+            recordSkip(source, 'duplicate_source_date', { url: originalUrl, title });
             result.skipped++;
             continue;
           }
@@ -1967,6 +2010,19 @@ When in doubt between safe and sensitive, choose sensitive. Only use blocked for
           result.errors.push(`⚠️ ${source.name} has been auto-disabled after repeated failures`);
         }
       }
+    }
+
+    // Batch insert skip events for diagnostics (max 500 per batch to avoid payload limits)
+    if (skips.length > 0) {
+      const batchSize = 500;
+      for (let i = 0; i < skips.length; i += batchSize) {
+        const batch = skips.slice(i, i + batchSize);
+        const { error: skipError } = await supabase.from("sync_skips").insert(batch);
+        if (skipError) {
+          console.warn(`⚠️ Failed to insert skip batch: ${skipError.message}`);
+        }
+      }
+      console.log(`📊 Recorded ${skips.length} skip events`);
     }
 
     // Log activity

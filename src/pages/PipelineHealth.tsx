@@ -20,6 +20,7 @@ import {
   Layers
 } from "lucide-react";
 import { formatDistanceToNow, subDays, subHours, format } from "date-fns";
+import { SkipReasonsCard } from "@/components/SkipReasonsCard";
 
 interface PipelineMetrics {
   throughput: {
@@ -441,6 +442,9 @@ const PipelineHealth = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Skip Reasons - Diagnostic Section */}
+      <SkipReasonsCard />
 
       <div className="grid gap-4 md:grid-cols-2">
         {/* Top Producing Sources */}
