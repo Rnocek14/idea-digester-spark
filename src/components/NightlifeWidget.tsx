@@ -398,7 +398,7 @@ function matchesRecurringDay(title: string, targetDayOfWeek: number): boolean {
   return targetNames.some(name => t.includes(name));
 }
 
-function deduplicateByVenue(events: NightlifeEvent[], limit: number): NightlifeEvent[] {
+function deduplicateByVenue(events: NightlifeEvent[], limit: number, maxPerVenue: number = 2): NightlifeEvent[] {
   // Group events by normalized venue name
   const eventsByVenue = new Map<string, NightlifeEvent[]>();
   
@@ -412,7 +412,7 @@ function deduplicateByVenue(events: NightlifeEvent[], limit: number): NightlifeE
     eventsByVenue.get(key)!.push(event);
   }
   
-  // For each venue, pick the event with most complete data
+  // For each venue, pick up to maxPerVenue events with most complete data
   const uniqueEvents: NightlifeEvent[] = [];
   for (const venueEvents of eventsByVenue.values()) {
     // Sort by data completeness: prefer events with performer AND time
@@ -424,7 +424,8 @@ function deduplicateByVenue(events: NightlifeEvent[], limit: number): NightlifeE
       const bScore = (bPerformer ? 3 : 0) + (b.performer ? 1 : 0) + (b.event_time ? 1 : 0);
       return bScore - aScore; // Higher score = more complete = first
     });
-    uniqueEvents.push(sorted[0]);
+    // Take up to maxPerVenue events per venue for diversity
+    uniqueEvents.push(...sorted.slice(0, maxPerVenue));
   }
   
   // Sort final list by event_time if available, then return limited
