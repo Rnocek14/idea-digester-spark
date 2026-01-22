@@ -12,8 +12,8 @@ type DayForecast = {
 const getWeatherIcon = (code: number, size = "h-4 w-4") => {
   if (code === 0) return <Sun className={`${size} text-amber-500`} />;
   if (code >= 1 && code <= 2) return <CloudSun className={`${size} text-amber-400`} />;
-  if (code === 3) return <Cloud className={`${size} text-muted-foreground`} />;
-  if (code >= 45 && code <= 48) return <CloudFog className={`${size} text-muted-foreground`} />;
+  if (code === 3) return <Cloud className={`${size} text-slate-400`} />;
+  if (code >= 45 && code <= 48) return <CloudFog className={`${size} text-slate-400`} />;
   if ((code >= 51 && code <= 65) || (code >= 80 && code <= 82)) return <CloudRain className={`${size} text-blue-500`} />;
   if (code >= 71 && code <= 77) return <Snowflake className={`${size} text-sky-400`} />;
   if (code >= 85 && code <= 86) return <Snowflake className={`${size} text-sky-400`} />;
@@ -49,22 +49,20 @@ export default function WeatherForecast() {
   if (forecast.length === 0) return null;
 
   return (
-    <div className="inline-flex items-center gap-1 rounded-lg bg-muted/50 px-2 py-1.5">
+    <div className="flex flex-wrap gap-2">
       {forecast.map((day, idx) => (
         <div
           key={idx}
-          className="flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-muted/80 transition-colors"
+          className="flex items-center gap-2 bg-muted/50 rounded-md px-2.5 py-1.5"
         >
-          <span className="text-xs font-medium text-muted-foreground min-w-[28px]">
+          <span className="text-xs font-semibold text-foreground min-w-[28px]">
             {format(day.date, "EEE")}
           </span>
           {getWeatherIcon(day.code)}
-          <span className="text-xs text-foreground font-medium">
-            {Math.round(day.high)}°
-          </span>
-          <span className="text-xs text-muted-foreground">
-            {Math.round(day.low)}°
-          </span>
+          <div className="flex items-center gap-1 font-mono text-xs">
+            <span className="text-orange-600 font-semibold">{Math.round(day.high)}°</span>
+            <span className="text-blue-600">{Math.round(day.low)}°</span>
+          </div>
         </div>
       ))}
     </div>
