@@ -272,6 +272,7 @@ Example output:
                 dedupe_key: dedupeKey,
                 venue: venueName,
                 source_type: "venue_calendar",
+                verticals: ["local", "nightlife"],
                 extracted_at: new Date().toISOString()
               }
             });
