@@ -249,6 +249,20 @@ const LakeGenevaV2 = () => {
   // Phase 1 Config: Smart geo_tier expansion with caps
   const MIN_FEED_ITEMS = 12; // Thin-feed threshold
   const EXTENDED_WINDOW_DAYS = 21; // Fallback window
+  
+  // Content diversity caps - prevent any single category from dominating
+  const CATEGORY_CAPS: Record<string, number> = {
+    weather: 2,      // Max 2 weather alerts
+    schools: 3,      // Max 3 school items
+    events: 8,       // Allow more events as they're core content
+  };
+  
+  // Minimum category targets - ensure feed diversity
+  const CATEGORY_MINIMUMS: Record<string, number> = {
+    news: 1,
+    civic: 1, 
+    community: 1,
+  };
 
   // Fetch stories with priority ordering + tier-0 cap + thin-feed fallback
   const { data: stories = [], isLoading: storiesLoading } = useQuery({
@@ -379,11 +393,46 @@ const LakeGenevaV2 = () => {
       const maxRegional = Math.floor(hyperlocal.length * (tier0Cap / (1 - tier0Cap)));
       const cappedRegional = regional.slice(0, Math.max(maxRegional, 3)); // At least 3 regional if available
       
-      const finalFeed = [...hyperlocal, ...cappedRegional];
+      let combinedFeed = [...hyperlocal, ...cappedRegional];
+
+      // Apply category caps to prevent domination
+      const categoryCounts: Record<string, number> = {};
+      const cappedFeed: any[] = [];
+      const overflowPool: any[] = [];
+      
+      for (const story of combinedFeed) {
+        const cat = (story.category || 'other').toLowerCase();
+        const cap = CATEGORY_CAPS[cat];
+        const currentCount = categoryCounts[cat] || 0;
+        
+        if (cap !== undefined && currentCount >= cap) {
+          overflowPool.push(story);
+        } else {
+          cappedFeed.push(story);
+          categoryCounts[cat] = currentCount + 1;
+        }
+      }
+      
+      // Check category minimums and pull from overflow if needed
+      const finalCategoryCounts = { ...categoryCounts };
+      for (const [cat, minCount] of Object.entries(CATEGORY_MINIMUMS)) {
+        const current = finalCategoryCounts[cat] || 0;
+        if (current < minCount) {
+          // Find items in overflow that could fill this gap (from regional)
+          const filler = overflowPool.find(s => (s.category || '').toLowerCase() === cat);
+          if (filler) {
+            cappedFeed.push(filler);
+            finalCategoryCounts[cat] = current + 1;
+          }
+        }
+      }
+      
+      const finalFeed = cappedFeed;
 
       // Dev logging
       if (import.meta.env.DEV) {
-        console.log(`[PHASE1] Feed composition: ${hyperlocal.length} hyperlocal + ${cappedRegional.length}/${regional.length} regional (${Math.round(cappedRegional.length / finalFeed.length * 100)}% tier-0)`);
+        console.log(`[PHASE1] Feed composition: ${hyperlocal.length} hyperlocal + ${cappedRegional.length}/${regional.length} regional`);
+        console.log(`[PHASE1] Category counts after caps:`, finalCategoryCounts);
       }
 
       return finalFeed;
