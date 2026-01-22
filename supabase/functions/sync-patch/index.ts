@@ -136,19 +136,18 @@ serve(async (req) => {
 
     console.log(`[sync-patch] Starting DIY scrape...`);
 
-    // Collect article links from section pages using DIY
+    // Collect article links from section pages - Firecrawl first since DIY is often blocked
     const allLinks: string[] = [];
     let usedFirecrawl = false;
 
     for (const sectionUrl of KNOWN_SECTIONS) {
-      console.log(`[sync-patch] DIY scraping section: ${sectionUrl}`);
+      console.log(`[sync-patch] Scraping section: ${sectionUrl}`);
       
-      // Try DIY first
-      let html = await diyFetch(sectionUrl);
+      let html: string | null = null;
       
-      // Fallback to Firecrawl if DIY fails
-      if (!html && firecrawlKey) {
-        console.log(`[sync-patch] DIY failed, trying Firecrawl for ${sectionUrl}`);
+      // Try Firecrawl first (more reliable for Patch)
+      if (firecrawlKey) {
+        console.log(`[sync-patch] Using Firecrawl for ${sectionUrl}`);
         try {
           const fcRes = await fetch("https://api.firecrawl.dev/v1/scrape", {
             method: "POST",
@@ -167,16 +166,27 @@ serve(async (req) => {
             const data = await fcRes.json();
             html = data.data?.html || '';
             usedFirecrawl = true;
+            console.log(`[sync-patch] Firecrawl returned ${html?.length || 0} chars`);
+          } else {
+            console.warn(`[sync-patch] Firecrawl failed with status ${fcRes.status}`);
           }
         } catch (err) {
-          console.warn(`[sync-patch] Firecrawl fallback failed: ${err}`);
+          console.warn(`[sync-patch] Firecrawl error: ${err}`);
         }
+      }
+      
+      // Fallback to DIY if Firecrawl fails or not available
+      if (!html) {
+        console.log(`[sync-patch] Fallback to DIY for ${sectionUrl}`);
+        html = await diyFetch(sectionUrl);
       }
       
       if (html) {
         const links = extractArticleLinks(html);
         console.log(`[sync-patch] Found ${links.length} links from ${sectionUrl}`);
         allLinks.push(...links);
+      } else {
+        console.warn(`[sync-patch] No HTML retrieved for ${sectionUrl}`);
       }
     }
 
