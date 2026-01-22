@@ -71,22 +71,24 @@ export default function WeekendSidebarWidget() {
       const daysUntilFriday = day === 0 ? -2 : (5 - day + 7) % 7;
       const friday = new Date(now);
       friday.setDate(now.getDate() + daysUntilFriday);
-      friday.setHours(0, 0, 0, 0);
+      const fridayStr = friday.toISOString().split('T')[0];
 
       const sunday = new Date(friday);
       sunday.setDate(friday.getDate() + 2);
-      sunday.setHours(23, 59, 59, 999);
+      const sundayStr = sunday.toISOString().split('T')[0];
 
+      // Query by event_date (when event happens), not publish_date
       const { data, error } = await supabase
         .from("content_queue")
         .select("id, title, category, publish_date, event_date, event_time, performer, metadata")
         .in("status", ["approved", "auto_published", "published"])
         .eq("safety_level", "safe")
-        .in("category", ["events", "community", "entertainment", "dining"])
-        .gte("publish_date", friday.toISOString())
-        .lte("publish_date", sunday.toISOString())
+        .in("category", ["events", "community", "entertainment", "dining", "nightlife"])
+        .gte("event_date", fridayStr)
+        .lte("event_date", sundayStr)
+        .order("event_date", { ascending: true })
         .order("event_time", { ascending: true, nullsFirst: false })
-        .limit(6);
+        .limit(8);
 
       if (error) {
         console.error("[WeekendSidebar] Error loading events", error);
