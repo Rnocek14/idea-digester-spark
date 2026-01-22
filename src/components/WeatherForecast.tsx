@@ -7,6 +7,8 @@ type DayForecast = {
   high: number;
   low: number;
   code: number;
+  snowfall: number;
+  precipitation: number;
 };
 
 const getWeatherIcon = (code: number, size = "h-4 w-4") => {
@@ -26,7 +28,7 @@ export default function WeatherForecast() {
 
   useEffect(() => {
     fetch(
-      "https://api.open-meteo.com/v1/forecast?latitude=42.5917&longitude=-88.4334&daily=temperature_2m_max,temperature_2m_min,weathercode&temperature_unit=fahrenheit&timezone=America%2FChicago&forecast_days=4"
+      "https://api.open-meteo.com/v1/forecast?latitude=42.5917&longitude=-88.4334&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_sum,snowfall_sum&temperature_unit=fahrenheit&precipitation_unit=inch&timezone=America%2FChicago&forecast_days=4"
     )
       .then((res) => res.json())
       .then((data) => {
@@ -38,6 +40,8 @@ export default function WeatherForecast() {
               high: data.daily.temperature_2m_max[i],
               low: data.daily.temperature_2m_min[i],
               code: data.daily.weathercode[i],
+              snowfall: data.daily.snowfall_sum[i] * 0.3937, // cm to inches
+              precipitation: data.daily.precipitation_sum[i] || 0,
             });
           }
           setForecast(days);
@@ -63,6 +67,12 @@ export default function WeatherForecast() {
             <span className="text-orange-600 font-semibold">{Math.round(day.high)}°</span>
             <span className="text-blue-600">{Math.round(day.low)}°</span>
           </div>
+          {day.snowfall >= 0.5 && (
+            <span className="text-sky-400 text-xs font-medium">❄️ {day.snowfall.toFixed(1)}"</span>
+          )}
+          {day.snowfall < 0.5 && day.precipitation >= 0.1 && (
+            <span className="text-blue-400 text-xs font-medium">💧 {day.precipitation.toFixed(1)}"</span>
+          )}
         </div>
       ))}
     </div>
