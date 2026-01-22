@@ -3,6 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ScrollableContainer } from "@/components/ui/ScrollableContainer";
 import { toast } from "sonner";
 import PageShell from "@/components/PageShell";
 import { StoryCard } from "@/components/StoryCard";
@@ -477,20 +478,22 @@ const LakeGenevaV2 = () => {
           
           {/* ========== LEFT COLUMN: LIVE (LOCKED) ========== */}
           <aside className="hidden xl:block border-r border-slate-200">
-            <div className="sticky top-20 space-y-4 max-h-[calc(100vh-6rem)] overflow-y-auto pr-4">
-              {/* LIVE Header with dynamic indicator */}
-              <LiveColumnHeader />
-              
-              {/* Weather at top of LIVE */}
-              <div className="bg-stone-50 rounded-md border border-slate-200 p-4">
-                <WeatherWidget />
-                <div className="mt-4 pt-4 border-t border-slate-100">
-                  <WeatherForecast />
+            <div className="sticky top-20">
+              <ScrollableContainer className="space-y-4 max-h-[calc(100vh-6rem)] overflow-y-auto pr-4">
+                {/* LIVE Header with dynamic indicator */}
+                <LiveColumnHeader />
+                
+                {/* Weather at top of LIVE */}
+                <div className="bg-stone-50 rounded-md border border-slate-200 p-4">
+                  <WeatherWidget />
+                  <div className="mt-4 pt-4 border-t border-slate-100">
+                    <WeatherForecast />
+                  </div>
                 </div>
-              </div>
-              
-              {/* Live Incidents */}
-              <LiveIncidentsSidebar />
+                
+                {/* Live Incidents */}
+                <LiveIncidentsSidebar />
+              </ScrollableContainer>
             </div>
           </aside>
 
@@ -693,18 +696,20 @@ const LakeGenevaV2 = () => {
 
           {/* ========== RIGHT COLUMN: LATER (LOCKED) ========== */}
           <aside className="hidden xl:block border-l border-slate-200">
-            <div className="sticky top-20 space-y-4 max-h-[calc(100vh-6rem)] overflow-y-auto pl-4">
-              {/* LATER Header - Commit B: amber accent for Plans */}
-              <div className="pb-3 border-b-2 border-amber-500 mb-4">
-                <div className="flex items-baseline justify-between">
-                  <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-foreground">LATER</h2>
-                  <span className="text-[10px] font-mono text-amber-600 uppercase">[PLANS]</span>
+            <div className="sticky top-20">
+              <ScrollableContainer className="space-y-4 max-h-[calc(100vh-6rem)] overflow-y-auto pl-4">
+                {/* LATER Header - Commit B: amber accent for Plans */}
+                <div className="pb-3 border-b-2 border-amber-500 mb-4">
+                  <div className="flex items-baseline justify-between">
+                    <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-foreground">LATER</h2>
+                    <span className="text-[10px] font-mono text-amber-600 uppercase">[PLANS]</span>
+                  </div>
+                  <p className="text-[10px] font-mono text-muted-foreground mt-1 uppercase">Tonight → Next 3 Days</p>
                 </div>
-                <p className="text-[10px] font-mono text-muted-foreground mt-1 uppercase">Tonight → Next 3 Days</p>
-              </div>
-              
-              {/* Nightlife Widget - with Tonight/Weekend toggle */}
-              <NightlifeWidget showLaterPick showModeToggle />
+                
+                {/* Nightlife Widget - with Tonight/Weekend toggle */}
+                <NightlifeWidget showLaterPick showModeToggle />
+              </ScrollableContainer>
             </div>
           </aside>
         </div>
