@@ -604,25 +604,44 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
       const now = new Date();
       const dayOfWeek = now.getDay();
       
-      // Only fetch weekend events if it's not already the weekend
-      if (dayOfWeek === 0 || dayOfWeek === 6) {
-        return { saturday: [], sunday: [] };
+      // On weekends, show "today" and "tomorrow" as weekend content
+      // Saturday (6): show Saturday (today) + Sunday (tomorrow)
+      // Sunday (0): show Sunday only (today)
+      let satDateToFetch = saturdayStr;
+      let sunDateToFetch = sundayStr;
+      
+      if (dayOfWeek === 6) {
+        // It's Saturday - use today as Saturday and tomorrow as Sunday
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        satDateToFetch = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        sunDateToFetch = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
+      } else if (dayOfWeek === 0) {
+        // It's Sunday - show Sunday (today) only
+        const today = new Date();
+        sunDateToFetch = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        satDateToFetch = ''; // Skip Saturday fetching
       }
       
-      // Saturday events by event_date
-      const { data: satEvents, error: satError } = await supabase
-        .from("content_queue")
-        .select("id, title, publish_date, original_url, metadata, event_date, event_time, performer, created_at")
-        .in("status", ["approved", "auto_published", "published"])
-        .eq("safety_level", "safe")
-        .eq("category", "events")
-        .contains("metadata", { verticals: ["nightlife"] })
-        .eq("event_date", saturdayStr)
-        .order("created_at", { ascending: false })
-        .limit(5);
+      // Saturday events by event_date (skip if on Sunday)
+      let satEvents: NightlifeEvent[] = [];
+      if (satDateToFetch) {
+        const { data, error: satError } = await supabase
+          .from("content_queue")
+          .select("id, title, publish_date, original_url, metadata, event_date, event_time, performer, created_at")
+          .in("status", ["approved", "auto_published", "published"])
+          .eq("safety_level", "safe")
+          .eq("category", "events")
+          .contains("metadata", { verticals: ["nightlife"] })
+          .eq("event_date", satDateToFetch)
+          .order("created_at", { ascending: false })
+          .limit(5);
 
-      if (satError) {
-        console.error("[LiveMusicWidget] Error loading Saturday events", satError);
+        if (satError) {
+          console.error("[LiveMusicWidget] Error loading Saturday events", satError);
+        }
+        satEvents = (data as NightlifeEvent[]) || [];
       }
 
       // Sunday events by event_date
@@ -633,7 +652,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
         .eq("safety_level", "safe")
         .eq("category", "events")
         .contains("metadata", { verticals: ["nightlife"] })
-        .eq("event_date", sundayStr)
+        .eq("event_date", sunDateToFetch)
         .order("created_at", { ascending: false })
         .limit(5);
 
@@ -671,7 +690,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
       }
 
       // Merge dated events with recurring events
-      const allSat = [...(satEvents as NightlifeEvent[] || []), ...satRecurring];
+      const allSat = [...satEvents, ...satRecurring];
       const allSun = [...(sunEvents as NightlifeEvent[] || []), ...sunRecurring];
 
       // Deduplicate by ID
@@ -1021,7 +1040,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
               return (
               <div key={e.id} className="flex items-baseline gap-3 py-2.5 border-b border-slate-100 last:border-0 min-h-[44px]">
                   <span className="text-sm font-mono text-slate-500 w-14 shrink-0">
-                    {e.event_time || '—'}
+                    {e.event_time || 'Eve'}
                   </span>
                   <div className="flex-1 min-w-0">
                     {e.original_url ? (
@@ -1082,7 +1101,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
                     return (
                       <div key={e.id} className="flex items-baseline gap-3 py-2 border-b border-slate-100 last:border-0 min-h-[40px]">
                         <span className="text-sm font-mono text-slate-500 w-14 shrink-0">
-                          {e.event_time || '—'}
+                          {e.event_time || 'Eve'}
                         </span>
                         <div className="flex-1 min-w-0">
                           {e.original_url ? (
@@ -1131,7 +1150,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
                   return (
                     <div key={e.id} className="flex items-baseline gap-3 py-1 border-b border-slate-100 last:border-0">
                       <span className="text-[11px] font-mono text-slate-400 w-12 shrink-0">
-                        {e.event_time || '—'}
+                        {e.event_time || 'Eve'}
                       </span>
                       <div className="flex-1 min-w-0">
                         {e.original_url ? (
@@ -1170,7 +1189,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
                   return (
                     <div key={e.id} className="flex items-baseline gap-3 py-1 border-b border-slate-100 last:border-0">
                       <span className="text-[11px] font-mono text-slate-400 w-12 shrink-0">
-                        {e.event_time || '—'}
+                        {e.event_time || 'Eve'}
                       </span>
                       <div className="flex-1 min-w-0">
                         {e.original_url ? (
