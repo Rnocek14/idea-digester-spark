@@ -477,7 +477,7 @@ const LakeGenevaV2 = () => {
           
           {/* ========== LEFT COLUMN: LIVE (LOCKED) ========== */}
           <aside className="hidden xl:block border-r border-slate-200">
-            <div className="sticky top-20 space-y-4">
+            <div className="sticky top-20 space-y-4 max-h-[calc(100vh-6rem)] overflow-y-auto pr-4">
               {/* LIVE Header with dynamic indicator */}
               <LiveColumnHeader />
               
@@ -694,7 +694,7 @@ const LakeGenevaV2 = () => {
 
           {/* ========== RIGHT COLUMN: LATER (LOCKED) ========== */}
           <aside className="hidden xl:block border-l border-slate-200">
-            <div className="sticky top-20 space-y-4">
+            <div className="sticky top-20 space-y-4 max-h-[calc(100vh-6rem)] overflow-y-auto pl-4">
               {/* LATER Header - Commit B: amber accent for Plans */}
               <div className="pb-3 border-b-2 border-amber-500 mb-4">
                 <div className="flex items-baseline justify-between">
