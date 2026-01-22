@@ -13,41 +13,63 @@ const KNOWN_SECTIONS = [
   "https://patch.com/wisconsin/lake-geneva-wi/around-town",
 ];
 
-// User agents for DIY scraping
+// User agents for DIY scraping - more comprehensive list
 const USER_AGENTS = [
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15',
 ];
 
-// DIY fetch with anti-bot evasion
-async function diyFetch(url: string, attempt = 0): Promise<string | null> {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 12000);
-    
-    const res = await fetch(url, {
-      headers: {
-        'User-Agent': USER_AGENTS[attempt % USER_AGENTS.length],
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Accept-Encoding': 'gzip, deflate',
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache',
-      },
-      redirect: 'follow',
-      signal: controller.signal,
-    });
-    
-    clearTimeout(timeoutId);
-    
-    if (res.ok) {
-      return await res.text();
+// DIY fetch with anti-bot evasion and retry
+async function diyFetch(url: string, attempt = 0, maxAttempts = 3): Promise<string | null> {
+  for (let i = attempt; i < maxAttempts; i++) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      
+      // Add delay between retries
+      if (i > attempt) {
+        await new Promise(resolve => setTimeout(resolve, 1000 * i));
+      }
+      
+      const res = await fetch(url, {
+        headers: {
+          'User-Agent': USER_AGENTS[i % USER_AGENTS.length],
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.9',
+          'Accept-Encoding': 'gzip, deflate, br',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+          'Sec-Fetch-Dest': 'document',
+          'Sec-Fetch-Mode': 'navigate',
+          'Sec-Fetch-Site': 'none',
+          'Sec-Fetch-User': '?1',
+          'Upgrade-Insecure-Requests': '1',
+          'Connection': 'keep-alive',
+        },
+        redirect: 'follow',
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (res.ok) {
+        const html = await res.text();
+        console.log(`[sync-patch] DIY fetch got ${html.length} chars from ${url}`);
+        // Check if we got actual content (not a block page)
+        if (html.length > 5000 && (html.includes('article') || html.includes('story') || html.includes('Card'))) {
+          return html;
+        }
+        console.log(`[sync-patch] DIY fetch got blocked or empty response, retrying...`);
+      } else {
+        console.log(`[sync-patch] DIY fetch status ${res.status} for ${url}`);
+      }
+    } catch (e) {
+      console.log(`[sync-patch] DIY fetch attempt ${i + 1} failed for ${url}: ${e}`);
     }
-    return null;
-  } catch (e) {
-    console.log(`DIY fetch failed for ${url}: ${e}`);
-    return null;
   }
+  return null;
 }
 
 // Extract article links from HTML
