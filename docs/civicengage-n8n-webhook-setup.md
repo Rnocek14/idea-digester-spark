@@ -66,90 +66,50 @@ n8n running on a VPS or self-hosted instance has a different IP range than Supab
 
 5. **HTTP Request Node**: POST to Supabase
    - Method: POST
-   - URL: `{{$env.SUPABASE_URL}}/functions/v1/ingest-civic`
+   - URL: `https://mzumvkrpnxhkvhdyzgqa.supabase.co/functions/v1/ingest-civic`
    - Headers:
      ```
-     Authorization: Bearer {{$env.SUPABASE_SERVICE_ROLE_KEY}}
-     apikey: {{$env.SUPABASE_ANON_KEY}}
+     X-Ingest-Secret: {{$env.CIVIC_INGEST_SECRET}}
      Content-Type: application/json
      ```
-   - Body: `{{ JSON.stringify($json) }}`
+   - Body: `{{ JSON.stringify($input.all().map(i => i.json)) }}`
+
+**SECURITY NOTE**: We use a dedicated `CIVIC_INGEST_SECRET` header instead of the Supabase Service Role Key. This minimizes blast radius if n8n is ever compromised - the secret only grants access to this one ingestion endpoint, not your entire database.
 
 ### Supabase Edge Function: ingest-civic
 
-Create an edge function to receive the n8n webhook:
+The edge function is already deployed at `/functions/v1/ingest-civic`. It:
+- Validates the `X-Ingest-Secret` header
+- Batch inserts items with `ON CONFLICT DO NOTHING` (dedupe via unique index)
+- Returns `{ inserted, skipped }` counts
+
+Key features:
+- **Secure auth**: Uses dedicated secret, service role key never leaves Supabase
+- **Batch insert**: All items inserted in one query
+- **Automatic dedup**: Unique constraint on `normalized_url` prevents duplicates
+- **Activity logging**: Records ingestion stats to `activity_log`
+
+Example request:
+```bash
+curl -X POST https://mzumvkrpnxhkvhdyzgqa.supabase.co/functions/v1/ingest-civic \
+  -H "X-Ingest-Secret: your-secret-here" \
+  -H "Content-Type: application/json" \
+  -d '[{"source_id": "uuid", "title": "Test", "content": "Content here"}]'
+```
+
+Response:
+```json
+{"success": true, "inserted": 1, "skipped": 0}
+```
+
+<details>
+<summary>Edge Function Source (for reference)</summary>
 
 ```typescript
-// supabase/functions/ingest-civic/index.ts
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+// See supabase/functions/ingest-civic/index.ts for full implementation
+```
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
-
-  // Validate service role auth
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader?.includes(Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!)) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-  );
-
-  const items = await req.json();
-  
-  let inserted = 0;
-  let skipped = 0;
-
-  for (const item of items) {
-    // Check for duplicate by normalized_url
-    const normalizedUrl = item.original_url?.toLowerCase().replace(/\/+$/, '');
-    
-    const { data: existing } = await supabase
-      .from("content_queue")
-      .select("id")
-      .eq("normalized_url", normalizedUrl)
-      .limit(1);
-
-    if (existing?.length) {
-      skipped++;
-      continue;
-    }
-
-    const { error } = await supabase.from("content_queue").insert({
-      source_id: item.source_id,
-      title: item.title,
-      content: item.content,
-      summary: item.summary,
-      status: item.status || 'pending',
-      category: item.category,
-      original_url: item.original_url,
-      normalized_url: normalizedUrl,
-      publish_date: item.publish_date,
-      geo_tier: item.geo_tier,
-      geo_label: item.geo_label,
-      metadata: item.metadata,
-    });
-
-    if (!error) inserted++;
-  }
-
-  return new Response(
-    JSON.stringify({ success: true, inserted, skipped }),
-    { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-  );
-});
+</details>
 ```
 
 ### Source UUIDs
