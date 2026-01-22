@@ -10,11 +10,13 @@ type NightlifeEvent = {
   title: string;
   publish_date: string | null;
   original_url: string | null;
-  metadata: { 
-    verticals?: string[]; 
+  metadata: {
+    verticals?: string[];
     content_tags?: string[]; 
     event_date?: string;
     recurring_days?: string[] | null; // e.g., ["friday", "saturday"]
+    venue?: string; // Venue name from scraper metadata
+    location_detail?: string; // Specific room/area within venue
   } | null;
   event_date: string | null;
   event_time: string | null;
@@ -286,6 +288,69 @@ function shouldShowPerformer(displayedVenue: string, performer: string | null): 
   if (KNOWN_VENUES.some(v => v.toLowerCase() === performerLower)) return false;
   
   return true;
+}
+
+// Build display info for an event - returns {mainLine, subLine} for better rendering
+function getEventDisplayInfo(event: NightlifeEvent): { mainLine: string; subLine: string | null; venue: string | null } {
+  const venue = extractVenue(event.title);
+  const performer = getDisplayPerformer(event);
+  const metadataVenue = (event.metadata?.venue as string) || null;
+  
+  // Priority 1: We have a specific performer - show performer as main, venue as context
+  if (performer) {
+    // Use metadata venue if available, otherwise extracted venue
+    const venueContext = venue || metadataVenue;
+    return {
+      mainLine: performer,
+      subLine: venueContext ? `at ${venueContext}` : null,
+      venue: venueContext
+    };
+  }
+  
+  // Priority 2: Title has specific event name beyond just "Live Music at Venue"
+  // Check if title has meaningful content beyond venue name
+  const titleLower = event.title.toLowerCase();
+  const hasSpecificEvent = (
+    titleLower.includes('bonfire') ||
+    titleLower.includes('trivia') ||
+    titleLower.includes('karaoke') ||
+    titleLower.includes('fish fry') ||
+    titleLower.includes('brunch') ||
+    titleLower.includes('fest') ||
+    titleLower.includes('show')
+  );
+  
+  if (hasSpecificEvent) {
+    // Extract the specific event type and show with venue
+    if (titleLower.includes('bonfire')) {
+      return { mainLine: 'Bonfire Night', subLine: venue || metadataVenue ? `at ${venue || metadataVenue}` : null, venue };
+    }
+    if (titleLower.includes('trivia')) {
+      return { mainLine: 'Trivia Night', subLine: venue || metadataVenue ? `at ${venue || metadataVenue}` : null, venue };
+    }
+    if (titleLower.includes('karaoke')) {
+      return { mainLine: 'Karaoke', subLine: venue || metadataVenue ? `at ${venue || metadataVenue}` : null, venue };
+    }
+    if (titleLower.includes('fish fry')) {
+      return { mainLine: 'Fish Fry', subLine: venue || metadataVenue ? `at ${venue || metadataVenue}` : null, venue };
+    }
+    // For other specific events, use the full title
+    return { mainLine: event.title, subLine: null, venue };
+  }
+  
+  // Priority 3: We have venue info but no performer - show venue with "Live Music" context
+  if (venue || metadataVenue) {
+    const venueName = venue || metadataVenue;
+    // Check if title implies live music
+    if (titleLower.includes('live music') || titleLower.includes('live entertainment')) {
+      return { mainLine: venueName!, subLine: 'Live Music', venue: venueName };
+    }
+    // Otherwise just show venue with no subline
+    return { mainLine: venueName!, subLine: null, venue: venueName };
+  }
+  
+  // Priority 4: Just use the title as-is
+  return { mainLine: event.title, subLine: null, venue: null };
 }
 
 // Filter to include all nightlife events (broadened from music-only)
@@ -935,10 +1000,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
           </div>
           <div className="border-2 border-black rounded-md p-4 bg-stone-50">
             {(() => {
-              const venue = extractVenue(laterPick!.title);
-              const displayName = venue || laterPick!.title;
-              const displayPerformer = getDisplayPerformer(laterPick!);
-              const showPerformer = shouldShowPerformer(displayName, displayPerformer);
+              const displayInfo = getEventDisplayInfo(laterPick!);
               return (
                 <>
                   {laterPick!.original_url ? (
@@ -948,13 +1010,13 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
                       rel="noopener noreferrer"
                       className="text-base font-semibold text-slate-900 leading-snug hover:text-slate-600 transition-colors block py-1"
                     >
-                      {displayName}
+                      {displayInfo.mainLine}
                     </a>
                   ) : (
-                    <p className="text-base font-semibold text-slate-900 leading-snug">{displayName}</p>
+                    <p className="text-base font-semibold text-slate-900 leading-snug">{displayInfo.mainLine}</p>
                   )}
-                  {showPerformer && displayPerformer && (
-                    <p className="text-sm text-slate-600 mt-1.5">{displayPerformer}</p>
+                  {displayInfo.subLine && (
+                    <p className="text-sm text-slate-600 mt-1.5">{displayInfo.subLine}</p>
                   )}
                   {laterPick!.event_time && (
                     <p className="text-xs font-mono text-slate-500 mt-1.5">{laterPick!.event_time}</p>
@@ -983,10 +1045,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
           </div>
           <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-3 border border-amber-100">
             {(() => {
-              const venue = extractVenue(tonightsPick.title);
-              const displayName = venue || tonightsPick.title;
-              const displayPerformer = getDisplayPerformer(tonightsPick);
-              const showPerformer = shouldShowPerformer(displayName, displayPerformer);
+              const displayInfo = getEventDisplayInfo(tonightsPick);
               return (
                 <>
                   {tonightsPick.original_url ? (
@@ -996,19 +1055,19 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
                       rel="noopener noreferrer"
                       className="text-sm font-semibold text-foreground leading-snug hover:text-amber-700 transition-colors block"
                     >
-                      {displayName}
+                      {displayInfo.mainLine}
                     </a>
                   ) : (
-                    <p className="text-sm font-semibold text-foreground leading-snug">{displayName}</p>
+                    <p className="text-sm font-semibold text-foreground leading-snug">{displayInfo.mainLine}</p>
                   )}
-                  {(showPerformer || tonightsPick.event_time) && (
+                  {(displayInfo.subLine || tonightsPick.event_time) && (
                     <p className="text-[11px] text-muted-foreground mt-1">
-                      {showPerformer && displayPerformer}
-                      {showPerformer && tonightsPick.event_time && ' · '}
+                      {displayInfo.subLine}
+                      {displayInfo.subLine && tonightsPick.event_time && ' · '}
                       {tonightsPick.event_time || 'Tonight'}
                     </p>
                   )}
-                  {!showPerformer && !tonightsPick.event_time && (
+                  {!displayInfo.subLine && !tonightsPick.event_time && (
                     <p className="text-[11px] text-muted-foreground mt-1">Tonight</p>
                   )}
                 </>
@@ -1034,10 +1093,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
           
           <div className="space-y-1">
             {remainingTonightEvents.map((e) => {
-              const venue = extractVenue(e.title);
-              const displayName = venue || e.title;
-              const displayPerformer = getDisplayPerformer(e);
-              const showPerformer = shouldShowPerformer(displayName, displayPerformer);
+              const displayInfo = getEventDisplayInfo(e);
               return (
               <div key={e.id} className="flex items-baseline gap-3 py-2.5 border-b border-slate-100 last:border-0 min-h-[44px]">
                   <span className="text-sm font-mono text-slate-500 w-14 shrink-0">
@@ -1050,15 +1106,15 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-base text-slate-900 leading-snug hover:text-slate-600 transition-colors"
-                        title={displayName}
+                        title={e.title}
                       >
-                        {displayName}
+                        {displayInfo.mainLine}
                       </a>
                     ) : (
-                      <span className="text-base text-slate-900 leading-snug">{displayName}</span>
+                      <span className="text-base text-slate-900 leading-snug">{displayInfo.mainLine}</span>
                     )}
-                    {showPerformer && displayPerformer && (
-                      <span className="text-sm text-slate-600 ml-1.5">· {displayPerformer}</span>
+                    {displayInfo.subLine && (
+                      <span className="text-sm text-slate-600 ml-1.5">· {displayInfo.subLine}</span>
                     )}
                   </div>
                 </div>
@@ -1095,10 +1151,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
                 <p className="text-[10px] font-mono text-slate-400 mb-1 uppercase">{dayName}</p>
                 <div className="space-y-1">
                   {dayEvents.map((e) => {
-                    const venue = extractVenue(e.title);
-                    const displayName = venue || e.title;
-                    const displayPerformer = getDisplayPerformer(e);
-                    const showPerformer = shouldShowPerformer(displayName, displayPerformer);
+                    const displayInfo = getEventDisplayInfo(e);
                     return (
                       <div key={e.id} className="flex items-baseline gap-3 py-2 border-b border-slate-100 last:border-0 min-h-[40px]">
                         <span className="text-sm font-mono text-slate-500 w-14 shrink-0">
@@ -1111,15 +1164,15 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-base text-slate-900 leading-snug hover:text-slate-600 transition-colors"
-                              title={displayName}
+                              title={e.title}
                             >
-                              {displayName}
+                              {displayInfo.mainLine}
                             </a>
                           ) : (
-                            <span className="text-base text-slate-900 leading-snug">{displayName}</span>
+                            <span className="text-base text-slate-900 leading-snug">{displayInfo.mainLine}</span>
                           )}
-                          {showPerformer && displayPerformer && (
-                            <span className="text-xs text-slate-500 ml-1">· {displayPerformer}</span>
+                          {displayInfo.subLine && (
+                            <span className="text-xs text-slate-500 ml-1">· {displayInfo.subLine}</span>
                           )}
                         </div>
                       </div>
@@ -1144,10 +1197,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
               <p className="text-[10px] font-mono text-slate-400 mb-1 uppercase">Saturday</p>
               <div className="space-y-1">
                 {weekendEvents!.saturday.map((e) => {
-                  const venue = extractVenue(e.title);
-                  const displayName = venue || e.title;
-                  const displayPerformer = getDisplayPerformer(e);
-                  const showPerformer = shouldShowPerformer(displayName, displayPerformer);
+                  const displayInfo = getEventDisplayInfo(e);
                   return (
                     <div key={e.id} className="flex items-baseline gap-3 py-1 border-b border-slate-100 last:border-0">
                       <span className="text-[11px] font-mono text-slate-400 w-12 shrink-0">
@@ -1160,15 +1210,15 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-sm text-slate-900 leading-snug hover:text-slate-600 transition-colors"
-                            title={displayName}
+                            title={e.title}
                           >
-                            {displayName}
+                            {displayInfo.mainLine}
                           </a>
                         ) : (
-                          <span className="text-sm text-slate-900 leading-snug">{displayName}</span>
+                          <span className="text-sm text-slate-900 leading-snug">{displayInfo.mainLine}</span>
                         )}
-                        {showPerformer && displayPerformer && (
-                          <span className="text-xs text-slate-500 ml-1">· {displayPerformer}</span>
+                        {displayInfo.subLine && (
+                          <span className="text-xs text-slate-500 ml-1">· {displayInfo.subLine}</span>
                         )}
                       </div>
                     </div>
@@ -1183,10 +1233,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
               <p className="text-[10px] font-mono text-slate-400 mb-1 uppercase">Sunday</p>
               <div className="space-y-1">
                 {weekendEvents!.sunday.map((e) => {
-                  const venue = extractVenue(e.title);
-                  const displayName = venue || e.title;
-                  const displayPerformer = getDisplayPerformer(e);
-                  const showPerformer = shouldShowPerformer(displayName, displayPerformer);
+                  const displayInfo = getEventDisplayInfo(e);
                   return (
                     <div key={e.id} className="flex items-baseline gap-3 py-1 border-b border-slate-100 last:border-0">
                       <span className="text-[11px] font-mono text-slate-400 w-12 shrink-0">
@@ -1199,15 +1246,15 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-sm text-slate-900 leading-snug hover:text-slate-600 transition-colors"
-                            title={displayName}
+                            title={e.title}
                           >
-                            {displayName}
+                            {displayInfo.mainLine}
                           </a>
                         ) : (
-                          <span className="text-sm text-slate-900 leading-snug">{displayName}</span>
+                          <span className="text-sm text-slate-900 leading-snug">{displayInfo.mainLine}</span>
                         )}
-                        {showPerformer && displayPerformer && (
-                          <span className="text-xs text-slate-500 ml-1">· {displayPerformer}</span>
+                        {displayInfo.subLine && (
+                          <span className="text-xs text-slate-500 ml-1">· {displayInfo.subLine}</span>
                         )}
                       </div>
                     </div>
