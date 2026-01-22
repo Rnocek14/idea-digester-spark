@@ -231,10 +231,6 @@ const getCategoryFallbackImage = (storyId: string, category: string | null): str
   return images[hash % images.length];
 };
 
-// Feed display constants
-const HEADLINE_LIMIT_DEFAULT = 20;
-const CARD_RESUME_AFTER = 8; // Resume full cards after this many total stories
-
 // Tier-0 cap thresholds
 const THIN_FEED_THRESHOLD = 15;
 const DEFAULT_TIER0_CAP = 0.30;
@@ -243,7 +239,6 @@ const THIN_FEED_TIER0_CAP = 0.40;
 const LakeGenevaV2 = () => {
   const [email, setEmail] = useState("");
   const [isSubscribing, setIsSubscribing] = useState(false);
-  const [headlineLimit, setHeadlineLimit] = useState(HEADLINE_LIMIT_DEFAULT);
 
   useEffect(() => {
     document.title = "Lake Geneva Brief – V2 Layout";
@@ -618,72 +613,7 @@ const LakeGenevaV2 = () => {
               <HappeningTodayWidget />
             )}
 
-            {/* Dense headline list - "More Today" with thumbnails + expand */}
-            {!storiesLoading && stories.length > 2 && (() => {
-              const headlineStories = stories.slice(2, 2 + headlineLimit);
-              const remainingHeadlines = Math.max(0, stories.length - 2 - headlineLimit);
-              const canExpand = remainingHeadlines > 0;
-              
-              return (
-                <div className="mb-8">
-                  <h3 className="text-xs font-mono uppercase tracking-wider text-slate-600 mb-4 font-semibold">More Today</h3>
-                  <div className="space-y-0">
-                    {headlineStories.map((story: Story) => {
-                      const time = getRelativeTime(story.publish_date || story.created_at);
-                      const geoLabel = story.geo_tier === 1 ? 'LG' : story.geo_tier === 2 ? 'County' : story.geo_tier === 0 ? 'WI' : null;
-                      return (
-                        <a 
-                          key={story.id}
-                          href={story.original_url || '#'}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-3 py-2 border-b border-slate-100 last:border-0 hover:bg-stone-50 -mx-3 px-3 transition-colors min-h-[52px]"
-                        >
-                          {/* Thumbnail */}
-                          <div className="h-12 w-12 rounded-md overflow-hidden bg-muted shrink-0">
-                            {story.image_url ? (
-                              <img
-                                src={story.image_url}
-                                alt=""
-                                className="h-full w-full object-cover"
-                                loading="lazy"
-                              />
-                            ) : (
-                              <div className="h-full w-full flex items-center justify-center text-lg bg-stone-100">
-                                {getCategoryEmoji(story.category)}
-                              </div>
-                            )}
-                          </div>
-                          
-                          {/* Content */}
-                          <div className="min-w-0 flex-1">
-                            <div className="text-sm text-slate-900 line-clamp-2 font-medium">{story.title}</div>
-                            <div className="text-xs text-muted-foreground mt-0.5">
-                              {geoLabel && <span className="font-mono uppercase tracking-wider">{geoLabel}</span>}
-                              {geoLabel && time && <span className="mx-1">·</span>}
-                              {time && <span className="font-mono">{time}</span>}
-                            </div>
-                          </div>
-                        </a>
-                      );
-                    })}
-                  </div>
-                  
-                  {/* Expand button for power users */}
-                  {canExpand && (
-                    <Button
-                      variant="ghost"
-                      className="w-full mt-3 text-sm font-mono"
-                      onClick={() => setHeadlineLimit(prev => prev + 20)}
-                    >
-                      Show {Math.min(20, remainingHeadlines)} more headlines →
-                    </Button>
-                  )}
-                </div>
-              );
-            })()}
-
-            {/* Sponsor Section - NOW below headline list */}
+            {/* Sponsor Section */}
             {sponsor && (
               <div className="mb-8">
                 <PresentedBySectionCompact sponsor={sponsor} marketData={marketData} />
@@ -701,7 +631,7 @@ const LakeGenevaV2 = () => {
               </div>
             )}
 
-            {/* Full Story Cards (stories 9+) */}
+            {/* All Story Cards (stories 3+) as unified visual grid */}
             {storiesLoading ? (
               <div className="text-center py-16 text-slate-500">Loading today's stories...</div>
             ) : stories.length === 0 ? (
@@ -709,9 +639,9 @@ const LakeGenevaV2 = () => {
                 <p className="text-slate-900 font-medium mb-2">No stories yet</p>
                 <p className="text-slate-500 text-sm">Check back later for updates.</p>
               </div>
-            ) : stories.length > CARD_RESUME_AFTER ? (
+            ) : stories.length > 2 ? (
               <div className="grid gap-5 sm:grid-cols-2">
-                {stories.slice(CARD_RESUME_AFTER).map((story: Story, idx: number) => {
+                {stories.slice(2).map((story: Story, idx: number) => {
                   const time = getRelativeTime(story.publish_date || story.created_at);
                   let source: string | null = (story as any).source?.name || null;
                   if (!source && story.original_url) {
@@ -733,7 +663,7 @@ const LakeGenevaV2 = () => {
                         meta={{ time, source }}
                       />
                       {/* Inline subscribe CTA after every 6th story */}
-                      {(idx + 1) % 6 === 0 && idx < stories.length - (CARD_RESUME_AFTER + 1) && (
+                      {(idx + 1) % 6 === 0 && idx < stories.length - 3 && (
                         <div className="mt-5 sm:col-span-2">
                           <InlineSubscribeCTA />
                         </div>
