@@ -40,7 +40,7 @@ export default function WeatherForecast() {
               high: data.daily.temperature_2m_max[i],
               low: data.daily.temperature_2m_min[i],
               code: data.daily.weathercode[i],
-              snowfall: data.daily.snowfall_sum[i] * 0.3937, // cm to inches
+              snowfall: data.daily.snowfall_sum[i] || 0, // already in inches
               precipitation: data.daily.precipitation_sum[i] || 0,
             });
           }
