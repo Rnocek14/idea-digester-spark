@@ -53,26 +53,28 @@ export default function WeatherForecast() {
   if (forecast.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-col gap-1.5">
       {forecast.map((day, idx) => (
         <div
           key={idx}
-          className="flex items-center gap-2 bg-muted/50 rounded-md px-2.5 py-1.5"
+          className="flex items-center justify-between bg-muted/50 rounded-md px-2.5 py-1.5 text-xs"
         >
-          <span className="text-xs font-semibold text-foreground min-w-[28px]">
-            {format(day.date, "EEE")}
-          </span>
-          {getWeatherIcon(day.code)}
-          <div className="flex items-center gap-1 font-mono text-xs">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-foreground w-[28px]">
+              {format(day.date, "EEE")}
+            </span>
+            {getWeatherIcon(day.code)}
+          </div>
+          <div className="flex items-center gap-2 font-mono">
             <span className="text-orange-600 font-semibold">{Math.round(day.high)}°</span>
             <span className="text-blue-600">{Math.round(day.low)}°</span>
+            {day.snowfall >= 0.5 && (
+              <span className="text-sky-400 font-medium">❄️ {day.snowfall.toFixed(1)}"</span>
+            )}
+            {day.snowfall < 0.5 && day.precipitation >= 0.1 && (
+              <span className="text-blue-400 font-medium">💧 {day.precipitation.toFixed(1)}"</span>
+            )}
           </div>
-          {day.snowfall >= 0.5 && (
-            <span className="text-sky-400 text-xs font-medium">❄️ {day.snowfall.toFixed(1)}"</span>
-          )}
-          {day.snowfall < 0.5 && day.precipitation >= 0.1 && (
-            <span className="text-blue-400 text-xs font-medium">💧 {day.precipitation.toFixed(1)}"</span>
-          )}
         </div>
       ))}
     </div>
