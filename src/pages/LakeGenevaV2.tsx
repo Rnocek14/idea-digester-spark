@@ -231,9 +231,19 @@ const getCategoryFallbackImage = (storyId: string, category: string | null): str
   return images[hash % images.length];
 };
 
+// Feed display constants
+const HEADLINE_LIMIT_DEFAULT = 20;
+const CARD_RESUME_AFTER = 8; // Resume full cards after this many total stories
+
+// Tier-0 cap thresholds
+const THIN_FEED_THRESHOLD = 15;
+const DEFAULT_TIER0_CAP = 0.30;
+const THIN_FEED_TIER0_CAP = 0.40;
+
 const LakeGenevaV2 = () => {
   const [email, setEmail] = useState("");
   const [isSubscribing, setIsSubscribing] = useState(false);
+  const [headlineLimit, setHeadlineLimit] = useState(HEADLINE_LIMIT_DEFAULT);
 
   useEffect(() => {
     document.title = "Lake Geneva Brief – V2 Layout";
@@ -241,7 +251,6 @@ const LakeGenevaV2 = () => {
   }, []);
 
   // Phase 1 Config: Smart geo_tier expansion with caps
-  const TIER_0_CAP_PERCENT = 0.30; // Max 30% regional content
   const MIN_FEED_ITEMS = 12; // Thin-feed threshold
   const EXTENDED_WINDOW_DAYS = 21; // Fallback window
 
@@ -365,11 +374,13 @@ const LakeGenevaV2 = () => {
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
 
-      // Apply tier-0 cap: max 30% of feed can be regional
+      // Apply tier-0 cap: dynamic based on feed health
       const hyperlocal = sorted.filter((s: any) => s.geo_tier === 1 || s.geo_tier === 2);
       const regional = sorted.filter((s: any) => s.geo_tier === 0 || s.geo_tier === null);
       
-      const maxRegional = Math.floor(hyperlocal.length * (TIER_0_CAP_PERCENT / (1 - TIER_0_CAP_PERCENT)));
+      // Use relaxed cap when hyperlocal feed is thin
+      const tier0Cap = hyperlocal.length < THIN_FEED_THRESHOLD ? THIN_FEED_TIER0_CAP : DEFAULT_TIER0_CAP;
+      const maxRegional = Math.floor(hyperlocal.length * (tier0Cap / (1 - tier0Cap)));
       const cappedRegional = regional.slice(0, Math.max(maxRegional, 3)); // At least 3 regional if available
       
       const finalFeed = [...hyperlocal, ...cappedRegional];
@@ -607,38 +618,70 @@ const LakeGenevaV2 = () => {
               <HappeningTodayWidget />
             )}
 
-            {/* Dense headline list - "More Today" with improved touch targets */}
-            {!storiesLoading && stories.length > 2 && (
-              <div className="mb-8">
-                <h3 className="text-xs font-mono uppercase tracking-wider text-slate-600 mb-4 font-semibold">More Today</h3>
-                <div className="space-y-0">
-                  {stories.slice(2, 12).map((story: Story) => {
-                    const time = getRelativeTime(story.publish_date || story.created_at);
-                    const geoLabel = story.geo_tier === 1 ? 'LG' : story.geo_tier === 2 ? 'County' : story.geo_tier === 0 ? 'WI' : null;
-                    return (
-                      <a 
-                        key={story.id}
-                        href={story.original_url || '#'}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-baseline gap-3 py-2.5 border-b border-slate-100 last:border-0 hover:bg-stone-50 -mx-3 px-3 transition-colors min-h-[44px]"
-                      >
-                        <span className="text-base shrink-0">{getCategoryEmoji(story.category)}</span>
-                        <span className="text-sm text-slate-900 line-clamp-1 flex-1">{story.title}</span>
-                        {geoLabel && (
-                          <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground shrink-0">
-                            {geoLabel}
-                          </span>
-                        )}
-                        <span className="text-xs font-mono text-slate-500 shrink-0">
-                          {time}
-                        </span>
-                      </a>
-                    );
-                  })}
+            {/* Dense headline list - "More Today" with thumbnails + expand */}
+            {!storiesLoading && stories.length > 2 && (() => {
+              const headlineStories = stories.slice(2, 2 + headlineLimit);
+              const remainingHeadlines = Math.max(0, stories.length - 2 - headlineLimit);
+              const canExpand = remainingHeadlines > 0;
+              
+              return (
+                <div className="mb-8">
+                  <h3 className="text-xs font-mono uppercase tracking-wider text-slate-600 mb-4 font-semibold">More Today</h3>
+                  <div className="space-y-0">
+                    {headlineStories.map((story: Story) => {
+                      const time = getRelativeTime(story.publish_date || story.created_at);
+                      const geoLabel = story.geo_tier === 1 ? 'LG' : story.geo_tier === 2 ? 'County' : story.geo_tier === 0 ? 'WI' : null;
+                      return (
+                        <a 
+                          key={story.id}
+                          href={story.original_url || '#'}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-3 py-2 border-b border-slate-100 last:border-0 hover:bg-stone-50 -mx-3 px-3 transition-colors min-h-[52px]"
+                        >
+                          {/* Thumbnail */}
+                          <div className="h-12 w-12 rounded-md overflow-hidden bg-muted shrink-0">
+                            {story.image_url ? (
+                              <img
+                                src={story.image_url}
+                                alt=""
+                                className="h-full w-full object-cover"
+                                loading="lazy"
+                              />
+                            ) : (
+                              <div className="h-full w-full flex items-center justify-center text-lg bg-stone-100">
+                                {getCategoryEmoji(story.category)}
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* Content */}
+                          <div className="min-w-0 flex-1">
+                            <div className="text-sm text-slate-900 line-clamp-2 font-medium">{story.title}</div>
+                            <div className="text-xs text-muted-foreground mt-0.5">
+                              {geoLabel && <span className="font-mono uppercase tracking-wider">{geoLabel}</span>}
+                              {geoLabel && time && <span className="mx-1">·</span>}
+                              {time && <span className="font-mono">{time}</span>}
+                            </div>
+                          </div>
+                        </a>
+                      );
+                    })}
+                  </div>
+                  
+                  {/* Expand button for power users */}
+                  {canExpand && (
+                    <Button
+                      variant="ghost"
+                      className="w-full mt-3 text-sm font-mono"
+                      onClick={() => setHeadlineLimit(prev => prev + 20)}
+                    >
+                      Show {Math.min(20, remainingHeadlines)} more headlines →
+                    </Button>
+                  )}
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Sponsor Section - NOW below headline list */}
             {sponsor && (
@@ -666,9 +709,9 @@ const LakeGenevaV2 = () => {
                 <p className="text-slate-900 font-medium mb-2">No stories yet</p>
                 <p className="text-slate-500 text-sm">Check back later for updates.</p>
               </div>
-            ) : stories.length > 12 ? (
+            ) : stories.length > CARD_RESUME_AFTER ? (
               <div className="grid gap-5 sm:grid-cols-2">
-                {stories.slice(12).map((story: Story, idx: number) => {
+                {stories.slice(CARD_RESUME_AFTER).map((story: Story, idx: number) => {
                   const time = getRelativeTime(story.publish_date || story.created_at);
                   let source: string | null = (story as any).source?.name || null;
                   if (!source && story.original_url) {
@@ -690,7 +733,7 @@ const LakeGenevaV2 = () => {
                         meta={{ time, source }}
                       />
                       {/* Inline subscribe CTA after every 6th story */}
-                      {(idx + 1) % 6 === 0 && idx < stories.length - 13 && (
+                      {(idx + 1) % 6 === 0 && idx < stories.length - (CARD_RESUME_AFTER + 1) && (
                         <div className="mt-5 sm:col-span-2">
                           <InlineSubscribeCTA />
                         </div>
