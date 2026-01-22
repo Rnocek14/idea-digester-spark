@@ -211,3 +211,6 @@ verify_jwt = false
 
 [functions.kick-source-fetch]
 verify_jwt = false
+
+[functions.sync-venue-calendars]
+verify_jwt = false
