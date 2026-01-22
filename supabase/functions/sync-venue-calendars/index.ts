@@ -42,7 +42,7 @@ serve(async (req) => {
 
   // Parse request for optional source filter
   let sourceFilter: string | null = null;
-  let limit = 5;
+  let limit = 15;
   try {
     const body = await req.json();
     sourceFilter = body?.source_name || null;
