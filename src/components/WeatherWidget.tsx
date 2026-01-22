@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Cloud, Sun, CloudRain, Snowflake, CloudLightning, CloudFog, CloudSun } from "lucide-react";
+import { Cloud, Sun, CloudRain, Snowflake, CloudLightning, CloudFog, CloudSun, Wind } from "lucide-react";
 
 type WeatherData = {
   temp: number;
@@ -9,16 +9,18 @@ type WeatherData = {
   low: number;
 };
 
-const getWeatherIcon = (code: number) => {
-  if (code === 0) return <Sun className="h-5 w-5 text-amber-500" />;
-  if (code >= 1 && code <= 2) return <CloudSun className="h-5 w-5 text-amber-400" />;
-  if (code === 3) return <Cloud className="h-5 w-5 text-muted-foreground" />;
-  if (code >= 45 && code <= 48) return <CloudFog className="h-5 w-5 text-muted-foreground" />;
-  if ((code >= 51 && code <= 65) || (code >= 80 && code <= 82)) return <CloudRain className="h-5 w-5 text-blue-500" />;
-  if (code >= 71 && code <= 77) return <Snowflake className="h-5 w-5 text-sky-400" />;
-  if (code >= 85 && code <= 86) return <Snowflake className="h-5 w-5 text-sky-400" />;
-  if (code >= 95) return <CloudLightning className="h-5 w-5 text-violet-500" />;
-  return <CloudSun className="h-5 w-5 text-amber-400" />;
+const getWeatherIcon = (code: number, size: "sm" | "lg" = "lg") => {
+  const className = size === "lg" ? "h-10 w-10" : "h-5 w-5";
+  
+  if (code === 0) return <Sun className={`${className} text-amber-500`} />;
+  if (code >= 1 && code <= 2) return <CloudSun className={`${className} text-amber-400`} />;
+  if (code === 3) return <Cloud className={`${className} text-slate-400`} />;
+  if (code >= 45 && code <= 48) return <CloudFog className={`${className} text-slate-400`} />;
+  if ((code >= 51 && code <= 65) || (code >= 80 && code <= 82)) return <CloudRain className={`${className} text-blue-500`} />;
+  if (code >= 71 && code <= 77) return <Snowflake className={`${className} text-sky-400`} />;
+  if (code >= 85 && code <= 86) return <Snowflake className={`${className} text-sky-400`} />;
+  if (code >= 95) return <CloudLightning className={`${className} text-violet-500`} />;
+  return <CloudSun className={`${className} text-amber-400`} />;
 };
 
 const getWeatherLabel = (code: number) => {
@@ -60,19 +62,31 @@ export default function WeatherWidget() {
   if (!weather) return null;
 
   return (
-    <div className="flex items-center gap-3 w-full">
-      <div className="flex items-center gap-2 shrink-0">
-        {getWeatherIcon(weather.code)}
-        <span className="text-xl font-semibold text-foreground font-mono">
-          {Math.round(weather.temp)}°
-        </span>
+    <div className="space-y-3">
+      {/* Main temp + icon row */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          {getWeatherIcon(weather.code)}
+          <div>
+            <div className="text-3xl font-bold text-foreground font-mono tracking-tight">
+              {Math.round(weather.temp)}°
+            </div>
+            <div className="text-sm text-muted-foreground font-medium">
+              {getWeatherLabel(weather.code)}
+            </div>
+          </div>
+        </div>
       </div>
-      <div className="h-5 w-px bg-slate-200 shrink-0" />
-      <div className="flex flex-col text-xs min-w-0">
-        <span className="text-slate-600 truncate text-[11px]">{getWeatherLabel(weather.code)}</span>
-        <div className="flex items-center gap-2 font-mono text-[10px]">
-          <span className="text-blue-600">L:{Math.round(weather.low)}°</span>
-          <span className="text-orange-600">H:{Math.round(weather.high)}°</span>
+
+      {/* Hi/Lo + Wind row */}
+      <div className="flex items-center gap-4 text-sm">
+        <div className="flex items-center gap-2 font-mono">
+          <span className="text-orange-600 font-semibold">H:{Math.round(weather.high)}°</span>
+          <span className="text-blue-600 font-semibold">L:{Math.round(weather.low)}°</span>
+        </div>
+        <div className="flex items-center gap-1 text-muted-foreground">
+          <Wind className="h-3.5 w-3.5" />
+          <span className="font-mono text-xs">{Math.round(weather.wind)} mph</span>
         </div>
       </div>
     </div>
