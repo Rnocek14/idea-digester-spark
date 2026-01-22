@@ -472,12 +472,12 @@ const LakeGenevaV2 = () => {
       <WelcomeModal />
       <StickySubscribeBanner />
       {/* Three-Column Layout - Full width responsive with generous spacing */}
-      <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-16 py-6">
-        <div className="grid grid-cols-1 xl:grid-cols-[280px_1fr_280px] 2xl:grid-cols-[340px_1fr_340px] gap-0">
+      <div className="w-full px-4 sm:px-6 lg:px-6 xl:px-8 py-6">
+        <div className="grid grid-cols-1 xl:grid-cols-[260px_1fr_260px] 2xl:grid-cols-[300px_1fr_300px] gap-6">
           
           {/* ========== LEFT COLUMN: LIVE (LOCKED) ========== */}
-          <aside className="hidden xl:block border-r border-slate-200 pr-6 xl:pr-8">
-            <div className="sticky top-20 space-y-4 overflow-hidden">
+          <aside className="hidden xl:block border-r border-slate-200">
+            <div className="sticky top-20 space-y-4">
               {/* LIVE Header with dynamic indicator */}
               <LiveColumnHeader />
               
@@ -693,8 +693,8 @@ const LakeGenevaV2 = () => {
           </main>
 
           {/* ========== RIGHT COLUMN: LATER (LOCKED) ========== */}
-          <aside className="hidden xl:block border-l border-slate-200 pl-6 xl:pl-8">
-            <div className="sticky top-20 space-y-4 overflow-hidden">
+          <aside className="hidden xl:block border-l border-slate-200">
+            <div className="sticky top-20 space-y-4">
               {/* LATER Header - Commit B: amber accent for Plans */}
               <div className="pb-3 border-b-2 border-amber-500 mb-4">
                 <div className="flex items-baseline justify-between">
