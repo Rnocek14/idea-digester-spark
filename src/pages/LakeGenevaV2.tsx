@@ -529,10 +529,10 @@ const LakeGenevaV2 = () => {
               </p>
             </div>
 
-            {/* Lead stories - side by side on desktop */}
+            {/* Lead stories - pyramid: first full-width, second+third side by side */}
             {!storiesLoading && stories.length > 0 && (
-              <div className="mb-6 grid gap-5 sm:grid-cols-2">
-                {/* First story */}
+              <div className="mb-6 space-y-5">
+                {/* First story - FULL WIDTH, dominant header photo */}
                 {stories[0] && (() => {
                   const story = stories[0];
                   const time = getRelativeTime(story.publish_date || story.created_at);
@@ -560,33 +560,35 @@ const LakeGenevaV2 = () => {
                   );
                 })()}
 
-                {/* Second story */}
-                {stories[1] && (() => {
-                  const story = stories[1];
-                  const time = getRelativeTime(story.publish_date || story.created_at);
-                  let source: string | null = (story as any).source?.name || null;
-                  if (!source && story.original_url) {
-                    try {
-                      const url = new URL(story.original_url);
-                      source = url.hostname.replace(/^www\./, '');
-                    } catch {}
-                  }
-                  return (
-                    <StoryCard
-                      key={story.id}
-                      id={story.id}
-                      title={story.title}
-                      summary={story.content_website || story.content_lg_base || story.summary}
-                      imageUrl={story.image_url}
-                      category={story.category}
-                      url={story.original_url}
-                      geoTier={story.geo_tier}
-                      geoLabel={story.geo_label}
-                      meta={{ time, source }}
-                      featured
-                    />
-                  );
-                })()}
+                {/* Second + Third stories - side by side */}
+                {stories.length > 1 && (
+                  <div className="grid gap-5 sm:grid-cols-2">
+                    {[stories[1], stories[2]].filter(Boolean).map((story) => {
+                      const time = getRelativeTime(story.publish_date || story.created_at);
+                      let source: string | null = (story as any).source?.name || null;
+                      if (!source && story.original_url) {
+                        try {
+                          const url = new URL(story.original_url);
+                          source = url.hostname.replace(/^www\./, '');
+                        } catch {}
+                      }
+                      return (
+                        <StoryCard
+                          key={story.id}
+                          id={story.id}
+                          title={story.title}
+                          summary={story.content_website || story.content_lg_base || story.summary}
+                          imageUrl={story.image_url}
+                          category={story.category}
+                          url={story.original_url}
+                          geoTier={story.geo_tier}
+                          geoLabel={story.geo_label}
+                          meta={{ time, source }}
+                        />
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
 
