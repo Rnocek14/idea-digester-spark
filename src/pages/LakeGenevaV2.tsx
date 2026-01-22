@@ -471,16 +471,6 @@ const LakeGenevaV2 = () => {
     <PageShell fullWidth>
       <WelcomeModal />
       <StickySubscribeBanner />
-      
-      {/* V2 Layout Toggle Banner */}
-      <div className="bg-primary text-primary-foreground text-center py-2 text-sm">
-        <span className="font-medium">🧪 Experimental Layout</span>
-        <span className="mx-2">·</span>
-        <NavLink to="/" className="underline hover:no-underline">
-          Switch to current layout →
-        </NavLink>
-      </div>
-
       {/* Three-Column Layout - Full width responsive with generous spacing */}
       <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-16 py-6">
         <div className="grid grid-cols-1 xl:grid-cols-[280px_1fr_280px] 2xl:grid-cols-[340px_1fr_340px] gap-0">
