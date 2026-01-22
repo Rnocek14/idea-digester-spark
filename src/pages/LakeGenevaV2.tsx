@@ -672,7 +672,7 @@ const LakeGenevaV2 = () => {
               </div>
             )}
 
-            {/* All Story Cards (stories 3+) as unified visual grid */}
+            {/* All Story Cards (stories 4+) as unified visual grid */}
             {storiesLoading ? (
               <div className="text-center py-16 text-slate-500">Loading today's stories...</div>
             ) : stories.length === 0 ? (
@@ -680,9 +680,9 @@ const LakeGenevaV2 = () => {
                 <p className="text-slate-900 font-medium mb-2">No stories yet</p>
                 <p className="text-slate-500 text-sm">Check back later for updates.</p>
               </div>
-            ) : stories.length > 2 ? (
+            ) : stories.length > 3 ? (
               <div className="grid gap-5 sm:grid-cols-2">
-                {stories.slice(2).map((story: Story, idx: number) => {
+                {stories.slice(3).map((story: Story, idx: number) => {
                   const time = getRelativeTime(story.publish_date || story.created_at);
                   let source: string | null = (story as any).source?.name || null;
                   if (!source && story.original_url) {
