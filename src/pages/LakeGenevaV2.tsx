@@ -529,10 +529,10 @@ const LakeGenevaV2 = () => {
               </p>
             </div>
 
-            {/* Lead stories - first one full width, second half */}
+            {/* Lead stories - side by side on desktop */}
             {!storiesLoading && stories.length > 0 && (
-              <div className="mb-6 space-y-5">
-                {/* First story - FULL WIDTH, dominant */}
+              <div className="mb-6 grid gap-5 sm:grid-cols-2">
+                {/* First story */}
                 {stories[0] && (() => {
                   const story = stories[0];
                   const time = getRelativeTime(story.publish_date || story.created_at);
@@ -560,36 +560,33 @@ const LakeGenevaV2 = () => {
                   );
                 })()}
 
-                {/* Second story - half width on desktop */}
-                {stories[1] && (
-                  <div className="sm:w-1/2">
-                    {(() => {
-                      const story = stories[1];
-                      const time = getRelativeTime(story.publish_date || story.created_at);
-                      let source: string | null = (story as any).source?.name || null;
-                      if (!source && story.original_url) {
-                        try {
-                          const url = new URL(story.original_url);
-                          source = url.hostname.replace(/^www\./, '');
-                        } catch {}
-                      }
-                      return (
-                        <StoryCard
-                          key={story.id}
-                          id={story.id}
-                          title={story.title}
-                          summary={story.content_website || story.content_lg_base || story.summary}
-                          imageUrl={story.image_url}
-                          category={story.category}
-                          url={story.original_url}
-                          geoTier={story.geo_tier}
-                          geoLabel={story.geo_label}
-                          meta={{ time, source }}
-                        />
-                      );
-                    })()}
-                  </div>
-                )}
+                {/* Second story */}
+                {stories[1] && (() => {
+                  const story = stories[1];
+                  const time = getRelativeTime(story.publish_date || story.created_at);
+                  let source: string | null = (story as any).source?.name || null;
+                  if (!source && story.original_url) {
+                    try {
+                      const url = new URL(story.original_url);
+                      source = url.hostname.replace(/^www\./, '');
+                    } catch {}
+                  }
+                  return (
+                    <StoryCard
+                      key={story.id}
+                      id={story.id}
+                      title={story.title}
+                      summary={story.content_website || story.content_lg_base || story.summary}
+                      imageUrl={story.image_url}
+                      category={story.category}
+                      url={story.original_url}
+                      geoTier={story.geo_tier}
+                      geoLabel={story.geo_label}
+                      meta={{ time, source }}
+                      featured
+                    />
+                  );
+                })()}
               </div>
             )}
 
