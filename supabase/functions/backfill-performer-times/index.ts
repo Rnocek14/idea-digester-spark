@@ -48,7 +48,7 @@ function extractPerformer(title: string, content?: string): string | null {
   return null;
 }
 
-// Extract event time from content
+// Extract event time from content - enhanced patterns
 function extractEventTime(title: string, content?: string): string | null {
   const text = `${title} ${content || ''}`;
   
@@ -58,16 +58,53 @@ function extractEventTime(title: string, content?: string): string | null {
     return `${timeRangeMatch[1].toUpperCase().replace(/\s/g, '')} - ${timeRangeMatch[2].toUpperCase().replace(/\s/g, '')}`;
   }
   
-  // Pattern: single time like "starts at 7pm" or "@ 8:00 PM"
-  const singleTimeMatch = text.match(/(?:starts?\s+(?:at\s+)?|@\s*)(\d{1,2}(?::\d{2})?\s*(?:am|pm))/i);
-  if (singleTimeMatch) {
-    return singleTimeMatch[1].toUpperCase().replace(/\s/g, '');
-  }
-  
   // Pattern: "5:30 pm - 8:30 pm" (lowercase)
   const lowercaseRange = text.match(/(\d{1,2}:\d{2}\s*(?:am|pm))\s*-\s*(\d{1,2}:\d{2}\s*(?:am|pm))/i);
   if (lowercaseRange) {
     return `${lowercaseRange[1].toUpperCase().replace(/\s/g, '')} - ${lowercaseRange[2].toUpperCase().replace(/\s/g, '')}`;
+  }
+  
+  // Pattern: single time like "starts at 7pm" or "@ 8:00 PM" or "beginning at 6:30"
+  const singleTimeMatch = text.match(/(?:starts?\s+(?:at\s+)?|begins?\s+(?:at\s+)?|beginning\s+(?:at\s+)?|@\s*)(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)/i);
+  if (singleTimeMatch) {
+    let time = singleTimeMatch[1].trim();
+    if (!/am|pm/i.test(time)) {
+      const hour = parseInt(time.split(':')[0]);
+      if (hour >= 1 && hour <= 11) {
+        time += hour >= 5 ? 'PM' : (hour <= 6 ? 'PM' : 'AM');
+      }
+    }
+    return time.toUpperCase().replace(/\s/g, '');
+  }
+  
+  // Pattern: "at noon" or "at midnight"
+  if (/\bat\s+noon\b/i.test(text)) return "12:00PM";
+  if (/\bat\s+midnight\b/i.test(text)) return "12:00AM";
+  
+  // Pattern: standalone "7pm" or "8:00 PM" in title
+  const titleTimeMatch = title.match(/\b(\d{1,2}(?::\d{2})?\s*(?:am|pm))\b/i);
+  if (titleTimeMatch) {
+    return titleTimeMatch[1].toUpperCase().replace(/\s/g, '');
+  }
+  
+  // Pattern: 24-hour format like "19:00" or "20:30"
+  const time24Match = text.match(/\b([01]?\d|2[0-3]):([0-5]\d)\b/);
+  if (time24Match) {
+    let hours = parseInt(time24Match[1]);
+    const minutes = time24Match[2];
+    const period = hours >= 12 ? 'PM' : 'AM';
+    if (hours > 12) hours -= 12;
+    if (hours === 0) hours = 12;
+    return `${hours}:${minutes}${period}`;
+  }
+  
+  // Pattern: "doors at 7" or "show at 8" (context implies PM)
+  const doorsMatch = text.match(/(?:doors|show|showtime|music)\s+(?:at\s+)?(\d{1,2})(?:\s|,|$)/i);
+  if (doorsMatch) {
+    const hour = parseInt(doorsMatch[1]);
+    if (hour >= 1 && hour <= 11) {
+      return `${hour}:00PM`;
+    }
   }
   
   return null;
