@@ -11,6 +11,7 @@ interface ExtractedEvent {
   date: string;
   time: string | null;
   performer: string | null;
+  location_detail: string | null;
   description: string | null;
 }
 
@@ -169,27 +170,42 @@ serve(async (req) => {
             messages: [
               {
                 role: "system",
-                content: `You are an event data extractor. Extract upcoming events from venue calendar pages.
+                content: `You are an expert event data extractor. Extract upcoming events from venue calendar pages with HIGH QUALITY data.
+
+CRITICAL RULES:
+1. ALWAYS extract the specific performer/artist/band name - never use generic terms like "Live Music" or "DJ"
+2. If you see "Live Music with [Name]" or "[Name] Band" - the performer is that specific name
+3. If an event lists a performer, that IS the title (e.g., "The Nightinjails" not "Live Music")
+4. Include the venue name AND specific location/room if mentioned (e.g., "Bar West", "Waterfront", "240 West")
+5. SKIP events without a specific performer name unless it's a special themed event (Fish Fry, Trivia, etc.)
 
 For each event, extract:
-- title: Event name or performer name
-- date: YYYY-MM-DD format (infer year as 2026 if not specified)
-- time: Start time like "7:00 PM" or "6:30 PM" (null if not found)
-- performer: Artist/band name if different from title (null otherwise)
+- title: SPECIFIC event name - must include performer name OR specific event type (never generic "Live Music")
+- date: YYYY-MM-DD format (infer year as 2026 if not specified)  
+- time: Start time like "7:00 PM" or "6:30 PM" (null if truly not found)
+- performer: Artist/band name - extract from title or separately listed
+- location_detail: Specific room/area within venue if mentioned (Bar West, Waterfront, Patio, etc.)
 - description: Brief description if available (null otherwise)
 
 Today's date is ${today}. Only include events on or after today.
-Return a JSON array of events. Maximum 15 events.
+Return a JSON array. Maximum 15 events. QUALITY OVER QUANTITY - skip vague entries.
 
-Example output:
-[{"title": "Live Music with John Smith", "date": "2026-01-25", "time": "7:00 PM", "performer": "John Smith", "description": null}]`
+GOOD examples:
+[{"title": "Dan Trudell Trio", "date": "2026-01-25", "time": "8:00 PM", "performer": "Dan Trudell Trio", "location_detail": "Lobby Lounge", "description": "Jazz trio performance"}]
+[{"title": "The Nightinjails", "date": "2026-01-23", "time": "7:00 PM", "performer": "The Nightinjails", "location_detail": null, "description": "Live rock music"}]
+[{"title": "Friday Fish Fry", "date": "2026-01-24", "time": "4:00 PM", "performer": null, "location_detail": "Waterfront Restaurant", "description": "Weekly fish fry special"}]
+
+BAD examples (DO NOT output these):
+[{"title": "Live Music", ...}] - too generic, find the performer name
+[{"title": "DJ Event", ...}] - find the actual DJ name
+[{"title": "Saturday Night Entertainment", ...}] - not specific enough`
               },
               {
                 role: "user",
-                content: `Venue: ${venueName}\n\nPage content:\n${pageContent.substring(0, 6000)}`
+                content: `Venue: ${venueName}\n\nPage content:\n${pageContent.substring(0, 8000)}`
               }
             ],
-            max_tokens: 2000,
+            max_tokens: 2500,
             temperature: 0,
           }),
         });
@@ -246,11 +262,19 @@ Example output:
             continue;
           }
 
-          // Build title with venue context
+          // Build title with venue context - ensure venue is always clear
           let title = event.title;
-          if (!title.toLowerCase().includes(venueName.toLowerCase()) && 
-              !title.toLowerCase().includes("at ")) {
-            title = `${event.title} at ${venueName}`;
+          const titleLower = title.toLowerCase();
+          const venueLower = venueName.toLowerCase();
+          
+          // Add location detail if available (e.g., "at Bar West")
+          const locationPart = event.location_detail ? ` at ${event.location_detail}` : '';
+          
+          // Add venue if not already in title
+          if (!titleLower.includes(venueLower) && !titleLower.includes("at ")) {
+            title = `${event.title}${locationPart} — ${venueName}`;
+          } else if (event.location_detail && !titleLower.includes(event.location_detail.toLowerCase())) {
+            title = `${event.title}${locationPart}`;
           }
 
           const { error: insertError } = await supabase
@@ -271,6 +295,7 @@ Example output:
               metadata: {
                 dedupe_key: dedupeKey,
                 venue: venueName,
+                location_detail: event.location_detail,
                 source_type: "venue_calendar",
                 verticals: ["local", "nightlife"],
                 extracted_at: new Date().toISOString()
