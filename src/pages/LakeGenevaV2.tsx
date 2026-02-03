@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,8 +20,11 @@ import { WelcomeModal } from "@/components/WelcomeModal";
 import { PresentedBySection } from "@/components/PresentedBySection";
 import { getSubscribeSource, getReferralSource } from "@/lib/referralTracking";
 import { NavLink } from "@/components/NavLink";
-import { Link } from "react-router-dom";
-import { Home, Star, Phone } from "lucide-react";
+import { Home, Star, Phone, ChevronDown } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
+
+// Category order for topic mode filtering
+const categoryOrder = ['news', 'civic', 'events', 'dining', 'community', 'schools', 'real_estate'];
 
 // Dynamic LIVE column header - shows green when all clear, red when active incidents
 // Includes freshness timestamp for credibility
@@ -240,11 +244,35 @@ const THIN_FEED_TIER0_CAP = 0.40;
 const LakeGenevaV2 = () => {
   const [email, setEmail] = useState("");
   const [isSubscribing, setIsSubscribing] = useState(false);
+  const isMobile = useIsMobile();
+  
+  // View mode state for merged V1 features
+  const [searchParams] = useSearchParams();
+  const [activeCategory, setActiveCategory] = useState<'all' | string>('all');
+  const [viewMode, setViewMode] = useState<'all' | 'topic' | 'recent'>('all');
+  const [newUpdatesCount, setNewUpdatesCount] = useState(0);
+  const previousFeedIdsRef = useRef<Set<string>>(new Set());
+  const [mobileViewDropdownOpen, setMobileViewDropdownOpen] = useState(false);
 
   useEffect(() => {
     document.title = "Lake Geneva Brief – V2 Layout";
     getReferralSource();
   }, []);
+
+  // Deep linking: handle ?category=events URL params
+  useEffect(() => {
+    const categoryParam = searchParams.get('category');
+    if (categoryParam && categoryOrder.includes(categoryParam.toLowerCase())) {
+      setActiveCategory(categoryParam.toLowerCase());
+      setViewMode('topic');
+    }
+  }, [searchParams]);
+
+  // Scroll to story helper
+  const scrollToStory = (storyId: string) => {
+    const el = document.getElementById(`story-${storyId}`);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   // Phase 1 Config: Smart geo_tier expansion with caps
   const MIN_FEED_ITEMS = 12; // Thin-feed threshold
@@ -517,6 +545,57 @@ const LakeGenevaV2 = () => {
     subscribeMutation.mutate(email);
   };
 
+  // Track new updates for "Recent" badge
+  useEffect(() => {
+    if (stories.length === 0) return;
+    
+    const currentIds = new Set(stories.map((s: Story) => s.id));
+    const previousIds = previousFeedIdsRef.current;
+    
+    if (previousIds.size > 0) {
+      const newItems = [...currentIds].filter(id => !previousIds.has(id));
+      if (newItems.length > 0 && viewMode !== 'recent') {
+        setNewUpdatesCount(prev => prev + newItems.length);
+      }
+    }
+    
+    previousFeedIdsRef.current = currentIds;
+  }, [stories, viewMode]);
+
+  // Filter stories based on view mode and category
+  const getFilteredStories = () => {
+    if (viewMode === 'topic' && activeCategory !== 'all') {
+      return stories.filter((s: Story) => 
+        (s.category || '').toLowerCase() === activeCategory.toLowerCase()
+      );
+    }
+    if (viewMode === 'recent') {
+      // Pure chronological by created_at
+      return [...stories].sort((a: Story, b: Story) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+    }
+    return stories;
+  };
+
+  const filteredStories = getFilteredStories();
+
+  // Group stories by category for topic mode
+  const getStoriesByCategory = () => {
+    const grouped: Record<string, Story[]> = {};
+    const cats = activeCategory === 'all' ? categoryOrder : [activeCategory];
+    
+    for (const cat of cats) {
+      const catStories = stories.filter((s: Story) => 
+        (s.category || '').toLowerCase() === cat.toLowerCase()
+      );
+      if (catStories.length > 0) {
+        grouped[cat] = catStories;
+      }
+    }
+    return grouped;
+  };
+
   return (
     <PageShell fullWidth>
       <WelcomeModal />
@@ -581,12 +660,141 @@ const LakeGenevaV2 = () => {
               </p>
             </div>
 
-            {/* Lead stories - pyramid: first full-width, second+third side by side */}
+            {/* AT-A-GLANCE: Quick-scan bullet list (V1 feature) */}
             {!storiesLoading && stories.length > 0 && (
+              <div className="mb-6 p-4 bg-slate-50 border border-slate-200 rounded-sm">
+                <p className="text-[10px] font-mono uppercase tracking-wider text-slate-500 mb-3">
+                  AT A GLANCE
+                </p>
+                <ul className="space-y-2">
+                  {stories.slice(0, 5).map((story: Story) => (
+                    <li key={story.id} className="flex items-start gap-2">
+                      <span className="text-slate-400 mt-0.5">•</span>
+                      <button
+                        onClick={() => scrollToStory(story.id)}
+                        className="text-left text-sm text-slate-800 hover:text-blue-700 line-clamp-1 flex-1"
+                      >
+                        {story.title}
+                      </button>
+                      <span className="text-[10px] text-slate-400 whitespace-nowrap">
+                        {getRelativeTime(story.created_at)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* VIEW MODE TOGGLE - sticky (V1 feature) */}
+            <div className="sticky top-[73px] z-20 bg-background py-3 border-b border-slate-200 mb-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                {/* Desktop: Toggle Pills */}
+                {!isMobile ? (
+                  <div className="flex items-center gap-1 bg-slate-100 rounded-sm p-1">
+                    <button
+                      onClick={() => setViewMode('all')}
+                      className={`rounded-sm px-3 py-1.5 text-xs font-mono uppercase tracking-wider transition-colors ${
+                        viewMode === 'all'
+                          ? "bg-white text-slate-900 shadow-sm"
+                          : "text-slate-500 hover:text-slate-700"
+                      }`}
+                    >
+                      All
+                    </button>
+                    <button
+                      onClick={() => setViewMode('topic')}
+                      className={`rounded-sm px-3 py-1.5 text-xs font-mono uppercase tracking-wider transition-colors ${
+                        viewMode === 'topic'
+                          ? "bg-white text-slate-900 shadow-sm"
+                          : "text-slate-500 hover:text-slate-700"
+                      }`}
+                    >
+                      By Topic
+                    </button>
+                    <button
+                      onClick={() => {
+                        setViewMode('recent');
+                        setNewUpdatesCount(0);
+                      }}
+                      className={`rounded-sm px-3 py-1.5 text-xs font-mono uppercase tracking-wider transition-colors flex items-center gap-1.5 ${
+                        viewMode === 'recent'
+                          ? "bg-white text-slate-900 shadow-sm"
+                          : "text-slate-500 hover:text-slate-700"
+                      }`}
+                    >
+                      Recent
+                      {newUpdatesCount > 0 && viewMode !== 'recent' && (
+                        <span className="h-4 min-w-[16px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold">
+                          {newUpdatesCount > 9 ? '9+' : newUpdatesCount}
+                        </span>
+                      )}
+                    </button>
+                  </div>
+                ) : (
+                  /* Mobile: Dropdown */
+                  <div className="relative">
+                    <button
+                      onClick={() => setMobileViewDropdownOpen(!mobileViewDropdownOpen)}
+                      className="flex items-center gap-2 bg-slate-100 rounded-sm px-3 py-2 text-xs font-mono uppercase tracking-wider text-slate-700"
+                    >
+                      {viewMode === 'all' ? 'All Stories' : viewMode === 'topic' ? 'By Topic' : 'Most Recent'}
+                      {newUpdatesCount > 0 && viewMode !== 'recent' && (
+                        <span className="h-4 min-w-[16px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold">
+                          {newUpdatesCount > 9 ? '9+' : newUpdatesCount}
+                        </span>
+                      )}
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    </button>
+                    {mobileViewDropdownOpen && (
+                      <div className="absolute top-full left-0 mt-1 bg-white border border-slate-200 rounded-sm shadow-lg z-30">
+                        {(['all', 'topic', 'recent'] as const).map((mode) => (
+                          <button
+                            key={mode}
+                            onClick={() => {
+                              setViewMode(mode);
+                              if (mode === 'recent') setNewUpdatesCount(0);
+                              setMobileViewDropdownOpen(false);
+                            }}
+                            className={`block w-full text-left px-4 py-2 text-xs font-mono uppercase tracking-wider ${
+                              viewMode === mode ? 'bg-slate-100 text-slate-900' : 'text-slate-600 hover:bg-slate-50'
+                            }`}
+                          >
+                            {mode === 'all' ? 'All Stories' : mode === 'topic' ? 'By Topic' : 'Most Recent'}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Category Pills (topic mode only) */}
+                {viewMode === 'topic' && (
+                  <div className="flex flex-wrap gap-2">
+                    {['all', ...categoryOrder].map((cat) => (
+                      <button
+                        key={cat}
+                        onClick={() => setActiveCategory(cat)}
+                        className={`rounded-sm px-2.5 py-1 text-[11px] font-mono uppercase border transition-colors ${
+                          activeCategory === cat
+                            ? "bg-blue-600 text-white border-blue-600"
+                            : "bg-white text-slate-600 border-slate-200 hover:border-blue-500"
+                        }`}
+                      >
+                        {cat === 'all' ? 'All' : cat.replace('_', ' ')}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Lead stories - pyramid: first full-width, second+third side by side */}
+            {/* Show pyramid only in 'all' mode, hide in 'recent' mode for pure chronological */}
+            {!storiesLoading && filteredStories.length > 0 && viewMode !== 'recent' && viewMode !== 'topic' && (
               <div className="mb-6 space-y-5">
                 {/* First story - FULL WIDTH, dominant header photo */}
-                {stories[0] && (() => {
-                  const story = stories[0];
+                {filteredStories[0] && (() => {
+                  const story = filteredStories[0];
                   const time = getRelativeTime(story.publish_date || story.created_at);
                   let source: string | null = (story as any).source?.name || null;
                   if (!source && story.original_url) {
@@ -596,26 +804,28 @@ const LakeGenevaV2 = () => {
                     } catch {}
                   }
                   return (
-                    <StoryCard
-                      key={story.id}
-                      id={story.id}
-                      title={story.title}
-                      summary={story.content_website || story.content_lg_base || story.summary}
-                      imageUrl={story.image_url}
-                      category={story.category}
-                      url={story.original_url}
-                      geoTier={story.geo_tier}
-                      geoLabel={story.geo_label}
-                      meta={{ time, source }}
-                      featured
-                    />
+                    <div id={`story-${story.id}`}>
+                      <StoryCard
+                        key={story.id}
+                        id={story.id}
+                        title={story.title}
+                        summary={story.content_website || story.content_lg_base || story.summary}
+                        imageUrl={story.image_url}
+                        category={story.category}
+                        url={story.original_url}
+                        geoTier={story.geo_tier}
+                        geoLabel={story.geo_label}
+                        meta={{ time, source }}
+                        featured
+                      />
+                    </div>
                   );
                 })()}
 
                 {/* Second + Third stories - side by side */}
-                {stories.length > 1 && (
+                {filteredStories.length > 1 && (
                   <div className="grid gap-5 sm:grid-cols-2">
-                    {[stories[1], stories[2]].filter(Boolean).map((story) => {
+                    {[filteredStories[1], filteredStories[2]].filter(Boolean).map((story) => {
                       const time = getRelativeTime(story.publish_date || story.created_at);
                       let source: string | null = (story as any).source?.name || null;
                       if (!source && story.original_url) {
@@ -625,18 +835,19 @@ const LakeGenevaV2 = () => {
                         } catch {}
                       }
                       return (
-                        <StoryCard
-                          key={story.id}
-                          id={story.id}
-                          title={story.title}
-                          summary={story.content_website || story.content_lg_base || story.summary}
-                          imageUrl={story.image_url}
-                          category={story.category}
-                          url={story.original_url}
-                          geoTier={story.geo_tier}
-                          geoLabel={story.geo_label}
-                          meta={{ time, source }}
-                        />
+                        <div key={story.id} id={`story-${story.id}`}>
+                          <StoryCard
+                            id={story.id}
+                            title={story.title}
+                            summary={story.content_website || story.content_lg_base || story.summary}
+                            imageUrl={story.image_url}
+                            category={story.category}
+                            url={story.original_url}
+                            geoTier={story.geo_tier}
+                            geoLabel={story.geo_label}
+                            meta={{ time, source }}
+                          />
+                        </div>
                       );
                     })}
                   </div>
@@ -645,24 +856,24 @@ const LakeGenevaV2 = () => {
             )}
 
             {/* Horizontal rule after lead stories */}
-            {!storiesLoading && stories.length > 2 && (
+            {!storiesLoading && filteredStories.length > 2 && viewMode === 'all' && (
               <div className="border-t border-border mb-6" />
             )}
 
             {/* HAPPENING TODAY - Commit B: local pulse module */}
-            {!storiesLoading && (
+            {!storiesLoading && viewMode === 'all' && (
               <HappeningTodayWidget />
             )}
 
             {/* Sponsor Section */}
-            {sponsor && (
+            {sponsor && viewMode === 'all' && (
               <div className="mb-8">
                 <PresentedBySectionCompact sponsor={sponsor} marketData={marketData} />
               </div>
             )}
 
             {/* Quiet day notice - shows when lead stories are stale */}
-            {!storiesLoading && stories.length > 0 && stories.filter((s: any) => s._isFresh).length < 2 && (
+            {!storiesLoading && stories.length > 0 && stories.filter((s: any) => s._isFresh).length < 2 && viewMode === 'all' && (
               <div className="text-center py-10 mb-6 bg-stone-50 border border-slate-200 rounded-md">
                 <p className="text-slate-700 text-base mb-1">It's a quiet day in Lake Geneva</p>
                 <p className="text-slate-500 text-sm">— and that's usually a good thing.</p>
@@ -672,17 +883,18 @@ const LakeGenevaV2 = () => {
               </div>
             )}
 
-            {/* All Story Cards (stories 4+) as unified visual grid */}
+            {/* Story Grid - respects viewMode */}
             {storiesLoading ? (
               <div className="text-center py-16 text-slate-500">Loading today's stories...</div>
-            ) : stories.length === 0 ? (
+            ) : filteredStories.length === 0 ? (
               <div className="text-center py-16">
                 <p className="text-slate-900 font-medium mb-2">No stories yet</p>
                 <p className="text-slate-500 text-sm">Check back later for updates.</p>
               </div>
-            ) : stories.length > 3 ? (
+            ) : viewMode === 'all' && filteredStories.length > 3 ? (
+              /* ALL MODE: Chronological grid (stories 4+) */
               <div className="grid gap-5 sm:grid-cols-2">
-                {stories.slice(3).map((story: Story, idx: number) => {
+                {filteredStories.slice(3).map((story: Story, idx: number) => {
                   const time = getRelativeTime(story.publish_date || story.created_at);
                   let source: string | null = (story as any).source?.name || null;
                   if (!source && story.original_url) {
@@ -692,8 +904,9 @@ const LakeGenevaV2 = () => {
                     } catch {}
                   }
                   return (
-                    <div key={story.id}>
+                    <div key={story.id} id={`story-${story.id}`}>
                       <StoryCard
+                        id={story.id}
                         title={story.title}
                         summary={story.content_website || story.content_lg_base || story.summary}
                         imageUrl={story.image_url}
@@ -704,7 +917,80 @@ const LakeGenevaV2 = () => {
                         meta={{ time, source }}
                       />
                       {/* Inline subscribe CTA after every 6th story */}
-                      {(idx + 1) % 6 === 0 && idx < stories.length - 3 && (
+                      {(idx + 1) % 6 === 0 && idx < filteredStories.length - 3 && (
+                        <div className="mt-5 sm:col-span-2">
+                          <InlineSubscribeCTA />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : viewMode === 'topic' ? (
+              /* TOPIC MODE: Grouped by category with headers */
+              <div className="space-y-8">
+                {Object.entries(getStoriesByCategory()).map(([category, catStories]) => (
+                  <div key={category}>
+                    <h3 className="text-xs font-mono uppercase tracking-wider text-slate-500 mb-4 pb-2 border-b border-slate-200">
+                      {category.replace('_', ' ')} ({catStories.length})
+                    </h3>
+                    <div className="grid gap-5 sm:grid-cols-2">
+                      {catStories.map((story: Story) => {
+                        const time = getRelativeTime(story.publish_date || story.created_at);
+                        let source: string | null = (story as any).source?.name || null;
+                        if (!source && story.original_url) {
+                          try {
+                            const url = new URL(story.original_url);
+                            source = url.hostname.replace(/^www\./, '');
+                          } catch {}
+                        }
+                        return (
+                          <div key={story.id} id={`story-${story.id}`}>
+                            <StoryCard
+                              id={story.id}
+                              title={story.title}
+                              summary={story.content_website || story.content_lg_base || story.summary}
+                              imageUrl={story.image_url}
+                              category={story.category}
+                              url={story.original_url}
+                              geoTier={story.geo_tier}
+                              geoLabel={story.geo_label}
+                              meta={{ time, source }}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : viewMode === 'recent' ? (
+              /* RECENT MODE: Pure chronological feed */
+              <div className="grid gap-5 sm:grid-cols-2">
+                {filteredStories.map((story: Story, idx: number) => {
+                  const time = getRelativeTime(story.publish_date || story.created_at);
+                  let source: string | null = (story as any).source?.name || null;
+                  if (!source && story.original_url) {
+                    try {
+                      const url = new URL(story.original_url);
+                      source = url.hostname.replace(/^www\./, '');
+                    } catch {}
+                  }
+                  return (
+                    <div key={story.id} id={`story-${story.id}`}>
+                      <StoryCard
+                        id={story.id}
+                        title={story.title}
+                        summary={story.content_website || story.content_lg_base || story.summary}
+                        imageUrl={story.image_url}
+                        category={story.category}
+                        url={story.original_url}
+                        geoTier={story.geo_tier}
+                        geoLabel={story.geo_label}
+                        meta={{ time, source }}
+                      />
+                      {/* Inline subscribe CTA after every 6th story */}
+                      {(idx + 1) % 6 === 0 && idx < filteredStories.length - 1 && (
                         <div className="mt-5 sm:col-span-2">
                           <InlineSubscribeCTA />
                         </div>
