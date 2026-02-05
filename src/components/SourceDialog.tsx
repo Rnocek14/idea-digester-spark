@@ -86,7 +86,7 @@ export function SourceDialog({ sourceId, open, onOpenChange }: SourceDialogProps
         type,
         url,
         category: category || null,
-        fetch_frequency_minutes: parseInt(fetchFrequency) || 60,
+        fetch_frequency_minutes: Math.max(5, Math.min(1440, parseInt(fetchFrequency) || 60)),
         default_geo_tier: validGeoTier,
       };
 
