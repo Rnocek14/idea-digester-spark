@@ -106,10 +106,9 @@ const CATEGORY_FALLBACKS: Record<string, string[]> = {
     "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80",
   ],
   civic: [
-    "https://images.unsplash.com/photo-1577962917302-cd874c4e31d2?w=800&q=80",
-    "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=800&q=80",
-    "https://images.unsplash.com/photo-1523292562811-8fa7962a78c8?w=800&q=80",
-    "https://images.unsplash.com/photo-1575505586569-646b2ca898fc?w=800&q=80",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Lake_Geneva_Wisconsin_City_Hall.jpg/1280px-Lake_Geneva_Wisconsin_City_Hall.jpg",
+    "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=800&q=80", // government building
+    "https://images.unsplash.com/photo-1555848962-6e79363ec58f?w=800&q=80", // american flag on building
   ],
   default: [
     "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?w=800&q=80",

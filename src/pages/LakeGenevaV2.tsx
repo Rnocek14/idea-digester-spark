@@ -213,8 +213,9 @@ const getCategoryEmoji = (category: string | null) => {
 // Fallback images
 const CATEGORY_FALLBACK_IMAGES: Record<string, string[]> = {
   news: [
-    "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&q=80",
-    "https://images.unsplash.com/photo-1495020689067-958852a7765e?w=800&q=80",
+    "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&q=80", // newspaper
+    "https://images.unsplash.com/photo-1495020689067-958852a7765e?w=800&q=80", // news desk
+    "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=800&q=80", // press
   ],
   events: [
     "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&q=80",
@@ -222,6 +223,8 @@ const CATEGORY_FALLBACK_IMAGES: Record<string, string[]> = {
   ],
   civic: [
     "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Lake_Geneva_Wisconsin_City_Hall.jpg/1280px-Lake_Geneva_Wisconsin_City_Hall.jpg",
+    "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=800&q=80", // government building
+    "https://images.unsplash.com/photo-1555848962-6e79363ec58f?w=800&q=80", // american flag on building
   ],
   default: [
     "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?w=800&q=80",
