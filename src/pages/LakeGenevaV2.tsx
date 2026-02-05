@@ -443,10 +443,10 @@ const LakeGenevaV2 = () => {
       // Key principle: tier blocks remain stable, no full re-sort after quota assembly
       const tier1Stories = sorted.filter((s: any) => s.geo_tier === 1);
       const tier2Stories = sorted.filter((s: any) => s.geo_tier === 2);
-      const tier0Stories = sorted.filter((s: any) => s.geo_tier === 0 || s.geo_tier === null);
+      // Note: tier0Stories not used directly, we filter inline
 
       const usedIds = new Set<string>();
-      let tier0InTopTotal = 0; // Track tier-0 count across entire top slots assembly
+      let tier0InTop = 0; // Tier-0 count in top slots (from remainder only, since tier1Top/tier2Top have none)
 
       // Step 1: Pick best tier-1 stories (with thin-feed fallback)
       const availableTier1 = Math.min(tier1Stories.length, MIN_TIER1_IN_TOP);
@@ -459,7 +459,6 @@ const LakeGenevaV2 = () => {
       tier2Top.forEach((s: any) => usedIds.add(s.id));
 
       // Step 3: Calculate shortfall and fill remainder slots
-      // If we couldn't satisfy tier1/tier2 minimums, remainder gets more slots
       const tier1Shortfall = MIN_TIER1_IN_TOP - availableTier1;
       const tier2Shortfall = MIN_TIER2_IN_TOP - availableTier2;
       const remainderSlotCount = TOP_SLOTS_COUNT - tier1Top.length - tier2Top.length;
@@ -473,8 +472,8 @@ const LakeGenevaV2 = () => {
         
         const isTier0 = story.geo_tier === 0 || story.geo_tier === null;
         if (isTier0) {
-          if (tier0InTopTotal >= MAX_TIER0_IN_TOP) continue;
-          tier0InTopTotal++;
+          if (tier0InTop >= MAX_TIER0_IN_TOP) continue;
+          tier0InTop++;
         }
         
         remainder.push(story);
@@ -482,19 +481,15 @@ const LakeGenevaV2 = () => {
       }
 
       // Assemble top slots: tier-1 block + tier-2 block + remainder
-      // Each block is already score-sorted internally, preserving quota structure
       const topSlots = [...tier1Top, ...tier2Top, ...remainder];
 
       // Step 4: Build rest of feed with score-ordered regional interleaving
-      // Instead of forcing all hyperlocal before regional, iterate in score order
-      // and enforce regional share cap inline
       const afterTopStories = sorted.filter((s: any) => !usedIds.has(s.id));
       const hyperlocalRestCount = afterTopStories.filter((s: any) => s.geo_tier === 1 || s.geo_tier === 2).length;
       const maxRegionalInRest = Math.max(Math.ceil(hyperlocalRestCount * 0.3), 2);
       
       let regionalInRest = 0;
       const restOfFeed: any[] = [];
-      const skippedForCaps: any[] = []; // Pool for category minimum recovery
       
       for (const story of afterTopStories) {
         const isTier0 = story.geo_tier === 0 || story.geo_tier === null;
@@ -510,7 +505,8 @@ const LakeGenevaV2 = () => {
       
       const restCategoryCounts: Record<string, number> = {};
       const cappedRest: any[] = [];
-      const categoryOverflow: any[] = []; // Stories skipped due to caps
+      const categoryOverflow: any[] = [];
+      const overflowUsedIds = new Set<string>(); // Guard against duplicate overflow pulls
       
       for (const story of restOfFeed) {
         const cat = (story.category || 'other').toLowerCase();
@@ -526,13 +522,16 @@ const LakeGenevaV2 = () => {
         restCategoryCounts[cat] = currentCount + 1;
       }
       
-      // Category minimums: pull from overflow if needed
+      // Category minimums: pull from overflow if needed (with dedup guard)
       for (const [cat, minCount] of Object.entries(CATEGORY_MINIMUMS)) {
         const current = restCategoryCounts[cat] || 0;
         if (current < minCount) {
-          const filler = categoryOverflow.find(s => (s.category || '').toLowerCase() === cat);
+          const filler = categoryOverflow.find(s => 
+            (s.category || '').toLowerCase() === cat && !overflowUsedIds.has(s.id)
+          );
           if (filler) {
             cappedRest.push(filler);
+            overflowUsedIds.add(filler.id);
             restCategoryCounts[cat] = current + 1;
           }
         }
