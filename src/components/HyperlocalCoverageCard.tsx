@@ -19,13 +19,16 @@ interface CoverageData {
   tier0Pct: number;
   hyperlocalPct: number;
   total: number;
-  dailyHyperlocalPct: number[];  // 7 days for sparkline
+  tier1Count: number;
+  tier2Count: number;
+  tier0Count: number;
+  dailyHyperlocalPct: (number | null)[];  // 7 days for sparkline, null = no data
   trend: 'up' | 'down' | 'flat';
-  alertDays: number;  // Days below threshold in last 7
+  alertDays: number;  // Days below threshold (only counting days with stories)
 }
 
-// Sparkline component for coverage trend
-const CoverageSparkline: React.FC<{ values: number[]; threshold: number }> = ({ values, threshold }) => {
+// Sparkline component for coverage trend (handles null = no data)
+const CoverageSparkline: React.FC<{ values: (number | null)[]; threshold: number }> = ({ values, threshold }) => {
   if (!values || values.length === 0) return null;
   
   const width = 80;
@@ -33,14 +36,12 @@ const CoverageSparkline: React.FC<{ values: number[]; threshold: number }> = ({ 
   const step = width / (values.length - 1 || 1);
   const maxVal = 100; // Percentage scale
 
-  const points = values
-    .map((v, i) => {
-      const x = i * step;
-      const y = height - (v / maxVal) * (height - 4) - 2;
-      return `${x},${y}`;
-    })
-    .join(" ");
+  // Filter out nulls for the line, but keep positions for dots
+  const validPoints = values
+    .map((v, i) => v !== null ? { x: i * step, y: height - (v / maxVal) * (height - 4) - 2, val: v } : null)
+    .filter((p): p is { x: number; y: number; val: number } => p !== null);
 
+  const linePoints = validPoints.map(p => `${p.x},${p.y}`).join(" ");
   const thresholdY = height - (threshold / maxVal) * (height - 4) - 2;
 
   return (
@@ -56,17 +57,31 @@ const CoverageSparkline: React.FC<{ values: number[]; threshold: number }> = ({ 
         strokeDasharray="2,2"
         className="text-muted-foreground/30"
       />
-      {/* Data line */}
-      <polyline
-        points={points}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        className="text-blue-500"
-      />
-      {/* Points */}
+      {/* Data line (only valid points) */}
+      {validPoints.length > 1 && (
+        <polyline
+          points={linePoints}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          className="text-blue-500"
+        />
+      )}
+      {/* Points - colored by status, gray for no data */}
       {values.map((v, i) => {
         const x = i * step;
+        if (v === null) {
+          // No data day - gray dot
+          return (
+            <circle
+              key={i}
+              cx={x}
+              cy={height / 2}
+              r="2"
+              className="fill-muted-foreground/30"
+            />
+          );
+        }
         const y = height - (v / maxVal) * (height - 4) - 2;
         const isBelow = v < threshold;
         return (
@@ -147,7 +162,8 @@ export const HyperlocalCoverageCard = () => {
       const hyperlocalPct = tier1Pct + tier2Pct;
 
       // Calculate daily hyperlocal % for sparkline (last 7 days)
-      const dailyHyperlocalPct: number[] = [];
+      // null = no stories that day (different from 0% which means stories but none hyperlocal)
+      const dailyHyperlocalPct: (number | null)[] = [];
       
       for (let i = 6; i >= 0; i--) {
         const dayStart = subDays(today, i);
@@ -157,7 +173,7 @@ export const HyperlocalCoverageCard = () => {
         });
         
         if (dayStories.length === 0) {
-          dailyHyperlocalPct.push(0);
+          dailyHyperlocalPct.push(null); // No data, not 0%
         } else {
           const dayHyperlocal = dayStories.filter(s => s.geo_tier === 1 || s.geo_tier === 2).length;
           dailyHyperlocalPct.push(Math.round((dayHyperlocal / dayStories.length) * 100));
@@ -178,8 +194,8 @@ export const HyperlocalCoverageCard = () => {
       if (hyperlocalPct > prevHyperlocalPct + 5) trend = 'up';
       else if (hyperlocalPct < prevHyperlocalPct - 5) trend = 'down';
 
-      // Count alert days (days below threshold)
-      const alertDays = dailyHyperlocalPct.filter(pct => pct < TARGETS.alertThreshold && pct > 0).length;
+      // Count alert days (only days with stories that fell below threshold)
+      const alertDays = dailyHyperlocalPct.filter(pct => pct !== null && pct < TARGETS.alertThreshold).length;
 
       return {
         tier1Pct,
@@ -187,6 +203,9 @@ export const HyperlocalCoverageCard = () => {
         tier0Pct,
         hyperlocalPct,
         total,
+        tier1Count,
+        tier2Count,
+        tier0Count,
         dailyHyperlocalPct,
         trend,
         alertDays,
@@ -287,10 +306,15 @@ export const HyperlocalCoverageCard = () => {
           </div>
         )}
 
-        {/* Stats footer */}
-        <div className="pt-2 border-t flex justify-between text-xs text-muted-foreground">
-          <span>{data?.total || 0} stories this week</span>
-          <span>Target: ≥{TARGETS.tier1Min}% Tier 1, ≤{TARGETS.tier0Max}% Regional</span>
+        {/* Stats footer with raw counts */}
+        <div className="pt-2 border-t space-y-1">
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span>Tier1: {data?.tier1Count || 0} · Tier2: {data?.tier2Count || 0} · Regional: {data?.tier0Count || 0}</span>
+            <span>{data?.total || 0} total</span>
+          </div>
+          <div className="text-[10px] text-muted-foreground/70">
+            Target: ≥{TARGETS.tier1Min}% Tier 1, ≤{TARGETS.tier0Max}% Regional
+          </div>
         </div>
       </CardContent>
     </Card>
