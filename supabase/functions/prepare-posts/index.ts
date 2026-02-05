@@ -495,7 +495,7 @@ serve(async (req) => {
           continue;
         }
         
-        // Check if already queued or sent (prevent duplicates)
+        // Check if already queued or sent for THIS story (prevent duplicates)
         const { data: existing } = await supabaseClient
           .from("post_queue")
           .select("id, status")
@@ -508,6 +508,35 @@ serve(async (req) => {
           console.log(`[prepare-posts] Skipping ${platform} for story ${story.id} - already ${existing.status}`);
           continue;
         }
+        
+        // CRITICAL: Check for SIMILAR content already posted recently to prevent duplicate tweets
+        // This catches cases where multiple story_ids have the same/similar content (dedup failure upstream)
+        const storyTitle = story.title.toLowerCase().trim();
+        const titleWords = storyTitle.split(/\s+/).slice(0, 5).join(' '); // First 5 words for fuzzy match
+        
+        const recentCutoff = new Date();
+        recentCutoff.setDate(recentCutoff.getDate() - 7); // Look back 7 days
+        
+        const { data: similarPosts } = await supabaseClient
+          .from("post_queue")
+          .select("id, post_text, story_id, sent_at")
+          .eq("platform", platform)
+          .in("status", ["sent", "simulated", "pending"])
+          .gte("created_at", recentCutoff.toISOString())
+          .limit(50);
+        
+        const hasSimilarPost = similarPosts?.some(p => {
+          // Check if post text is very similar (contains same key phrases)
+          const postLower = p.post_text.toLowerCase();
+          // Match if the title keywords appear in the post
+          return titleWords.length > 10 && postLower.includes(titleWords);
+        });
+        
+        if (hasSimilarPost) {
+          console.log(`[prepare-posts] ⚠️ DEDUP: Skipping ${platform} for "${story.title.substring(0, 40)}..." - similar content already posted`);
+          continue;
+        }
+
 
         const isBreaking = story.is_breaking || false;
         let scheduledFor: Date;
