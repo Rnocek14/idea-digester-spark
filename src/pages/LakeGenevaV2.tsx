@@ -440,105 +440,90 @@ const LakeGenevaV2 = () => {
 
       // === HARD QUOTA ENFORCEMENT FOR TOP SLOTS ===
       // Ensure hyperlocal content dominates the top 10 positions
+      // Key principle: tier blocks remain stable, no full re-sort after quota assembly
       const tier1Stories = sorted.filter((s: any) => s.geo_tier === 1);
       const tier2Stories = sorted.filter((s: any) => s.geo_tier === 2);
       const tier0Stories = sorted.filter((s: any) => s.geo_tier === 0 || s.geo_tier === null);
 
-      // Build top slots with quota enforcement
-      const topSlots: any[] = [];
       const usedIds = new Set<string>();
 
-      // Step 1: Fill minimum tier-1 quota
-      for (const story of tier1Stories) {
-        if (topSlots.length >= MIN_TIER1_IN_TOP) break;
-        if (!usedIds.has(story.id)) {
-          topSlots.push(story);
-          usedIds.add(story.id);
-        }
-      }
+      // Step 1: Pick best tier-1 stories (already sorted by score within tier)
+      const tier1Top = tier1Stories.slice(0, MIN_TIER1_IN_TOP);
+      tier1Top.forEach((s: any) => usedIds.add(s.id));
 
-      // Step 2: Fill minimum tier-2 quota
-      for (const story of tier2Stories) {
-        if (topSlots.filter((s: any) => s.geo_tier === 2).length >= MIN_TIER2_IN_TOP) break;
-        if (!usedIds.has(story.id) && topSlots.length < TOP_SLOTS_COUNT) {
-          topSlots.push(story);
-          usedIds.add(story.id);
-        }
-      }
+      // Step 2: Pick best tier-2 stories
+      const tier2Top = tier2Stories.slice(0, MIN_TIER2_IN_TOP);
+      tier2Top.forEach((s: any) => usedIds.add(s.id));
 
-      // Step 3: Fill remaining top slots (respecting tier-0 cap)
-      let tier0InTop = 0;
-      for (const story of sorted) {
-        if (topSlots.length >= TOP_SLOTS_COUNT) break;
-        if (usedIds.has(story.id)) continue;
+      // Step 3: Fill remainder slots from any tier, respecting tier-0 cap
+      // Remainder = TOP_SLOTS_COUNT - tier1Top.length - tier2Top.length
+      const remainderSlotCount = TOP_SLOTS_COUNT - tier1Top.length - tier2Top.length;
+      const remainderCandidates = sorted.filter((s: any) => !usedIds.has(s.id));
+      
+      const remainder: any[] = [];
+      let tier0InRemainder = 0;
+      
+      for (const story of remainderCandidates) {
+        if (remainder.length >= remainderSlotCount) break;
         
         const isTier0 = story.geo_tier === 0 || story.geo_tier === null;
         if (isTier0) {
-          if (tier0InTop >= MAX_TIER0_IN_TOP) continue;
-          tier0InTop++;
+          if (tier0InRemainder >= MAX_TIER0_IN_TOP) continue;
+          tier0InRemainder++;
         }
         
-        topSlots.push(story);
+        remainder.push(story);
         usedIds.add(story.id);
       }
 
-      // Re-sort top slots by score to maintain natural ordering within quotas
-      topSlots.sort((a: any, b: any) => b._score - a._score);
+      // Assemble top slots: tier-1 block + tier-2 block + remainder
+      // Each block is already score-sorted internally, preserving quota structure
+      const topSlots = [...tier1Top, ...tier2Top, ...remainder];
 
-      // Step 4: Build rest of feed (after top slots) with overall tier-0 cap
-      const remainingStories = sorted.filter((s: any) => !usedIds.has(s.id));
-      const hyperlocal = remainingStories.filter((s: any) => s.geo_tier === 1 || s.geo_tier === 2);
-      const regional = remainingStories.filter((s: any) => s.geo_tier === 0 || s.geo_tier === null);
+      // Step 4: Build rest of feed (after top slots) with simplified tier-0 cap
+      const afterTopStories = sorted.filter((s: any) => !usedIds.has(s.id));
+      const hyperlocalRest = afterTopStories.filter((s: any) => s.geo_tier === 1 || s.geo_tier === 2);
+      const regionalRest = afterTopStories.filter((s: any) => s.geo_tier === 0 || s.geo_tier === null);
       
-      // Dynamic cap based on feed health
-      const tier0Cap = hyperlocal.length < THIN_FEED_THRESHOLD ? THIN_FEED_TIER0_CAP : DEFAULT_TIER0_CAP;
-      const maxRegionalRemaining = Math.floor(hyperlocal.length * (tier0Cap / (1 - tier0Cap)));
-      const cappedRegional = regional.slice(0, Math.max(maxRegionalRemaining, 2));
+      // Simple cap: max 30% of rest, minimum 2 regional stories allowed
+      const maxRegionalInRest = Math.max(Math.ceil(hyperlocalRest.length * 0.3), 2);
+      const cappedRegionalRest = regionalRest.slice(0, maxRegionalInRest);
       
-      let combinedFeed = [...topSlots, ...hyperlocal, ...cappedRegional];
+      const restOfFeed = [...hyperlocalRest, ...cappedRegionalRest];
 
-      // === CATEGORY CAPS TO PREVENT DOMINATION ===
-      const categoryCounts: Record<string, number> = {};
-      const cappedFeed: any[] = [];
-      const overflowPool: any[] = [];
+      // === CATEGORY CAPS (STAGE 2: apply to rest only, protect top slots) ===
+      const topSlotsProtected = [...topSlots]; // Top 10 are immutable
       
-      for (const story of combinedFeed) {
+      const restCategoryCounts: Record<string, number> = {};
+      const cappedRest: any[] = [];
+      
+      for (const story of restOfFeed) {
         const cat = (story.category || 'other').toLowerCase();
         const cap = CATEGORY_CAPS[cat];
-        const currentCount = categoryCounts[cat] || 0;
+        const currentCount = restCategoryCounts[cat] || 0;
         
+        // Only apply caps to rest, not top slots
         if (cap !== undefined && currentCount >= cap) {
-          overflowPool.push(story);
-        } else {
-          cappedFeed.push(story);
-          categoryCounts[cat] = currentCount + 1;
+          continue; // Skip over-cap items in rest
         }
+        
+        cappedRest.push(story);
+        restCategoryCounts[cat] = currentCount + 1;
       }
       
-      // Check category minimums and pull from overflow if needed
-      const finalCategoryCounts = { ...categoryCounts };
-      for (const [cat, minCount] of Object.entries(CATEGORY_MINIMUMS)) {
-        const current = finalCategoryCounts[cat] || 0;
-        if (current < minCount) {
-          const filler = overflowPool.find(s => (s.category || '').toLowerCase() === cat);
-          if (filler) {
-            cappedFeed.push(filler);
-            finalCategoryCounts[cat] = current + 1;
-          }
-        }
-      }
-      
-      const finalFeed = cappedFeed;
+      // Final feed: protected top slots + capped rest
+      const finalFeed = [...topSlotsProtected, ...cappedRest];
 
-      // Dev logging
+      // Dev logging for quota verification
       if (import.meta.env.DEV) {
-        const t1Count = finalFeed.filter((s: any) => s.geo_tier === 1).length;
-        const t2Count = finalFeed.filter((s: any) => s.geo_tier === 2).length;
-        const t0Count = finalFeed.filter((s: any) => s.geo_tier === 0 || s.geo_tier === null).length;
+        const topT1 = topSlots.filter((s: any) => s.geo_tier === 1).length;
+        const topT2 = topSlots.filter((s: any) => s.geo_tier === 2).length;
         const topT0 = topSlots.filter((s: any) => s.geo_tier === 0 || s.geo_tier === null).length;
-        console.log(`[GEO-TIER] Top 10 composition: tier0=${topT0}/${MAX_TIER0_IN_TOP} max`);
-        console.log(`[GEO-TIER] Full feed: tier1=${t1Count}, tier2=${t2Count}, tier0=${t0Count}`);
-        console.log(`[GEO-TIER] Category counts:`, finalCategoryCounts);
+        const t1Total = finalFeed.filter((s: any) => s.geo_tier === 1).length;
+        const t2Total = finalFeed.filter((s: any) => s.geo_tier === 2).length;
+        const t0Total = finalFeed.filter((s: any) => s.geo_tier === 0 || s.geo_tier === null).length;
+        console.log(`[GEO-TIER] Top 10: tier1=${topT1}/${MIN_TIER1_IN_TOP}min, tier2=${topT2}/${MIN_TIER2_IN_TOP}min, tier0=${topT0}/${MAX_TIER0_IN_TOP}max`);
+        console.log(`[GEO-TIER] Full feed: tier1=${t1Total}, tier2=${t2Total}, tier0=${t0Total}`);
       }
 
       return finalFeed;
