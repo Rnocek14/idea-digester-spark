@@ -13,6 +13,31 @@ interface ExtractedEvent {
   performer: string | null;
   location_detail: string | null;
   description: string | null;
+  is_recurring?: boolean;
+}
+
+// Clean up title - remove redundant venue mentions, "Live Music @" prefixes
+function cleanTitle(title: string, venueName: string): string {
+  let cleaned = title;
+  
+  // Remove "Live Music with/featuring/by" prefixes
+  cleaned = cleaned.replace(/^Live Music\s*(with|featuring|by|@|at|-|–|:)?\s*/i, '');
+  
+  // Remove venue name if it appears in the title
+  const venueVariants = [
+    venueName,
+    venueName.replace(/\s*-\s*Events?$/i, ''),
+    venueName.replace(/\s*Events?$/i, ''),
+  ];
+  for (const variant of venueVariants) {
+    const regex = new RegExp(`\\s*(at|@|–|-|—)?\\s*${variant.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*(–|-|—)?\\s*`, 'gi');
+    cleaned = cleaned.replace(regex, ' ');
+  }
+  
+  // Remove trailing punctuation and whitespace
+  cleaned = cleaned.replace(/[\s\-–—@]+$/g, '').trim();
+  
+  return cleaned || title; // Fallback to original if we removed everything
 }
 
 // Generate stable dedupe key
@@ -176,28 +201,29 @@ CRITICAL RULES:
 1. ALWAYS extract the specific performer/artist/band name - never use generic terms like "Live Music" or "DJ"
 2. If you see "Live Music with [Name]" or "[Name] Band" - the performer is that specific name
 3. If an event lists a performer, that IS the title (e.g., "The Nightinjails" not "Live Music")
-4. Include the venue name AND specific location/room if mentioned (e.g., "Bar West", "Waterfront", "240 West")
-5. SKIP events without a specific performer name unless it's a special themed event (Fish Fry, Trivia, etc.)
+4. SKIP events without a specific performer name unless it's a special themed event (Fish Fry, Trivia, Karaoke, Open Mic, etc.)
+5. Detect RECURRING events (same performer on multiple dates, weekly events like "Trivia Night every Tuesday")
 
 For each event, extract:
-- title: SPECIFIC event name - must include performer name OR specific event type (never generic "Live Music")
+- title: JUST the performer name or event name (e.g., "Dan Trudell Trio" NOT "Live Music with Dan Trudell Trio")
 - date: YYYY-MM-DD format (infer year as 2026 if not specified)  
 - time: Start time like "7:00 PM" or "6:30 PM" (null if truly not found)
 - performer: Artist/band name - extract from title or separately listed
 - location_detail: Specific room/area within venue if mentioned (Bar West, Waterfront, Patio, etc.)
 - description: Brief description if available (null otherwise)
+- is_recurring: true if this is a weekly/monthly recurring event (like "every Friday")
 
 Today's date is ${today}. Only include events on or after today.
 Return a JSON array. Maximum 15 events. QUALITY OVER QUANTITY - skip vague entries.
 
 GOOD examples:
-[{"title": "Dan Trudell Trio", "date": "2026-01-25", "time": "8:00 PM", "performer": "Dan Trudell Trio", "location_detail": "Lobby Lounge", "description": "Jazz trio performance"}]
-[{"title": "The Nightinjails", "date": "2026-01-23", "time": "7:00 PM", "performer": "The Nightinjails", "location_detail": null, "description": "Live rock music"}]
-[{"title": "Friday Fish Fry", "date": "2026-01-24", "time": "4:00 PM", "performer": null, "location_detail": "Waterfront Restaurant", "description": "Weekly fish fry special"}]
+[{"title": "Dan Trudell Trio", "date": "2026-01-25", "time": "8:00 PM", "performer": "Dan Trudell Trio", "location_detail": "Lobby Lounge", "description": "Jazz trio", "is_recurring": false}]
+[{"title": "Trivia Night", "date": "2026-01-23", "time": "7:00 PM", "performer": null, "location_detail": null, "description": "Weekly trivia", "is_recurring": true}]
+[{"title": "Friday Fish Fry", "date": "2026-01-24", "time": "4:00 PM", "performer": null, "location_detail": "Waterfront", "description": "Weekly special", "is_recurring": true}]
 
 BAD examples (DO NOT output these):
-[{"title": "Live Music", ...}] - too generic, find the performer name
-[{"title": "DJ Event", ...}] - find the actual DJ name
+[{"title": "Live Music", ...}] - too generic
+[{"title": "Live Music @ Venue", ...}] - don't include venue in title
 [{"title": "Saturday Night Entertainment", ...}] - not specific enough`
               },
               {
@@ -262,27 +288,17 @@ BAD examples (DO NOT output these):
             continue;
           }
 
-          // Build title with venue context - ensure venue is always clear
-          let title = event.title;
-          const titleLower = title.toLowerCase();
-          const venueLower = venueName.toLowerCase();
-          
-          // Add location detail if available (e.g., "at Bar West")
-          const locationPart = event.location_detail ? ` at ${event.location_detail}` : '';
-          
-          // Add venue if not already in title
-          if (!titleLower.includes(venueLower) && !titleLower.includes("at ")) {
-            title = `${event.title}${locationPart} — ${venueName}`;
-          } else if (event.location_detail && !titleLower.includes(event.location_detail.toLowerCase())) {
-            title = `${event.title}${locationPart}`;
-          }
+          // Clean and format title: "{Performer/Event} @ {Venue}"
+          const cleanedTitle = cleanTitle(event.title, venueName);
+          const locationPart = event.location_detail ? ` (${event.location_detail})` : '';
+          const title = `${cleanedTitle} @ ${venueName}${locationPart}`;
 
           const { error: insertError } = await supabase
             .from("content_queue")
             .insert({
               source_id: source.id,
               title,
-              content: event.description || `Live event at ${venueName}`,
+              content: event.description || `${cleanedTitle} performing at ${venueName}`,
               original_url: source.url,
               category: "events",
               status: "auto_published",
@@ -298,6 +314,7 @@ BAD examples (DO NOT output these):
                 location_detail: event.location_detail,
                 source_type: "venue_calendar",
                 verticals: ["local", "nightlife"],
+                is_recurring: event.is_recurring || false,
                 extracted_at: new Date().toISOString()
               }
             });
