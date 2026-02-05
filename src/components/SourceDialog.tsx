@@ -75,13 +75,19 @@ export function SourceDialog({ sourceId, open, onOpenChange }: SourceDialogProps
 
   const saveMutation = useMutation({
     mutationFn: async () => {
+      // Validate and clamp geo tier to [0,1,2]
+      const parsedGeoTier = parseInt(defaultGeoTier);
+      const validGeoTier = Number.isNaN(parsedGeoTier) 
+        ? 1 
+        : Math.max(0, Math.min(2, parsedGeoTier));
+
       const sourceData = {
         name,
         type,
         url,
         category: category || null,
-        fetch_frequency_minutes: parseInt(fetchFrequency),
-        default_geo_tier: parseInt(defaultGeoTier),
+        fetch_frequency_minutes: parseInt(fetchFrequency) || 60,
+        default_geo_tier: validGeoTier,
       };
 
       if (isEditing) {
@@ -199,11 +205,11 @@ export function SourceDialog({ sourceId, open, onOpenChange }: SourceDialogProps
                 <SelectItem value="events">Events</SelectItem>
                 <SelectItem value="dining">Dining</SelectItem>
                 <SelectItem value="nightlife">Nightlife</SelectItem>
-                <SelectItem value="civic">Civic / Government</SelectItem>
-                <SelectItem value="safety">Public Safety</SelectItem>
+                <SelectItem value="civic">Civic</SelectItem>
+                <SelectItem value="safety">Safety</SelectItem>
                 <SelectItem value="schools">Schools</SelectItem>
                 <SelectItem value="community">Community</SelectItem>
-                <SelectItem value="real-estate">Real Estate</SelectItem>
+                <SelectItem value="real_estate">Real Estate</SelectItem>
               </SelectContent>
             </Select>
           </div>
