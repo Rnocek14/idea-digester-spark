@@ -34,6 +34,7 @@ export function SourceDialog({ sourceId, open, onOpenChange }: SourceDialogProps
   const [url, setUrl] = useState("");
   const [category, setCategory] = useState("");
   const [fetchFrequency, setFetchFrequency] = useState("60");
+  const [defaultGeoTier, setDefaultGeoTier] = useState("1");
 
   const isEditing = !!sourceId;
 
@@ -60,6 +61,7 @@ export function SourceDialog({ sourceId, open, onOpenChange }: SourceDialogProps
       setUrl(source.url);
       setCategory(source.category || "");
       setFetchFrequency(source.fetch_frequency_minutes?.toString() || "60");
+      setDefaultGeoTier(source.default_geo_tier?.toString() || "1");
     } else if (!sourceId) {
       // Reset form for new source
       setName("");
@@ -67,6 +69,7 @@ export function SourceDialog({ sourceId, open, onOpenChange }: SourceDialogProps
       setUrl("");
       setCategory("");
       setFetchFrequency("60");
+      setDefaultGeoTier("1");
     }
   }, [source, sourceId]);
 
@@ -78,6 +81,7 @@ export function SourceDialog({ sourceId, open, onOpenChange }: SourceDialogProps
         url,
         category: category || null,
         fetch_frequency_minutes: parseInt(fetchFrequency),
+        default_geo_tier: parseInt(defaultGeoTier),
       };
 
       if (isEditing) {
@@ -194,10 +198,31 @@ export function SourceDialog({ sourceId, open, onOpenChange }: SourceDialogProps
                 <SelectItem value="news">News</SelectItem>
                 <SelectItem value="events">Events</SelectItem>
                 <SelectItem value="dining">Dining</SelectItem>
-                <SelectItem value="real-estate">Real Estate</SelectItem>
+                <SelectItem value="nightlife">Nightlife</SelectItem>
+                <SelectItem value="civic">Civic / Government</SelectItem>
+                <SelectItem value="safety">Public Safety</SelectItem>
+                <SelectItem value="schools">Schools</SelectItem>
                 <SelectItem value="community">Community</SelectItem>
+                <SelectItem value="real-estate">Real Estate</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="geo-tier">Default Geo Tier</Label>
+            <Select value={defaultGeoTier} onValueChange={setDefaultGeoTier}>
+              <SelectTrigger className="mt-1.5">
+                <SelectValue placeholder="Select geo tier" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">Tier 1 — Lake Geneva (hyperlocal)</SelectItem>
+                <SelectItem value="2">Tier 2 — Walworth County</SelectItem>
+                <SelectItem value="0">Tier 0 — Regional / Wisconsin</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground mt-1.5">
+              Stories inherit this tier unless geo-detection overrides it
+            </p>
           </div>
 
           <div>
