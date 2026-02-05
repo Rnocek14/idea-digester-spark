@@ -446,30 +446,35 @@ const LakeGenevaV2 = () => {
       const tier0Stories = sorted.filter((s: any) => s.geo_tier === 0 || s.geo_tier === null);
 
       const usedIds = new Set<string>();
+      let tier0InTopTotal = 0; // Track tier-0 count across entire top slots assembly
 
-      // Step 1: Pick best tier-1 stories (already sorted by score within tier)
-      const tier1Top = tier1Stories.slice(0, MIN_TIER1_IN_TOP);
+      // Step 1: Pick best tier-1 stories (with thin-feed fallback)
+      const availableTier1 = Math.min(tier1Stories.length, MIN_TIER1_IN_TOP);
+      const tier1Top = tier1Stories.slice(0, availableTier1);
       tier1Top.forEach((s: any) => usedIds.add(s.id));
 
-      // Step 2: Pick best tier-2 stories
-      const tier2Top = tier2Stories.slice(0, MIN_TIER2_IN_TOP);
+      // Step 2: Pick best tier-2 stories (with thin-feed fallback)
+      const availableTier2 = Math.min(tier2Stories.length, MIN_TIER2_IN_TOP);
+      const tier2Top = tier2Stories.slice(0, availableTier2);
       tier2Top.forEach((s: any) => usedIds.add(s.id));
 
-      // Step 3: Fill remainder slots from any tier, respecting tier-0 cap
-      // Remainder = TOP_SLOTS_COUNT - tier1Top.length - tier2Top.length
+      // Step 3: Calculate shortfall and fill remainder slots
+      // If we couldn't satisfy tier1/tier2 minimums, remainder gets more slots
+      const tier1Shortfall = MIN_TIER1_IN_TOP - availableTier1;
+      const tier2Shortfall = MIN_TIER2_IN_TOP - availableTier2;
       const remainderSlotCount = TOP_SLOTS_COUNT - tier1Top.length - tier2Top.length;
-      const remainderCandidates = sorted.filter((s: any) => !usedIds.has(s.id));
       
+      // Fill remainder from score-sorted candidates, respecting tier-0 cap
+      const remainderCandidates = sorted.filter((s: any) => !usedIds.has(s.id));
       const remainder: any[] = [];
-      let tier0InRemainder = 0;
       
       for (const story of remainderCandidates) {
         if (remainder.length >= remainderSlotCount) break;
         
         const isTier0 = story.geo_tier === 0 || story.geo_tier === null;
         if (isTier0) {
-          if (tier0InRemainder >= MAX_TIER0_IN_TOP) continue;
-          tier0InRemainder++;
+          if (tier0InTopTotal >= MAX_TIER0_IN_TOP) continue;
+          tier0InTopTotal++;
         }
         
         remainder.push(story);
@@ -480,35 +485,57 @@ const LakeGenevaV2 = () => {
       // Each block is already score-sorted internally, preserving quota structure
       const topSlots = [...tier1Top, ...tier2Top, ...remainder];
 
-      // Step 4: Build rest of feed (after top slots) with simplified tier-0 cap
+      // Step 4: Build rest of feed with score-ordered regional interleaving
+      // Instead of forcing all hyperlocal before regional, iterate in score order
+      // and enforce regional share cap inline
       const afterTopStories = sorted.filter((s: any) => !usedIds.has(s.id));
-      const hyperlocalRest = afterTopStories.filter((s: any) => s.geo_tier === 1 || s.geo_tier === 2);
-      const regionalRest = afterTopStories.filter((s: any) => s.geo_tier === 0 || s.geo_tier === null);
+      const hyperlocalRestCount = afterTopStories.filter((s: any) => s.geo_tier === 1 || s.geo_tier === 2).length;
+      const maxRegionalInRest = Math.max(Math.ceil(hyperlocalRestCount * 0.3), 2);
       
-      // Simple cap: max 30% of rest, minimum 2 regional stories allowed
-      const maxRegionalInRest = Math.max(Math.ceil(hyperlocalRest.length * 0.3), 2);
-      const cappedRegionalRest = regionalRest.slice(0, maxRegionalInRest);
+      let regionalInRest = 0;
+      const restOfFeed: any[] = [];
+      const skippedForCaps: any[] = []; // Pool for category minimum recovery
       
-      const restOfFeed = [...hyperlocalRest, ...cappedRegionalRest];
+      for (const story of afterTopStories) {
+        const isTier0 = story.geo_tier === 0 || story.geo_tier === null;
+        if (isTier0) {
+          if (regionalInRest >= maxRegionalInRest) continue;
+          regionalInRest++;
+        }
+        restOfFeed.push(story);
+      }
 
       // === CATEGORY CAPS (STAGE 2: apply to rest only, protect top slots) ===
       const topSlotsProtected = [...topSlots]; // Top 10 are immutable
       
       const restCategoryCounts: Record<string, number> = {};
       const cappedRest: any[] = [];
+      const categoryOverflow: any[] = []; // Stories skipped due to caps
       
       for (const story of restOfFeed) {
         const cat = (story.category || 'other').toLowerCase();
         const cap = CATEGORY_CAPS[cat];
         const currentCount = restCategoryCounts[cat] || 0;
         
-        // Only apply caps to rest, not top slots
         if (cap !== undefined && currentCount >= cap) {
-          continue; // Skip over-cap items in rest
+          categoryOverflow.push(story);
+          continue;
         }
         
         cappedRest.push(story);
         restCategoryCounts[cat] = currentCount + 1;
+      }
+      
+      // Category minimums: pull from overflow if needed
+      for (const [cat, minCount] of Object.entries(CATEGORY_MINIMUMS)) {
+        const current = restCategoryCounts[cat] || 0;
+        if (current < minCount) {
+          const filler = categoryOverflow.find(s => (s.category || '').toLowerCase() === cat);
+          if (filler) {
+            cappedRest.push(filler);
+            restCategoryCounts[cat] = current + 1;
+          }
+        }
       }
       
       // Final feed: protected top slots + capped rest
@@ -522,8 +549,14 @@ const LakeGenevaV2 = () => {
         const t1Total = finalFeed.filter((s: any) => s.geo_tier === 1).length;
         const t2Total = finalFeed.filter((s: any) => s.geo_tier === 2).length;
         const t0Total = finalFeed.filter((s: any) => s.geo_tier === 0 || s.geo_tier === null).length;
+        const hyperlocalPct = Math.round(((t1Total + t2Total) / finalFeed.length) * 100);
+        
+        // Soft-fail warning if minimums weren't satisfied
+        if (tier1Shortfall > 0 || tier2Shortfall > 0) {
+          console.warn(`[GEO-TIER] Thin feed: tier1 shortfall=${tier1Shortfall}, tier2 shortfall=${tier2Shortfall}`);
+        }
         console.log(`[GEO-TIER] Top 10: tier1=${topT1}/${MIN_TIER1_IN_TOP}min, tier2=${topT2}/${MIN_TIER2_IN_TOP}min, tier0=${topT0}/${MAX_TIER0_IN_TOP}max`);
-        console.log(`[GEO-TIER] Full feed: tier1=${t1Total}, tier2=${t2Total}, tier0=${t0Total}`);
+        console.log(`[GEO-TIER] Full feed: tier1=${t1Total}, tier2=${t2Total}, tier0=${t0Total} (${hyperlocalPct}% hyperlocal)`);
       }
 
       return finalFeed;

@@ -11,6 +11,7 @@ import { WeeklyMetricsCard } from "@/components/WeeklyMetricsCard";
 import { SourceHealthAlerts } from "@/components/SourceHealthAlerts";
 import { SystemHealthCard } from "@/components/SystemHealthCard";
 import { VIPChampionsCard } from "@/components/VIPChampionsCard";
+import { HyperlocalCoverageCard } from "@/components/HyperlocalCoverageCard";
 
 const Dashboard = () => {
   const { data: pendingCount = 0, isLoading: pendingLoading, refetch: refetchPending } = useQuery({
@@ -154,10 +155,11 @@ const Dashboard = () => {
         </Card>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <SystemHealthCard />
         <WeeklyMetricsCard />
         <PipelineHealthCard />
+        <HyperlocalCoverageCard />
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
