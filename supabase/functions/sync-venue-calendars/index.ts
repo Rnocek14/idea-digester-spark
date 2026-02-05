@@ -182,7 +182,19 @@ serve(async (req) => {
         }
 
         const today = new Date().toISOString().split('T')[0];
-        const venueName = source.name.replace(/ Events?| Calendar| Live Music| Entertainment/gi, '').trim();
+        // Clean venue name - remove suffixes and clean up dashes
+        let venueName = source.name
+          .replace(/\s*[-–—]\s*Events?$/gi, '')  // Remove "- Events" suffix
+          .replace(/\s*Events?$/gi, '')           // Remove "Events" suffix  
+          .replace(/\s*Calendar$/gi, '')          // Remove "Calendar" suffix
+          .replace(/\s*Live Music$/gi, '')        // Remove "Live Music" suffix
+          .replace(/\s*Entertainment$/gi, '')     // Remove "Entertainment" suffix
+          .replace(/\s*[-–—]\s*$/g, '')           // Remove trailing dashes
+          .trim();
+        
+        // Special case: Visit Lake Geneva is an aggregator, not a venue
+        // For aggregators, we'll use the location_detail as the venue
+        const isAggregator = venueName.toLowerCase().includes('visit lake geneva');
 
         const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
           method: "POST",
@@ -288,17 +300,28 @@ BAD examples (DO NOT output these):
             continue;
           }
 
-          // Clean and format title: "{Performer/Event} @ {Venue}"
+          // Clean and format title based on source type
           const cleanedTitle = cleanTitle(event.title, venueName);
-          const locationPart = event.location_detail ? ` (${event.location_detail})` : '';
-          const title = `${cleanedTitle} @ ${venueName}${locationPart}`;
+          let title: string;
+          let displayVenue: string;
+          
+          if (isAggregator && event.location_detail) {
+            // For aggregators like Visit Lake Geneva, use location_detail as the venue
+            displayVenue = event.location_detail;
+            title = `${cleanedTitle} @ ${event.location_detail}`;
+          } else {
+            // For direct venue sources, use venue name with optional location detail
+            displayVenue = venueName;
+            const locationPart = event.location_detail ? ` (${event.location_detail})` : '';
+            title = `${cleanedTitle} @ ${venueName}${locationPart}`;
+          }
 
           const { error: insertError } = await supabase
             .from("content_queue")
             .insert({
               source_id: source.id,
               title,
-              content: event.description || `${cleanedTitle} performing at ${venueName}`,
+              content: event.description || `${cleanedTitle} at ${displayVenue}`,
               original_url: source.url,
               category: "events",
               status: "auto_published",
@@ -310,11 +333,13 @@ BAD examples (DO NOT output these):
               geo_label: "Lake Geneva",
               metadata: {
                 dedupe_key: dedupeKey,
-                venue: venueName,
+                venue: displayVenue,
+                source_name: source.name,
                 location_detail: event.location_detail,
                 source_type: "venue_calendar",
                 verticals: ["local", "nightlife"],
                 is_recurring: event.is_recurring || false,
+                is_aggregator: isAggregator,
                 extracted_at: new Date().toISOString()
               }
             });
