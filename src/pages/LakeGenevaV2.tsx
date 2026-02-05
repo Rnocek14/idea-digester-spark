@@ -236,10 +236,35 @@ const getCategoryFallbackImage = (storyId: string, category: string | null): str
   return images[hash % images.length];
 };
 
-// Tier-0 cap thresholds
+// Geo-tier ranking configuration
+// Hard quotas: ensure hyperlocal dominates top slots
+const TOP_SLOTS_COUNT = 10;          // Number of "prime" slots for quota enforcement
+const MIN_TIER1_IN_TOP = 5;          // Minimum tier-1 (Lake Geneva) in top 10
+const MIN_TIER2_IN_TOP = 2;          // Minimum tier-2 (Walworth) in top 10
+const MAX_TIER0_IN_TOP = 3;          // Maximum tier-0 (Regional) in top 10
+
+// Score weights for tier-based ranking
+const TIER_SCORE_WEIGHTS = {
+  1: 100,   // Lake Geneva hyperlocal
+  2: 70,    // Walworth County
+  0: 20,    // Regional Wisconsin
+} as const;
+
+// Freshness boost
+const FRESH_BOOST = 15;              // Added to score if < 48 hours old
+const RECENCY_DECAY_PER_DAY = 2;     // Score decay per day old
+
+// Legacy tier-0 cap thresholds (fallback)
 const THIN_FEED_THRESHOLD = 15;
 const DEFAULT_TIER0_CAP = 0.30;
 const THIN_FEED_TIER0_CAP = 0.40;
+
+// Geo label mapping for visual display
+const GEO_TIER_LABELS = {
+  1: { label: 'Lake Geneva', className: 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' },
+  2: { label: 'Walworth', className: 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300' },
+  0: { label: 'Wisconsin', className: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400' },
+} as const;
 
 const LakeGenevaV2 = () => {
   const [email, setEmail] = useState("");
@@ -392,38 +417,87 @@ const LakeGenevaV2 = () => {
         }
       }
 
-      // Sort: hyperlocal (tier 1-2) first, then fresh, then recency
-      // Custom sort: tier 1 → tier 2 → tier 0, within each: fresh first, then by date
-      const sorted = processed.sort((a: any, b: any) => {
-        // Tier priority: 1 < 2 < 0 (we want 1 first, then 2, then 0)
-        const tierPriority = (t: number | null) => {
-          if (t === 1) return 0;
-          if (t === 2) return 1;
-          return 2; // tier 0 or null goes last
-        };
-        const tierDiff = tierPriority(a.geo_tier) - tierPriority(b.geo_tier);
-        if (tierDiff !== 0) return tierDiff;
+      // === GEO-TIER SCORING ALGORITHM ===
+      // Calculate composite score: tier_weight + freshness_boost - age_decay
+      const calculateScore = (story: any): number => {
+        const tierWeight = TIER_SCORE_WEIGHTS[story.geo_tier as keyof typeof TIER_SCORE_WEIGHTS] ?? TIER_SCORE_WEIGHTS[0];
+        const ageMs = nowMs - new Date(story.created_at).getTime();
+        const ageDays = ageMs / (24 * 60 * 60 * 1000);
+        const freshBonus = story._isFresh ? FRESH_BOOST : 0;
+        const ageDecay = Math.min(ageDays * RECENCY_DECAY_PER_DAY, 30); // Cap decay at 30 points
         
-        // Within same tier: fresh first
-        if (a._isFresh && !b._isFresh) return -1;
-        if (!a._isFresh && b._isFresh) return 1;
-        
-        // Then by recency
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      });
+        return tierWeight + freshBonus - ageDecay;
+      };
 
-      // Apply tier-0 cap: dynamic based on feed health
-      const hyperlocal = sorted.filter((s: any) => s.geo_tier === 1 || s.geo_tier === 2);
-      const regional = sorted.filter((s: any) => s.geo_tier === 0 || s.geo_tier === null);
+      // Add scores to all stories
+      const scoredStories = processed.map((story: any) => ({
+        ...story,
+        _score: calculateScore(story),
+      }));
+
+      // Sort by score descending
+      const sorted = scoredStories.sort((a: any, b: any) => b._score - a._score);
+
+      // === HARD QUOTA ENFORCEMENT FOR TOP SLOTS ===
+      // Ensure hyperlocal content dominates the top 10 positions
+      const tier1Stories = sorted.filter((s: any) => s.geo_tier === 1);
+      const tier2Stories = sorted.filter((s: any) => s.geo_tier === 2);
+      const tier0Stories = sorted.filter((s: any) => s.geo_tier === 0 || s.geo_tier === null);
+
+      // Build top slots with quota enforcement
+      const topSlots: any[] = [];
+      const usedIds = new Set<string>();
+
+      // Step 1: Fill minimum tier-1 quota
+      for (const story of tier1Stories) {
+        if (topSlots.length >= MIN_TIER1_IN_TOP) break;
+        if (!usedIds.has(story.id)) {
+          topSlots.push(story);
+          usedIds.add(story.id);
+        }
+      }
+
+      // Step 2: Fill minimum tier-2 quota
+      for (const story of tier2Stories) {
+        if (topSlots.filter((s: any) => s.geo_tier === 2).length >= MIN_TIER2_IN_TOP) break;
+        if (!usedIds.has(story.id) && topSlots.length < TOP_SLOTS_COUNT) {
+          topSlots.push(story);
+          usedIds.add(story.id);
+        }
+      }
+
+      // Step 3: Fill remaining top slots (respecting tier-0 cap)
+      let tier0InTop = 0;
+      for (const story of sorted) {
+        if (topSlots.length >= TOP_SLOTS_COUNT) break;
+        if (usedIds.has(story.id)) continue;
+        
+        const isTier0 = story.geo_tier === 0 || story.geo_tier === null;
+        if (isTier0) {
+          if (tier0InTop >= MAX_TIER0_IN_TOP) continue;
+          tier0InTop++;
+        }
+        
+        topSlots.push(story);
+        usedIds.add(story.id);
+      }
+
+      // Re-sort top slots by score to maintain natural ordering within quotas
+      topSlots.sort((a: any, b: any) => b._score - a._score);
+
+      // Step 4: Build rest of feed (after top slots) with overall tier-0 cap
+      const remainingStories = sorted.filter((s: any) => !usedIds.has(s.id));
+      const hyperlocal = remainingStories.filter((s: any) => s.geo_tier === 1 || s.geo_tier === 2);
+      const regional = remainingStories.filter((s: any) => s.geo_tier === 0 || s.geo_tier === null);
       
-      // Use relaxed cap when hyperlocal feed is thin
+      // Dynamic cap based on feed health
       const tier0Cap = hyperlocal.length < THIN_FEED_THRESHOLD ? THIN_FEED_TIER0_CAP : DEFAULT_TIER0_CAP;
-      const maxRegional = Math.floor(hyperlocal.length * (tier0Cap / (1 - tier0Cap)));
-      const cappedRegional = regional.slice(0, Math.max(maxRegional, 3)); // At least 3 regional if available
+      const maxRegionalRemaining = Math.floor(hyperlocal.length * (tier0Cap / (1 - tier0Cap)));
+      const cappedRegional = regional.slice(0, Math.max(maxRegionalRemaining, 2));
       
-      let combinedFeed = [...hyperlocal, ...cappedRegional];
+      let combinedFeed = [...topSlots, ...hyperlocal, ...cappedRegional];
 
-      // Apply category caps to prevent domination
+      // === CATEGORY CAPS TO PREVENT DOMINATION ===
       const categoryCounts: Record<string, number> = {};
       const cappedFeed: any[] = [];
       const overflowPool: any[] = [];
@@ -446,7 +520,6 @@ const LakeGenevaV2 = () => {
       for (const [cat, minCount] of Object.entries(CATEGORY_MINIMUMS)) {
         const current = finalCategoryCounts[cat] || 0;
         if (current < minCount) {
-          // Find items in overflow that could fill this gap (from regional)
           const filler = overflowPool.find(s => (s.category || '').toLowerCase() === cat);
           if (filler) {
             cappedFeed.push(filler);
@@ -459,8 +532,13 @@ const LakeGenevaV2 = () => {
 
       // Dev logging
       if (import.meta.env.DEV) {
-        console.log(`[PHASE1] Feed composition: ${hyperlocal.length} hyperlocal + ${cappedRegional.length}/${regional.length} regional`);
-        console.log(`[PHASE1] Category counts after caps:`, finalCategoryCounts);
+        const t1Count = finalFeed.filter((s: any) => s.geo_tier === 1).length;
+        const t2Count = finalFeed.filter((s: any) => s.geo_tier === 2).length;
+        const t0Count = finalFeed.filter((s: any) => s.geo_tier === 0 || s.geo_tier === null).length;
+        const topT0 = topSlots.filter((s: any) => s.geo_tier === 0 || s.geo_tier === null).length;
+        console.log(`[GEO-TIER] Top 10 composition: tier0=${topT0}/${MAX_TIER0_IN_TOP} max`);
+        console.log(`[GEO-TIER] Full feed: tier1=${t1Count}, tier2=${t2Count}, tier0=${t0Count}`);
+        console.log(`[GEO-TIER] Category counts:`, finalCategoryCounts);
       }
 
       return finalFeed;

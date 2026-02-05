@@ -37,10 +37,26 @@ const getCategoryEmoji = (category: string | null) => {
   }
 };
 
+// Geo-tier label configuration - styled pills for visual clarity
+const GEO_TIER_CONFIG = {
+  1: { 
+    label: 'Lake Geneva', 
+    className: 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+  },
+  2: { 
+    label: 'Walworth', 
+    className: 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300 border-amber-200 dark:border-amber-800'
+  },
+  0: { 
+    label: 'Wisconsin', 
+    className: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 border-slate-200 dark:border-slate-700'
+  },
+} as const;
+
 const getGeoInfo = (tier: number | null | undefined, label?: string | null) => {
-  if (tier === 1) return { icon: "🏙️", label: label || "Lake Geneva" };
-  if (tier === 2) return { icon: "🗺️", label: label || "County" };
-  if (tier === 0) return { icon: "📍", label: label || "WI" };
+  if (tier === 1) return { ...GEO_TIER_CONFIG[1], customLabel: label };
+  if (tier === 2) return { ...GEO_TIER_CONFIG[2], customLabel: label };
+  if (tier === 0) return { ...GEO_TIER_CONFIG[0], customLabel: label };
   return null;
 };
 
@@ -225,18 +241,18 @@ export const StoryCard = ({
         )}
 
         {(meta?.time || meta?.source || geoInfo) && (
-          <p className="mt-2 text-[13px] text-slate-600 flex flex-wrap items-center gap-x-1.5">
+          <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
             {geoInfo && (
-              <span className="inline-flex items-center gap-0.5">
-                <span>{geoInfo.icon}</span>
-                <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">{geoInfo.label}</span>
+              <span className={`inline-flex items-center px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider rounded border ${geoInfo.className}`}>
+                {geoInfo.customLabel || geoInfo.label}
               </span>
             )}
-            {geoInfo && (meta?.source || meta?.time) && <span className="text-slate-400">•</span>}
-            {meta?.source && <span>{meta.source}</span>}
-            {meta?.source && meta?.time && <span className="text-slate-400">•</span>}
-            {meta?.time && <span className="text-slate-500">{meta.time}</span>}
-          </p>
+            <p className="text-[13px] text-slate-600 flex items-center gap-x-1.5">
+              {meta?.source && <span>{meta.source}</span>}
+              {meta?.source && meta?.time && <span className="text-slate-400">•</span>}
+              {meta?.time && <span className="text-slate-500">{meta.time}</span>}
+            </p>
+          </div>
         )}
 
         <div className="mt-auto pt-4 flex items-center justify-between">
