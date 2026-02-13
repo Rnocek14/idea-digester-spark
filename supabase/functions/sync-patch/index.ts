@@ -360,6 +360,31 @@ Return only valid JSON.`
         if (category === 'crime') priorityScore = 8;
         if (incidentType !== 'none' && incidentType !== 'weather') priorityScore = 7;
 
+        // Determine hold_reason and decision_path for Patch stories
+        let holdReason: string | null = null;
+        let decisionPath: string | null = null;
+        let status = "pending";
+
+        if (safetyLevel === 'blocked') {
+          status = 'blocked';
+          holdReason = 'blocked_content';
+          decisionPath = 'blocked';
+        } else if (safetyLevel === 'sensitive') {
+          holdReason = 'sensitive';
+          decisionPath = 'sensitive_hold';
+        } else if (safetyLevel === 'soft_sensitive') {
+          // Patch is Tier 1 (hyperlocal) → soft_sensitive auto-publishes
+          status = 'auto_published';
+          decisionPath = 'patch_soft_sensitive_t1_auto';
+        } else if (safetyLevel === 'safe') {
+          status = 'auto_published';
+          decisionPath = 'patch_safe_t1_auto';
+        } else {
+          // Unknown → fail closed
+          holdReason = 'unknown_safety_level';
+          decisionPath = 'unknown_safety_coerced';
+        }
+
         // Insert into content_queue
         const { error: insertError } = await supabase
           .from("content_queue")
@@ -370,7 +395,7 @@ Return only valid JSON.`
             summary: summary.substring(0, 500),
             original_url: articleUrl,
             category,
-            status: "pending",
+            status,
             safety_level: safetyLevel,
             priority_score: priorityScore,
             is_breaking: isIncident,
@@ -378,6 +403,8 @@ Return only valid JSON.`
             geo_label: "Lake Geneva",
             image_url: image,
             publish_date: new Date().toISOString(),
+            hold_reason: holdReason,
+            decision_path: decisionPath,
             metadata: {
               source_name: "Patch Lake Geneva",
               scraped_via: articleUsedFirecrawl ? "firecrawl_fallback" : "diy",

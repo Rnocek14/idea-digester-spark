@@ -18,6 +18,7 @@ Deno.serve(async (req) => {
     console.log(`[bulk-approve] Finding pending safe/soft_sensitive content... (dryRun=${dryRun})`);
 
     // Only fetch PENDING stories (idempotent — never re-touches handled rows)
+    // Exclude blocked content entirely — should never be bulk-approved
     const { data: pendingStories, error: fetchError } = await supabase
       .from('content_queue')
       .select('id, title, safety_level, geo_tier, category, reviewed_by')
@@ -29,19 +30,22 @@ Deno.serve(async (req) => {
       throw fetchError;
     }
 
+    // Compute hold reason for each story using same decision logic
+    function computeHoldReason(s: any): string | null {
+      if (s.reviewed_by) return 'manually_reviewed';
+      if (s.safety_level === 'safe') return null; // eligible
+      if (s.safety_level === 'soft_sensitive' && (s.geo_tier ?? 0) >= 1) return null; // eligible
+      if (s.safety_level === 'soft_sensitive' && (s.geo_tier ?? 0) < 1) return 'soft_sensitive_regional';
+      return 'not_eligible';
+    }
+
     // Filter: safe always approved, soft_sensitive only if hyperlocal (tier 1/2)
     // Never touch manually reviewed items (reviewed_by is set)
-    const eligible = (pendingStories || []).filter(s => {
-      // Skip manually reviewed items
-      if (s.reviewed_by) return false;
-      
-      if (s.safety_level === 'safe') return true;
-      if (s.safety_level === 'soft_sensitive' && (s.geo_tier ?? 0) >= 1) return true;
-      return false;
-    });
+    const eligible = (pendingStories || []).filter(s => computeHoldReason(s) === null);
 
-    const approveIds = eligible.map(s => s.id);
-    const held = (pendingStories || []).filter(s => !approveIds.includes(s.id));
+    const approveIdSet = new Set(eligible.map(s => s.id));
+    const approveIds = [...approveIdSet];
+    const held = (pendingStories || []).filter(s => !approveIdSet.has(s.id));
 
     if (dryRun) {
       console.log(`[bulk-approve] DRY RUN: ${approveIds.length} would be approved, ${held.length} held`);
@@ -51,15 +55,13 @@ Deno.serve(async (req) => {
           dryRun: true,
           wouldApprove: approveIds.length,
           wouldHold: held.length,
-          eligible: eligible.map(s => ({ id: s.id, title: s.title, safety_level: s.safety_level, geo_tier: s.geo_tier })),
+          eligible: eligible.map(s => ({ id: s.id, title: s.title, safety_level: s.safety_level, geo_tier: s.geo_tier, decision_path: 'bulk_auto_publish' })),
           held: held.map(s => ({ 
             id: s.id, 
             title: s.title, 
             safety_level: s.safety_level, 
             geo_tier: s.geo_tier,
-            reason: s.reviewed_by ? 'manually_reviewed' : 
-                    s.safety_level === 'soft_sensitive' && (s.geo_tier ?? 0) < 1 ? 'soft_sensitive_regional' : 
-                    'unknown'
+            reason: computeHoldReason(s) || 'not_eligible'
           })),
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

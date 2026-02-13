@@ -969,30 +969,30 @@ function decideStatusForStory(
   safetyLevel: string,
   geoTier: number = 0,
   eventDate?: string | null
-): { status: string; holdReason?: string } {
+): { status: string; holdReason?: string; decisionPath?: string } {
   // DETERMINISTIC PRIORITY ORDER — no fall-through possible
   
   // 1. BLOCKED — never publish
   if (safetyLevel === "blocked") {
-    return { status: "blocked", holdReason: "blocked_content" };
+    return { status: "blocked", holdReason: "blocked_content", decisionPath: "blocked" };
   }
   
   // 2. UNKNOWN SAFETY — fail closed
   const VALID_LEVELS = ['safe', 'soft_sensitive', 'sensitive'];
   if (!VALID_LEVELS.includes(safetyLevel)) {
     console.warn(`⚠️ Unknown safety_level "${safetyLevel}" → pending`);
-    return { status: "pending", holdReason: "unknown_safety_level" };
+    return { status: "pending", holdReason: "unknown_safety_level", decisionPath: "unknown_safety_coerced" };
   }
   
   // 3. SENSITIVE — always hold
   if (safetyLevel === "sensitive") {
-    return { status: "pending", holdReason: "sensitive" };
+    return { status: "pending", holdReason: "sensitive", decisionPath: "sensitive_hold" };
   }
   
   // 4. SOFT_SENSITIVE + REGIONAL — hold
   if (safetyLevel === "soft_sensitive" && geoTier < 1) {
     console.log(`⚠️ Soft-sensitive held for review | geo_tier=${geoTier} (regional)`);
-    return { status: "pending", holdReason: "soft_sensitive_regional" };
+    return { status: "pending", holdReason: "soft_sensitive_regional", decisionPath: "soft_sensitive_t0_hold" };
   }
   
   // 5. EXPIRED EVENT — suppress
@@ -1000,7 +1000,7 @@ function decideStatusForStory(
     const today = new Date().toISOString().split('T')[0];
     if (eventDate < today) {
       console.log(`⏰ Past event suppressed: event_date=${eventDate}`);
-      return { status: "expired", holdReason: "past_event" };
+      return { status: "expired", holdReason: "past_event", decisionPath: "expired_event" };
     }
   }
   
@@ -1010,7 +1010,7 @@ function decideStatusForStory(
   }
   
   if (!rules || rules.length === 0) {
-    return { status: "pending", holdReason: "no_matching_rule" };
+    return { status: "pending", holdReason: "no_matching_rule", decisionPath: "no_rules" };
   }
   
   const cat = category || null;
@@ -1031,30 +1031,30 @@ function decideStatusForStory(
   
   const rule = specific || global;
   if (!rule) {
-    return { status: "pending", holdReason: "no_matching_rule" };
+    return { status: "pending", holdReason: "no_matching_rule", decisionPath: "no_rule_match" };
   }
   
   // HYPERLOCAL GATE: If rule requires hyperlocal, content must have geo_tier >= 1
   if (rule.requires_hyperlocal && geoTier < 1) {
     console.log(`⚠️ Rule requires hyperlocal but geo_tier=${geoTier}, keeping pending`);
-    return { status: "pending", holdReason: "rule_requires_hyperlocal" };
+    return { status: "pending", holdReason: "rule_requires_hyperlocal", decisionPath: "hyperlocal_gate_fail" };
   }
   
   // TIER-2 CATEGORY GATE
   if (rule.action === "auto_publish" && geoTier === 2 && cat && !TIER2_ALLOWED_CATEGORIES.includes(cat)) {
     console.log(`⚠️ Tier-2 auto-publish blocked | category="${cat}"`);
-    return { status: "pending", holdReason: "tier2_category_blocked" };
+    return { status: "pending", holdReason: "tier2_category_blocked", decisionPath: "tier2_category_gate" };
   }
   
   switch (rule.action) {
     case "auto_publish": 
       console.log(`✅ Auto-publishing | geo_tier=${geoTier} | category="${cat}" | safety=${safetyLevel}`);
-      return { status: "auto_published" };
+      return { status: "auto_published", decisionPath: `rule_auto_publish_${safetyLevel}_t${geoTier}` };
     case "flag": 
-      return { status: "flagged", holdReason: "flagged_by_rule" };
+      return { status: "flagged", holdReason: "flagged_by_rule", decisionPath: "rule_flagged" };
     case "needs_review":
     default: 
-      return { status: "pending", holdReason: "rule_needs_review" };
+      return { status: "pending", holdReason: "rule_needs_review", decisionPath: "rule_needs_review" };
   }
 }
 
@@ -1943,6 +1943,7 @@ When in doubt between safe and soft_sensitive, choose safe. When in doubt betwee
           const statusResult = decideStatusForStory(rules as AutoPublishRule[], source.id, aiCategory, safetyLevel, geoTier, eventDate);
           const status = statusResult.status;
           const holdReason = statusResult.holdReason;
+          const decisionPath = statusResult.decisionPath;
 
           // Classify breaking news priority (with freshness check)
           const trustedForLocality = source.metadata?.trust_locality === true;
@@ -1957,8 +1958,7 @@ When in doubt between safe and soft_sensitive, choose safe. When in doubt betwee
           if (isBreaking) {
             console.log(`🔴 BREAKING: "${title.substring(0, 40)}..." (score: ${priorityScore})`);
           }
-          
-          console.log(`📋 Story "${title.substring(0, 40)}..." → category: ${aiCategory}, safety: ${safetyLevel}, status: ${status}${holdReason ? ` (${holdReason})` : ''}, priority: ${priorityScore}, geo: tier${geoTier}`);
+          console.log(`📋 Story "${title.substring(0, 40)}..." → category: ${aiCategory}, safety: ${safetyLevel}, status: ${status}${holdReason ? ` (${holdReason})` : ''}, path: ${decisionPath || 'none'}, priority: ${priorityScore}, geo: tier${geoTier}`);
 
           // Insert into content_queue
           const normalizedUrlValue = originalUrl ? normalizeUrl(originalUrl) : null;
@@ -1986,6 +1986,8 @@ When in doubt between safe and soft_sensitive, choose safe. When in doubt betwee
               priority_score: priorityScore,
               geo_tier: geoTier,
               geo_label: geoLabel,
+              hold_reason: holdReason || null,
+              decision_path: decisionPath || null,
               metadata: {
                 source_name: source.name,
                 original_published_at: pubDate,
@@ -1998,7 +2000,6 @@ When in doubt between safe and soft_sensitive, choose safe. When in doubt betwee
                 recurring_days: isNightlifeContent ? extractRecurringDays(title, rawContent) : null,
                 dining_sub_category: diningSubCategory,
                 dining_restaurant_name: diningRestaurantName,
-                ...(holdReason ? { hold_reason: holdReason } : {}),
               },
             });
 

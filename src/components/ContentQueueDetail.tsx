@@ -462,19 +462,22 @@ export function ContentQueueDetail({
                           ? "bg-blue-500/10 text-blue-500 border-blue-500/20"
                           : story.safety_level === "sensitive"
                           ? "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
-                          : "bg-red-500/10 text-red-500 border-red-500/20"
+                          : story.safety_level === "blocked"
+                          ? "bg-red-500/10 text-red-500 border-red-500/20"
+                          : "bg-gray-500/10 text-gray-500 border-gray-500/20"
                       }
                     >
                       {story.safety_level}
                     </Badge>
                   </div>
                   {/* Hold reason display */}
-                  {story.status === 'pending' && (
+                  {(story.status === 'pending' || story.status === 'blocked') && (
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-muted-foreground">Why pending:</span>
-                      <Badge variant="outline" className="text-xs">
+                      <span className="text-sm text-muted-foreground">Why {story.status === 'blocked' ? 'blocked' : 'pending'}:</span>
+                      <Badge variant={story.status === 'blocked' ? 'destructive' : 'outline'} className="text-xs">
                         {(() => {
-                          const holdReason = (story.metadata as any)?.hold_reason;
+                          // Use first-class hold_reason column, fallback to metadata, then inference
+                          const holdReason = (story as any).hold_reason || (story.metadata as any)?.hold_reason;
                           if (holdReason) {
                             const labels: Record<string, string> = {
                               sensitive: 'Sensitive content',
@@ -485,10 +488,14 @@ export function ContentQueueDetail({
                               tier2_category_blocked: 'Tier 2 category blocked',
                               rule_needs_review: 'Rule requires review',
                               past_event: 'Past event date',
+                              blocked_content: 'Blocked content',
+                              flagged_by_rule: 'Flagged by rule',
+                              manually_reviewed: 'Manually reviewed',
                             };
                             return labels[holdReason] || holdReason;
                           }
                           // Fallback inference
+                          if (story.safety_level === 'blocked') return 'Blocked content';
                           if (story.safety_level === 'sensitive') return 'Sensitive content';
                           if (story.safety_level === 'soft_sensitive' && (story.geo_tier === 0 || story.geo_tier === null)) return 'Soft-sensitive regional (Tier 0)';
                           return 'Awaiting review';
