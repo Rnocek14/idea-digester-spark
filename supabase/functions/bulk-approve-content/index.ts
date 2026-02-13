@@ -13,34 +13,38 @@ Deno.serve(async (req) => {
 
     console.log('[bulk-approve] Finding pending safe content...');
 
-    // Find all pending stories that are safe
+    // Find all pending stories that are safe or soft_sensitive (with geo-tier awareness)
     const { data: pendingStories, error: fetchError } = await supabase
       .from('content_queue')
-      .select('id, title')
+      .select('id, title, safety_level, geo_tier')
       .eq('status', 'pending')
-      .eq('safety_level', 'safe');
+      .in('safety_level', ['safe', 'soft_sensitive']);
 
     if (fetchError) {
       console.error('[bulk-approve] Error fetching stories:', fetchError);
       throw fetchError;
     }
 
-    if (!pendingStories || pendingStories.length === 0) {
-      console.log('[bulk-approve] No pending safe stories found');
+    // Filter: safe always approved, soft_sensitive only if hyperlocal (tier 1/2)
+    const approveIds = (pendingStories || [])
+      .filter(s => s.safety_level === 'safe' || (s.safety_level === 'soft_sensitive' && (s.geo_tier ?? 0) >= 1))
+      .map(s => s.id);
+
+    if (approveIds.length === 0) {
+      console.log('[bulk-approve] No eligible stories found');
       return new Response(
-        JSON.stringify({ success: true, approved: 0, message: 'No pending safe stories to approve' }),
+        JSON.stringify({ success: true, approved: 0, message: 'No eligible stories to approve' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`[bulk-approve] Found ${pendingStories.length} pending safe stories`);
+    console.log(`[bulk-approve] Found ${approveIds.length} eligible stories (of ${pendingStories?.length || 0} pending safe/soft_sensitive)`);
 
-    // Update all to auto_published
+    // Update eligible to auto_published
     const { error: updateError } = await supabase
       .from('content_queue')
       .update({ status: 'auto_published' })
-      .eq('status', 'pending')
-      .eq('safety_level', 'safe');
+      .in('id', approveIds);
 
     if (updateError) {
       console.error('[bulk-approve] Error updating stories:', updateError);
@@ -52,17 +56,17 @@ Deno.serve(async (req) => {
       entity_type: 'content',
       action: 'bulk_approved',
       actor_type: 'system',
-      message: `Bulk approved ${pendingStories.length} safe stories`,
-      details: { count: pendingStories.length, story_ids: pendingStories.map(s => s.id) }
+      message: `Bulk approved ${approveIds.length} eligible stories (safe + soft_sensitive hyperlocal)`,
+      details: { count: approveIds.length, story_ids: approveIds }
     });
 
-    console.log(`[bulk-approve] Successfully approved ${pendingStories.length} stories`);
+    console.log(`[bulk-approve] Successfully approved ${approveIds.length} stories`);
 
     return new Response(
       JSON.stringify({
         success: true,
-        approved: pendingStories.length,
-        stories: pendingStories
+        approved: approveIds.length,
+        total_eligible: pendingStories?.length || 0,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

@@ -315,7 +315,7 @@ serve(async (req) => {
                     content: `Analyze this Lake Geneva local news article. Return JSON with:
 - summary: 1-2 sentence summary (max 200 chars)
 - category: one of "news", "civic", "schools", "events", "dining", "crime", "community"
-- safety_level: "safe", "sensitive", or "blocked"
+- safety_level: "safe", "soft_sensitive", "sensitive", or "blocked"
 - is_incident: true if this is about an accident, fire, crime, emergency
 - incident_type: if is_incident, one of "accident", "fire", "crime", "police", "weather", "road_closure", "none"
 
