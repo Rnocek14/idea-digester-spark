@@ -259,6 +259,32 @@ function getNextOptimalSlot(
   return null;
 }
 
+/**
+ * Parse various raw event date formats into a Date object.
+ * Handles: "January 28, 2026", "Fri, 30 Jan 2026 01:57:48 +0000", 
+ * "2026-01-30T07:32", ISO strings, etc.
+ */
+function parseRawEventDate(raw: string): Date | null {
+  try {
+    // Try "Month Day" or "Month Day, Year" format
+    const monthDayMatch = raw.match(/(\w+)\s+(\d{1,2}),?\s*(\d{4})?/i);
+    if (monthDayMatch) {
+      const monthNames = ['january', 'february', 'march', 'april', 'may', 'june',
+                          'july', 'august', 'september', 'october', 'november', 'december'];
+      const monthIndex = monthNames.findIndex(m => m.startsWith(monthDayMatch[1].toLowerCase()));
+      if (monthIndex >= 0) {
+        const day = parseInt(monthDayMatch[2]);
+        const year = monthDayMatch[3] ? parseInt(monthDayMatch[3]) : new Date().getFullYear();
+        return new Date(year, monthIndex, day);
+      }
+    }
+    // Try direct parse (ISO, RFC2822, etc.)
+    const parsed = new Date(raw);
+    if (!isNaN(parsed.getTime())) return parsed;
+  } catch (_) { /* ignore */ }
+  return null;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -383,12 +409,32 @@ serve(async (req) => {
     const isPostHoliday = currentMonth === 0 || (currentMonth === 11 && currentDay > 26);
 
     const freshStories = eligibleStories.filter(story => {
-      // Check if event_date has passed
+      // Check if event_date column has passed
       if (story.event_date) {
         const eventDate = new Date(story.event_date);
         eventDate.setHours(0, 0, 0, 0);
         if (eventDate < today) {
           console.log(`[prepare-posts] ⏭️ Skipping "${story.title.substring(0, 50)}..." - event_date ${story.event_date} has passed`);
+          return false;
+        }
+      }
+
+      // Also check raw_event_date in metadata (many events only have this)
+      const rawEventDate = story.metadata?.raw_event_date;
+      if (rawEventDate && !story.event_date) {
+        const parsed = parseRawEventDate(rawEventDate);
+        if (parsed && parsed < today) {
+          console.log(`[prepare-posts] ⏭️ Skipping "${story.title.substring(0, 50)}..." - raw_event_date "${rawEventDate}" has passed`);
+          return false;
+        }
+      }
+
+      // Check title for past event signals (e.g. "Winterfest Jan 28 - Feb 1" when it's Feb 10)
+      const titleDateMatch = story.title.match(/(?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2}/i);
+      if (titleDateMatch && ['events', 'entertainment'].includes(story.category || '')) {
+        const titleDate = parseRawEventDate(titleDateMatch[0]);
+        if (titleDate && titleDate < today) {
+          console.log(`[prepare-posts] ⏭️ Skipping "${story.title.substring(0, 50)}..." - title contains past date "${titleDateMatch[0]}"`);
           return false;
         }
       }
