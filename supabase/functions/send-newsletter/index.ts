@@ -52,6 +52,30 @@ serve(async (req) => {
       throw new Error(`Newsletter status is '${newsletter.status}', can only send 'ready' newsletters`);
     }
 
+    // GUARD: Never send a newsletter with 0 stories
+    if (newsletter.story_count === 0 || !newsletter.story_ids || newsletter.story_ids.length === 0) {
+      console.log(`⛔ Refusing to send newsletter with 0 stories (story_count=${newsletter.story_count})`);
+      
+      // Mark as skipped instead
+      await supabase
+        .from("newsletters")
+        .update({ 
+          status: "skipped", 
+          metadata: { ...(newsletter.metadata || {}), skipped_reason: "zero_stories_send_gate" }
+        })
+        .eq("id", newsletter_id);
+      
+      return new Response(
+        JSON.stringify({
+          success: false,
+          newsletter_id,
+          message: "Newsletter has 0 stories — send blocked. Marked as skipped.",
+          skipped_reason: "zero_stories_send_gate"
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+      );
+    }
+
     // Send newsletter
     const { sent, failed } = await sendNewsletterEmail(supabase, newsletter, supabaseUrl);
     

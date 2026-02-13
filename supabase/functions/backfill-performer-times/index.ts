@@ -7,6 +7,26 @@ const corsHeaders = {
 };
 
 // Extract performer name from event title/content
+// Stop-phrases that indicate garbage performer extraction
+const PERFORMER_STOP_PHRASES = [
+  'then from', 'your kids', 'click here', 'http', 'register',
+  'discounts and', 'planned tributes', 'syrup for', 'businesses the',
+  'bringing the laughs', 'every friday', 'every saturday', 'every week',
+  'sign up', 'learn more', 'tickets available', 'buy tickets'
+];
+
+function isValidPerformer(performer: string): boolean {
+  if (!performer || performer.length < 3 || performer.length > 50) return false;
+  const lower = performer.toLowerCase();
+  if (PERFORMER_STOP_PHRASES.some(p => lower.includes(p))) return false;
+  // Reject if contains multiple sentences (period followed by space and capital)
+  if (/\.\s+[A-Z]/.test(performer)) return false;
+  // Reject if mostly lowercase sentence-like text
+  const words = performer.split(/\s+/);
+  if (words.length > 6) return false;
+  return true;
+}
+
 function extractPerformer(title: string, content?: string): string | null {
   const text = `${title} ${content || ''}`;
   
@@ -14,7 +34,7 @@ function extractPerformer(title: string, content?: string): string | null {
   const liveMusicMatch = text.match(/live\s+music[:\s-]+([^@\n\r]+?)(?:\s*[@\-–]|\s*$)/i);
   if (liveMusicMatch) {
     const performer = liveMusicMatch[1].trim();
-    if (performer.length > 2 && performer.length < 80 && !performer.toLowerCase().includes('every')) {
+    if (isValidPerformer(performer)) {
       return performer;
     }
   }
@@ -22,14 +42,15 @@ function extractPerformer(title: string, content?: string): string | null {
   // Pattern: "featuring Artist Name" or "feat. Artist"
   const featMatch = text.match(/(?:featuring|feat\.?)\s+([^@\n\r,]+)/i);
   if (featMatch) {
-    return featMatch[1].trim();
+    const performer = featMatch[1].trim();
+    if (isValidPerformer(performer)) return performer;
   }
   
   // Pattern: "with Artist Name" (at start or after venue)
   const withMatch = text.match(/\bwith\s+([A-Z][^@\n\r,]+?)(?:\s*[-–@]|\s*$)/i);
   if (withMatch) {
     const performer = withMatch[1].trim();
-    if (performer.length > 2 && performer.length < 60) {
+    if (isValidPerformer(performer)) {
       return performer;
     }
   }
