@@ -16,14 +16,37 @@ interface ExtractedEvent {
   is_recurring?: boolean;
 }
 
+// Detect if HTML is a bot challenge page
+function detectChallenge(content: string): boolean {
+  const markers = ["cloudflare", "captcha", "attention required", "enable javascript", "just a moment", "checking your browser", "cf-browser-verification"];
+  const lower = content.substring(0, 5000).toLowerCase();
+  return markers.some(m => lower.includes(m));
+}
+
+// Update source fetch health in DB
+async function updateSourceHealth(
+  supabase: any,
+  sourceId: string,
+  success: boolean,
+  errorCode?: string,
+  errorDetail?: string,
+) {
+  const update: Record<string, any> = { last_fetched_at: new Date().toISOString() };
+  if (success) {
+    update.last_successful_fetch_at = new Date().toISOString();
+    update.last_error_code = null;
+    update.last_error_detail = null;
+  } else {
+    update.last_error_code = errorCode || "unknown";
+    update.last_error_detail = (errorDetail || "").substring(0, 500);
+  }
+  await supabase.from("sources").update(update).eq("id", sourceId);
+}
+
 // Clean up title - remove redundant venue mentions, "Live Music @" prefixes
 function cleanTitle(title: string, venueName: string): string {
   let cleaned = title;
-  
-  // Remove "Live Music with/featuring/by" prefixes
   cleaned = cleaned.replace(/^Live Music\s*(with|featuring|by|@|at|-|–|:)?\s*/i, '');
-  
-  // Remove venue name if it appears in the title
   const venueVariants = [
     venueName,
     venueName.replace(/\s*-\s*Events?$/i, ''),
@@ -33,11 +56,8 @@ function cleanTitle(title: string, venueName: string): string {
     const regex = new RegExp(`\\s*(at|@|–|-|—)?\\s*${variant.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*(–|-|—)?\\s*`, 'gi');
     cleaned = cleaned.replace(regex, ' ');
   }
-  
-  // Remove trailing punctuation and whitespace
   cleaned = cleaned.replace(/[\s\-–—@]+$/g, '').trim();
-  
-  return cleaned || title; // Fallback to original if we removed everything
+  return cleaned || title;
 }
 
 // Generate stable dedupe key
@@ -66,7 +86,6 @@ serve(async (req) => {
   
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-  // Parse request for optional source filter
   let sourceFilter: string | null = null;
   let limit = 15;
   try {
@@ -78,7 +97,6 @@ serve(async (req) => {
   }
 
   try {
-    // Get venue calendar sources
     let query = supabase
       .from("sources")
       .select("*")
@@ -104,15 +122,19 @@ serve(async (req) => {
       );
     }
 
-    const results: Array<{ source: string; events: number; inserted: number; errors: string[] }> = [];
+    const results: Array<{ source: string; events: number; inserted: number; errors: string[]; fetch_health: any }> = [];
 
     for (const source of sources) {
       console.log(`\n[sync-venue-calendars] Processing: ${source.name}`);
-      const sourceResult = { source: source.name, events: 0, inserted: 0, errors: [] as string[] };
+      const sourceResult = { source: source.name, events: 0, inserted: 0, errors: [] as string[], fetch_health: {} as any };
 
       try {
-        // Fetch page content
         let pageContent = "";
+        let fetchStatusCode = 0;
+        let fetchContentType = "";
+        let fetchContentLength = 0;
+        let containsChallenge = false;
+        let fetchMethod = "none";
         
         // Try Firecrawl first for JS-rendered sites
         if (firecrawlKey) {
@@ -131,10 +153,16 @@ serve(async (req) => {
               }),
             });
 
+            fetchStatusCode = scrapeResponse.status;
+            fetchContentType = scrapeResponse.headers.get("content-type") || "";
+
             if (scrapeResponse.ok) {
               const data = await scrapeResponse.json();
               pageContent = data.data?.markdown || data.markdown || "";
-              console.log(`  ✓ Firecrawl: ${pageContent.length} chars`);
+              fetchContentLength = pageContent.length;
+              fetchMethod = "firecrawl";
+              containsChallenge = detectChallenge(pageContent);
+              console.log(`  ✓ Firecrawl: ${pageContent.length} chars, challenge=${containsChallenge}`);
             } else {
               console.log(`  ⚠️ Firecrawl: ${scrapeResponse.status}`);
             }
@@ -148,27 +176,65 @@ serve(async (req) => {
           try {
             const staticResponse = await fetch(source.url, {
               headers: {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-                "Accept": "text/html,application/xhtml+xml",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.5",
+                "Cache-Control": "no-cache",
               },
             });
 
+            fetchStatusCode = staticResponse.status;
+            fetchContentType = staticResponse.headers.get("content-type") || "";
+
             if (staticResponse.ok) {
               const html = await staticResponse.text();
+              fetchContentLength = html.length;
+              containsChallenge = detectChallenge(html);
+              
               pageContent = html
                 .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
                 .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
                 .replace(/<[^>]+>/g, ' ')
                 .replace(/\s+/g, ' ')
                 .trim();
-              console.log(`  ✓ Static fetch: ${pageContent.length} chars`);
+              fetchMethod = "static";
+              console.log(`  ✓ Static fetch: ${pageContent.length} chars, challenge=${containsChallenge}`);
+            } else {
+              console.log(`  ⚠️ Static fetch: ${staticResponse.status}`);
             }
           } catch (e) {
             console.log(`  ⚠️ Static fetch error: ${e}`);
           }
         }
 
+        // Log fetch health
+        const fetchHealth = {
+          status_code: fetchStatusCode,
+          content_type: fetchContentType,
+          content_length: fetchContentLength,
+          contains_challenge: containsChallenge,
+          fetch_method: fetchMethod,
+        };
+        sourceResult.fetch_health = fetchHealth;
+        console.log(`  📊 Fetch health:`, JSON.stringify(fetchHealth));
+
+        // Determine error state
+        if (containsChallenge) {
+          await updateSourceHealth(supabase, source.id, false, "blocked", "Bot challenge/Cloudflare page detected");
+          sourceResult.errors.push("Blocked: bot challenge page detected");
+          results.push(sourceResult);
+          continue;
+        }
+
+        if (fetchStatusCode === 403 || fetchStatusCode === 401) {
+          await updateSourceHealth(supabase, source.id, false, `http_${fetchStatusCode}`, `HTTP ${fetchStatusCode} from ${source.url}`);
+          sourceResult.errors.push(`HTTP ${fetchStatusCode}`);
+          results.push(sourceResult);
+          continue;
+        }
+
         if (!pageContent || pageContent.length < 100) {
+          await updateSourceHealth(supabase, source.id, false, "empty_content", `Only ${pageContent?.length || 0} chars fetched`);
           sourceResult.errors.push("Could not fetch page content");
           results.push(sourceResult);
           continue;
@@ -176,24 +242,22 @@ serve(async (req) => {
 
         // Use AI to extract events
         if (!openaiKey) {
+          await updateSourceHealth(supabase, source.id, false, "config_error", "No OpenAI key configured");
           sourceResult.errors.push("No OpenAI key configured");
           results.push(sourceResult);
           continue;
         }
 
         const today = new Date().toISOString().split('T')[0];
-        // Clean venue name - remove suffixes and clean up dashes
         let venueName = source.name
-          .replace(/\s*[-–—]\s*Events?$/gi, '')  // Remove "- Events" suffix
-          .replace(/\s*Events?$/gi, '')           // Remove "Events" suffix  
-          .replace(/\s*Calendar$/gi, '')          // Remove "Calendar" suffix
-          .replace(/\s*Live Music$/gi, '')        // Remove "Live Music" suffix
-          .replace(/\s*Entertainment$/gi, '')     // Remove "Entertainment" suffix
-          .replace(/\s*[-–—]\s*$/g, '')           // Remove trailing dashes
+          .replace(/\s*[-–—]\s*Events?$/gi, '')
+          .replace(/\s*Events?$/gi, '')
+          .replace(/\s*Calendar$/gi, '')
+          .replace(/\s*Live Music$/gi, '')
+          .replace(/\s*Entertainment$/gi, '')
+          .replace(/\s*[-–—]\s*$/g, '')
           .trim();
         
-        // Special case: Visit Lake Geneva is an aggregator, not a venue
-        // For aggregators, we'll use the location_detail as the venue
         const isAggregator = venueName.toLowerCase().includes('visit lake geneva');
 
         const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -230,13 +294,10 @@ Return a JSON array. Maximum 15 events. QUALITY OVER QUANTITY - skip vague entri
 
 GOOD examples:
 [{"title": "Dan Trudell Trio", "date": "2026-01-25", "time": "8:00 PM", "performer": "Dan Trudell Trio", "location_detail": "Lobby Lounge", "description": "Jazz trio", "is_recurring": false}]
-[{"title": "Trivia Night", "date": "2026-01-23", "time": "7:00 PM", "performer": null, "location_detail": null, "description": "Weekly trivia", "is_recurring": true}]
-[{"title": "Friday Fish Fry", "date": "2026-01-24", "time": "4:00 PM", "performer": null, "location_detail": "Waterfront", "description": "Weekly special", "is_recurring": true}]
 
 BAD examples (DO NOT output these):
 [{"title": "Live Music", ...}] - too generic
-[{"title": "Live Music @ Venue", ...}] - don't include venue in title
-[{"title": "Saturday Night Entertainment", ...}] - not specific enough`
+[{"title": "Live Music @ Venue", ...}] - don't include venue in title`
               },
               {
                 role: "user",
@@ -250,6 +311,7 @@ BAD examples (DO NOT output these):
 
         if (!aiResponse.ok) {
           const errText = await aiResponse.text();
+          await updateSourceHealth(supabase, source.id, false, "ai_error", `OpenAI ${aiResponse.status}: ${errText.substring(0, 200)}`);
           sourceResult.errors.push(`OpenAI error: ${aiResponse.status}`);
           console.log(`  ⚠️ OpenAI error: ${errText}`);
           results.push(sourceResult);
@@ -259,58 +321,56 @@ BAD examples (DO NOT output these):
         const aiData = await aiResponse.json();
         const content = aiData.choices?.[0]?.message?.content?.trim() || "";
         
-        // Parse JSON from response
         let events: ExtractedEvent[] = [];
         try {
-          // Handle markdown code blocks
           const jsonMatch = content.match(/\[[\s\S]*\]/);
           if (jsonMatch) {
             events = JSON.parse(jsonMatch[0]);
           }
         } catch (e) {
           console.log(`  ⚠️ JSON parse error: ${e}`);
+          await updateSourceHealth(supabase, source.id, false, "parse_error", "Failed to parse AI response");
           sourceResult.errors.push("Failed to parse AI response");
           results.push(sourceResult);
           continue;
         }
 
         sourceResult.events = events.length;
+        sourceResult.fetch_health.parse_items_found = events.length;
         console.log(`  → Extracted ${events.length} events`);
+
+        if (events.length === 0) {
+          // 200 OK but nothing parsed — markup drift or empty calendar
+          await updateSourceHealth(supabase, source.id, false, "parse_zero", `Fetched ${fetchContentLength} chars but extracted 0 events`);
+        } else {
+          // Success!
+          await updateSourceHealth(supabase, source.id, true);
+        }
 
         // Insert events
         for (const event of events) {
           if (!event.title || !event.date) continue;
-          
-          // Validate date format
           if (!/^\d{4}-\d{2}-\d{2}$/.test(event.date)) continue;
-          
-          // Skip past events
           if (event.date < today) continue;
 
           const dedupeKey = generateDedupeKey(event.title, event.date, venueName);
 
-          // Check for existing
           const { data: existing } = await supabase
             .from("content_queue")
             .select("id")
             .eq("metadata->>dedupe_key", dedupeKey)
             .maybeSingle();
 
-          if (existing) {
-            continue;
-          }
+          if (existing) continue;
 
-          // Clean and format title based on source type
           const cleanedTitle = cleanTitle(event.title, venueName);
           let title: string;
           let displayVenue: string;
           
           if (isAggregator && event.location_detail) {
-            // For aggregators like Visit Lake Geneva, use location_detail as the venue
             displayVenue = event.location_detail;
             title = `${cleanedTitle} @ ${event.location_detail}`;
           } else {
-            // For direct venue sources, use venue name with optional location detail
             displayVenue = venueName;
             const locationPart = event.location_detail ? ` (${event.location_detail})` : '';
             title = `${cleanedTitle} @ ${venueName}${locationPart}`;
@@ -331,6 +391,7 @@ BAD examples (DO NOT output these):
               performer: event.performer,
               geo_tier: source.default_geo_tier || 1,
               geo_label: "Lake Geneva",
+              decision_path: "venue_calendar_auto_publish",
               metadata: {
                 dedupe_key: dedupeKey,
                 venue: displayVenue,
@@ -352,14 +413,9 @@ BAD examples (DO NOT output these):
           }
         }
 
-        // Update last_fetched_at
-        await supabase
-          .from("sources")
-          .update({ last_fetched_at: new Date().toISOString() })
-          .eq("id", source.id);
-
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
+        await updateSourceHealth(supabase, source.id, false, "exception", msg.substring(0, 500));
         sourceResult.errors.push(msg);
         console.error(`  ❌ Error: ${msg}`);
       }
