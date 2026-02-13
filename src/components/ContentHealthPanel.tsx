@@ -19,7 +19,9 @@ export function ContentHealthPanel() {
         freshEvents24h,
         pendingSafeEvents,
         softSensitiveStats,
-        recentNewsletters
+        recentNewsletters,
+        holdReasonDist,
+        canaryStuck
       ] = await Promise.all([
         // Tier distribution last 7d
         supabase
@@ -53,7 +55,17 @@ export function ContentHealthPanel() {
           .from('newsletters')
           .select('id, status, story_count, sent_at, edition_date, metadata')
           .order('edition_date', { ascending: false })
-          .limit(7)
+          .limit(7),
+        // Hold reason distribution (pending items, last 7d)
+        supabase
+          .from('content_queue')
+          .select('hold_reason')
+          .eq('status', 'pending')
+          .gte('created_at', sevenDaysAgo),
+        // Canary: stuck stories that should have auto-published
+        supabase
+          .from('canary_stuck_stories' as any)
+          .select('id', { count: 'exact', head: true })
       ]);
 
       // Calculate tier percentages
@@ -85,6 +97,16 @@ export function ContentHealthPanel() {
       const ssHeld = ssData.filter(s => s.status === 'pending').length;
       const ssHeldT0 = ssData.filter(s => s.status === 'pending' && (s.geo_tier === 0 || s.geo_tier === null)).length;
       const ssAutoT1T2 = ssData.filter(s => ['auto_published', 'published'].includes(s.status) && (s.geo_tier ?? 0) >= 1).length;
+      // Hold reason distribution
+      const holdData = holdReasonDist.data || [];
+      const holdReasons: Record<string, number> = {};
+      holdData.forEach((r: any) => {
+        const reason = r.hold_reason || 'no_reason_set';
+        holdReasons[reason] = (holdReasons[reason] || 0) + 1;
+      });
+
+      // Canary count
+      const canaryCount = canaryStuck.count || 0;
 
       return {
         tiers7d,
@@ -100,6 +122,8 @@ export function ContentHealthPanel() {
           heldT0: ssHeldT0,
           autoT1T2: ssAutoT1T2,
         },
+        holdReasons,
+        canaryCount,
       };
     },
     staleTime: 60000,
@@ -217,7 +241,35 @@ export function ContentHealthPanel() {
               <Badge variant="destructive">{data.zeroStorySends}</Badge>
             </div>
           )}
+
+          {/* Canary SLO Alert */}
+          {data.canaryCount > 0 && (
+            <div className="flex items-center justify-between text-sm p-2 rounded bg-destructive/10">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-destructive" />
+                <span className="font-medium text-destructive">Stuck Stories (canary)</span>
+              </div>
+              <Badge variant="destructive">{data.canaryCount}</Badge>
+            </div>
+          )}
         </div>
+
+        {/* Hold Reason Breakdown */}
+        {Object.keys(data.holdReasons).length > 0 && (
+          <div className="space-y-2 pt-2 border-t">
+            <div className="text-sm font-medium">Pending Reasons (7d)</div>
+            <div className="space-y-1">
+              {Object.entries(data.holdReasons)
+                .sort(([, a], [, b]) => (b as number) - (a as number))
+                .map(([reason, count]) => (
+                  <div key={reason} className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground font-mono">{reason}</span>
+                    <Badge variant="outline" className="text-xs">{count as number}</Badge>
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
