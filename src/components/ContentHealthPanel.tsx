@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { HeartPulse, Calendar, Mail, AlertTriangle, Shield } from "lucide-react";
+import { HeartPulse, Calendar, Mail, AlertTriangle, Shield, Wifi } from "lucide-react";
 
 export function ContentHealthPanel() {
   const { data, isLoading } = useQuery({
@@ -22,7 +22,8 @@ export function ContentHealthPanel() {
         softSensitiveStats,
         recentNewsletters,
         holdReasonDist,
-        canaryStuck
+        canaryStuck,
+        staleSources
       ] = await Promise.all([
         // Tier distribution last 7d
         supabase
@@ -75,7 +76,15 @@ export function ContentHealthPanel() {
           .from('canary_stuck_stories' as any)
           .select('id, created_at')
           .order('created_at', { ascending: true })
-          .limit(50)
+          .limit(50),
+        // Stale sources: active sources with last_successful_fetch_at > 48h ago (or null)
+        supabase
+          .from('sources')
+          .select('id, name, last_successful_fetch_at, last_error_code, last_error_detail')
+          .eq('status', 'active')
+          .or(`last_successful_fetch_at.is.null,last_successful_fetch_at.lt.${new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString()}`)
+          .order('last_successful_fetch_at', { ascending: true, nullsFirst: true })
+          .limit(10)
       ]);
 
       // Calculate tier percentages
@@ -141,6 +150,20 @@ export function ContentHealthPanel() {
         canaryStale = oldestAge > 10 * 60 * 1000; // 10 minutes
       }
 
+      // Stale sources
+      const staleSourceRows = (staleSources.data as any[]) || [];
+      const ERROR_CODE_LABELS: Record<string, string> = {
+        blocked: '🛡️ Blocked',
+        parse_zero: '📄 Parse 0',
+        http_403: '🚫 403',
+        http_503: '⏳ 503',
+        empty_content: '📭 Empty',
+        timeout: '⏱️ Timeout',
+        ai_error: '🤖 AI Error',
+        config_error: '⚙️ Config',
+        exception: '💥 Exception',
+      };
+
       return {
         tiers7d,
         freshEvents24h: freshEvents24h.count || 0,
@@ -159,6 +182,13 @@ export function ContentHealthPanel() {
         holdReasons,
         canaryCount,
         canaryStale,
+        staleSources: staleSourceRows.map((s: any) => ({
+          name: s.name,
+          lastSuccess: s.last_successful_fetch_at,
+          errorCode: s.last_error_code,
+          errorLabel: ERROR_CODE_LABELS[s.last_error_code] || s.last_error_code || 'Unknown',
+          errorDetail: s.last_error_detail,
+        })),
       };
     },
     staleTime: 60000,
@@ -317,6 +347,36 @@ export function ContentHealthPanel() {
                     <Badge variant="outline" className="text-xs">{count as number}</Badge>
                   </div>
                 ))}
+            </div>
+          </div>
+        )}
+
+        {/* Stale Sources (last_successful_fetch_at > 48h) */}
+        {data.staleSources.length > 0 && (
+          <div className="space-y-2 pt-2 border-t">
+            <div className="flex items-center justify-between text-sm font-medium">
+              <div className="flex items-center gap-2">
+                <Wifi className="h-4 w-4 text-destructive" />
+                <span>Stale Sources ({data.staleSources.length})</span>
+              </div>
+              <Badge variant="destructive">&gt;48h</Badge>
+            </div>
+            <div className="space-y-1">
+              {data.staleSources.slice(0, 5).map((s: any) => (
+                <div key={s.name} className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground truncate max-w-[160px]" title={s.errorDetail || undefined}>
+                    {s.name}
+                  </span>
+                  <Badge variant="outline" className="text-xs shrink-0">
+                    {s.errorLabel}
+                  </Badge>
+                </div>
+              ))}
+              {data.staleSources.length > 5 && (
+                <div className="text-xs text-muted-foreground">
+                  +{data.staleSources.length - 5} more
+                </div>
+              )}
             </div>
           </div>
         )}

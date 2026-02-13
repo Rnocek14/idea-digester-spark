@@ -2051,7 +2051,10 @@ export type Database = {
           default_geo_tier: number | null
           fetch_frequency_minutes: number | null
           id: string
+          last_error_code: string | null
+          last_error_detail: string | null
           last_fetched_at: string | null
+          last_successful_fetch_at: string | null
           metadata: Json | null
           name: string
           status: string
@@ -2065,7 +2068,10 @@ export type Database = {
           default_geo_tier?: number | null
           fetch_frequency_minutes?: number | null
           id?: string
+          last_error_code?: string | null
+          last_error_detail?: string | null
           last_fetched_at?: string | null
+          last_successful_fetch_at?: string | null
           metadata?: Json | null
           name: string
           status?: string
@@ -2079,7 +2085,10 @@ export type Database = {
           default_geo_tier?: number | null
           fetch_frequency_minutes?: number | null
           id?: string
+          last_error_code?: string | null
+          last_error_detail?: string | null
           last_fetched_at?: string | null
+          last_successful_fetch_at?: string | null
           metadata?: Json | null
           name?: string
           status?: string
