@@ -21,11 +21,12 @@ serve(async (req) => {
 
     console.log('[backfill-safety] Starting safety backfill...');
 
-    // Fetch articles without safety data
+    // Fetch articles without safety data — never overwrite manually reviewed items
     const { data: articles, error: fetchError } = await supabase
       .from('content_queue')
-      .select('id, title, content, summary')
-      .is('safety_level', null);
+      .select('id, title, content, summary, reviewed_by')
+      .is('safety_level', null)
+      .is('reviewed_by', null);
 
     if (fetchError) {
       console.error('[backfill-safety] Error fetching articles:', fetchError);

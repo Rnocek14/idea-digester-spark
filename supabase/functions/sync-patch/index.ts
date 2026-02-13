@@ -338,7 +338,13 @@ Return only valid JSON.`
                 const parsed = JSON.parse(jsonMatch[0]);
                 summary = parsed.summary || summary;
                 category = parsed.category || category;
-                safetyLevel = parsed.safety_level || safetyLevel;
+                // Coerce unknown safety levels to sensitive (fail-closed)
+                const validLevels = ['safe', 'soft_sensitive', 'sensitive', 'blocked'];
+                const parsedSafety = parsed.safety_level || 'sensitive';
+                safetyLevel = validLevels.includes(parsedSafety) ? parsedSafety : 'sensitive';
+                if (parsedSafety !== safetyLevel) {
+                  console.warn(`[sync-patch] Coerced unknown safety "${parsedSafety}" → "sensitive" for: ${title}`);
+                }
                 isIncident = parsed.is_incident || false;
                 incidentType = parsed.incident_type || "none";
               }

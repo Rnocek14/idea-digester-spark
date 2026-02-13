@@ -11,12 +11,16 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    console.log('[bulk-approve] Finding pending safe content...');
+    // Parse query params for dry run
+    const url = new URL(req.url);
+    const dryRun = url.searchParams.get('dryRun') === 'true';
 
-    // Find all pending stories that are safe or soft_sensitive (with geo-tier awareness)
+    console.log(`[bulk-approve] Finding pending safe/soft_sensitive content... (dryRun=${dryRun})`);
+
+    // Only fetch PENDING stories (idempotent — never re-touches handled rows)
     const { data: pendingStories, error: fetchError } = await supabase
       .from('content_queue')
-      .select('id, title, safety_level, geo_tier')
+      .select('id, title, safety_level, geo_tier, category, reviewed_by')
       .eq('status', 'pending')
       .in('safety_level', ['safe', 'soft_sensitive']);
 
@@ -26,19 +30,51 @@ Deno.serve(async (req) => {
     }
 
     // Filter: safe always approved, soft_sensitive only if hyperlocal (tier 1/2)
-    const approveIds = (pendingStories || [])
-      .filter(s => s.safety_level === 'safe' || (s.safety_level === 'soft_sensitive' && (s.geo_tier ?? 0) >= 1))
-      .map(s => s.id);
+    // Never touch manually reviewed items (reviewed_by is set)
+    const eligible = (pendingStories || []).filter(s => {
+      // Skip manually reviewed items
+      if (s.reviewed_by) return false;
+      
+      if (s.safety_level === 'safe') return true;
+      if (s.safety_level === 'soft_sensitive' && (s.geo_tier ?? 0) >= 1) return true;
+      return false;
+    });
 
-    if (approveIds.length === 0) {
-      console.log('[bulk-approve] No eligible stories found');
+    const approveIds = eligible.map(s => s.id);
+    const held = (pendingStories || []).filter(s => !approveIds.includes(s.id));
+
+    if (dryRun) {
+      console.log(`[bulk-approve] DRY RUN: ${approveIds.length} would be approved, ${held.length} held`);
       return new Response(
-        JSON.stringify({ success: true, approved: 0, message: 'No eligible stories to approve' }),
+        JSON.stringify({
+          success: true,
+          dryRun: true,
+          wouldApprove: approveIds.length,
+          wouldHold: held.length,
+          eligible: eligible.map(s => ({ id: s.id, title: s.title, safety_level: s.safety_level, geo_tier: s.geo_tier })),
+          held: held.map(s => ({ 
+            id: s.id, 
+            title: s.title, 
+            safety_level: s.safety_level, 
+            geo_tier: s.geo_tier,
+            reason: s.reviewed_by ? 'manually_reviewed' : 
+                    s.safety_level === 'soft_sensitive' && (s.geo_tier ?? 0) < 1 ? 'soft_sensitive_regional' : 
+                    'unknown'
+          })),
+        }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`[bulk-approve] Found ${approveIds.length} eligible stories (of ${pendingStories?.length || 0} pending safe/soft_sensitive)`);
+    if (approveIds.length === 0) {
+      console.log('[bulk-approve] No eligible stories found');
+      return new Response(
+        JSON.stringify({ success: true, approved: 0, held: held.length, message: 'No eligible stories to approve' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log(`[bulk-approve] Approving ${approveIds.length} stories, holding ${held.length}`);
 
     // Update eligible to auto_published
     const { error: updateError } = await supabase
@@ -57,7 +93,7 @@ Deno.serve(async (req) => {
       action: 'bulk_approved',
       actor_type: 'system',
       message: `Bulk approved ${approveIds.length} eligible stories (safe + soft_sensitive hyperlocal)`,
-      details: { count: approveIds.length, story_ids: approveIds }
+      details: { count: approveIds.length, held: held.length, story_ids: approveIds }
     });
 
     console.log(`[bulk-approve] Successfully approved ${approveIds.length} stories`);
@@ -66,7 +102,8 @@ Deno.serve(async (req) => {
       JSON.stringify({
         success: true,
         approved: approveIds.length,
-        total_eligible: pendingStories?.length || 0,
+        held: held.length,
+        total_checked: pendingStories?.length || 0,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
