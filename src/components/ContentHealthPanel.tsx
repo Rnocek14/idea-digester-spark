@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { HeartPulse, Calendar, Music, Mail, AlertTriangle } from "lucide-react";
+import { HeartPulse, Calendar, Mail, AlertTriangle, Shield } from "lucide-react";
 
 export function ContentHealthPanel() {
   const { data, isLoading } = useQuery({
@@ -15,19 +15,12 @@ export function ContentHealthPanel() {
       const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
       const [
-        tierDist24h,
         tierDist7d,
         freshEvents24h,
         pendingSafeEvents,
-        badPerformers,
+        softSensitiveStats,
         recentNewsletters
       ] = await Promise.all([
-        // Tier distribution last 24h
-        supabase
-          .from('content_queue')
-          .select('geo_tier')
-          .in('status', ['published', 'auto_published', 'approved'])
-          .gte('created_at', oneDayAgo),
         // Tier distribution last 7d
         supabase
           .from('content_queue')
@@ -49,12 +42,12 @@ export function ContentHealthPanel() {
           .eq('status', 'pending')
           .in('safety_level', ['safe', 'soft_sensitive'])
           .eq('category', 'events'),
-        // Bad performer rows
+        // Soft-sensitive breakdown by geo_tier and status (last 7d)
         supabase
           .from('content_queue')
-          .select('id', { count: 'exact', head: true })
-          .not('performer', 'is', null)
-          .gt('performer', ''),
+          .select('geo_tier, status')
+          .eq('safety_level', 'soft_sensitive')
+          .gte('created_at', sevenDaysAgo),
         // Recent newsletters (last 7)
         supabase
           .from('newsletters')
@@ -78,7 +71,6 @@ export function ContentHealthPanel() {
         };
       };
 
-      const tiers24h = calcTierPct(tierDist24h.data || []);
       const tiers7d = calcTierPct(tierDist7d.data || []);
 
       // Newsletter stats
@@ -87,18 +79,27 @@ export function ContentHealthPanel() {
       const skipped = newsletters.filter(n => n.status === 'skipped');
       const zeroStory = sent.filter(n => n.story_count === 0);
 
-      // Count performers > 50 chars (we already cleaned, so check current state)
-      // For now just return the total performer count as a health signal
+      // Soft-sensitive stats
+      const ssData = softSensitiveStats.data || [];
+      const ssAutoPublished = ssData.filter(s => ['auto_published', 'published'].includes(s.status)).length;
+      const ssHeld = ssData.filter(s => s.status === 'pending').length;
+      const ssHeldT0 = ssData.filter(s => s.status === 'pending' && (s.geo_tier === 0 || s.geo_tier === null)).length;
+      const ssAutoT1T2 = ssData.filter(s => ['auto_published', 'published'].includes(s.status) && (s.geo_tier ?? 0) >= 1).length;
 
       return {
-        tiers24h,
         tiers7d,
         freshEvents24h: freshEvents24h.count || 0,
         pendingSafeEvents: pendingSafeEvents.count || 0,
         newslettersSent: sent.length,
         newslettersSkipped: skipped.length,
         zeroStorySends: zeroStory.length,
-        totalPerformers: badPerformers.count || 0,
+        softSensitive: {
+          total: ssData.length,
+          autoPublished: ssAutoPublished,
+          held: ssHeld,
+          heldT0: ssHeldT0,
+          autoT1T2: ssAutoT1T2,
+        },
       };
     },
     staleTime: 60000,
@@ -125,7 +126,6 @@ export function ContentHealthPanel() {
 
   if (!data) return null;
 
-  const hyperlocalPct24h = data.tiers24h.t1 + data.tiers24h.t2;
   const hyperlocalPct7d = data.tiers7d.t1 + data.tiers7d.t2;
   const hyperlocalHealthy = hyperlocalPct7d >= 40;
 
@@ -147,21 +147,9 @@ export function ContentHealthPanel() {
             </Badge>
           </div>
           <div className="flex gap-1 h-3 rounded overflow-hidden">
-            <div 
-              className="bg-primary" 
-              style={{ width: `${data.tiers7d.t1}%` }} 
-              title={`Tier 1: ${data.tiers7d.t1}%`}
-            />
-            <div 
-              className="bg-primary/60" 
-              style={{ width: `${data.tiers7d.t2}%` }} 
-              title={`Tier 2: ${data.tiers7d.t2}%`}
-            />
-            <div 
-              className="bg-muted" 
-              style={{ width: `${data.tiers7d.t0}%` }} 
-              title={`Tier 0: ${data.tiers7d.t0}%`}
-            />
+            <div className="bg-primary" style={{ width: `${data.tiers7d.t1}%` }} title={`Tier 1: ${data.tiers7d.t1}%`} />
+            <div className="bg-primary/60" style={{ width: `${data.tiers7d.t2}%` }} title={`Tier 2: ${data.tiers7d.t2}%`} />
+            <div className="bg-muted" style={{ width: `${data.tiers7d.t0}%` }} title={`Tier 0: ${data.tiers7d.t0}%`} />
           </div>
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>T1: {data.tiers7d.t1}%</span>
@@ -192,6 +180,20 @@ export function ContentHealthPanel() {
               {data.pendingSafeEvents}
             </Badge>
           </div>
+
+          {/* Soft-sensitive stats */}
+          {data.softSensitive.total > 0 && (
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center gap-2">
+                <Shield className="h-4 w-4 text-muted-foreground" />
+                <span>Soft-Sensitive (7d)</span>
+              </div>
+              <div className="flex gap-1">
+                <Badge variant="secondary">{data.softSensitive.autoT1T2} auto</Badge>
+                <Badge variant="outline">{data.softSensitive.heldT0} held</Badge>
+              </div>
+            </div>
+          )}
 
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-2">

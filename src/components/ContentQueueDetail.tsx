@@ -458,6 +458,8 @@ export function ContentQueueDetail({
                       className={
                         story.safety_level === "safe"
                           ? "bg-green-500/10 text-green-500 border-green-500/20"
+                          : story.safety_level === "soft_sensitive"
+                          ? "bg-blue-500/10 text-blue-500 border-blue-500/20"
                           : story.safety_level === "sensitive"
                           ? "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
                           : "bg-red-500/10 text-red-500 border-red-500/20"
@@ -466,6 +468,34 @@ export function ContentQueueDetail({
                       {story.safety_level}
                     </Badge>
                   </div>
+                  {/* Hold reason display */}
+                  {story.status === 'pending' && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">Why pending:</span>
+                      <Badge variant="outline" className="text-xs">
+                        {(() => {
+                          const holdReason = (story.metadata as any)?.hold_reason;
+                          if (holdReason) {
+                            const labels: Record<string, string> = {
+                              sensitive: 'Sensitive content',
+                              soft_sensitive_regional: 'Soft-sensitive regional (Tier 0)',
+                              unknown_safety_level: 'Unknown safety level',
+                              no_matching_rule: 'No auto-publish rule',
+                              rule_requires_hyperlocal: 'Rule requires hyperlocal',
+                              tier2_category_blocked: 'Tier 2 category blocked',
+                              rule_needs_review: 'Rule requires review',
+                              past_event: 'Past event date',
+                            };
+                            return labels[holdReason] || holdReason;
+                          }
+                          // Fallback inference
+                          if (story.safety_level === 'sensitive') return 'Sensitive content';
+                          if (story.safety_level === 'soft_sensitive' && (story.geo_tier === 0 || story.geo_tier === null)) return 'Soft-sensitive regional (Tier 0)';
+                          return 'Awaiting review';
+                        })()}
+                      </Badge>
+                    </div>
+                  )}
                   {story.safety_tags && Array.isArray(story.safety_tags) && story.safety_tags.length > 0 && (
                     <div className="flex items-start gap-2">
                       <span className="text-sm text-muted-foreground min-w-fit">Tags:</span>

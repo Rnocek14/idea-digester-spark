@@ -967,34 +967,51 @@ function decideStatusForStory(
   sourceId: string,
   category: string | null,
   safetyLevel: string,
-  geoTier: number = 0
-): string {
-  // SAFETY GATE: Check safety level FIRST before applying auto-publish rules
-  // This ensures unsafe content never auto-publishes regardless of rules
+  geoTier: number = 0,
+  eventDate?: string | null
+): { status: string; holdReason?: string } {
+  // DETERMINISTIC PRIORITY ORDER — no fall-through possible
   
+  // 1. BLOCKED — never publish
   if (safetyLevel === "blocked") {
-    // Never publish blocked content
-    return "blocked";
+    return { status: "blocked", holdReason: "blocked_content" };
   }
   
+  // 2. UNKNOWN SAFETY — fail closed
+  const VALID_LEVELS = ['safe', 'soft_sensitive', 'sensitive'];
+  if (!VALID_LEVELS.includes(safetyLevel)) {
+    console.warn(`⚠️ Unknown safety_level "${safetyLevel}" → pending`);
+    return { status: "pending", holdReason: "unknown_safety_level" };
+  }
+  
+  // 3. SENSITIVE — always hold
   if (safetyLevel === "sensitive") {
-    // Sensitive content always requires manual review, regardless of auto-publish rules
-    return "pending";
+    return { status: "pending", holdReason: "sensitive" };
   }
   
-  if (safetyLevel === "soft_sensitive") {
-    // Soft-sensitive: auto-publish for hyperlocal (Tier 1/2), hold for regional (Tier 0)
-    if (geoTier >= 1) {
-      console.log(`✅ Soft-sensitive auto-publish for hyperlocal | geo_tier=${geoTier} | category="${category}"`);
-      // Fall through to rule evaluation below
-    } else {
-      console.log(`⚠️ Soft-sensitive held for review | geo_tier=${geoTier} (regional)`);
-      return "pending";
+  // 4. SOFT_SENSITIVE + REGIONAL — hold
+  if (safetyLevel === "soft_sensitive" && geoTier < 1) {
+    console.log(`⚠️ Soft-sensitive held for review | geo_tier=${geoTier} (regional)`);
+    return { status: "pending", holdReason: "soft_sensitive_regional" };
+  }
+  
+  // 5. EXPIRED EVENT — suppress
+  if (category === "events" && eventDate) {
+    const today = new Date().toISOString().split('T')[0];
+    if (eventDate < today) {
+      console.log(`⏰ Past event suppressed: event_date=${eventDate}`);
+      return { status: "expired", holdReason: "past_event" };
     }
   }
   
-  // Safety level is "safe" or "soft_sensitive+hyperlocal" — proceed with auto-publish rule evaluation
-  if (!rules || rules.length === 0) return "pending";
+  // 6. At this point: safe OR (soft_sensitive + hyperlocal) — evaluate rules
+  if (safetyLevel === "soft_sensitive") {
+    console.log(`✅ Soft-sensitive auto-publish eligible | geo_tier=${geoTier} | category="${category}"`);
+  }
+  
+  if (!rules || rules.length === 0) {
+    return { status: "pending", holdReason: "no_matching_rule" };
+  }
   
   const cat = category || null;
   
@@ -1013,29 +1030,31 @@ function decideStatusForStory(
   );
   
   const rule = specific || global;
-  if (!rule) return "pending";
+  if (!rule) {
+    return { status: "pending", holdReason: "no_matching_rule" };
+  }
   
   // HYPERLOCAL GATE: If rule requires hyperlocal, content must have geo_tier >= 1
   if (rule.requires_hyperlocal && geoTier < 1) {
     console.log(`⚠️ Rule requires hyperlocal but geo_tier=${geoTier}, keeping pending`);
-    return "pending";
+    return { status: "pending", holdReason: "rule_requires_hyperlocal" };
   }
   
-  // TIER-2 CATEGORY GATE: Tier-2 can only auto-publish for specific categories
-  // This prevents regional "news" from diluting the feed while allowing events/eats/nightlife
-  // Only applies when the rule action is auto_publish (manual promotion still allowed)
+  // TIER-2 CATEGORY GATE
   if (rule.action === "auto_publish" && geoTier === 2 && cat && !TIER2_ALLOWED_CATEGORIES.includes(cat)) {
-    console.log(`⚠️ Tier-2 auto-publish blocked | category="${cat}" | source_id=${sourceId} | rule_id=${rule.id || 'unknown'}`);
-    return "pending";
+    console.log(`⚠️ Tier-2 auto-publish blocked | category="${cat}"`);
+    return { status: "pending", holdReason: "tier2_category_blocked" };
   }
   
   switch (rule.action) {
     case "auto_publish": 
-      console.log(`✅ Auto-publishing | geo_tier=${geoTier} | category="${cat}" | source_id=${sourceId}`);
-      return "auto_published";
-    case "flag": return "flagged";
+      console.log(`✅ Auto-publishing | geo_tier=${geoTier} | category="${cat}" | safety=${safetyLevel}`);
+      return { status: "auto_published" };
+    case "flag": 
+      return { status: "flagged", holdReason: "flagged_by_rule" };
     case "needs_review":
-    default: return "pending";
+    default: 
+      return { status: "pending", holdReason: "rule_needs_review" };
   }
 }
 
@@ -1858,7 +1877,13 @@ When in doubt between safe and soft_sensitive, choose safe. When in doubt betwee
           // Extract restaurant name for dining news
           const diningRestaurantName = (aiCategory === 'dining') ? extractRestaurantFromNews(title) : null;
           
-          const safetyLevel = aiResult.safety_level || "safe";
+          // SAFETY COERCION: fail-closed — unknown values become sensitive
+          const VALID_SAFETY_LEVELS = ['safe', 'soft_sensitive', 'sensitive', 'blocked'];
+          let safetyLevel = aiResult.safety_level || "sensitive";
+          if (!VALID_SAFETY_LEVELS.includes(safetyLevel)) {
+            console.warn(`⚠️ Unknown safety_level "${safetyLevel}" for "${title.substring(0, 40)}..." → coercing to sensitive`);
+            safetyLevel = "sensitive";
+          }
           
           // Detect locality tier for hyperlocal filtering BEFORE status decision
           const locality = detectLocality(title, aiResult.summary);
@@ -1888,11 +1913,38 @@ When in doubt between safe and soft_sensitive, choose safe. When in doubt betwee
             geoLabel = null;
           }
           
-          // Now decide status with geoTier for hyperlocal gate
-          const status = decideStatusForStory(rules as AutoPublishRule[], source.id, aiCategory, safetyLevel, geoTier);
+          // Parse event date BEFORE status decision (needed for expired event gate)
+          const isNightlifeContent = aiResult.verticals?.includes('nightlife') || 
+                                     aiCategory === 'events' ||
+                                     source.metadata?.default_nightlife === true;
+          let eventDate: string | null = null;
+          let performer: string | null = null;
+          let eventTime: string | null = null;
+          
+          if (isNightlifeContent) {
+            const parsedEventDate = parseEventDate(title, rawContent);
+            if (parsedEventDate) {
+              eventDate = parsedEventDate.toISOString().split('T')[0];
+              console.log(`📅 Parsed event date for "${title.substring(0, 40)}...": ${eventDate}`);
+            }
+            
+            performer = extractPerformer(title, rawContent);
+            eventTime = extractEventTime(title, rawContent);
+            
+            if (performer) {
+              console.log(`🎤 Extracted performer: "${performer}" for "${title.substring(0, 40)}..."`);
+            }
+            if (eventTime) {
+              console.log(`⏰ Extracted time: "${eventTime}" for "${title.substring(0, 40)}..."`);
+            }
+          }
+
+          // Now decide status with geoTier + eventDate for full gate logic
+          const statusResult = decideStatusForStory(rules as AutoPublishRule[], source.id, aiCategory, safetyLevel, geoTier, eventDate);
+          const status = statusResult.status;
+          const holdReason = statusResult.holdReason;
 
           // Classify breaking news priority (with freshness check)
-          // Check if source is trusted for locality (e.g., TMJ4 Walworth, Walworth Sheriff)
           const trustedForLocality = source.metadata?.trust_locality === true;
           const { isBreaking, priorityScore } = classifyBreaking({
             title,
@@ -1906,34 +1958,7 @@ When in doubt between safe and soft_sensitive, choose safe. When in doubt betwee
             console.log(`🔴 BREAKING: "${title.substring(0, 40)}..." (score: ${priorityScore})`);
           }
           
-          console.log(`📋 Story "${title.substring(0, 40)}..." → category: ${aiCategory}, safety: ${safetyLevel}, status: ${status}, priority: ${priorityScore}, geo: tier${geoTier}`);
-
-          // Parse actual event date, performer, and time for nightlife/events content
-          const isNightlifeContent = aiResult.verticals?.includes('nightlife') || 
-                                     aiCategory === 'events' ||
-                                     source.metadata?.default_nightlife === true;
-          let eventDate: string | null = null;
-          let performer: string | null = null;
-          let eventTime: string | null = null;
-          
-          if (isNightlifeContent) {
-            const parsedEventDate = parseEventDate(title, rawContent);
-            if (parsedEventDate) {
-              eventDate = parsedEventDate.toISOString().split('T')[0]; // Just the date part (YYYY-MM-DD)
-              console.log(`📅 Parsed event date for "${title.substring(0, 40)}...": ${eventDate}`);
-            }
-            
-            // Extract performer and time
-            performer = extractPerformer(title, rawContent);
-            eventTime = extractEventTime(title, rawContent);
-            
-            if (performer) {
-              console.log(`🎤 Extracted performer: "${performer}" for "${title.substring(0, 40)}..."`);
-            }
-            if (eventTime) {
-              console.log(`⏰ Extracted time: "${eventTime}" for "${title.substring(0, 40)}..."`);
-            }
-          }
+          console.log(`📋 Story "${title.substring(0, 40)}..." → category: ${aiCategory}, safety: ${safetyLevel}, status: ${status}${holdReason ? ` (${holdReason})` : ''}, priority: ${priorityScore}, geo: tier${geoTier}`);
 
           // Insert into content_queue
           const normalizedUrlValue = originalUrl ? normalizeUrl(originalUrl) : null;
@@ -1954,7 +1979,7 @@ When in doubt between safe and soft_sensitive, choose safe. When in doubt betwee
               performer: performer,
               event_time: eventTime,
               status,
-              safety_level: aiResult.safety_level || "safe",
+              safety_level: safetyLevel,
               safety_tags: aiResult.safety_tags || [],
               safety_reason: aiResult.safety_reason || "",
               is_breaking: isBreaking,
@@ -1973,6 +1998,7 @@ When in doubt between safe and soft_sensitive, choose safe. When in doubt betwee
                 recurring_days: isNightlifeContent ? extractRecurringDays(title, rawContent) : null,
                 dining_sub_category: diningSubCategory,
                 dining_restaurant_name: diningRestaurantName,
+                ...(holdReason ? { hold_reason: holdReason } : {}),
               },
             });
 
