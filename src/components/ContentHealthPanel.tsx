@@ -18,6 +18,7 @@ export function ContentHealthPanel() {
         tierDist7d,
         freshEvents24h,
         pendingSafeEvents,
+        pendingSafeNonEvents,
         softSensitiveStats,
         recentNewsletters,
         holdReasonDist,
@@ -44,6 +45,13 @@ export function ContentHealthPanel() {
           .eq('status', 'pending')
           .in('safety_level', ['safe', 'soft_sensitive'])
           .eq('category', 'events'),
+        // Pending safe/soft_sensitive NON-events (rule drift detector)
+        supabase
+          .from('content_queue')
+          .select('id', { count: 'exact', head: true })
+          .eq('status', 'pending')
+          .in('safety_level', ['safe', 'soft_sensitive'])
+          .neq('category', 'events'),
         // Soft-sensitive breakdown by geo_tier and status (last 7d)
         supabase
           .from('content_queue')
@@ -62,10 +70,12 @@ export function ContentHealthPanel() {
           .select('hold_reason')
           .eq('status', 'pending')
           .gte('created_at', sevenDaysAgo),
-        // Canary: stuck stories that should have auto-published
+        // Canary: stuck stories that should have auto-published (with oldest created_at for debounce)
         supabase
           .from('canary_stuck_stories' as any)
-          .select('id', { count: 'exact', head: true })
+          .select('id, created_at')
+          .order('created_at', { ascending: true })
+          .limit(50)
       ]);
 
       // Calculate tier percentages
@@ -97,21 +107,45 @@ export function ContentHealthPanel() {
       const ssHeld = ssData.filter(s => s.status === 'pending').length;
       const ssHeldT0 = ssData.filter(s => s.status === 'pending' && (s.geo_tier === 0 || s.geo_tier === null)).length;
       const ssAutoT1T2 = ssData.filter(s => ['auto_published', 'published'].includes(s.status) && (s.geo_tier ?? 0) >= 1).length;
-      // Hold reason distribution
+      // Hold reason distribution with human labels
+      const HOLD_REASON_LABELS: Record<string, string> = {
+        sensitive: 'Sensitive content',
+        soft_sensitive_regional: 'Soft-sensitive regional (T0)',
+        blocked_content: 'Blocked content',
+        no_matching_rule: 'No matching rule',
+        rule_requires_hyperlocal: 'Rule requires hyperlocal',
+        unknown_safety_level: 'Unknown safety level',
+        missing_event_date: 'Missing event date',
+        expired_event: 'Expired event',
+        no_reason_set: 'No reason set',
+      };
       const holdData = holdReasonDist.data || [];
-      const holdReasons: Record<string, number> = {};
+      const rawHoldReasons: Record<string, number> = {};
       holdData.forEach((r: any) => {
         const reason = r.hold_reason || 'no_reason_set';
-        holdReasons[reason] = (holdReasons[reason] || 0) + 1;
+        rawHoldReasons[reason] = (rawHoldReasons[reason] || 0) + 1;
+      });
+      // Map to labels, bucket unknowns into "Other"
+      const holdReasons: Record<string, number> = {};
+      Object.entries(rawHoldReasons).forEach(([reason, count]) => {
+        const label = HOLD_REASON_LABELS[reason] || 'Other';
+        holdReasons[label] = (holdReasons[label] || 0) + (count as number);
       });
 
-      // Canary count
-      const canaryCount = canaryStuck.count || 0;
+      // Canary: debounce — only alert if oldest stuck story is > 10 min old
+      const canaryRows = (canaryStuck.data as any[]) || [];
+      const canaryCount = canaryRows.length;
+      let canaryStale = false;
+      if (canaryCount > 0 && canaryRows[0]?.created_at) {
+        const oldestAge = Date.now() - new Date(canaryRows[0].created_at).getTime();
+        canaryStale = oldestAge > 10 * 60 * 1000; // 10 minutes
+      }
 
       return {
         tiers7d,
         freshEvents24h: freshEvents24h.count || 0,
         pendingSafeEvents: pendingSafeEvents.count || 0,
+        pendingSafeNonEvents: pendingSafeNonEvents.count || 0,
         newslettersSent: sent.length,
         newslettersSkipped: skipped.length,
         zeroStorySends: zeroStory.length,
@@ -124,6 +158,7 @@ export function ContentHealthPanel() {
         },
         holdReasons,
         canaryCount,
+        canaryStale,
       };
     },
     staleTime: 60000,
@@ -205,6 +240,19 @@ export function ContentHealthPanel() {
             </Badge>
           </div>
 
+          {/* Pending safe/soft_sensitive non-events (rule drift detector) */}
+          {data.pendingSafeNonEvents > 0 && (
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+                <span>Stuck Non-Events</span>
+              </div>
+              <Badge variant={data.pendingSafeNonEvents > 5 ? "destructive" : "outline"}>
+                {data.pendingSafeNonEvents}
+              </Badge>
+            </div>
+          )}
+
           {/* Soft-sensitive stats */}
           {data.softSensitive.total > 0 && (
             <div className="flex items-center justify-between text-sm">
@@ -242,14 +290,16 @@ export function ContentHealthPanel() {
             </div>
           )}
 
-          {/* Canary SLO Alert */}
+          {/* Canary SLO Alert — only red when stuck > 10 min */}
           {data.canaryCount > 0 && (
-            <div className="flex items-center justify-between text-sm p-2 rounded bg-destructive/10">
+            <div className={`flex items-center justify-between text-sm p-2 rounded ${data.canaryStale ? 'bg-destructive/10' : 'bg-muted'}`}>
               <div className="flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-destructive" />
-                <span className="font-medium text-destructive">Stuck Stories (canary)</span>
+                <AlertTriangle className={`h-4 w-4 ${data.canaryStale ? 'text-destructive' : 'text-muted-foreground'}`} />
+                <span className={`font-medium ${data.canaryStale ? 'text-destructive' : 'text-muted-foreground'}`}>
+                  Stuck Stories (canary)
+                </span>
               </div>
-              <Badge variant="destructive">{data.canaryCount}</Badge>
+              <Badge variant={data.canaryStale ? "destructive" : "outline"}>{data.canaryCount}</Badge>
             </div>
           )}
         </div>
