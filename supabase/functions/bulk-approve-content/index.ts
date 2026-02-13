@@ -78,10 +78,10 @@ Deno.serve(async (req) => {
 
     console.log(`[bulk-approve] Approving ${approveIds.length} stories, holding ${held.length}`);
 
-    // Update eligible to auto_published
+    // Update eligible to auto_published with audit trail
     const { error: updateError } = await supabase
       .from('content_queue')
-      .update({ status: 'auto_published' })
+      .update({ status: 'auto_published', decision_path: 'bulk_auto_publish', hold_reason: null })
       .in('id', approveIds);
 
     if (updateError) {
