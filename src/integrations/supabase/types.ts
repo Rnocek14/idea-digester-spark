@@ -411,10 +411,12 @@ export type Database = {
           content_x: string | null
           created_at: string
           data_snapshot_id: string | null
+          decision_path: string | null
           event_date: string | null
           event_time: string | null
           geo_label: string | null
           geo_tier: number | null
+          hold_reason: string | null
           id: string
           image_source: string | null
           image_url: string | null
@@ -456,10 +458,12 @@ export type Database = {
           content_x?: string | null
           created_at?: string
           data_snapshot_id?: string | null
+          decision_path?: string | null
           event_date?: string | null
           event_time?: string | null
           geo_label?: string | null
           geo_tier?: number | null
+          hold_reason?: string | null
           id?: string
           image_source?: string | null
           image_url?: string | null
@@ -501,10 +505,12 @@ export type Database = {
           content_x?: string | null
           created_at?: string
           data_snapshot_id?: string | null
+          decision_path?: string | null
           event_date?: string | null
           event_time?: string | null
           geo_label?: string | null
           geo_tier?: number | null
+          hold_reason?: string | null
           id?: string
           image_source?: string | null
           image_url?: string | null
@@ -605,6 +611,13 @@ export type Database = {
             columns: ["channel_id"]
             isOneToOne: false
             referencedRelation: "distribution_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_targets_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "canary_stuck_stories"
             referencedColumns: ["id"]
           },
           {
@@ -1030,6 +1043,13 @@ export type Database = {
             foreignKeyName: "incident_updates_story_id_fkey"
             columns: ["story_id"]
             isOneToOne: false
+            referencedRelation: "canary_stuck_stories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incident_updates_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
             referencedRelation: "content_queue"
             referencedColumns: ["id"]
           },
@@ -1088,6 +1108,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "incidents_source_story_id_fkey"
+            columns: ["source_story_id"]
+            isOneToOne: false
+            referencedRelation: "canary_stuck_stories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "incidents_source_story_id_fkey"
             columns: ["source_story_id"]
@@ -1468,6 +1495,13 @@ export type Database = {
             columns: ["sponsor_id"]
             isOneToOne: false
             referencedRelation: "sponsors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_queue_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "canary_stuck_stories"
             referencedColumns: ["id"]
           },
           {
@@ -2376,7 +2410,19 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      canary_stuck_stories: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          geo_tier: number | null
+          hold_reason: string | null
+          id: string | null
+          safety_level: string | null
+          source_name: string | null
+          title: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       check_feature_eligibility: {

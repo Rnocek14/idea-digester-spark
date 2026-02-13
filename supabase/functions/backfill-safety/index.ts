@@ -127,21 +127,36 @@ When in doubt between safe and soft_sensitive, choose safe. When in doubt betwee
           continue;
         }
 
-        // Update the article with safety data
+        // SAFETY COERCION: fail-closed — unknown values become sensitive
+        const VALID_LEVELS = ['safe', 'soft_sensitive', 'sensitive', 'blocked'];
+        let safetyLevel = safetyData.safety_level || 'sensitive';
+        if (!VALID_LEVELS.includes(safetyLevel)) {
+          console.warn(`[backfill-safety] ⚠️ Unknown safety_level "${safetyLevel}" → coercing to sensitive for ${article.id}`);
+          safetyLevel = 'sensitive';
+        }
+
+        // Compute hold_reason based on safety level (geo_tier not available here, will be inferred)
+        let holdReason: string | null = null;
+        if (safetyLevel === 'blocked') holdReason = 'blocked_content';
+        else if (safetyLevel === 'sensitive') holdReason = 'sensitive';
+
+        // Update the article with safety data (never overwrite reviewed_by — query already filters)
         const { error: updateError } = await supabase
           .from('content_queue')
           .update({
-            safety_level: safetyData.safety_level,
+            safety_level: safetyLevel,
             safety_tags: safetyData.safety_tags,
             safety_reason: safetyData.safety_reason,
+            ...(holdReason ? { hold_reason: holdReason } : {}),
           })
-          .eq('id', article.id);
+          .eq('id', article.id)
+          .is('reviewed_by', null); // Double-check: never overwrite manually reviewed
 
         if (updateError) {
           console.error(`[backfill-safety] Error updating ${article.id}:`, updateError);
           failed++;
         } else {
-          console.log(`[backfill-safety] ✓ Updated ${article.id}: ${safetyData.safety_level}`);
+          console.log(`[backfill-safety] ✓ Updated ${article.id}: ${safetyLevel}`);
           analyzed++;
         }
 
