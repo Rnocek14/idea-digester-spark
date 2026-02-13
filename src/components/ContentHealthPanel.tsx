@@ -42,12 +42,12 @@ export function ContentHealthPanel() {
           .in('status', ['published', 'auto_published', 'approved'])
           .gte('event_date', today)
           .gte('created_at', oneDayAgo),
-        // Pending safe events (should be 0)
+        // Pending safe/soft_sensitive events (should be 0)
         supabase
           .from('content_queue')
           .select('id', { count: 'exact', head: true })
           .eq('status', 'pending')
-          .eq('safety_level', 'safe')
+          .in('safety_level', ['safe', 'soft_sensitive'])
           .eq('category', 'events'),
         // Bad performer rows
         supabase

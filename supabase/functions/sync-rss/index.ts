@@ -982,7 +982,18 @@ function decideStatusForStory(
     return "pending";
   }
   
-  // Safety level is "safe" — proceed with auto-publish rule evaluation
+  if (safetyLevel === "soft_sensitive") {
+    // Soft-sensitive: auto-publish for hyperlocal (Tier 1/2), hold for regional (Tier 0)
+    if (geoTier >= 1) {
+      console.log(`✅ Soft-sensitive auto-publish for hyperlocal | geo_tier=${geoTier} | category="${category}"`);
+      // Fall through to rule evaluation below
+    } else {
+      console.log(`⚠️ Soft-sensitive held for review | geo_tier=${geoTier} (regional)`);
+      return "pending";
+    }
+  }
+  
+  // Safety level is "safe" or "soft_sensitive+hyperlocal" — proceed with auto-publish rule evaluation
   if (!rules || rules.length === 0) return "pending";
   
   const cat = category || null;
@@ -1727,16 +1738,17 @@ For each article, you must:
    - Open houses, market updates: ["local", "real_estate"]
    - Most events also get "local" - it's the main feed
 5. Evaluate safety and assign:
-   - safety_level: safe, sensitive, or blocked
-   - safety_tags: zero or more labels like crime, public-safety, politics, tragedy, dining, family, graphic-violence, sexual-content, hate, scam
-   - safety_reason: a short sentence explaining why
+    - safety_level: safe, soft_sensitive, sensitive, or blocked
+    - safety_tags: zero or more labels like crime, public-safety, politics, tragedy, dining, family, graphic-violence, sexual-content, hate, scam
+    - safety_reason: a short sentence explaining why
 
 Guidelines:
-- SAFE: family-friendly events, dining, attractions, community info, basic weather/traffic, non-controversial business content
-- SENSITIVE: crime, arrests, police logs, non-graphic accidents or fires, political campaigns or protests, obituaries and tragedies, contentious public issues
+- SAFE: family-friendly events, dining, attractions, community info, basic weather/traffic, non-controversial business content, sports results, human-interest stories
+- SOFT_SENSITIVE: public-interest content that is factual but touches on mildly sensitive topics — civic meetings, school board updates, park development debates, municipal construction, zoo/animal news, budget discussions, traffic/road closures, non-violent public incidents, sports competition results, non-graphic accidents without fatalities, routine government business
+- SENSITIVE: crime, arrests, police logs, shootings, gun incidents, political campaigns or protests, obituaries and tragedies, contentious public issues, layoffs, health scares
 - BLOCKED: graphic violence, sexual content, hate/extremist content, obvious scams, or anything inappropriate for a general-audience local community brand
 
-When in doubt between safe and sensitive, choose sensitive. Only use blocked for clearly inappropriate content.`
+When in doubt between safe and soft_sensitive, choose safe. When in doubt between soft_sensitive and sensitive, choose soft_sensitive. Only use sensitive for genuinely concerning content. Only use blocked for clearly inappropriate content.`
                 },
                 {
                   role: "user",
@@ -1777,7 +1789,7 @@ When in doubt between safe and sensitive, choose sensitive. Only use blocked for
                       },
                       safety_level: {
                         type: "string",
-                        enum: ["safe", "sensitive", "blocked"],
+                        enum: ["safe", "soft_sensitive", "sensitive", "blocked"],
                         description: "Safety evaluation level"
                       },
                       safety_tags: {

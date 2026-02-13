@@ -62,16 +62,17 @@ For each article, you must:
 1. Write a clear, neutral, 2–3 sentence summary in a friendly local-news tone.
 2. Assign a category: one of events, news, community, dining, or real-estate.
 3. Evaluate safety and assign:
-   - safety_level: safe, sensitive, or blocked.
+   - safety_level: safe, soft_sensitive, sensitive, or blocked.
    - safety_tags: zero or more labels like crime, public-safety, politics, tragedy, dining, family, graphic-violence, sexual-content, hate, scam.
    - safety_reason: a short sentence explaining why.
 
 Guidelines:
-- safe: family-friendly events, dining, attractions, community info, basic weather/traffic, non-controversial business content.
-- sensitive: crime, arrests, police logs, non-graphic accidents or fires, political campaigns or protests, obituaries and tragedies, contentious public issues.
+- safe: family-friendly events, dining, attractions, community info, basic weather/traffic, non-controversial business content, sports results, human-interest stories.
+- soft_sensitive: public-interest content that is factual but touches on mildly sensitive topics — civic meetings, school board updates, park development debates, municipal construction, zoo/animal news, budget discussions, traffic/road closures, non-violent public incidents, sports competition results, routine government business.
+- sensitive: crime, arrests, police logs, shootings, gun incidents, political campaigns or protests, obituaries and tragedies, contentious public issues, layoffs, health scares.
 - blocked: graphic violence, sexual content, hate/extremist content, obvious scams, or anything inappropriate for a general-audience local community brand.
 
-When in doubt between safe and sensitive, choose sensitive. Only use blocked for clearly inappropriate content.`
+When in doubt between safe and soft_sensitive, choose safe. When in doubt between soft_sensitive and sensitive, choose soft_sensitive. Only use sensitive for genuinely concerning content. Only use blocked for clearly inappropriate content.`
               },
               {
                 role: 'user',
@@ -88,7 +89,7 @@ When in doubt between safe and sensitive, choose sensitive. Only use blocked for
                   properties: {
                     safety_level: {
                       type: "string",
-                      enum: ["safe", "sensitive", "blocked"],
+                      enum: ["safe", "soft_sensitive", "sensitive", "blocked"],
                       description: "Overall safety classification"
                     },
                     safety_tags: {
