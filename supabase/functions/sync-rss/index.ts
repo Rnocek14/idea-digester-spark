@@ -968,7 +968,8 @@ function decideStatusForStory(
   category: string | null,
   safetyLevel: string,
   geoTier: number = 0,
-  eventDate?: string | null
+  eventDate?: string | null,
+  storyTitle?: string | null
 ): { status: string; holdReason?: string; decisionPath?: string } {
   // DETERMINISTIC PRIORITY ORDER — no fall-through possible
   
@@ -984,15 +985,30 @@ function decideStatusForStory(
     return { status: "pending", holdReason: "unknown_safety_level", decisionPath: "unknown_safety_coerced" };
   }
   
-  // 3. SENSITIVE — always hold
+  // 3. SENSITIVE — hold unless Tier 1/2 civic or public health
   if (safetyLevel === "sensitive") {
-    return { status: "pending", holdReason: "sensitive", decisionPath: "sensitive_hold" };
+    // Allow T1/T2 sensitive civic/community stories (local public health, utility, school safety)
+    const SENSITIVE_AUTO_CATEGORIES = ['civic', 'community', 'schools'];
+    if (geoTier >= 1 && SENSITIVE_AUTO_CATEGORIES.includes(category || '')) {
+      console.log(`✅ Sensitive but T${geoTier} ${category} — allowing through pipeline`);
+      // Don't return here — let it fall through to rule matching below
+    } else {
+      return { status: "pending", holdReason: "sensitive", decisionPath: "sensitive_hold" };
+    }
   }
   
-  // 4. SOFT_SENSITIVE + REGIONAL — hold
+  // 4. SOFT_SENSITIVE + REGIONAL — hold (except public health/safety keywords)
   if (safetyLevel === "soft_sensitive" && geoTier < 1) {
-    console.log(`⚠️ Soft-sensitive held for review | geo_tier=${geoTier} (regional)`);
-    return { status: "pending", holdReason: "soft_sensitive_regional", decisionPath: "soft_sensitive_t0_hold" };
+    const title = (storyTitle || '').toLowerCase();
+    const PUBLIC_SAFETY_KEYWORDS = ['measles', 'ice ', 'fire ', 'flood', 'tornado', 'water bill', 'power outage', 'boil water', 'evacuation', 'closure'];
+    const isPublicSafety = PUBLIC_SAFETY_KEYWORDS.some(kw => title.includes(kw));
+    if (isPublicSafety) {
+      console.log(`✅ Soft-sensitive T0 but public safety topic — allowing through`);
+      // Fall through to rule matching
+    } else {
+      console.log(`⚠️ Soft-sensitive held for review | geo_tier=${geoTier} (regional)`);
+      return { status: "pending", holdReason: "soft_sensitive_regional", decisionPath: "soft_sensitive_t0_hold" };
+    }
   }
   
   // 5. EXPIRED EVENT — suppress
@@ -1940,7 +1956,7 @@ When in doubt between safe and soft_sensitive, choose safe. When in doubt betwee
           }
 
           // Now decide status with geoTier + eventDate for full gate logic
-          const statusResult = decideStatusForStory(rules as AutoPublishRule[], source.id, aiCategory, safetyLevel, geoTier, eventDate);
+          const statusResult = decideStatusForStory(rules as AutoPublishRule[], source.id, aiCategory, safetyLevel, geoTier, eventDate, title);
           const status = statusResult.status;
           const holdReason = statusResult.holdReason;
           const decisionPath = statusResult.decisionPath;
