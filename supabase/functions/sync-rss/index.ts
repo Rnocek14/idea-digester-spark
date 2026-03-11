@@ -1861,17 +1861,39 @@ When in doubt between safe and soft_sensitive, choose safe. When in doubt betwee
             console.warn(`⚠️ AI request returned ${aiResponse.status} for "${title.substring(0, 40)}..."`);
           }
 
+          let aiData: any;
+          let aiResult: any;
+          
           if (!aiResponse || !aiResponse.ok) {
             const status_code = aiResponse?.status || 'unknown';
-            console.error(`AI request failed after ${AI_MAX_RETRIES} attempts: ${status_code}`);
-            result.errors.push(`AI failed for: ${title.substring(0, 50)}`);
-            recordSkip(source, "ai_failed", { url: originalUrl, title });
-            result.skipped++;
-            continue;
+            console.warn(`⚠️ AI unavailable (${status_code}) for "${title.substring(0, 50)}..." — using fallback classification`);
+            
+            // FALLBACK: Insert with basic classification so pipeline doesn't stall
+            // Use source category or 'news', safety 'soft_sensitive' (conservative), pending for review
+            aiResult = {
+              summary: rawContent.substring(0, 200),
+              category: source.category || "news",
+              content_tags: [],
+              verticals: ["local"],
+              safety_level: "soft_sensitive",
+              safety_tags: ["ai_unavailable"],
+              safety_reason: "Fallback: AI classification unavailable, pending human review"
+            };
+            aiData = null;
+          } else {
+            // Small delay between AI calls to avoid rate limiting
+            await new Promise(r => setTimeout(r, 300));
+            
+            aiData = await aiResponse.json();
+            const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
+            aiResult = toolCall ? JSON.parse(toolCall.function.arguments) : { 
+              summary: rawContent.substring(0, 200), 
+              category: "news",
+              safety_level: "safe",
+              safety_tags: [],
+              safety_reason: "Fallback processing"
+            };
           }
-          
-          // Small delay between AI calls to avoid rate limiting
-          await new Promise(r => setTimeout(r, 300));
 
           const aiData = await aiResponse.json();
           const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
