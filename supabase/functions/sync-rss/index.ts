@@ -1895,15 +1895,6 @@ When in doubt between safe and soft_sensitive, choose safe. When in doubt betwee
             };
           }
 
-          const aiData = await aiResponse.json();
-          const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
-          const aiResult = toolCall ? JSON.parse(toolCall.function.arguments) : { 
-            summary: rawContent.substring(0, 200), 
-            category: "news",
-            safety_level: "safe",
-            safety_tags: [],
-            safety_reason: "Fallback processing"
-          };
 
           // HALLUCINATION DETECTION: Check if AI produced filler content from non-article pages
           if (isHallucinatedSummary(aiResult.summary || '')) {
