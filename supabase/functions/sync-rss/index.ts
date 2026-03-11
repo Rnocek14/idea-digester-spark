@@ -1747,23 +1747,31 @@ serve(async (req) => {
             // Continue without image - not a fatal error
           }
 
-          // Call OpenAI for summarization, categorization, and safety evaluation
-          const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-            method: "POST",
-            headers: {
-              "Authorization": `Bearer ${openaiApiKey}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              model: "gpt-4o-mini",
-              messages: [
-                {
-                  role: "system",
-                  content: `You are a content normalizer and safety reviewer for a family-friendly Lake Geneva local media brand.
+          // Call OpenAI for summarization, categorization, and safety evaluation (with retry for rate limits)
+          const AI_MAX_RETRIES = 3;
+          let aiResponse: Response | null = null;
+          for (let attempt = 0; attempt < AI_MAX_RETRIES; attempt++) {
+            if (attempt > 0) {
+              const backoffMs = Math.min(1000 * Math.pow(2, attempt), 8000); // 2s, 4s, 8s
+              console.log(`⏳ AI retry ${attempt + 1}/${AI_MAX_RETRIES} after ${backoffMs}ms backoff...`);
+              await new Promise(r => setTimeout(r, backoffMs));
+            }
+            aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+              method: "POST",
+              headers: {
+                "Authorization": `Bearer ${openaiApiKey}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                model: "gpt-4o-mini",
+                messages: [
+                  {
+                    role: "system",
+                    content: `You are a content normalizer and safety reviewer for a family-friendly Lake Geneva local media brand.
 
 For each article, you must:
 1. Write a clear, neutral, 2-3 sentence summary in a friendly local-news tone.
-2. Assign a category: one of events, news, civic, community, dining, or real-estate. Use 'civic' for city council, committee meetings, municipal announcements, ordinances, public hearings, school board, and government-related content.
+2. Assign a category: one of events, news, civic, community, dining, or real-estate. Use 'civic' for city council, committee meetings, municipal content.
 3. Assign content_tags (granular attributes): one or more tags like brunch, lunch, dinner, coffee, bar, cocktails, wine, brewery, live-music, dj, late-night, kids, family-friendly, meeting, ordinance, road-closure, school-board, open-house, market-update, etc.
 4. Assign verticals (which accounts should show this): array from ["local", "eats", "nightlife", "civic", "family", "real_estate"]
    - Dining content: ["local", "eats"]
@@ -1784,75 +1792,86 @@ Guidelines:
 - BLOCKED: graphic violence, sexual content, hate/extremist content, obvious scams, or anything inappropriate for a general-audience local community brand
 
 When in doubt between safe and soft_sensitive, choose safe. When in doubt between soft_sensitive and sensitive, choose soft_sensitive. Only use sensitive for genuinely concerning content. Only use blocked for clearly inappropriate content.`
-                },
-                {
-                  role: "user",
-                  content: `Normalize this article:\n\nTitle: ${title}\nContent: ${rawContent.substring(0, 1000)}`
-                }
-              ],
-              tools: [{
-                type: "function",
-                function: {
-                  name: "normalize_article",
-                  description: "Normalize article with summary, category, and safety evaluation",
-                  parameters: {
-                    type: "object",
-                    properties: {
-                      summary: { type: "string", description: "2-3 sentence summary in friendly local-news tone" },
-                      category: { 
-                        type: "string", 
-                        enum: ["news", "events", "dining", "real-estate", "community", "civic"],
-                        description: "Article category - use 'civic' for city council, committee meetings, municipal content. Use 'dining' for restaurant news, openings, closings, reviews."
-                      },
-                      dining_sub_category: {
-                        type: "string",
-                        enum: ["opening", "closing", "review", "deal", "chef", "award", "menu", "general"],
-                        description: "For dining articles: subcategory indicating type of restaurant news"
-                      },
-                      content_tags: {
-                        type: "array",
-                        items: { type: "string" },
-                        description: "Granular content attributes like brunch, live-music, kids, meeting, road-closure"
-                      },
-                      verticals: {
-                        type: "array",
-                        items: { 
-                          type: "string",
-                          enum: ["local", "eats", "nightlife", "civic", "family", "real_estate"]
-                        },
-                        description: "Which account feeds should show this content"
-                      },
-                      safety_level: {
-                        type: "string",
-                        enum: ["safe", "soft_sensitive", "sensitive", "blocked"],
-                        description: "Safety evaluation level"
-                      },
-                      safety_tags: {
-                        type: "array",
-                        items: { type: "string" },
-                        description: "Array of safety labels"
-                      },
-                      safety_reason: {
-                        type: "string",
-                        description: "Short explanation of why this safety level was chosen"
-                      }
-                    },
-                    required: ["summary", "category", "content_tags", "verticals", "safety_level", "safety_tags", "safety_reason"],
-                    additionalProperties: false
+                  },
+                  {
+                    role: "user",
+                    content: `Normalize this article:\n\nTitle: ${title}\nContent: ${rawContent.substring(0, 1000)}`
                   }
-                }
-              }],
-              tool_choice: { type: "function", function: { name: "normalize_article" } }
-            }),
-          });
+                ],
+                tools: [{
+                  type: "function",
+                  function: {
+                    name: "normalize_article",
+                    description: "Normalize article with summary, category, and safety evaluation",
+                    parameters: {
+                      type: "object",
+                      properties: {
+                        summary: { type: "string", description: "2-3 sentence summary in friendly local-news tone" },
+                        category: { 
+                          type: "string", 
+                          enum: ["news", "events", "dining", "real-estate", "community", "civic"],
+                          description: "Article category - use 'civic' for city council, committee meetings, municipal content. Use 'dining' for restaurant news, openings, closings, reviews."
+                        },
+                        dining_sub_category: {
+                          type: "string",
+                          enum: ["opening", "closing", "review", "deal", "chef", "award", "menu", "general"],
+                          description: "For dining articles: subcategory indicating type of restaurant news"
+                        },
+                        content_tags: {
+                          type: "array",
+                          items: { type: "string" },
+                          description: "Granular content attributes like brunch, live-music, kids, meeting, road-closure"
+                        },
+                        verticals: {
+                          type: "array",
+                          items: { 
+                            type: "string",
+                            enum: ["local", "eats", "nightlife", "civic", "family", "real_estate"]
+                          },
+                          description: "Which account feeds should show this content"
+                        },
+                        safety_level: {
+                          type: "string",
+                          enum: ["safe", "soft_sensitive", "sensitive", "blocked"],
+                          description: "Safety evaluation level"
+                        },
+                        safety_tags: {
+                          type: "array",
+                          items: { type: "string" },
+                          description: "Array of safety labels"
+                        },
+                        safety_reason: {
+                          type: "string",
+                          description: "Short explanation of why this safety level was chosen"
+                        }
+                      },
+                      required: ["summary", "category", "content_tags", "verticals", "safety_level", "safety_tags", "safety_reason"],
+                      additionalProperties: false
+                    }
+                  }
+                }],
+                tool_choice: { type: "function", function: { name: "normalize_article" } }
+              }),
+            });
+            
+            if (aiResponse.ok) break;
+            
+            // Only retry on 429 (rate limit) or 5xx (server error)
+            if (aiResponse.status !== 429 && aiResponse.status < 500) break;
+            console.warn(`⚠️ AI request returned ${aiResponse.status} for "${title.substring(0, 40)}..."`);
+          }
 
-          if (!aiResponse.ok) {
-            console.error(`AI request failed: ${aiResponse.status}`);
+          if (!aiResponse || !aiResponse.ok) {
+            const status_code = aiResponse?.status || 'unknown';
+            console.error(`AI request failed after ${AI_MAX_RETRIES} attempts: ${status_code}`);
             result.errors.push(`AI failed for: ${title.substring(0, 50)}`);
             recordSkip(source, "ai_failed", { url: originalUrl, title });
             result.skipped++;
             continue;
           }
+          
+          // Small delay between AI calls to avoid rate limiting
+          await new Promise(r => setTimeout(r, 300));
 
           const aiData = await aiResponse.json();
           const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
