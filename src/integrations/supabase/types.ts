@@ -2047,51 +2047,90 @@ export type Database = {
       sources: {
         Row: {
           category: string | null
+          consecutive_zero_runs: number
+          content_confidence_score: number
           created_at: string
           default_geo_tier: number | null
           fetch_frequency_minutes: number | null
+          health_severity: string
           id: string
           last_error_code: string | null
           last_error_detail: string | null
           last_fetched_at: string | null
+          last_items_ingested_count: number
+          last_nonzero_run_at: string | null
           last_successful_fetch_at: string | null
+          last_zero_items_at: string | null
           metadata: Json | null
           name: string
+          source_trust_score: number
           status: string
+          supports_events: boolean
+          supports_geo_enrichment: boolean
+          supports_live_music: boolean
+          supports_recurring_events: boolean
+          supports_ticket_links: boolean
+          trust_locality: boolean
           type: string
           updated_at: string
           url: string
         }
         Insert: {
           category?: string | null
+          consecutive_zero_runs?: number
+          content_confidence_score?: number
           created_at?: string
           default_geo_tier?: number | null
           fetch_frequency_minutes?: number | null
+          health_severity?: string
           id?: string
           last_error_code?: string | null
           last_error_detail?: string | null
           last_fetched_at?: string | null
+          last_items_ingested_count?: number
+          last_nonzero_run_at?: string | null
           last_successful_fetch_at?: string | null
+          last_zero_items_at?: string | null
           metadata?: Json | null
           name: string
+          source_trust_score?: number
           status?: string
+          supports_events?: boolean
+          supports_geo_enrichment?: boolean
+          supports_live_music?: boolean
+          supports_recurring_events?: boolean
+          supports_ticket_links?: boolean
+          trust_locality?: boolean
           type: string
           updated_at?: string
           url: string
         }
         Update: {
           category?: string | null
+          consecutive_zero_runs?: number
+          content_confidence_score?: number
           created_at?: string
           default_geo_tier?: number | null
           fetch_frequency_minutes?: number | null
+          health_severity?: string
           id?: string
           last_error_code?: string | null
           last_error_detail?: string | null
           last_fetched_at?: string | null
+          last_items_ingested_count?: number
+          last_nonzero_run_at?: string | null
           last_successful_fetch_at?: string | null
+          last_zero_items_at?: string | null
           metadata?: Json | null
           name?: string
+          source_trust_score?: number
           status?: string
+          supports_events?: boolean
+          supports_geo_enrichment?: boolean
+          supports_live_music?: boolean
+          supports_recurring_events?: boolean
+          supports_ticket_links?: boolean
+          trust_locality?: boolean
           type?: string
           updated_at?: string
           url?: string
@@ -2459,6 +2498,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      invoke_edge_function: {
+        Args: { _body?: Json; _name: string }
+        Returns: number
       }
       normalize_url: { Args: { input: string }; Returns: string }
     }
