@@ -618,26 +618,25 @@ const TITLE_START_EXCLUSIONS = [
   'remembering', 'looking back', 'years ago', 'funeral for', 'tribute to'
 ];
 
-// Patterns that should exclude anywhere in story (administrative/educational)
+// Patterns that should exclude a story from INCIDENT classification (not from
+// content publishing). Used only inside classifyBreaking → matchesExclusionPattern.
+// IMPORTANT: keep entertainment/events out of this list — those are core content,
+// they just shouldn't trigger an "incident" record.
 const FULL_TEXT_EXCLUSIONS = [
   // Policy/administrative news
   'expands support', 'new policy', 'policy change', 'announces plan',
   'study finds', 'study shows', 'study flags', 'report finds', 'analysis shows',
   'department announces', 'council approves', 'board approves',
-  
+
   // Prevention/safety education
   'fire prevention', 'fire safety', 'safety tips', 'how to prevent',
   'awareness week', 'awareness month', 'training exercise', 'drill',
   'fire department hosts', 'fire department open house',
-  
+
   // Department operations (not incidents)
   'new hire', 'retires', 'promoted', 'equipment purchase',
-  'station renovation', 'open house', 'recruitment', 'staffing',
+  'station renovation', 'recruitment', 'staffing',
   'department expands', 'fire chief', 'police chief', 'department celebrates',
-  
-  // Events/entertainment (not incidents)
-  'dj ', 'ladies night', 'live music', 'karaoke', 'trivia', 'concert',
-  'festival', 'parade', 'fundraiser', 'gala', 'celebration'
 ];
 
 // STRICT LOCALITY - areas that MUST be mentioned for incident creation
