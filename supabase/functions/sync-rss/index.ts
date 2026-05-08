@@ -499,9 +499,21 @@ function isNonLocalStory(title: string, summary?: string | null): boolean {
 }
 
 // Hyperlocal tier detection for geo-filtering
+// Expanded with venue names, neighborhood shorthand, ZIP, and local landmarks
+// so AI/RSS content that uses local shorthand still resolves to Tier 1.
 const HYPERLOCAL_TIER_1 = [
+  // Core place names
   'lake geneva', 'geneva lake', 'williams bay', 'fontana', 'downtown lake geneva',
-  'riviera', 'big foot beach', 'nws milwaukee', 'sullivan wi'
+  'downtown lg', 'lg ', ' lg.', '53147', '53125', '53191',
+  // Landmarks / parks
+  'riviera', 'flat iron park', 'flat iron tap', 'big foot beach', 'wrigley drive',
+  'lake shore drive', 'library park', 'horticultural hall',
+  // Major venues / resorts (event content frequently names these without the city)
+  'grand geneva', 'abbey resort', 'pier 290', 'baker house', 'gordy\'s', 'gordys boat',
+  'harpoon willie', 'fat cat', 'geneva tap house', 'topsy turvy', 'house of music',
+  'crafted americana', 'chuck\'s lakeshore', 'chucks lakeshore',
+  // Weather & emergency feeds we trust as Lake Geneva
+  'nws milwaukee', 'sullivan wi'
 ];
 
 // Tier-2: Walworth County area (15-25 min from Lake Geneva)
