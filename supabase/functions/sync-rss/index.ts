@@ -1180,8 +1180,11 @@ serve(async (req) => {
       result.skipsByReason[reason] = (result.skipsByReason[reason] || 0) + 1;
     }
 
-    // Daily cap for events per source (prevents flood from high-volume event scrapers)
-    const MAX_EVENTS_PER_SOURCE_PER_DAY = 15;
+    // Daily cap for events per source (prevents flood from high-volume event scrapers).
+    // Raised from 15 → 50 because event-heavy venues with full Friday/Saturday
+    // calendars were getting capped before the weekend lineup was ingested.
+    // News/community sources keep a lower implicit cap (no per-source guard here).
+    const MAX_EVENTS_PER_SOURCE_PER_DAY = 50;
     const syncToday = new Date().toISOString().split('T')[0];
 
     // Helper to handle blocked source alarm
