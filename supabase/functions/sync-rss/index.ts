@@ -72,22 +72,16 @@ const NON_LOCAL_TITLE_KEYWORDS = [
 ];
 
 // AI hallucination phrases that indicate non-article content was processed
+// Narrowed: tourism-style filler phrases removed (they appear in legitimate
+// Lake Geneva content). Only flag obvious "AI describing the page" tells.
 const HALLUCINATION_PHRASES = [
   'this article provides an overview',
   'readers to navigate',
   'enhance your experience',
   'rich tapestry of',
-  'stay tuned for updates',
   'organize local content',
   'help organize',
   'making it easier to find',
-  // Generic AI filler patterns
-  'something for everyone',
-  'popular destination known for',
-  'stunning views and welcoming',
-  'variety of attractions suitable',
-  'whether you\'re looking for adventure or relaxation',
-  'perfect for all ages',
 ];
 
 // Check if URL is a valid HTTP/HTTPS URL (rejects tel:, mailto:, javascript:, urn:, etc.)
@@ -133,8 +127,12 @@ function isNonLocalTitle(title: string): boolean {
 }
 
 // Check if AI summary contains hallucination patterns (sign of non-article content)
+// Only treat as hallucination when summary is also thin (< 50 words). Substantial
+// body text + a flagged phrase is usually legitimate tourism/event copy.
 function isHallucinatedSummary(summary: string): boolean {
-  const lower = summary.toLowerCase();
+  const lower = (summary || '').toLowerCase();
+  const wordCount = lower.split(/\s+/).filter(Boolean).length;
+  if (wordCount >= 50) return false;
   return HALLUCINATION_PHRASES.some(phrase => lower.includes(phrase));
 }
 
@@ -501,9 +499,21 @@ function isNonLocalStory(title: string, summary?: string | null): boolean {
 }
 
 // Hyperlocal tier detection for geo-filtering
+// Expanded with venue names, neighborhood shorthand, ZIP, and local landmarks
+// so AI/RSS content that uses local shorthand still resolves to Tier 1.
 const HYPERLOCAL_TIER_1 = [
+  // Core place names
   'lake geneva', 'geneva lake', 'williams bay', 'fontana', 'downtown lake geneva',
-  'riviera', 'big foot beach', 'nws milwaukee', 'sullivan wi'
+  'downtown lg', 'lg ', ' lg.', '53147', '53125', '53191',
+  // Landmarks / parks
+  'riviera', 'flat iron park', 'flat iron tap', 'big foot beach', 'wrigley drive',
+  'lake shore drive', 'library park', 'horticultural hall',
+  // Major venues / resorts (event content frequently names these without the city)
+  'grand geneva', 'abbey resort', 'pier 290', 'baker house', 'gordy\'s', 'gordys boat',
+  'harpoon willie', 'fat cat', 'geneva tap house', 'topsy turvy', 'house of music',
+  'crafted americana', 'chuck\'s lakeshore', 'chucks lakeshore',
+  // Weather & emergency feeds we trust as Lake Geneva
+  'nws milwaukee', 'sullivan wi'
 ];
 
 // Tier-2: Walworth County area (15-25 min from Lake Geneva)
@@ -608,26 +618,25 @@ const TITLE_START_EXCLUSIONS = [
   'remembering', 'looking back', 'years ago', 'funeral for', 'tribute to'
 ];
 
-// Patterns that should exclude anywhere in story (administrative/educational)
+// Patterns that should exclude a story from INCIDENT classification (not from
+// content publishing). Used only inside classifyBreaking → matchesExclusionPattern.
+// IMPORTANT: keep entertainment/events out of this list — those are core content,
+// they just shouldn't trigger an "incident" record.
 const FULL_TEXT_EXCLUSIONS = [
   // Policy/administrative news
   'expands support', 'new policy', 'policy change', 'announces plan',
   'study finds', 'study shows', 'study flags', 'report finds', 'analysis shows',
   'department announces', 'council approves', 'board approves',
-  
+
   // Prevention/safety education
   'fire prevention', 'fire safety', 'safety tips', 'how to prevent',
   'awareness week', 'awareness month', 'training exercise', 'drill',
   'fire department hosts', 'fire department open house',
-  
+
   // Department operations (not incidents)
   'new hire', 'retires', 'promoted', 'equipment purchase',
-  'station renovation', 'open house', 'recruitment', 'staffing',
+  'station renovation', 'recruitment', 'staffing',
   'department expands', 'fire chief', 'police chief', 'department celebrates',
-  
-  // Events/entertainment (not incidents)
-  'dj ', 'ladies night', 'live music', 'karaoke', 'trivia', 'concert',
-  'festival', 'parade', 'fundraiser', 'gala', 'celebration'
 ];
 
 // STRICT LOCALITY - areas that MUST be mentioned for incident creation
@@ -1171,8 +1180,11 @@ serve(async (req) => {
       result.skipsByReason[reason] = (result.skipsByReason[reason] || 0) + 1;
     }
 
-    // Daily cap for events per source (prevents flood from high-volume event scrapers)
-    const MAX_EVENTS_PER_SOURCE_PER_DAY = 15;
+    // Daily cap for events per source (prevents flood from high-volume event scrapers).
+    // Raised from 15 → 50 because event-heavy venues with full Friday/Saturday
+    // calendars were getting capped before the weekend lineup was ingested.
+    // News/community sources keep a lower implicit cap (no per-source guard here).
+    const MAX_EVENTS_PER_SOURCE_PER_DAY = 50;
     const syncToday = new Date().toISOString().split('T')[0];
 
     // Helper to handle blocked source alarm
@@ -1640,10 +1652,28 @@ serve(async (req) => {
           }
           
           if (daysOld > MAX_STORY_AGE_DAYS && !isRecurringEvent(title)) {
-            console.log(`⏭️ Skipping stale story (${Math.floor(daysOld)} days old): "${title.substring(0, 50)}..."`);
-            recordSkip(source, 'stale_content', { url: originalUrl, title });
-            result.skipped++;
-            continue;
+            // EXCEPTION: events / event-category content with a future event date
+            // should pass the stale gate even if the *publish* date is old. A
+            // summer festival announced months in advance is still useful.
+            let skipStaleGate = false;
+            const isEventCategoryEarly = source.category === 'events' ||
+              source.name.toLowerCase().includes('event') ||
+              source.name.toLowerCase().includes('calendar');
+            if (isEventCategoryEarly) {
+              try {
+                const earlyEventDate = parseEventDate(title, rawContent);
+                if (earlyEventDate && earlyEventDate.getTime() > now) {
+                  skipStaleGate = true;
+                  console.log(`📅 Stale-gate bypass (future event ${earlyEventDate.toISOString().split('T')[0]}): "${title.substring(0, 50)}..."`);
+                }
+              } catch (_e) { /* ignore parse errors, fall through to skip */ }
+            }
+            if (!skipStaleGate) {
+              console.log(`⏭️ Skipping stale story (${Math.floor(daysOld)} days old): "${title.substring(0, 50)}..."`);
+              recordSkip(source, 'stale_content', { url: originalUrl, title });
+              result.skipped++;
+              continue;
+            }
           }
           
           // CROSS-SOURCE TITLE DEDUPLICATION: Safe mode - only for news/community, not events/civic/weather
@@ -1767,10 +1797,18 @@ serve(async (req) => {
                 messages: [
                   {
                     role: "system",
-                    content: `You are a content normalizer and safety reviewer for a family-friendly Lake Geneva local media brand.
+                    content: `You are the content editor for Lake Geneva Local, a hyperlocal news and events publication serving Lake Geneva, Wisconsin and the Geneva Lake area (Williams Bay, Fontana, Town of Linn, Walworth County).
+
+LAKE GENEVA CONTEXT (use this to make summaries specific, not generic):
+- Resort town on Geneva Lake, ~8,000 year-round residents, swells to 50,000+ on summer weekends.
+- Landmarks: Riviera Ballroom, Flat Iron Park, Big Foot Beach State Park, Library Park, Wrigley Drive waterfront, Horticultural Hall.
+- Major venues / resorts: Grand Geneva Resort, The Abbey Resort, PIER 290, Baker House, Gordy's Boat House, Riviera Ballroom.
+- Bars / live music / nightlife: Fat Cat, Geneva Tap House, Topsy Turvy Brewery, Harpoon Willie's, Chuck's Lakeshore Inn, House of Music, Crafted Americana, Flat Iron Tap.
+- Signature annual events: Venetian Festival, Winterfest (Snow Sculpting), Midwest Triathlon, Balloon Rally, Restaurant Week, Christmas Parade, Friday Fish Fry.
+- Seasons matter: summer = boating/lake season, fall = leaf tourism, winter = Winterfest/snow, spring = restaurant openings.
 
 For each article, you must:
-1. Write a clear, neutral, 2-3 sentence summary in a friendly local-news tone.
+1. Write a 2-3 sentence summary as a local editor would: specific, conversational, mentions the venue or location if known. NAME the performer if mentioned. Avoid tourism-brochure filler ("something for everyone", "perfect for all ages"). If the story is generic regional news, make the local relevance explicit.
 2. Assign a category: one of events, news, civic, community, dining, or real-estate. Use 'civic' for city council, committee meetings, municipal content.
 3. Assign content_tags (granular attributes): one or more tags like brunch, lunch, dinner, coffee, bar, cocktails, wine, brewery, live-music, dj, late-night, kids, family-friendly, meeting, ordinance, road-closure, school-board, open-house, market-update, etc.
 4. Assign verticals (which accounts should show this): array from ["local", "eats", "nightlife", "civic", "family", "real_estate"]
