@@ -1253,6 +1253,7 @@ serve(async (req) => {
     // Process each source
     for (const source of sources || []) {
       result.sourcesProcessed++;
+      const insertedBeforeSource = result.articlesInserted;
 
       try {
         console.log(`Processing ${source.type} source: ${source.name}`);
@@ -2179,11 +2180,29 @@ When in doubt between safe and soft_sensitive, choose safe. When in doubt betwee
           }
         }
 
-        // Update last_fetched_at and reset failure count on success
-        await supabase
-          .from("sources")
-          .update({ last_fetched_at: new Date().toISOString() })
-          .eq("id", source.id);
+        // Update last_fetched_at + observability counters on success
+        const insertedThisRun = result.articlesInserted - insertedBeforeSource;
+        const nowIso = new Date().toISOString();
+        const sourceUpdate: Record<string, unknown> = {
+          last_fetched_at: nowIso,
+          last_successful_fetch_at: nowIso,
+          last_items_ingested_count: insertedThisRun,
+          last_error_code: null,
+          last_error_detail: null,
+        };
+        if (insertedThisRun > 0) {
+          sourceUpdate.last_nonzero_run_at = nowIso;
+          sourceUpdate.consecutive_zero_runs = 0;
+          sourceUpdate.health_severity = 'ok';
+        } else {
+          // increment zero-run counter atomically via RPC-less approach
+          const prevRuns = (source as any).consecutive_zero_runs ?? 0;
+          const nextRuns = prevRuns + 1;
+          sourceUpdate.last_zero_items_at = nowIso;
+          sourceUpdate.consecutive_zero_runs = nextRuns;
+          sourceUpdate.health_severity = nextRuns >= 10 ? 'critical' : (nextRuns >= 4 ? 'warn' : 'ok');
+        }
+        await supabase.from("sources").update(sourceUpdate).eq("id", source.id);
         
         // Reset consecutive failures on successful sync
         await resetSourceFailures(source);
