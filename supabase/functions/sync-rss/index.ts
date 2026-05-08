@@ -72,22 +72,16 @@ const NON_LOCAL_TITLE_KEYWORDS = [
 ];
 
 // AI hallucination phrases that indicate non-article content was processed
+// Narrowed: tourism-style filler phrases removed (they appear in legitimate
+// Lake Geneva content). Only flag obvious "AI describing the page" tells.
 const HALLUCINATION_PHRASES = [
   'this article provides an overview',
   'readers to navigate',
   'enhance your experience',
   'rich tapestry of',
-  'stay tuned for updates',
   'organize local content',
   'help organize',
   'making it easier to find',
-  // Generic AI filler patterns
-  'something for everyone',
-  'popular destination known for',
-  'stunning views and welcoming',
-  'variety of attractions suitable',
-  'whether you\'re looking for adventure or relaxation',
-  'perfect for all ages',
 ];
 
 // Check if URL is a valid HTTP/HTTPS URL (rejects tel:, mailto:, javascript:, urn:, etc.)
@@ -133,8 +127,12 @@ function isNonLocalTitle(title: string): boolean {
 }
 
 // Check if AI summary contains hallucination patterns (sign of non-article content)
+// Only treat as hallucination when summary is also thin (< 50 words). Substantial
+// body text + a flagged phrase is usually legitimate tourism/event copy.
 function isHallucinatedSummary(summary: string): boolean {
-  const lower = summary.toLowerCase();
+  const lower = (summary || '').toLowerCase();
+  const wordCount = lower.split(/\s+/).filter(Boolean).length;
+  if (wordCount >= 50) return false;
   return HALLUCINATION_PHRASES.some(phrase => lower.includes(phrase));
 }
 
