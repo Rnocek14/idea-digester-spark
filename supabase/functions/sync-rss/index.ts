@@ -1652,10 +1652,28 @@ serve(async (req) => {
           }
           
           if (daysOld > MAX_STORY_AGE_DAYS && !isRecurringEvent(title)) {
-            console.log(`⏭️ Skipping stale story (${Math.floor(daysOld)} days old): "${title.substring(0, 50)}..."`);
-            recordSkip(source, 'stale_content', { url: originalUrl, title });
-            result.skipped++;
-            continue;
+            // EXCEPTION: events / event-category content with a future event date
+            // should pass the stale gate even if the *publish* date is old. A
+            // summer festival announced months in advance is still useful.
+            let skipStaleGate = false;
+            const isEventCategoryEarly = source.category === 'events' ||
+              source.name.toLowerCase().includes('event') ||
+              source.name.toLowerCase().includes('calendar');
+            if (isEventCategoryEarly) {
+              try {
+                const earlyEventDate = parseEventDate(title, rawContent);
+                if (earlyEventDate && earlyEventDate.getTime() > now) {
+                  skipStaleGate = true;
+                  console.log(`📅 Stale-gate bypass (future event ${earlyEventDate.toISOString().split('T')[0]}): "${title.substring(0, 50)}..."`);
+                }
+              } catch (_e) { /* ignore parse errors, fall through to skip */ }
+            }
+            if (!skipStaleGate) {
+              console.log(`⏭️ Skipping stale story (${Math.floor(daysOld)} days old): "${title.substring(0, 50)}..."`);
+              recordSkip(source, 'stale_content', { url: originalUrl, title });
+              result.skipped++;
+              continue;
+            }
           }
           
           // CROSS-SOURCE TITLE DEDUPLICATION: Safe mode - only for news/community, not events/civic/weather
