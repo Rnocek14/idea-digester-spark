@@ -2481,6 +2481,14 @@ export type Database = {
       expire_old_restaurant_news: { Args: never; Returns: number }
       generate_invoice_number: { Args: never; Returns: string }
       generate_referral_code: { Args: { email_input: string }; Returns: string }
+      get_employer_preferences: {
+        Args: { _token: string }
+        Returns: {
+          email: string
+          expiry_reminders: boolean
+          weekly_digest: boolean
+        }[]
+      }
       get_skip_stats: { Args: never; Returns: Json }
       get_source_health_stats: {
         Args: never
@@ -2503,7 +2511,31 @@ export type Database = {
         Args: { _body?: Json; _name: string }
         Returns: number
       }
+      mark_employer_token_used: { Args: { _token: string }; Returns: undefined }
+      mark_sponsor_token_used: { Args: { _token: string }; Returns: undefined }
       normalize_url: { Args: { input: string }; Returns: string }
+      set_employer_preference: {
+        Args: { _field: string; _token: string; _value: boolean }
+        Returns: undefined
+      }
+      validate_employer_token: {
+        Args: { _token: string }
+        Returns: {
+          email: string
+          expires_at: string
+          used_at: string
+        }[]
+      }
+      validate_sponsor_token: {
+        Args: { _token: string }
+        Returns: {
+          business_id: string
+          business_name: string
+          email: string
+          expires_at: string
+          used_at: string
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
