@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Briefcase, Plus, Search, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
+import { PageMeta } from "@/components/PageMeta";
 
 type JobListing = {
   id: string;
@@ -84,6 +85,17 @@ const Jobs = () => {
 
   return (
     <PageShell>
+      <PageMeta
+        title="Jobs in Lake Geneva, WI – Local Hiring | Lake Geneva Brief"
+        description="Browse current job openings from Lake Geneva area businesses — hospitality, retail, trades, and more."
+        path="/jobs"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          "name": "Lake Geneva Jobs",
+          "url": "https://lakegeneva.citybrief.info/jobs"
+        }}
+      />
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Hero */}
         <div className="text-center mb-8">
