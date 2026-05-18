@@ -526,7 +526,8 @@ const HYPERLOCAL_TIER_2 = [
 ];
 
 // Categories that allow Tier-2 auto-publish (things locals would drive to)
-const TIER2_ALLOWED_CATEGORIES = ['events', 'eats', 'nightlife', 'community', 'civic'];
+// Tier-2 = Walworth County. Allow legitimate local news + schools to auto-publish.
+const TIER2_ALLOWED_CATEGORIES = ['events', 'eats', 'nightlife', 'community', 'civic', 'news', 'schools', 'weather'];
 
 type LocalityResult = { tier: 0 | 1 | 2; label: string | null };
 
