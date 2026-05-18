@@ -140,10 +140,24 @@ function isHallucinatedSummary(summary: string): boolean {
 // Used to sanitize raw RSS/scrape descriptions before storing or summarizing.
 function stripHtml(input: string): string {
   if (!input) return "";
-  return input
+  // Coerce to string in case the XML parser returned an object
+  // (e.g., when description contains nested tags like <img>)
+  const str = typeof input === "string" ? input : (() => {
+    try {
+      // fast-xml-parser may yield { "#text": "...", img: {...} }
+      const anyVal: any = input;
+      if (anyVal && typeof anyVal === "object") {
+        if (typeof anyVal["#text"] === "string") return anyVal["#text"];
+        return JSON.stringify(anyVal);
+      }
+      return String(input ?? "");
+    } catch { return ""; }
+  })();
+  return str
     .replace(/<style[\s\S]*?<\/style>/gi, " ")
     .replace(/<script[\s\S]*?<\/script>/gi, " ")
     .replace(/<[^>]+>/g, " ")
+    .replace(/<[^>\s]*\s+[^>]*$/g, " ") // strip dangling/unclosed tag at end (e.g. truncated <img src='...)
     .replace(/&nbsp;/gi, " ")
     .replace(/&amp;/gi, "&")
     .replace(/&quot;/gi, '"')
