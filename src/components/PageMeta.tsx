@@ -5,11 +5,13 @@ interface PageMetaProps {
   description: string;
   path: string;
   jsonLd?: Record<string, unknown> | Record<string, unknown>[];
+  ogType?: "website" | "article";
+  ogImage?: string;
 }
 
 const SITE = "https://lakegeneva.citybrief.info";
 
-export function PageMeta({ title, description, path, jsonLd }: PageMetaProps) {
+export function PageMeta({ title, description, path, jsonLd, ogType = "website", ogImage }: PageMetaProps) {
   const url = `${SITE}${path}`;
   const ldArray = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
   return (
@@ -20,8 +22,11 @@ export function PageMeta({ title, description, path, jsonLd }: PageMetaProps) {
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />
       <meta property="og:url" content={url} />
+      <meta property="og:type" content={ogType} />
+      {ogImage ? <meta property="og:image" content={ogImage} /> : null}
       <meta name="twitter:title" content={title} />
       <meta name="twitter:description" content={description} />
+      {ogImage ? <meta name="twitter:image" content={ogImage} /> : null}
       {ldArray.map((ld, i) => (
         <script key={i} type="application/ld+json">{JSON.stringify(ld)}</script>
       ))}

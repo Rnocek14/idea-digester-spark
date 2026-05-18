@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import PageShell from "@/components/PageShell";
+import { PageMeta } from "@/components/PageMeta";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -27,9 +28,7 @@ const Advertise = () => {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    document.title = "Advertise with Lake Geneva Brief";
-  }, []);
+  // Title is set via <PageMeta /> in the render tree.
 
   const submitLeadMutation = useMutation({
     mutationFn: async (data: z.infer<typeof leadSchema>) => {
@@ -114,6 +113,11 @@ const Advertise = () => {
       title="Advertise with Lake Geneva Brief"
       description="Sponsor the Lake Geneva Brief newsletter and reach local readers with targeted, trackable campaigns."
     >
+      <PageMeta
+        title="Advertise with Lake Geneva Brief — Sponsor Local News"
+        description="Reach engaged Lake Geneva locals and visitors. Sponsor daily local news, events, dining, and nightlife coverage trusted by the community."
+        path="/advertise"
+      />
       {/* Hero */}
       <header className="mb-10 space-y-4">
         <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
