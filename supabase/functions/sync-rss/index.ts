@@ -1057,6 +1057,15 @@ function decideStatusForStory(
   
   const rule = specific || global;
   if (!rule) {
+    // TIER-AWARE DEFAULT: if no rule matches but the story is from a
+    // hyperlocal (Tier-1) source and is safe, auto-publish. Tier-2 falls
+    // through the category gate; Tier-0 still requires explicit review.
+    if (geoTier >= 1 && safetyLevel === "safe") {
+      if (geoTier === 2 && cat && !TIER2_ALLOWED_CATEGORIES.includes(cat)) {
+        return { status: "pending", holdReason: "tier2_category_blocked", decisionPath: "tier2_default_gate" };
+      }
+      return { status: "auto_published", decisionPath: "tier_default_auto" };
+    }
     return { status: "pending", holdReason: "no_matching_rule", decisionPath: "no_rule_match" };
   }
   
