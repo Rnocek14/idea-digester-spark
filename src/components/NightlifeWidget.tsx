@@ -1021,9 +1021,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
                   {laterPick!.event_time && (
                     <p className="text-xs font-mono text-slate-500 mt-1.5">{laterPick!.event_time}</p>
                   )}
-                  {laterPickReason && (
-                    <p className="text-xs font-mono text-slate-500 mt-2.5 uppercase">Why: {laterPickReason}</p>
-                  )}
+                  {/* Internal QA reason intentionally hidden from public UI */}
                 </>
               );
             })()}
