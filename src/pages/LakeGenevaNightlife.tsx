@@ -4,6 +4,7 @@ import { format, addDays, isToday, isTomorrow, isThisWeek } from "date-fns";
 import { Moon, Music, Calendar, MapPin, Clock, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import PageShell from "@/components/PageShell";
+import { PageMeta } from "@/components/PageMeta";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -156,6 +157,11 @@ const LakeGenevaNightlife = () => {
 
   return (
     <PageShell>
+      <PageMeta
+        title="Lake Geneva Nightlife — Live Music, Bars & Late-Night Events"
+        description="Tonight and this week around Lake Geneva: live music, DJ sets, bar specials, and lakefront nightlife. Updated daily from local venues."
+        path="/nightlife"
+      />
       {/* Hero Section */}
       <div className="relative -mx-4 sm:-mx-6 lg:-mx-8 mb-8 overflow-hidden rounded-b-3xl bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 px-6 py-12 text-white">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-50"></div>

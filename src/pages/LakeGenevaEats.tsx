@@ -3,6 +3,7 @@ import { format } from "date-fns";
 import { Utensils, MapPin, Clock, ArrowRight, Star, Calendar, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import PageShell from "@/components/PageShell";
+import { PageMeta } from "@/components/PageMeta";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -176,6 +177,11 @@ const LakeGenevaEats = () => {
 
   return (
     <PageShell>
+      <PageMeta
+        title="Lake Geneva Eats — Restaurants, Openings & Dining News"
+        description="The latest Lake Geneva dining news, new restaurant openings, weekly specials, and where locals are eating this week."
+        path="/eats"
+      />
       {/* Hero Section */}
       <div className="relative -mx-4 sm:-mx-6 lg:-mx-8 mb-8 overflow-hidden rounded-b-3xl bg-gradient-to-br from-amber-900 via-orange-800 to-red-900 px-6 py-12 text-white">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-50"></div>
