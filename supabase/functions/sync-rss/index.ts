@@ -1905,14 +1905,19 @@ When in doubt between safe and soft_sensitive, choose safe. When in doubt betwee
             
             // FALLBACK: Insert with basic classification so pipeline doesn't stall
             // Use source category or 'news', safety 'soft_sensitive' (conservative), pending for review
+            // For trusted local sources, treat AI-unavailable as "safe" so
+            // content still flows. The source itself is the safety signal here.
+            const trustedFallback = (source.default_geo_tier ?? 0) >= 1;
             aiResult = {
               summary: rawContent.substring(0, 200),
               category: source.category || "news",
               content_tags: [],
               verticals: ["local"],
-              safety_level: "soft_sensitive",
+              safety_level: trustedFallback ? "safe" : "soft_sensitive",
               safety_tags: ["ai_unavailable"],
-              safety_reason: "Fallback: AI classification unavailable, pending human review"
+              safety_reason: trustedFallback
+                ? "Fallback: AI unavailable, trusted local source"
+                : "Fallback: AI classification unavailable, pending human review"
             };
             aiData = null;
           } else {
