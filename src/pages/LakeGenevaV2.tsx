@@ -742,6 +742,19 @@ const LakeGenevaV2 = () => {
               <p className="text-[10px] font-mono text-slate-400 mt-1">
                 What locals should know · {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).toUpperCase()}
               </p>
+              {stories.length > 0 && (() => {
+                const newest = stories.reduce((acc: any, s: any) => {
+                  const t = new Date(s.created_at).getTime();
+                  return t > acc ? t : acc;
+                }, 0);
+                const hoursAgo = Math.round((Date.now() - newest) / 36e5);
+                const isStale = hoursAgo >= 12;
+                return (
+                  <p className={`text-[10px] font-mono mt-1 ${isStale ? 'text-amber-700 font-semibold' : 'text-emerald-700'}`}>
+                    {isStale ? '⚠ ' : '● '}Last new story: {getRelativeTime(new Date(newest).toISOString())}
+                  </p>
+                );
+              })()}
             </div>
 
             {/* AT-A-GLANCE: Quick-scan bullet list (V1 feature) */}

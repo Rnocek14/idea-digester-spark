@@ -1060,11 +1060,15 @@ function decideStatusForStory(
     // TIER-AWARE DEFAULT: if no rule matches but the story is from a
     // hyperlocal (Tier-1) source and is safe, auto-publish. Tier-2 falls
     // through the category gate; Tier-0 still requires explicit review.
-    if (geoTier >= 1 && safetyLevel === "safe") {
+    // Self-heal: hyperlocal (T1) and approved-category Walworth (T2) stories
+    // with safe OR soft_sensitive levels auto-publish even without an explicit
+    // rule. This eliminates "no_matching_rule" backlog so the user does not
+    // have to manually approve routine local school/community statements.
+    if (geoTier >= 1 && (safetyLevel === "safe" || safetyLevel === "soft_sensitive")) {
       if (geoTier === 2 && cat && !TIER2_ALLOWED_CATEGORIES.includes(cat)) {
         return { status: "pending", holdReason: "tier2_category_blocked", decisionPath: "tier2_default_gate" };
       }
-      return { status: "auto_published", decisionPath: "tier_default_auto" };
+      return { status: "auto_published", decisionPath: `tier_default_auto_${safetyLevel}` };
     }
     return { status: "pending", holdReason: "no_matching_rule", decisionPath: "no_rule_match" };
   }
