@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Clock, MapPin, CheckCircle, AlertCircle, Info } from "lucide-react";
 import { PublicHeader } from "@/components/PublicHeader";
 import { PublicFooter } from "@/components/PublicFooter";
+import { PageMeta } from "@/components/PageMeta";
 import IncidentStatusControls from "@/components/IncidentStatusControls";
 import TipSubmissionForm from "@/components/TipSubmissionForm";
 import { ShareButtons } from "@/components/ShareButtons";
@@ -128,8 +129,35 @@ export default function IncidentDetail() {
   const isLoading = incidentLoading || updatesLoading;
   const status = incident ? statusConfig[incident.status] : statusConfig.active;
 
+  const metaTitle = incident
+    ? `${incident.title.slice(0, 70)} — Lake Geneva Incidents`
+    : "Lake Geneva Incident — Live Updates";
+  const metaDescription = incident
+    ? `Live updates on ${incident.title}${incident.location ? ` near ${incident.location}` : ""}. Status: ${incident.status}. Latest verified reports from local sources.`.slice(0, 300)
+    : "Live local incident tracker for Lake Geneva and Walworth County.";
+  const incidentJsonLd = incident
+    ? {
+        "@context": "https://schema.org",
+        "@type": "NewsArticle",
+        headline: incident.title,
+        datePublished: incident.started_at,
+        dateModified: incident.updated_at,
+        url: `https://lakegeneva.citybrief.info/incidents/${incident.slug}`,
+        publisher: {
+          "@type": "NewsMediaOrganization",
+          name: "Lake Geneva Brief",
+        },
+      }
+    : undefined;
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <PageMeta
+        title={metaTitle}
+        description={metaDescription}
+        path={`/incidents/${slug ?? ""}`}
+        jsonLd={incidentJsonLd}
+      />
       <PublicHeader />
 
       <main className="flex-1 container max-w-3xl mx-auto px-4 py-8">
