@@ -136,6 +136,24 @@ function isHallucinatedSummary(summary: string): boolean {
   return HALLUCINATION_PHRASES.some(phrase => lower.includes(phrase));
 }
 
+// Strip HTML tags, decode common entities, and collapse whitespace.
+// Used to sanitize raw RSS/scrape descriptions before storing or summarizing.
+function stripHtml(input: string): string {
+  if (!input) return "";
+  return input
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 // Normalize URL for deduplication (handles trailing slashes, encoding, case, tracking params)
 function normalizeUrl(url: string): string {
   try {
