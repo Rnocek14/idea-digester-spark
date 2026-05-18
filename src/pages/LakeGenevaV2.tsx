@@ -571,10 +571,25 @@ const LakeGenevaV2 = () => {
         .maybeSingle();
 
       if (error) throw error;
-      return data ? { 
-        ...data.business, 
-        placementId: data.id, 
-        businessId: data.business_id 
+      if (data) {
+        return { 
+          ...data.business, 
+          placementId: data.id, 
+          businessId: data.business_id 
+        } as Sponsor & { placementId: string; businessId: string };
+      }
+      // Fallback: always-on Gina Nocek card when no paid placement is active.
+      // The site is a real-estate funnel; "Presented by" should never be empty.
+      const { data: fallback } = await supabase
+        .from("business_profiles")
+        .select("name, logo_url, website, category, phone, description, email, zillow_url, zillow_rating, zillow_review_count, testimonial_quote")
+        .eq("id", "db06b0ce-2fe3-4a01-a870-7f2aef1913a6")
+        .maybeSingle();
+      return fallback ? {
+        ...fallback,
+        placementId: "fallback-gina",
+        businessId: "db06b0ce-2fe3-4a01-a870-7f2aef1913a6",
+        _isFallback: true,
       } as Sponsor & { placementId: string; businessId: string } : null;
     },
     staleTime: 300000,
@@ -743,12 +758,19 @@ const LakeGenevaV2 = () => {
                 What locals should know · {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).toUpperCase()}
               </p>
               {stories.length > 0 && (() => {
-                const newest = stories.reduce((acc: any, s: any) => {
+                const newest = stories.reduce((acc: number, s: any) => {
                   const t = new Date(s.created_at).getTime();
                   return t > acc ? t : acc;
                 }, 0);
-                const hoursAgo = Math.round((Date.now() - newest) / 36e5);
-                const isStale = hoursAgo >= 12;
+                const hoursAgo = (Date.now() - newest) / 36e5;
+                // Quiet-hours aware: overnight (8pm–8am) and weekends, sources
+                // post less. Use 24h stale threshold then; 12h on business days.
+                const now = new Date();
+                const hour = now.getHours();
+                const day = now.getDay(); // 0=Sun, 6=Sat
+                const isQuietWindow = hour >= 20 || hour < 8 || day === 0 || day === 6;
+                const threshold = isQuietWindow ? 24 : 12;
+                const isStale = hoursAgo >= threshold;
                 return (
                   <p className={`text-[10px] font-mono mt-1 ${isStale ? 'text-amber-700 font-semibold' : 'text-emerald-700'}`}>
                     {isStale ? '⚠ ' : '● '}Last new story: {getRelativeTime(new Date(newest).toISOString())}
