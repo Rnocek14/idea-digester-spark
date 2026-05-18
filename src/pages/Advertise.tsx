@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import PageShell from "@/components/PageShell";
 import { PageMeta } from "@/components/PageMeta";
+import { LG_CORE_KEYWORDS, LG_GEO_KEYWORDS } from "@/lib/seoKeywords";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -117,6 +118,16 @@ const Advertise = () => {
         title="Advertise with Lake Geneva Brief — Sponsor Local News"
         description="Reach engaged Lake Geneva locals and visitors. Sponsor daily local news, events, dining, and nightlife coverage trusted by the community."
         path="/advertise"
+        keywords={[
+          ...LG_CORE_KEYWORDS,
+          ...LG_GEO_KEYWORDS,
+          "advertise Lake Geneva",
+          "Lake Geneva advertising",
+          "Lake Geneva sponsorship",
+          "Lake Geneva newsletter sponsor",
+          "local advertising Lake Geneva WI",
+          "Walworth County advertising",
+        ]}
       />
       {/* Hero */}
       <header className="mb-10 space-y-4">

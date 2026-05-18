@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Briefcase, Plus, Search, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PageMeta } from "@/components/PageMeta";
+import { LG_CORE_KEYWORDS, LG_GEO_KEYWORDS } from "@/lib/seoKeywords";
 
 type JobListing = {
   id: string;
@@ -89,6 +90,18 @@ const Jobs = () => {
         title="Jobs in Lake Geneva, WI – Local Hiring | Lake Geneva Brief"
         description="Browse current job openings from Lake Geneva area businesses — hospitality, retail, trades, and more."
         path="/jobs"
+        keywords={[
+          ...LG_CORE_KEYWORDS,
+          ...LG_GEO_KEYWORDS,
+          "Lake Geneva jobs",
+          "jobs Lake Geneva WI",
+          "Lake Geneva hiring",
+          "Lake Geneva employment",
+          "Walworth County jobs",
+          "Lake Geneva hospitality jobs",
+          "Lake Geneva summer jobs",
+          "Grand Geneva jobs",
+        ]}
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "CollectionPage",
