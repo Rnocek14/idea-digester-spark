@@ -489,9 +489,9 @@ export default function EmployerDashboard() {
         )}
 
         {/* Email Preferences */}
-        {validatedEmail && (
+        {validatedEmail && token && (
           <div className="mt-8">
-            <EmailPreferencesCard email={validatedEmail} />
+            <EmailPreferencesCard email={validatedEmail} token={token} />
           </div>
         )}
 
