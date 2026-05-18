@@ -1,0 +1,1 @@
+UPDATE content_queue SET status='approved', hold_reason=NULL, publish_date=COALESCE(publish_date, now()) WHERE status='pending' AND hold_reason='tier2_category_blocked' AND created_at > now() - interval '7 days';
