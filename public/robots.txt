@@ -12,3 +12,5 @@ Allow: /
 
 User-agent: *
 Allow: /
+
+Sitemap: https://lakegeneva.citybrief.info/sitemap.xml
