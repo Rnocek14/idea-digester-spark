@@ -337,30 +337,16 @@ const LakeGenevaV2 = () => {
           .filter((story: any) => {
             // Exclude past events
             if (story.event_date && story.event_date < todayStr) return false;
-            // Exclude nightlife vertical
-            const vertical = (story.metadata?.vertical || '').toLowerCase();
-            if (vertical === 'nightlife') return false;
-            
             const category = (story.category || '').toLowerCase();
-            // Normalize curly apostrophes to straight
-            const title = (story.title || '').toLowerCase().replace(/['']/g, "'");
-            
-            // Pure entertainment patterns → LATER column only
-            const isPureEntertainment = 
-              title.includes('live music') || 
-              title.includes('concert at') ||
-              title.includes('music at') ||
-              title.includes('music @') ||
-              title.includes('band at') ||
-              title.includes('karaoke') || 
-              title.includes('trivia') ||
-              title.includes('open mic') ||
-              title.includes('dj at') ||
-              title.includes("ladies' night") ||
-              title.includes("ladies night") ||
-              title.includes("dueling pianos");
-            
-            if (category === 'events' && isPureEntertainment) return false;
+            // Use AI-classified verticals to distinguish marquee local events
+            // (e.g. Riviera concerts tagged ["local","nightlife"]) from pure
+            // bar entertainment (Wednesday trivia tagged ["nightlife"]).
+            const rawVerticals: string[] = Array.isArray(story.metadata?.verticals)
+              ? story.metadata.verticals
+              : (story.metadata?.vertical ? [story.metadata.vertical] : []);
+            const verticals = rawVerticals.map((v: string) => (v || '').toLowerCase());
+            const isNightlifeOnly = verticals.length > 0 && verticals.every((v) => v === 'nightlife');
+            if (category === 'events' && isNightlifeOnly) return false;
             return true;
           })
           .map((story: any) => {
