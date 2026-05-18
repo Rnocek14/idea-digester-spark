@@ -68,8 +68,9 @@ const App = () => (
         <Suspense fallback={<LoadingFallback />}>
           <HostnameRouter>
             <Routes>
-            <Route path="/" element={<LakeGeneva />} />
-            <Route path="/v2" element={<LakeGenevaV2 />} />
+            <Route path="/" element={<LakeGenevaV2 />} />
+            <Route path="/v1" element={<LakeGeneva />} />
+            <Route path="/v2" element={<Navigate to="/" replace />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/lake-geneva" element={<Navigate to="/" replace />} />
             <Route path="/selling-lake-geneva" element={<SellingLakeGeneva />} />
