@@ -284,7 +284,6 @@ const LakeGenevaV2 = () => {
   const [mobileViewDropdownOpen, setMobileViewDropdownOpen] = useState(false);
 
   useEffect(() => {
-    document.title = "Lake Geneva Brief – V2 Layout";
     getReferralSource();
   }, []);
 
