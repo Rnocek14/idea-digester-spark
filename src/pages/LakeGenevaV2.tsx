@@ -384,7 +384,7 @@ const LakeGenevaV2 = () => {
         .from("content_queue")
         .select("*, source:sources(name)")
         .in("status", ["published", "auto_published"])
-        .eq("safety_level", "safe")
+        .in("safety_level", ["safe", "soft_sensitive"])
         .gte("geo_tier", 0)  // Phase 1: Include regional
         .lte("geo_tier", 2)
         .gte("created_at", twoWeeksAgo)
@@ -405,7 +405,7 @@ const LakeGenevaV2 = () => {
           .from("content_queue")
           .select("*, source:sources(name)")
           .in("status", ["published", "auto_published"])
-          .eq("safety_level", "safe")
+          .in("safety_level", ["safe", "soft_sensitive"])
           .gte("geo_tier", 0)
           .lte("geo_tier", 2)
           .gte("created_at", threeWeeksAgo)

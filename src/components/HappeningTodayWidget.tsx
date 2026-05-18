@@ -124,7 +124,7 @@ export default function HappeningTodayWidget({ enabled = true }: HappeningTodayW
         .from("content_queue")
         .select("id, title, event_date, event_time, category, original_url, metadata")
         .in("status", ["published", "auto_published"])
-        .eq("safety_level", "safe")
+        .in("safety_level", ["safe", "soft_sensitive"])
         .eq("event_date", todayStr)
         .gte("geo_tier", 1)
         .lte("geo_tier", 2)
