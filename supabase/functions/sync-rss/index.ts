@@ -1563,7 +1563,7 @@ serve(async (req) => {
         for (const item of items) {
           let originalUrl = item.link || item["@_href"] || "";
           const title = item.title || "";
-          const rawContent = item.description || item.content || item.summary || "";
+          const rawContent = stripHtml(item.description || item.content || item.summary || "");
           const pubDate = item.pubDate || item.published || item.updated || new Date().toISOString();
 
           if (!title) {
