@@ -3,6 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import PageShell from "@/components/PageShell";
+import { PageMeta } from "@/components/PageMeta";
 
 type Business = {
   id: string;
@@ -88,6 +89,11 @@ const PublicDirectory = () => {
       title="Lake Geneva Business Directory – Lake Geneva Brief"
       description="Independent shops, services, and local businesses in Lake Geneva."
     >
+      <PageMeta
+        title="Lake Geneva Business Directory – Local Shops & Services"
+        description="Independent shops, restaurants, and services in and around Lake Geneva, Wisconsin."
+        path="/directory"
+      />
       {/* Header */}
       <header className="mb-8 space-y-3">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">

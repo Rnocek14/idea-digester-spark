@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import PageShell from "@/components/PageShell";
+import { PageMeta } from "@/components/PageMeta";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -249,6 +250,11 @@ const FishFryGuide = () => {
 
   return (
     <PageShell>
+      <PageMeta
+        title="Lake Geneva Fish Fry Guide – Friday Night Fish Frys"
+        description="The definitive Friday fish fry directory for Lake Geneva and Walworth County, with prices, hours, and what's on the menu."
+        path="/eats/fish-fry"
+      />
       {/* Hero Section */}
       <div className="relative -mx-4 sm:-mx-6 lg:-mx-8 mb-8 overflow-hidden rounded-b-3xl bg-gradient-to-br from-blue-900 via-blue-800 to-cyan-900 px-6 py-12 text-white">
         <div className="absolute inset-0 opacity-20">

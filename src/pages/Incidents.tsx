@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AlertTriangle, Flame, Car, CloudLightning, Shield, Zap } from "lucide-react";
 import { PublicHeader } from "@/components/PublicHeader";
 import { PublicFooter } from "@/components/PublicFooter";
+import { PageMeta } from "@/components/PageMeta";
 
 type Incident = {
   id: string;
@@ -82,6 +83,11 @@ export default function Incidents() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <PageMeta
+        title="Lake Geneva Live Incidents – Police, Fire & Weather"
+        description="Real-time police, fire, weather, and traffic incidents in the Lake Geneva area."
+        path="/incidents"
+      />
       <PublicHeader />
 
       <main className="flex-1 container max-w-4xl mx-auto px-4 py-8">
