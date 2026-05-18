@@ -157,6 +157,7 @@ export default function IncidentDetail() {
         description={metaDescription}
         path={`/incidents/${slug ?? ""}`}
         jsonLd={incidentJsonLd}
+        ogType="article"
       />
       <PublicHeader />
 
