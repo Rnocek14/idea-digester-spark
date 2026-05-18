@@ -2099,9 +2099,9 @@ When in doubt between safe and soft_sensitive, choose safe. When in doubt betwee
             .from("content_queue")
             .insert({
               source_id: source.id,
-              title: title,
-              content: rawContent,
-              summary: aiResult.summary || "",
+              title: stripHtml(title),
+              content: stripHtml(rawContent),
+              summary: stripHtml(aiResult.summary || ""),
               category: aiCategory,
               original_url: originalUrl,
               normalized_url: normalizedUrlValue,
