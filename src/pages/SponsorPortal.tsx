@@ -153,29 +153,22 @@ export default function SponsorPortal() {
       if (!token) return null;
       
       const { data, error } = await supabase
-        .from("sponsor_access_tokens")
-        .select(`
-          email,
-          business_id,
-          expires_at,
-          used_at,
-          business:business_profiles(id, name, email)
-        `)
-        .eq("token", token)
-        .gt("expires_at", new Date().toISOString())
-        .single();
+        .rpc("validate_sponsor_token", { _token: token });
 
-      if (error || !data) return null;
-      
-      // Mark token as used if first time
-      if (!data.used_at) {
-        await supabase
-          .from("sponsor_access_tokens")
-          .update({ used_at: new Date().toISOString() })
-          .eq("token", token);
+      if (error || !data || data.length === 0) return null;
+      const row = data[0];
+
+      if (!row.used_at) {
+        await supabase.rpc("mark_sponsor_token_used", { _token: token });
       }
-      
-      return data as TokenData;
+
+      return {
+        email: row.email,
+        business_id: row.business_id,
+        expires_at: row.expires_at,
+        used_at: row.used_at,
+        business: { id: row.business_id, name: row.business_name, email: row.email },
+      } as TokenData;
     },
     enabled: !!token,
   });

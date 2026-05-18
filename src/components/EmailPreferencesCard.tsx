@@ -8,52 +8,32 @@ import { Bell, Mail, CalendarClock, Loader2 } from "lucide-react";
 
 interface EmailPreferencesCardProps {
   email: string;
+  token: string;
 }
 
-export default function EmailPreferencesCard({ email }: EmailPreferencesCardProps) {
+export default function EmailPreferencesCard({ email, token }: EmailPreferencesCardProps) {
   const queryClient = useQueryClient();
 
   const { data: preferences, isLoading } = useQuery({
     queryKey: ["employer-email-preferences", email],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("employer_email_preferences")
-        .select("*")
-        .eq("email", email.toLowerCase())
-        .maybeSingle();
+        .rpc("get_employer_preferences", { _token: token });
 
       if (error) throw error;
-      
-      // Return defaults if no preferences exist
-      return data || { weekly_digest: true, expiry_reminders: true };
+      return (data && data[0]) || { weekly_digest: true, expiry_reminders: true };
     },
-    enabled: !!email,
+    enabled: !!email && !!token,
   });
 
   const updatePreferenceMutation = useMutation({
     mutationFn: async ({ field, value }: { field: "weekly_digest" | "expiry_reminders"; value: boolean }) => {
-      const { data: existing } = await supabase
-        .from("employer_email_preferences")
-        .select("id")
-        .eq("email", email.toLowerCase())
-        .maybeSingle();
-
-      if (existing) {
-        const { error } = await supabase
-          .from("employer_email_preferences")
-          .update({ [field]: value, updated_at: new Date().toISOString() })
-          .eq("email", email.toLowerCase());
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from("employer_email_preferences")
-          .insert({ 
-            email: email.toLowerCase(), 
-            weekly_digest: field === "weekly_digest" ? value : true,
-            expiry_reminders: field === "expiry_reminders" ? value : true,
-          });
-        if (error) throw error;
-      }
+      const { error } = await supabase.rpc("set_employer_preference", {
+        _token: token,
+        _field: field,
+        _value: value,
+      });
+      if (error) throw error;
     },
     onSuccess: (_, { field, value }) => {
       queryClient.invalidateQueries({ queryKey: ["employer-email-preferences", email] });
