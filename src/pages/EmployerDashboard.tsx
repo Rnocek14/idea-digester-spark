@@ -63,17 +63,10 @@ export default function EmployerDashboard() {
       if (!token) return null;
       
       const { data, error } = await supabase
-        .from("employer_access_tokens")
-        .select("email, expires_at, used_at")
-        .eq("token", token)
-        .single();
+        .rpc("validate_employer_token", { _token: token });
 
-      if (error || !data) return null;
-      
-      // Check if expired
-      if (new Date(data.expires_at) < new Date()) return null;
-      
-      return data;
+      if (error || !data || data.length === 0) return null;
+      return data[0];
     },
     enabled: !!token,
   });
@@ -84,11 +77,7 @@ export default function EmployerDashboard() {
       
       // Mark token as used if first use
       if (!tokenData.used_at) {
-        supabase
-          .from("employer_access_tokens")
-          .update({ used_at: new Date().toISOString() })
-          .eq("token", token)
-          .then();
+        supabase.rpc("mark_employer_token_used", { _token: token! }).then();
       }
     }
   }, [tokenData, token]);
@@ -500,9 +489,9 @@ export default function EmployerDashboard() {
         )}
 
         {/* Email Preferences */}
-        {validatedEmail && (
+        {validatedEmail && token && (
           <div className="mt-8">
-            <EmailPreferencesCard email={validatedEmail} />
+            <EmailPreferencesCard email={validatedEmail} token={token} />
           </div>
         )}
 

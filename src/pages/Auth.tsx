@@ -189,16 +189,18 @@ const Auth = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="mb-4">
-            <Button 
-              onClick={handleDevLogin} 
-              variant="outline" 
-              className="w-full"
-              disabled={loading}
-            >
-              🚀 Dev Test Login
-            </Button>
-          </div>
+          {import.meta.env.DEV && (
+            <div className="mb-4">
+              <Button 
+                onClick={handleDevLogin} 
+                variant="outline" 
+                className="w-full"
+                disabled={loading}
+              >
+                🚀 Dev Test Login
+              </Button>
+            </div>
+          )}
 
           {showEmailConfirmation && (
             <Alert className="mb-4">

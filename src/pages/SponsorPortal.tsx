@@ -153,29 +153,22 @@ export default function SponsorPortal() {
       if (!token) return null;
       
       const { data, error } = await supabase
-        .from("sponsor_access_tokens")
-        .select(`
-          email,
-          business_id,
-          expires_at,
-          used_at,
-          business:business_profiles(id, name, email)
-        `)
-        .eq("token", token)
-        .gt("expires_at", new Date().toISOString())
-        .single();
+        .rpc("validate_sponsor_token", { _token: token });
 
-      if (error || !data) return null;
-      
-      // Mark token as used if first time
-      if (!data.used_at) {
-        await supabase
-          .from("sponsor_access_tokens")
-          .update({ used_at: new Date().toISOString() })
-          .eq("token", token);
+      if (error || !data || data.length === 0) return null;
+      const row = data[0];
+
+      if (!row.used_at) {
+        await supabase.rpc("mark_sponsor_token_used", { _token: token });
       }
-      
-      return data as TokenData;
+
+      return {
+        email: row.email,
+        business_id: row.business_id,
+        expires_at: row.expires_at,
+        used_at: row.used_at,
+        business: { id: row.business_id, name: row.business_name, email: row.email },
+      } as TokenData;
     },
     enabled: !!token,
   });
@@ -299,6 +292,14 @@ export default function SponsorPortal() {
       return;
     }
 
+    const esc = (v: unknown) =>
+      String(v ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+
     const html = `
       <!DOCTYPE html>
       <html>
@@ -334,20 +335,20 @@ export default function SponsorPortal() {
           <div class="logo">Lake Geneva Locals</div>
           <div class="invoice-title">
             <h1>INVOICE</h1>
-            <p>${invoice.invoice_number}</p>
+            <p>${esc(invoice.invoice_number)}</p>
           </div>
         </div>
         
         <div class="details">
           <div class="details-section">
             <h3>Bill To</h3>
-            <p><strong>${businessName || "Sponsor"}</strong></p>
+            <p><strong>${esc(businessName || "Sponsor")}</strong></p>
           </div>
           <div class="details-section">
             <h3>Invoice Details</h3>
             <p><strong>Date:</strong> ${format(new Date(invoice.created_at), "MMM d, yyyy")}</p>
             ${invoice.due_date ? `<p><strong>Due Date:</strong> ${format(new Date(invoice.due_date), "MMM d, yyyy")}</p>` : ""}
-            <p><strong>Status:</strong> <span class="status ${invoice.status}">${invoice.status.toUpperCase()}</span></p>
+            <p><strong>Status:</strong> <span class="status ${esc(invoice.status)}">${esc(invoice.status.toUpperCase())}</span></p>
             ${invoice.paid_at ? `<p><strong>Paid:</strong> ${format(new Date(invoice.paid_at), "MMM d, yyyy")}</p>` : ""}
           </div>
         </div>
@@ -362,7 +363,7 @@ export default function SponsorPortal() {
           </thead>
           <tbody>
             <tr>
-              <td>${invoice.description || "Advertising Services"}</td>
+              <td>${esc(invoice.description || "Advertising Services")}</td>
               <td>${invoice.period_start && invoice.period_end ? `${format(new Date(invoice.period_start), "MMM d")} - ${format(new Date(invoice.period_end), "MMM d, yyyy")}` : "—"}</td>
               <td class="amount">$${(invoice.amount_cents / 100).toFixed(2)}</td>
             </tr>

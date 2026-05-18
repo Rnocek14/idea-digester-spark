@@ -225,6 +225,14 @@ export const SponsorBilling = () => {
       return;
     }
 
+    const esc = (v: unknown) =>
+      String(v ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+
     const html = `
       <!DOCTYPE html>
       <html>
@@ -260,20 +268,20 @@ export const SponsorBilling = () => {
           <div class="logo">Lake Geneva Locals</div>
           <div class="invoice-title">
             <h1>INVOICE</h1>
-            <p>${invoice.invoice_number}</p>
+            <p>${esc(invoice.invoice_number)}</p>
           </div>
         </div>
         
         <div class="details">
           <div class="details-section">
             <h3>Bill To</h3>
-            <p><strong>${invoice.business?.name || "Unknown Business"}</strong></p>
+            <p><strong>${esc(invoice.business?.name || "Unknown Business")}</strong></p>
           </div>
           <div class="details-section">
             <h3>Invoice Details</h3>
             <p><strong>Date:</strong> ${format(new Date(invoice.created_at), "MMM d, yyyy")}</p>
             ${invoice.due_date ? `<p><strong>Due Date:</strong> ${format(new Date(invoice.due_date), "MMM d, yyyy")}</p>` : ""}
-            <p><strong>Status:</strong> <span class="status ${invoice.status}">${invoice.status.toUpperCase()}</span></p>
+            <p><strong>Status:</strong> <span class="status ${esc(invoice.status)}">${esc(invoice.status.toUpperCase())}</span></p>
             ${invoice.paid_at ? `<p><strong>Paid:</strong> ${format(new Date(invoice.paid_at), "MMM d, yyyy")}</p>` : ""}
           </div>
         </div>
@@ -288,7 +296,7 @@ export const SponsorBilling = () => {
           </thead>
           <tbody>
             <tr>
-              <td>${invoice.description || "Advertising Services"}</td>
+              <td>${esc(invoice.description || "Advertising Services")}</td>
               <td>${invoice.period_start && invoice.period_end ? `${format(new Date(invoice.period_start), "MMM d")} - ${format(new Date(invoice.period_end), "MMM d, yyyy")}` : "—"}</td>
               <td class="amount">$${(invoice.amount_cents / 100).toFixed(2)}</td>
             </tr>
