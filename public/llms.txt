@@ -1,0 +1,22 @@
+# Lake Geneva Brief
+
+> The five-minute local brief for Lake Geneva, Wisconsin — covering city hall, schools, business, dining, nightlife, and events.
+
+Lake Geneva Brief is a hyperlocal news and community guide for Lake Geneva and the surrounding Walworth County area. We curate civic news, incident reports, things to do, restaurant guides, and job listings from trusted local sources.
+
+## Pages
+
+- [Home](/): Today's top local news, events, and community updates for Lake Geneva.
+- [Selling in Lake Geneva](/selling-lake-geneva): Real estate guide for homeowners considering selling on the lake.
+- [Business Directory](/directory): Local businesses, shops, and services around Lake Geneva.
+- [Nightlife](/nightlife): Tonight's live music, bar specials, and nightlife events.
+- [Eats](/eats): Restaurants and dining around Lake Geneva.
+- [Fish Fry Guide](/eats/fish-fry): Friday fish fry directory for the Lake Geneva area.
+- [Incidents](/incidents): Recent police, fire, and public safety incidents.
+- [Jobs](/jobs): Local job listings in and around Lake Geneva.
+- [Deals](/deals): Local deals and offers from area businesses.
+- [Advertise](/advertise): Sponsorship and advertising options.
+
+## Optional
+
+- [Post a Job](/jobs/post): Employer-facing job posting form.
