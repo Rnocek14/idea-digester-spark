@@ -661,18 +661,37 @@ const LakeGenevaV2 = () => {
     previousFeedIdsRef.current = currentIds;
   }, [stories, viewMode]);
 
+  // Categories that shouldn't dominate the hero slot — routine recurring bar/dining specials
+  const LOW_PRIORITY_LEAD_CATEGORIES = new Set(['nightlife', 'dining', 'entertainment']);
+
   // Filter stories based on view mode and category
   const getFilteredStories = () => {
     if (viewMode === 'topic' && activeCategory !== 'all') {
-      return stories.filter((s: Story) => 
+      return stories.filter((s: Story) =>
         (s.category || '').toLowerCase() === activeCategory.toLowerCase()
       );
     }
     if (viewMode === 'recent') {
       // Pure chronological by created_at
-      return [...stories].sort((a: Story, b: Story) => 
+      return [...stories].sort((a: Story, b: Story) =>
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
+    }
+    // 'all' mode: lift the first non-nightlife/dining story into the hero slot
+    // so the front page doesn't lead with a recurring bar special.
+    if (stories.length > 1) {
+      const leadCat = (stories[0].category || '').toLowerCase();
+      if (LOW_PRIORITY_LEAD_CATEGORIES.has(leadCat)) {
+        const swapIdx = stories.findIndex(
+          (s) => !LOW_PRIORITY_LEAD_CATEGORIES.has((s.category || '').toLowerCase())
+        );
+        if (swapIdx > 0) {
+          const reordered = [...stories];
+          const [promoted] = reordered.splice(swapIdx, 1);
+          reordered.unshift(promoted);
+          return reordered;
+        }
+      }
     }
     return stories;
   };
