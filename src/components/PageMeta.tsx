@@ -7,17 +7,21 @@ interface PageMetaProps {
   jsonLd?: Record<string, unknown> | Record<string, unknown>[];
   ogType?: "website" | "article";
   ogImage?: string;
+  keywords?: string[];
 }
 
 const SITE = "https://lakegeneva.citybrief.info";
 
-export function PageMeta({ title, description, path, jsonLd, ogType = "website", ogImage }: PageMetaProps) {
+export function PageMeta({ title, description, path, jsonLd, ogType = "website", ogImage, keywords }: PageMetaProps) {
   const url = `${SITE}${path}`;
   const ldArray = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
   return (
     <Helmet>
       <title>{title}</title>
       <meta name="description" content={description} />
+      {keywords && keywords.length > 0 ? (
+        <meta name="keywords" content={keywords.join(", ")} />
+      ) : null}
       <link rel="canonical" href={url} />
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />
