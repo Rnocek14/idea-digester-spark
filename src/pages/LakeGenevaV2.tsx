@@ -571,10 +571,25 @@ const LakeGenevaV2 = () => {
         .maybeSingle();
 
       if (error) throw error;
-      return data ? { 
-        ...data.business, 
-        placementId: data.id, 
-        businessId: data.business_id 
+      if (data) {
+        return { 
+          ...data.business, 
+          placementId: data.id, 
+          businessId: data.business_id 
+        } as Sponsor & { placementId: string; businessId: string };
+      }
+      // Fallback: always-on Gina Nocek card when no paid placement is active.
+      // The site is a real-estate funnel; "Presented by" should never be empty.
+      const { data: fallback } = await supabase
+        .from("business_profiles")
+        .select("name, logo_url, website, category, phone, description, email, zillow_url, zillow_rating, zillow_review_count, testimonial_quote")
+        .eq("id", "db06b0ce-2fe3-4a01-a870-7f2aef1913a6")
+        .maybeSingle();
+      return fallback ? {
+        ...fallback,
+        placementId: "fallback-gina",
+        businessId: "db06b0ce-2fe3-4a01-a870-7f2aef1913a6",
+        _isFallback: true,
       } as Sponsor & { placementId: string; businessId: string } : null;
     },
     staleTime: 300000,
