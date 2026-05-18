@@ -23,6 +23,7 @@ import { NavLink } from "@/components/NavLink";
 import { Home, Star, Phone, ChevronDown } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { PageMeta } from "@/components/PageMeta";
+import { LG_ALL_KEYWORDS } from "@/lib/seoKeywords";
 
 // Category order for topic mode filtering
 const categoryOrder = ['news', 'civic', 'events', 'dining', 'community', 'schools', 'real_estate'];
@@ -720,6 +721,7 @@ const LakeGenevaV2 = () => {
         title="Lake Geneva Brief – Today's Local News & Things To Do"
         description="Today's local news, civic updates, events, dining, and nightlife in Lake Geneva, Wisconsin — curated daily."
         path="/"
+        keywords={LG_ALL_KEYWORDS}
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "WebSite",

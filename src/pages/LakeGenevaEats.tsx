@@ -4,6 +4,7 @@ import { Utensils, MapPin, Clock, ArrowRight, Star, Calendar, ExternalLink } fro
 import { supabase } from "@/integrations/supabase/client";
 import PageShell from "@/components/PageShell";
 import { PageMeta } from "@/components/PageMeta";
+import { LG_CORE_KEYWORDS, LG_GEO_KEYWORDS } from "@/lib/seoKeywords";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -181,6 +182,18 @@ const LakeGenevaEats = () => {
         title="Lake Geneva Eats — Restaurants, Openings & Dining News"
         description="The latest Lake Geneva dining news, new restaurant openings, weekly specials, and where locals are eating this week."
         path="/eats"
+        keywords={[
+          ...LG_CORE_KEYWORDS,
+          ...LG_GEO_KEYWORDS,
+          "Lake Geneva restaurants",
+          "Lake Geneva dining",
+          "best restaurants Lake Geneva",
+          "new restaurants Lake Geneva",
+          "where to eat Lake Geneva",
+          "Lake Geneva brunch",
+          "Lake Geneva happy hour",
+          "Lake Geneva fish fry",
+        ]}
       />
       {/* Hero Section */}
       <div className="relative -mx-4 sm:-mx-6 lg:-mx-8 mb-8 overflow-hidden rounded-b-3xl bg-gradient-to-br from-amber-900 via-orange-800 to-red-900 px-6 py-12 text-white">

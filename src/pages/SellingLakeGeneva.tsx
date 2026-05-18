@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import lakeGenevaHero from "@/assets/lake-geneva-hero.jpg";
 import PageShell from "@/components/PageShell";
 import { PageMeta } from "@/components/PageMeta";
+import { LG_CORE_KEYWORDS, LG_GEO_KEYWORDS } from "@/lib/seoKeywords";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -159,6 +160,19 @@ const SellingLakeGeneva = () => {
         title="Selling a Home in Lake Geneva — Gina Nocek, Local Realtor"
         description="Thinking of selling your Lake Geneva home? Get a hyperlocal market analysis from Gina Nocek, a top Lake Geneva realtor who knows the neighborhoods."
         path="/selling-lake-geneva"
+        keywords={[
+          ...LG_CORE_KEYWORDS,
+          ...LG_GEO_KEYWORDS,
+          "Lake Geneva real estate",
+          "Lake Geneva realtor",
+          "Gina Nocek",
+          "sell my house Lake Geneva",
+          "homes for sale Lake Geneva WI",
+          "Lake Geneva home values",
+          "Lake Geneva lakefront homes",
+          "Geneva Lake property",
+          "Walworth County real estate",
+        ]}
         jsonLd={[
           {
             "@context": "https://schema.org",

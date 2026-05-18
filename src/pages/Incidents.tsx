@@ -8,6 +8,7 @@ import { AlertTriangle, Flame, Car, CloudLightning, Shield, Zap } from "lucide-r
 import { PublicHeader } from "@/components/PublicHeader";
 import { PublicFooter } from "@/components/PublicFooter";
 import { PageMeta } from "@/components/PageMeta";
+import { LG_CORE_KEYWORDS, LG_GEO_KEYWORDS } from "@/lib/seoKeywords";
 
 type Incident = {
   id: string;
@@ -87,6 +88,18 @@ export default function Incidents() {
         title="Lake Geneva Live Incidents – Police, Fire & Weather"
         description="Real-time police, fire, weather, and traffic incidents in the Lake Geneva area."
         path="/incidents"
+        keywords={[
+          ...LG_CORE_KEYWORDS,
+          ...LG_GEO_KEYWORDS,
+          "Lake Geneva police",
+          "Lake Geneva fire",
+          "Lake Geneva weather alerts",
+          "Lake Geneva road closures",
+          "Walworth County sheriff",
+          "Lake Geneva traffic",
+          "Lake Geneva incidents",
+          "Lake Geneva breaking news",
+        ]}
       />
       <PublicHeader />
 

@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import PageShell from "@/components/PageShell";
 import { PageMeta } from "@/components/PageMeta";
+import { LG_CORE_KEYWORDS, LG_GEO_KEYWORDS } from "@/lib/seoKeywords";
 
 type Business = {
   id: string;
@@ -93,6 +94,16 @@ const PublicDirectory = () => {
         title="Lake Geneva Business Directory – Local Shops & Services"
         description="Independent shops, restaurants, and services in and around Lake Geneva, Wisconsin."
         path="/directory"
+        keywords={[
+          ...LG_CORE_KEYWORDS,
+          ...LG_GEO_KEYWORDS,
+          "Lake Geneva businesses",
+          "Lake Geneva shops",
+          "Lake Geneva services",
+          "downtown Lake Geneva",
+          "shops in Lake Geneva",
+          "Lake Geneva business directory",
+        ]}
       />
       {/* Header */}
       <header className="mb-8 space-y-3">

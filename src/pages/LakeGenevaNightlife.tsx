@@ -5,6 +5,7 @@ import { Moon, Music, Calendar, MapPin, Clock, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import PageShell from "@/components/PageShell";
 import { PageMeta } from "@/components/PageMeta";
+import { LG_CORE_KEYWORDS, LG_GEO_KEYWORDS, LG_LANDMARK_KEYWORDS } from "@/lib/seoKeywords";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -161,6 +162,18 @@ const LakeGenevaNightlife = () => {
         title="Lake Geneva Nightlife — Live Music, Bars & Late-Night Events"
         description="Tonight and this week around Lake Geneva: live music, DJ sets, bar specials, and lakefront nightlife. Updated daily from local venues."
         path="/nightlife"
+        keywords={[
+          ...LG_CORE_KEYWORDS,
+          ...LG_GEO_KEYWORDS,
+          ...LG_LANDMARK_KEYWORDS,
+          "Lake Geneva nightlife",
+          "Lake Geneva live music",
+          "Lake Geneva bars",
+          "Lake Geneva DJ",
+          "Lake Geneva tonight",
+          "Lake Geneva this weekend",
+          "Riviera Ballroom concerts",
+        ]}
       />
       {/* Hero Section */}
       <div className="relative -mx-4 sm:-mx-6 lg:-mx-8 mb-8 overflow-hidden rounded-b-3xl bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 px-6 py-12 text-white">
