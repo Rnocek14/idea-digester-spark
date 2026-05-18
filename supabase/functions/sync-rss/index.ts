@@ -1057,6 +1057,15 @@ function decideStatusForStory(
   
   const rule = specific || global;
   if (!rule) {
+    // TIER-AWARE DEFAULT: if no rule matches but the story is from a
+    // hyperlocal (Tier-1) source and is safe, auto-publish. Tier-2 falls
+    // through the category gate; Tier-0 still requires explicit review.
+    if (geoTier >= 1 && safetyLevel === "safe") {
+      if (geoTier === 2 && cat && !TIER2_ALLOWED_CATEGORIES.includes(cat)) {
+        return { status: "pending", holdReason: "tier2_category_blocked", decisionPath: "tier2_default_gate" };
+      }
+      return { status: "auto_published", decisionPath: "tier_default_auto" };
+    }
     return { status: "pending", holdReason: "no_matching_rule", decisionPath: "no_rule_match" };
   }
   
@@ -1654,22 +1663,17 @@ serve(async (req) => {
           }
           
           if (daysOld > MAX_STORY_AGE_DAYS && !isRecurringEvent(title)) {
-            // EXCEPTION: events / event-category content with a future event date
-            // should pass the stale gate even if the *publish* date is old. A
-            // summer festival announced months in advance is still useful.
+            // EXCEPTION: any story with a parseable future event date passes
+            // the stale gate, regardless of source category. A news source
+            // announcing a July festival in March is still useful.
             let skipStaleGate = false;
-            const isEventCategoryEarly = source.category === 'events' ||
-              source.name.toLowerCase().includes('event') ||
-              source.name.toLowerCase().includes('calendar');
-            if (isEventCategoryEarly) {
-              try {
-                const earlyEventDate = parseEventDate(title, rawContent);
-                if (earlyEventDate && earlyEventDate.getTime() > now) {
-                  skipStaleGate = true;
-                  console.log(`📅 Stale-gate bypass (future event ${earlyEventDate.toISOString().split('T')[0]}): "${title.substring(0, 50)}..."`);
-                }
-              } catch (_e) { /* ignore parse errors, fall through to skip */ }
-            }
+            try {
+              const earlyEventDate = parseEventDate(title, rawContent);
+              if (earlyEventDate && earlyEventDate.getTime() > now) {
+                skipStaleGate = true;
+                console.log(`📅 Stale-gate bypass (future event ${earlyEventDate.toISOString().split('T')[0]}): "${title.substring(0, 50)}..."`);
+              }
+            } catch (_e) { /* ignore */ }
             if (!skipStaleGate) {
               console.log(`⏭️ Skipping stale story (${Math.floor(daysOld)} days old): "${title.substring(0, 50)}..."`);
               recordSkip(source, 'stale_content', { url: originalUrl, title });
@@ -1910,14 +1914,19 @@ When in doubt between safe and soft_sensitive, choose safe. When in doubt betwee
             
             // FALLBACK: Insert with basic classification so pipeline doesn't stall
             // Use source category or 'news', safety 'soft_sensitive' (conservative), pending for review
+            // For trusted local sources, treat AI-unavailable as "safe" so
+            // content still flows. The source itself is the safety signal here.
+            const trustedFallback = (source.default_geo_tier ?? 0) >= 1;
             aiResult = {
               summary: rawContent.substring(0, 200),
               category: source.category || "news",
               content_tags: [],
               verticals: ["local"],
-              safety_level: "soft_sensitive",
+              safety_level: trustedFallback ? "safe" : "soft_sensitive",
               safety_tags: ["ai_unavailable"],
-              safety_reason: "Fallback: AI classification unavailable, pending human review"
+              safety_reason: trustedFallback
+                ? "Fallback: AI unavailable, trusted local source"
+                : "Fallback: AI classification unavailable, pending human review"
             };
             aiData = null;
           } else {

@@ -91,23 +91,20 @@ const formatTime = (timeStr: string | null): string => {
   return `${hours}:${minutes} ${displayPeriod?.toUpperCase() || "PM"}`;
 };
 
-// Check if event is pure entertainment (belongs in LATER, not here)
-const isPureEntertainment = (title: string): boolean => {
-  const t = title.toLowerCase().replace(/[']/g, "'");
-  return (
-    t.includes('live music') ||
-    t.includes('concert at') ||
-    t.includes('music at') ||
-    t.includes('music @') ||
-    t.includes('band at') ||
-    t.includes('karaoke') ||
-    t.includes('trivia') ||
-    t.includes('open mic') ||
-    t.includes('dj at') ||
-    t.includes("ladies' night") ||
-    t.includes("ladies night") ||
-    t.includes("dueling pianos")
-  );
+// Check if event is pure nightlife (belongs in LATER, not here).
+// Uses AI-classified verticals from metadata rather than title substrings,
+// so marquee local events tagged ["local","nightlife"] (e.g. Riviera concerts)
+// still surface here.
+const isNightlifeOnly = (metadata: Json): boolean => {
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return false;
+  const v = (metadata as Record<string, unknown>).verticals;
+  const arr: string[] = Array.isArray(v)
+    ? (v as unknown[]).filter((x): x is string => typeof x === 'string')
+    : (typeof (metadata as Record<string, unknown>).vertical === 'string'
+        ? [(metadata as Record<string, unknown>).vertical as string]
+        : []);
+  if (arr.length === 0) return false;
+  return arr.every((x) => x.toLowerCase() === 'nightlife');
 };
 
 interface HappeningTodayWidgetProps {
@@ -124,7 +121,7 @@ export default function HappeningTodayWidget({ enabled = true }: HappeningTodayW
         .from("content_queue")
         .select("id, title, event_date, event_time, category, original_url, metadata")
         .in("status", ["published", "auto_published"])
-        .eq("safety_level", "safe")
+        .in("safety_level", ["safe", "soft_sensitive"])
         .eq("event_date", todayStr)
         .gte("geo_tier", 1)
         .lte("geo_tier", 2)
@@ -137,8 +134,8 @@ export default function HappeningTodayWidget({ enabled = true }: HappeningTodayW
       const seen = new Set<string>();
       return (data || [])
         .filter((event: HappeningEvent) => {
-          // Exclude pure entertainment
-          if (isPureEntertainment(event.title)) return false;
+          // Exclude pure nightlife (trivia/karaoke-only events)
+          if (isNightlifeOnly(event.metadata)) return false;
           
           // Dedupe by venue to avoid "Live at X" and "Trivia at X" both showing
           const venue = extractVenue(event).toLowerCase();
