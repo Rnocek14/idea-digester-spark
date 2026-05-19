@@ -83,7 +83,7 @@ const LiveColumnHeader = () => {
           )}
         </div>
       </div>
-      <p className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">
+      <p className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
         {updateTime ? `Updated ${updateTime}` : 'Real-time status'}
       </p>
     </div>
@@ -268,7 +268,7 @@ const THIN_FEED_TIER0_CAP = 0.40;
 const GEO_TIER_LABELS = {
   1: { label: 'Lake Geneva', className: 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' },
   2: { label: 'Walworth', className: 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300' },
-  0: { label: 'Wisconsin', className: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400' },
+  0: { label: 'Wisconsin', className: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-500' },
 } as const;
 
 const LakeGenevaV2 = () => {
@@ -791,7 +791,7 @@ const LakeGenevaV2 = () => {
                 <h2 className="text-sm font-black uppercase tracking-[0.15em] text-black">LATEST</h2>
                 <span className="text-[10px] font-mono text-blue-600 uppercase">[LOCAL BRIEFING]</span>
               </div>
-              <p className="text-[10px] font-mono text-slate-400 mt-1">
+              <p className="text-[10px] font-mono text-slate-500 mt-1">
                 What locals should know · {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).toUpperCase()}
               </p>
               {stories.length > 0 && (() => {
@@ -832,14 +832,14 @@ const LakeGenevaV2 = () => {
                 <ul className="space-y-2">
                   {newsFirst.slice(0, 5).map((story: Story) => (
                     <li key={story.id} className="flex items-start gap-2">
-                      <span className="text-slate-400 mt-0.5">•</span>
+                      <span className="text-slate-500 mt-0.5">•</span>
                       <button
                         onClick={() => scrollToStory(story.id)}
                         className="text-left text-sm text-slate-800 hover:text-blue-700 line-clamp-1 flex-1"
                       >
                         {story.title}
                       </button>
-                      <span className="text-[10px] text-slate-400 whitespace-nowrap">
+                      <span className="text-[10px] text-slate-500 whitespace-nowrap">
                         {getRelativeTime(story.created_at)}
                       </span>
                     </li>

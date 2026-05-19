@@ -36,7 +36,7 @@ export const PublicHeader = () => {
             <span className="font-display text-xl tracking-tight text-brand group-hover:text-brand-accent transition-colors">
               Lake Geneva Brief
             </span>
-            <span className="hidden text-[10px] uppercase tracking-[0.15em] text-gray-400 sm:inline">
+            <span className="hidden text-[10px] uppercase tracking-[0.15em] text-gray-500 sm:inline">
               LOCAL EDITION
             </span>
           </NavLink>
