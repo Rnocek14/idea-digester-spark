@@ -74,6 +74,24 @@ const CIVIC_IMAGE_LIBRARIES: Record<CivicTopic, string[]> = {
 
 const GENERIC_OG_PATTERNS = ["IconModuleCalendar", "calendar-icon", "default-event", "placeholder"];
 
+// Known recurring venues — used to prevent the same venue (esp. for live music / specials)
+// from monopolizing the X feed.
+const KNOWN_VENUES = [
+  'abbey resort', 'bar west', '240 west', 'geneva tap house', 'champs sports bar',
+  'inspired coffee', 'next door pub', 'sopra bistro', 'gino\'s east',
+  'baker house', 'pier 290', 'speedo\'s', 'studio winery', 'staller estate',
+  'grand geneva', 'timber ridge', 'lake geneva country club', 'lake lawn resort',
+  'sprecher', 'medusa grill', 'simple cafe', 'oakfire',
+];
+
+function extractVenue(title: string): string | null {
+  const t = title.toLowerCase();
+  for (const v of KNOWN_VENUES) {
+    if (t.includes(v)) return v;
+  }
+  return null;
+}
+
 // Curated dining images for restaurant deals
 const DINING_IMAGE_LIBRARIES: Record<DiningTopic, string[]> = {
   fish_fry: [
@@ -470,6 +488,44 @@ serve(async (req) => {
       x: { maxPerDay: 5 },
     };
 
+    // Per-category daily caps on X to prevent any single category (esp. nightlife/dining)
+    // from monopolizing the feed. News & civic are uncapped (within overall maxPerDay).
+    const X_CATEGORY_DAILY_CAPS: Record<string, number> = {
+      events: 2,
+      entertainment: 2,
+      dining: 1,
+      nightlife: 1,
+      sports: 2,
+    };
+    // Track scheduled counts: "x-YYYY-MM-DD-<category>" -> count
+    const xCategoryCounts = new Map<string, number>();
+    // Track venues already scheduled on X to avoid same-venue repetition: "<venue>" -> last scheduled date
+    const xVenueScheduled = new Map<string, string>();
+
+    // Pre-load category counts and venues from existing pending X posts
+    if (existingPosts) {
+      const { data: existingX } = await supabaseClient
+        .from("post_queue")
+        .select("scheduled_for, metadata")
+        .eq("platform", "x")
+        .eq("status", "pending")
+        .gte("scheduled_for", now.toISOString());
+      for (const p of existingX || []) {
+        const d = new Date(p.scheduled_for).toISOString().split("T")[0];
+        const cat = ((p.metadata as any)?.story_category || "").toLowerCase();
+        if (cat) {
+          const k = `x-${d}-${cat}`;
+          xCategoryCounts.set(k, (xCategoryCounts.get(k) || 0) + 1);
+        }
+        const title = ((p.metadata as any)?.story_title || "").toLowerCase();
+        const venue = extractVenue(title);
+        if (venue) {
+          const prev = xVenueScheduled.get(venue);
+          if (!prev || d < prev) xVenueScheduled.set(venue, d);
+        }
+      }
+    }
+
     let preparedCount = 0;
     let breakingPrepared = 0;
     let civicSkippedIG = 0;
@@ -540,6 +596,22 @@ serve(async (req) => {
         if (platform === 'instagram' && !finalImageUrl) {
           continue;
         }
+
+        // X-specific: venue-level dedup (no two posts about the same venue within 3 days)
+        if (platform === 'x') {
+          const venue = extractVenue(story.title);
+          if (venue) {
+            const prev = xVenueScheduled.get(venue);
+            if (prev) {
+              const prevDate = new Date(prev + 'T00:00:00Z');
+              const daysSince = (now.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24);
+              if (daysSince < 3 && prev >= now.toISOString().split('T')[0]) {
+                console.log(`[prepare-posts] ⚠️ VENUE DEDUP: skipping "${story.title.substring(0,40)}..." — ${venue} already scheduled ${prev}`);
+                continue;
+              }
+            }
+          }
+        }
         
         // Check if already queued or sent for THIS story (prevent duplicates)
         const { data: existing } = await supabaseClient
@@ -593,12 +665,37 @@ serve(async (req) => {
           console.log(`[prepare-posts] 🔴 BREAKING: Scheduling ${platform} post immediately`);
         } else {
           // Use optimal slot scheduling with daily cap
-          const maybeScheduled = getNextOptimalSlot(platform, usedSlotsByPlatform[platform], now, config.maxPerDay);
-          if (!maybeScheduled) {
-            console.log(`[prepare-posts] ⏭️ Skipping ${platform} - no available slots`);
+          // For X, find a slot that also respects per-category daily caps
+          let chosenSlot: Date | null = null;
+          const catKey = (story.category || '').toLowerCase();
+          const catCap = platform === 'x' ? X_CATEGORY_DAILY_CAPS[catKey] : undefined;
+
+          for (let attempt = 0; attempt < 14; attempt++) {
+            const maybeScheduled = getNextOptimalSlot(platform, usedSlotsByPlatform[platform], now, config.maxPerDay);
+            if (!maybeScheduled) break;
+            if (platform === 'x' && catCap !== undefined) {
+              const d = maybeScheduled.toISOString().split('T')[0];
+              const k = `x-${d}-${catKey}`;
+              const count = xCategoryCounts.get(k) || 0;
+              if (count >= catCap) {
+                console.log(`[prepare-posts] ⏭️ X category cap reached for ${catKey} on ${d} (${count}/${catCap}), trying next slot`);
+                continue; // try a different day
+              }
+              xCategoryCounts.set(k, count + 1);
+            }
+            chosenSlot = maybeScheduled;
+            break;
+          }
+          if (!chosenSlot) {
+            console.log(`[prepare-posts] ⏭️ Skipping ${platform} for "${story.title.substring(0,40)}..." - no slot under category cap`);
             continue;
           }
-          scheduledFor = maybeScheduled;
+          scheduledFor = chosenSlot;
+
+          if (platform === 'x') {
+            const venue = extractVenue(story.title);
+            if (venue) xVenueScheduled.set(venue, scheduledFor.toISOString().split('T')[0]);
+          }
         }
 
         const postText = story[`content_${platform}`];
