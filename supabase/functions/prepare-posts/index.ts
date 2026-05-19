@@ -74,6 +74,24 @@ const CIVIC_IMAGE_LIBRARIES: Record<CivicTopic, string[]> = {
 
 const GENERIC_OG_PATTERNS = ["IconModuleCalendar", "calendar-icon", "default-event", "placeholder"];
 
+// Known recurring venues — used to prevent the same venue (esp. for live music / specials)
+// from monopolizing the X feed.
+const KNOWN_VENUES = [
+  'abbey resort', 'bar west', '240 west', 'geneva tap house', 'champs sports bar',
+  'inspired coffee', 'next door pub', 'sopra bistro', 'gino\'s east',
+  'baker house', 'pier 290', 'speedo\'s', 'studio winery', 'staller estate',
+  'grand geneva', 'timber ridge', 'lake geneva country club', 'lake lawn resort',
+  'sprecher', 'medusa grill', 'simple cafe', 'oakfire',
+];
+
+function extractVenue(title: string): string | null {
+  const t = title.toLowerCase();
+  for (const v of KNOWN_VENUES) {
+    if (t.includes(v)) return v;
+  }
+  return null;
+}
+
 // Curated dining images for restaurant deals
 const DINING_IMAGE_LIBRARIES: Record<DiningTopic, string[]> = {
   fish_fry: [
