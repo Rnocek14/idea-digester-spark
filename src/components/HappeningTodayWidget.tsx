@@ -107,12 +107,28 @@ const isNightlifeOnly = (metadata: Json): boolean => {
   return arr.every((x) => x.toLowerCase() === 'nightlife');
 };
 
+// Guard against bad recurring-date data: if the title explicitly names a
+// weekday that isn't today, hide it (e.g. "Friday Fish Fry" showing on a
+// Wednesday because event_date was stamped incorrectly by the backfill).
+const WEEKDAYS = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"];
+const mentionsWrongWeekday = (title: string, todayDow: number): boolean => {
+  const t = title.toLowerCase();
+  for (let i = 0; i < 7; i++) {
+    if (i === todayDow) continue;
+    // word-boundary match to avoid false positives
+    const re = new RegExp(`\\b${WEEKDAYS[i]}\\b`, "i");
+    if (re.test(t)) return true;
+  }
+  return false;
+};
+
 interface HappeningTodayWidgetProps {
   enabled?: boolean;
 }
 
 export default function HappeningTodayWidget({ enabled = true }: HappeningTodayWidgetProps) {
   const todayStr = new Date().toISOString().split('T')[0];
+  const todayDow = new Date().getDay();
   
   const { data: events = [], isLoading } = useQuery({
     queryKey: ["happening-today", todayStr],
@@ -136,6 +152,9 @@ export default function HappeningTodayWidget({ enabled = true }: HappeningTodayW
         .filter((event: HappeningEvent) => {
           // Exclude pure nightlife (trivia/karaoke-only events)
           if (isNightlifeOnly(event.metadata)) return false;
+
+          // Exclude events whose title names a different weekday (bad data)
+          if (mentionsWrongWeekday(event.title, todayDow)) return false;
           
           // Dedupe by venue to avoid "Live at X" and "Trivia at X" both showing
           const venue = extractVenue(event).toLowerCase();
