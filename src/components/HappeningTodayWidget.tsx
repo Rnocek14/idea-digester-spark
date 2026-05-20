@@ -146,8 +146,9 @@ export default function HappeningTodayWidget({ enabled = true }: HappeningTodayW
       
       if (error) throw error;
       
-      // Filter out pure entertainment and dedupe by venue
-      const seen = new Set<string>();
+      // Filter out pure entertainment and dedupe by venue and by performer/title
+      const seenVenue = new Set<string>();
+      const seenTitle = new Set<string>();
       return (data || [])
         .filter((event: HappeningEvent) => {
           // Exclude pure nightlife (trivia/karaoke-only events)
@@ -155,12 +156,21 @@ export default function HappeningTodayWidget({ enabled = true }: HappeningTodayW
 
           // Exclude events whose title names a different weekday (bad data)
           if (mentionsWrongWeekday(event.title, todayDow)) return false;
-          
+
           // Dedupe by venue to avoid "Live at X" and "Trivia at X" both showing
           const venue = extractVenue(event).toLowerCase();
-          if (venue && seen.has(venue)) return false;
-          if (venue) seen.add(venue);
-          
+          if (venue && seenVenue.has(venue)) return false;
+
+          // Dedupe by performer/short-title so the same act doesn't appear twice
+          // (e.g. a venue-feed entry + a generic "Live Music" entry for the same performer)
+          const performer = (getMetaField(event.metadata, 'performer') || '').toLowerCase().trim();
+          const titleKey = performer || getShortTitle(event).toLowerCase().trim();
+          const normalizedTitleKey = titleKey.replace(/\s+/g, ' ');
+          if (normalizedTitleKey && seenTitle.has(normalizedTitleKey)) return false;
+
+          if (venue) seenVenue.add(venue);
+          if (normalizedTitleKey) seenTitle.add(normalizedTitleKey);
+
           return true;
         })
         .slice(0, 8) as HappeningEvent[];
