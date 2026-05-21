@@ -704,12 +704,34 @@ serve(async (req) => {
           continue;
         }
 
+        // Append canonical link to drive traffic back to our site.
+        // Each X post (and FB) should include a link to the relevant section.
+        let finalPostText = postText;
+        if (platform === 'x' || platform === 'facebook') {
+          const link = getCanonicalLink(category);
+          // Only append if the post doesn't already contain our domain
+          if (!/citybrief\.info/i.test(finalPostText)) {
+            if (platform === 'x') {
+              // X counts any URL as 23 chars (t.co wrap). Reserve 24 (space + url).
+              const RESERVED = 24;
+              const MAX = 280;
+              if (finalPostText.length + 1 + link.length > MAX) {
+                const trimTo = MAX - RESERVED - 1; // 1 for trailing newline/space
+                finalPostText = finalPostText.slice(0, trimTo - 1).trimEnd() + '…';
+              }
+              finalPostText = `${finalPostText}\n${link}`;
+            } else {
+              finalPostText = `${finalPostText}\n\n${link}`;
+            }
+          }
+        }
+
         const { error: insertError } = await supabaseClient
           .from("post_queue")
           .insert({
             story_id: story.id,
             platform,
-            post_text: postText,
+            post_text: finalPostText,
             image_url: finalImageUrl,
             generated_image_url: generatedImageUrl,
             is_sponsored: isSponsored,
