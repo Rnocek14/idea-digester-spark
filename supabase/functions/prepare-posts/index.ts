@@ -438,6 +438,48 @@ serve(async (req) => {
     const isPostHoliday = currentMonth === 0 || (currentMonth === 11 && currentDay > 26);
 
     const freshStories = eligibleStories.filter(story => {
+      // GEO GATE: only Lake Geneva / Walworth County content gets posted to social.
+      // Block stories that are clearly tied to non-local Wisconsin places unless
+      // the title/summary explicitly mentions a Lake Geneva anchor.
+      const haystack = `${story.title || ''} ${story.summary || ''} ${story.geo_label || ''}`.toLowerCase();
+      const LOCAL_ANCHORS = [
+        'lake geneva', 'walworth', 'williams bay', 'fontana', 'delavan',
+        'elkhorn', 'genoa city', 'lyons', 'linn', 'geneva lake',
+        'abbey resort', 'grand geneva', 'pier 290', 'topsy turvy',
+        'jackass saloon', 'bar west', 'geneva tap', 'the getaway',
+        'foley', 'lake geneva billiards'
+      ];
+      const NON_LOCAL_FLAGS = [
+        'milwaukee', 'madison', 'hartford', 'watertown', 'minocqua',
+        'discovery world', 'green bay', 'kenosha', 'racine', 'waukesha',
+        'appleton', 'oshkosh', 'eau claire', 'wausau', 'la crosse',
+        'sheboygan', 'janesville', 'beloit'
+      ];
+      const hasLocal = LOCAL_ANCHORS.some(a => haystack.includes(a));
+      const hasNonLocal = NON_LOCAL_FLAGS.some(a => haystack.includes(a));
+      const geoTier = story.geo_tier ?? 0;
+      const isLocalTier = geoTier === 1 || geoTier === 2;
+
+      if (hasNonLocal && !hasLocal) {
+        console.log(`[prepare-posts] ⏭️ GEO BLOCK (non-local mention): "${story.title.substring(0,60)}..."`);
+        return false;
+      }
+      if (!isLocalTier && !hasLocal) {
+        console.log(`[prepare-posts] ⏭️ GEO BLOCK (tier ${geoTier}, no local anchor): "${story.title.substring(0,60)}..."`);
+        return false;
+      }
+
+      // PAST-DATE TEXT GATE: block if post_text-bound title references a past explicit date
+      // (e.g. "starts March 26, 2026" while today is later in 2026)
+      const explicitPast = haystack.match(/(january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2}(?:,\s*\d{4})?/i);
+      if (explicitPast) {
+        const parsedExplicit = parseRawEventDate(explicitPast[0]);
+        if (parsedExplicit && parsedExplicit < today) {
+          console.log(`[prepare-posts] ⏭️ Skipping "${story.title.substring(0,60)}..." — explicit past date "${explicitPast[0]}"`);
+          return false;
+        }
+      }
+
       // Check if event_date column has passed
       if (story.event_date) {
         const eventDate = new Date(story.event_date);
