@@ -92,6 +92,17 @@ function extractVenue(title: string): string | null {
   return null;
 }
 
+const SITE_BASE = 'https://lakegeneva.citybrief.info';
+function getCanonicalLink(category: string | null | undefined): string {
+  const c = (category || '').toLowerCase();
+  if (c === 'nightlife') return `${SITE_BASE}/nightlife`;
+  if (c === 'dining') return `${SITE_BASE}/eats`;
+  if (c === 'incidents' || c === 'public_safety') return `${SITE_BASE}/incidents`;
+  if (c === 'jobs') return `${SITE_BASE}/jobs`;
+  if (c === 'deals') return `${SITE_BASE}/deals`;
+  return SITE_BASE;
+}
+
 // Curated dining images for restaurant deals
 const DINING_IMAGE_LIBRARIES: Record<DiningTopic, string[]> = {
   fish_fry: [
