@@ -11,6 +11,8 @@ import LakeGenevaNightlife from "./pages/LakeGenevaNightlife";
 import LakeGenevaEats from "./pages/LakeGenevaEats";
 import FishFryGuide from "./pages/FishFryGuide";
 import SellingLakeGeneva from "./pages/SellingLakeGeneva";
+import Events from "./pages/Events";
+import EventDetail from "./pages/EventDetail";
 import PublicDirectory from "./pages/PublicDirectory";
 import Advertise from "./pages/Advertise";
 import Incidents from "./pages/Incidents";
@@ -79,6 +81,8 @@ const App = () => (
 <Route path="/nightlife" element={<LakeGenevaNightlife />} />
             <Route path="/eats" element={<LakeGenevaEats />} />
             <Route path="/eats/fish-fry" element={<FishFryGuide />} />
+            <Route path="/events" element={<Events />} />
+            <Route path="/events/:id" element={<EventDetail />} />
             <Route path="/incidents" element={<Incidents />} />
             <Route path="/incidents/:slug" element={<IncidentDetail />} />
             <Route path="/jobs" element={<Jobs />} />
