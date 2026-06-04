@@ -13,6 +13,7 @@ import WeatherForecast from "@/components/WeatherForecast";
 import LiveIncidentsSidebar from "@/components/LiveIncidentsSidebar";
 import NightlifeWidget from "@/components/NightlifeWidget";
 import HappeningTodayWidget from "@/components/HappeningTodayWidget";
+import ComingUpRail from "@/components/ComingUpRail";
 import NowHiringWidget from "@/components/NowHiringWidget";
 import { InlineSubscribeCTA } from "@/components/InlineSubscribeCTA";
 import { StickySubscribeBanner } from "@/components/StickySubscribeBanner";
@@ -1028,6 +1029,9 @@ const LakeGenevaV2 = () => {
             {!storiesLoading && viewMode === 'all' && (
               <HappeningTodayWidget />
             )}
+
+            {/* COMING UP — Tonight / This Weekend / Next Week */}
+            {viewMode === 'all' && <ComingUpRail />}
 
             {/* Sponsor Section */}
             {sponsor && viewMode === 'all' && (
