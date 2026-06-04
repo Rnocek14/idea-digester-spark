@@ -87,7 +87,7 @@ export default function ComingUpRail() {
     }
   }
 
-  const buckets: Bucket[] = [
+  const buckets: Bucket[] = ([
     { key: "tonight", label: "Tonight", hint: "Happening today", events: tonight.slice(0, 5) },
     {
       key: "weekend",
@@ -103,7 +103,7 @@ export default function ComingUpRail() {
       hint: "Plan ahead",
       events: nextWeek.slice(0, 5),
     },
-  ].filter((b) => b.events.length > 0);
+  ] as Bucket[]).filter((b) => b.events.length > 0);
 
   if (buckets.length === 0) return null;
 
