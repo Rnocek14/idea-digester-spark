@@ -81,7 +81,7 @@ export default function Events() {
       <PageMeta
         title="Lake Geneva Events Calendar — What's Coming Up"
         description="Music, festivals, family, civic, and community events around Lake Geneva, Williams Bay, Fontana, and Walworth County."
-        canonical="/events"
+        path="/events"
       />
 
       <div className="mx-auto max-w-5xl px-4 sm:px-6 py-6">
