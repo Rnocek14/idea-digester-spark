@@ -1,225 +1,112 @@
 
+# Lake Geneva Brief → local staple: two pillars
 
-# Merge V1 and V2: Add Quick-Scan + View Controls to L-L-L Architecture
+After looking at On The Record and Perfect Duluth Day side-by-side, the reason locals open them isn't just *vibe* — it's a **two-pillar contract**:
 
-## Goal
-Combine V1's user-control and quick-scan features with V2's temporal 3-column layout to create the best of both worlds.
+1. **Utility** — "What's going on this week, this weekend, tonight?" (the events spine)
+2. **Soul** — recurring columns, bylines, history, reader photos, an "edition" rhythm
 
----
-
-## Architecture Overview
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                           HEADER                                     │
-├──────────────┬─────────────────────────────────┬────────────────────┤
-│   [LIVE]     │         [LATEST]                │    [LATER]         │
-│  (sidebar)   │                                 │   (sidebar)        │
-│              │  ┌─────────────────────────┐    │                    │
-│  Weather     │  │ At-a-Glance (5 bullets) │    │  Tonight's Pick    │
-│  Incidents   │  └─────────────────────────┘    │  NightlifeWidget   │
-│              │                                 │  NowHiringWidget   │
-│              │  ┌─────────────────────────┐    │                    │
-│              │  │ View Toggle:            │    │                    │
-│              │  │ [All] [Topic] [Recent•] │    │                    │
-│              │  └─────────────────────────┘    │                    │
-│              │                                 │                    │
-│              │  ┌─────────────────────────┐    │                    │
-│              │  │ Category Pills (if Topic)│   │                    │
-│              │  └─────────────────────────┘    │                    │
-│              │                                 │                    │
-│              │  Story Cards (filtered)         │                    │
-└──────────────┴─────────────────────────────────┴────────────────────┘
-```
+We have most of pillar 1's *data* but none of its *surface*. We have none of pillar 2 yet. Both have to ship for the site to feel like a staple.
 
 ---
 
-## Changes to `src/pages/LakeGenevaV2.tsx`
+## Pillar 1 — Events as the spine ("what to look forward to")
 
-### 1. Add State for View Modes
-Import `useSearchParams` and add new state variables:
-```typescript
-const [searchParams] = useSearchParams();
-const [activeCategory, setActiveCategory] = useState<'all' | string>('all');
-const [viewMode, setViewMode] = useState<'all' | 'topic' | 'recent'>('all');
-const [newUpdatesCount, setNewUpdatesCount] = useState(0);
-const previousFeedIdsRef = useRef<Set<string>>(new Set());
-```
+This is the gap the user just flagged. PDD's "Event Calendar" is one of three top-nav items. On The Record's whole identity is the events listing. Right now we have `HappeningTodayWidget` and `WeekendSidebarWidget`, but no destination page that says *"here is everything coming up in Lake Geneva."*
 
-### 2. Add Deep Linking Support
-Handle `?category=events` URL params:
-```typescript
-useEffect(() => {
-  const categoryParam = searchParams.get('category');
-  if (categoryParam && categoryOrder.includes(categoryParam.toLowerCase())) {
-    setActiveCategory(categoryParam.toLowerCase());
-    setViewMode('topic');
-  }
-}, [searchParams]);
-```
+### 1A. `/events` — the calendar destination
+- Top-nav item next to "Today" and "Directory."
+- Three views, toggleable: **List** (default, mobile-first), **Week**, **Month**.
+- Filters: category (Music, Family, Outdoors, Dining, Civic, Arts), venue, geo-tier (Lake Geneva / Walworth County).
+- Each event card: date pill, time, venue, short title, category emoji, "Add to calendar" (.ics download), share button.
+- Powered entirely by existing `content_queue` rows where `event_date >= today`.
 
-### 3. Add "At-a-Glance" Quick-Scan Section
-Insert after the LATEST header, before the lead stories:
-```typescript
-{/* At-a-Glance: Quick-scan bullet list */}
-{!storiesLoading && stories.length > 0 && (
-  <div className="mb-6 p-4 bg-slate-50 border border-slate-200 rounded-sm">
-    <p className="text-[10px] font-mono uppercase tracking-wider text-slate-500 mb-3">
-      AT A GLANCE
-    </p>
-    <ul className="space-y-2">
-      {stories.slice(0, 5).map((story) => (
-        <li key={story.id} className="flex items-start gap-2">
-          <span className="text-slate-400 mt-0.5">•</span>
-          <button
-            onClick={() => scrollToStory(story.id)}
-            className="text-left text-sm text-slate-800 hover:text-blue-700 line-clamp-1"
-          >
-            {story.title}
-          </button>
-          <span className="text-[10px] text-slate-400 whitespace-nowrap">
-            {getRelativeTime(story.created_at)}
-          </span>
-        </li>
-      ))}
-    </ul>
-  </div>
-)}
-```
+### 1B. Homepage "Coming Up" rail
+- New section on `/lake-geneva` between today's brief and the latest stories.
+- Three columns on desktop, horizontal scroll on mobile:
+  - **Tonight** (events with `event_date = today`)
+  - **This Weekend** (Fri–Sun, dynamic)
+  - **Next Week** (next 7 days, top 5)
+- "See all events →" link to `/events`.
 
-### 4. Add View Mode Toggle Bar
-Insert after At-a-Glance, styled to match V2's industrial aesthetic:
-```typescript
-{/* View Mode Toggle - sticky */}
-<div className="sticky top-[73px] z-20 bg-background py-3 border-b border-slate-200 mb-6">
-  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-    {/* Toggle Pills */}
-    <div className="flex items-center gap-1 bg-slate-100 rounded-sm p-1">
-      <button
-        onClick={() => setViewMode('all')}
-        className={`rounded-sm px-3 py-1.5 text-xs font-mono uppercase tracking-wider transition-colors ${
-          viewMode === 'all'
-            ? "bg-white text-slate-900 shadow-sm"
-            : "text-slate-500 hover:text-slate-700"
-        }`}
-      >
-        All
-      </button>
-      <button
-        onClick={() => setViewMode('topic')}
-        className={`rounded-sm px-3 py-1.5 text-xs font-mono uppercase tracking-wider transition-colors ${
-          viewMode === 'topic'
-            ? "bg-white text-slate-900 shadow-sm"
-            : "text-slate-500 hover:text-slate-700"
-        }`}
-      >
-        By Topic
-      </button>
-      <button
-        onClick={() => {
-          setViewMode('recent');
-          setNewUpdatesCount(0);
-        }}
-        className={`rounded-sm px-3 py-1.5 text-xs font-mono uppercase tracking-wider transition-colors flex items-center gap-1.5 ${
-          viewMode === 'recent'
-            ? "bg-white text-slate-900 shadow-sm"
-            : "text-slate-500 hover:text-slate-700"
-        }`}
-      >
-        Recent
-        {newUpdatesCount > 0 && viewMode !== 'recent' && (
-          <span className="h-4 min-w-[16px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold">
-            {newUpdatesCount > 9 ? '9+' : newUpdatesCount}
-          </span>
-        )}
-      </button>
-    </div>
+### 1C. Per-event detail page `/events/[id]`
+- We currently dump people to the original source URL. Bad for SEO, bad for stickiness.
+- Build a real event page: title, venue, date/time, address, map embed (static), description in our voice, "Add to calendar," related events at same venue, related stories.
+- This is the single biggest SEO unlock — "lake geneva [event name]" searches.
 
-    {/* Category Pills (topic mode only) */}
-    {viewMode === 'topic' && (
-      <div className="flex flex-wrap gap-2">
-        {['all', ...categoryOrder].map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setActiveCategory(cat)}
-            className={`rounded-sm px-2.5 py-1 text-[11px] font-mono uppercase border transition-colors ${
-              activeCategory === cat
-                ? "bg-blue-600 text-white border-blue-600"
-                : "bg-white text-slate-600 border-slate-200 hover:border-blue-500"
-            }`}
-          >
-            {cat === 'all' ? 'All' : cat.replace('_', ' ')}
-          </button>
-        ))}
-      </div>
-    )}
-  </div>
-</div>
-```
+### 1D. "Plan your weekend" newsletter (Thursday 7am)
+- Separate from the daily brief. Just events: tonight, Friday, Saturday, Sunday.
+- Locals get one daily "what happened" + one weekly "what's coming." That cadence is what PDD/OTR readers internalize.
 
-### 5. Update Story Grid to Respect View Mode
-Replace the current grid rendering with view-mode-aware logic:
-```typescript
-{/* Story Grid - respects viewMode */}
-{viewMode === 'all' && (
-  // Chronological list (current behavior)
-)}
-
-{viewMode === 'topic' && (
-  // Grouped by category with headers, filtered by activeCategory
-)}
-
-{viewMode === 'recent' && (
-  // Pure chronological with live incident interleaving (from V1's FeedItem logic)
-)}
-```
-
-### 6. Add New Updates Detection
-Track when new stories appear and show badge:
-```typescript
-useEffect(() => {
-  if (stories.length === 0) return;
-  
-  const currentIds = new Set(stories.map(s => s.id));
-  const previousIds = previousFeedIdsRef.current;
-  
-  if (previousIds.size > 0) {
-    const newItems = [...currentIds].filter(id => !previousIds.has(id));
-    if (newItems.length > 0 && viewMode !== 'recent') {
-      setNewUpdatesCount(prev => prev + newItems.length);
-    }
-  }
-  
-  previousFeedIdsRef.current = currentIds;
-}, [stories, viewMode]);
-```
+### 1E. Venue pages `/venues/[slug]`
+- The Riviera, Baker House, Pier 290, Grand Geneva, etc. each get a page.
+- Lists upcoming events at that venue + recent stories mentioning it. Drives long-tail SEO and gives sponsors a natural home page.
 
 ---
 
-## Files to Modify
+## Pillar 2 — Soul layer (from previous plan, condensed)
 
-| File | Changes |
-|------|---------|
-| `src/pages/LakeGenevaV2.tsx` | Add state, view toggles, At-a-Glance, category pills, filtered rendering |
+These are what turn "useful site" into "site I check every morning":
+
+### 2A. Recurring columns (3 to start)
+- **Throwback Thursday** — one historic photo/postcard per week (Geneva Lake Museum, Wisconsin Historical Society, public-domain postcards).
+- **Mystery Monday** — "Where on the lake is this?" reader-guess column.
+- **This Week on the Lake** — Monday roundup with a named voice.
+
+Each column gets its own route (`/columns/[slug]`), its own tag in `content_queue`, its own RSS, and a fixed slot in the daily newsletter.
+
+### 2B. Real bylines
+- Add `author_slug` to `content_queue`. Civic = "Lake Geneva Brief Desk," opinion/columns = real names (start with Gina + 1-2 invited locals).
+- Show byline + small avatar on every story card. Single biggest "the site feels human" lever.
+
+### 2C. Rotating user-submitted hero photo
+- Daily photo at top of `/lake-geneva`, credited to the submitter with a link.
+- "Submit a photo" CTA in footer. 20 submissions = 20 days of unique-feeling homepage.
+
+### 2D. Sponsor tiles → "Local Champions"
+- Reframe sponsor block as named neighbors (square photo + name), not banners. Sells better, feels less like AdSense.
+
+### 2E. `/submit` — one page, three buckets (photo, tip, event)
+- All flow into existing tables with `safety_level='pending'` for review.
+- Treats reader contributions as oxygen the way PDD does.
 
 ---
 
-## Design Decisions
+## Build sequence
 
-1. **Keep V2's industrial aesthetic**: Use `rounded-sm`, `font-mono`, uppercase tracking for consistency with L-L-L branding
-2. **At-a-Glance replaces lead pyramid in "recent" mode**: When viewing "Most Recent", hide the pyramid and show pure chronological feed
-3. **Category pills are text-only**: No emojis, matching V2's monospace industrial style
-4. **Sticky toggle bar**: Stays visible while scrolling for easy mode switching
-5. **Mobile: View toggles collapse**: On mobile, show a dropdown instead of pills to save horizontal space
+### Sprint 1 — Events spine (highest leverage, ~1 week)
+1. Build `/events` page with list/week/month views, filters, .ics export.
+2. Add "Coming Up" rail to `/lake-geneva` homepage.
+3. Add "Events" to top nav (mobile + desktop).
+4. Build `/events/[id]` detail pages with map + add-to-calendar + related.
+
+### Sprint 2 — Soul layer (~1 week)
+5. Add `author_slug` + `column_slug` columns to `content_queue` (migration).
+6. Build `/columns/[slug]` routes and seed Throwback Thursday with 8 weeks of public-domain Geneva Lake postcards.
+7. Add byline display to `StoryCard`.
+8. Build `/submit` page (photo, tip, event forms).
+
+### Sprint 3 — Reach + rituals (~1 week)
+9. Thursday "Plan your weekend" newsletter.
+10. Venue pages `/venues/[slug]` for top 10 venues.
+11. Rotating user-photo hero on homepage.
+12. Reframe sponsor block as "Local Champions."
 
 ---
 
-## Outcome
+## Why this order works
 
-After implementation:
-- **Quick scan**: Users can read 5 headlines in 10 seconds via At-a-Glance
-- **User control**: Three browsing modes (All/Topic/Recent) to match mental models
-- **Deep linking**: Share `?category=civic` URLs for specific topic views
-- **Live updates**: Badge shows new items since last "Recent" view
-- **Preserved L-L-L**: LIVE/LATEST/LATER 3-column architecture remains intact
+- **Events first** = immediate user value + immediate SEO unlock (event pages rank for "[event name] lake geneva" within days).
+- **Soul second** = compounds the events traffic into return visits and email subs.
+- **Rituals third** = once we have habits to build on, we layer the weekly cadence.
 
+This is also the order that protects the real-estate funnel: more event pages → more long-tail traffic → more sidebar exposure for Gina's listings → more leads. We don't have to choose between "useful" and "monetizable."
+
+---
+
+## Open questions before I start building
+
+1. **Top nav order**: Today / **Events** / Directory / Advertise — or do you want Events to replace Directory in the main nav and push Directory into a "More" menu?
+2. **Event detail pages**: build now (Sprint 1), or just deep-link to source for v1 and add detail pages in Sprint 2?
+3. **Bylines on civic/auto-ingested stories**: use "Lake Geneva Brief Desk" as a neutral catch-all, or leave them unbylined and only put bylines on columns?
+4. **Throwback Thursday seed**: I'll source public-domain Geneva Lake postcards myself, or do you have a Geneva Lake Museum / Historical Society contact you want to partner with first?
