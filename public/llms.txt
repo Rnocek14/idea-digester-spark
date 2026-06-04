@@ -9,6 +9,7 @@ Lake Geneva Brief is a hyperlocal news and community guide for Lake Geneva and t
 - [Home](/): Today's top local news, events, and community updates for Lake Geneva.
 - [Selling in Lake Geneva](/selling-lake-geneva): Real estate guide for homeowners considering selling on the lake.
 - [Business Directory](/directory): Local businesses, shops, and services around Lake Geneva.
+- [Events Calendar](/events): What's coming up — music, festivals, family days, civic and community events around Lake Geneva and Walworth County.
 - [Nightlife](/nightlife): Tonight's live music, bar specials, and nightlife events.
 - [Eats](/eats): Restaurants and dining around Lake Geneva.
 - [Fish Fry Guide](/eats/fish-fry): Friday fish fry directory for the Lake Geneva area.
