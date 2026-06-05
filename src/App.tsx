@@ -45,6 +45,9 @@ import PipelineHealth from "./pages/PipelineHealth";
 import Submit from "./pages/Submit";
 import CommunityLocalLove from "./pages/CommunityLocalLove";
 import CommunityVoices from "./pages/CommunityVoices";
+import ThingsToDoLakeGeneva from "./pages/guides/ThingsToDoLakeGeneva";
+import MovingToLakeGeneva from "./pages/guides/MovingToLakeGeneva";
+import LakeGenevaNeighborhoods from "./pages/guides/LakeGenevaNeighborhoods";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -96,6 +99,9 @@ const App = () => (
             <Route path="/submit" element={<Submit />} />
             <Route path="/community/local-love" element={<CommunityLocalLove />} />
             <Route path="/community/voices" element={<CommunityVoices />} />
+            <Route path="/guides/things-to-do-lake-geneva" element={<ThingsToDoLakeGeneva />} />
+            <Route path="/guides/moving-to-lake-geneva" element={<MovingToLakeGeneva />} />
+            <Route path="/guides/lake-geneva-neighborhoods" element={<LakeGenevaNeighborhoods />} />
             <Route path="/dashboard" element={<DashboardLayout />}>
               <Route index element={<Dashboard />} />
               <Route path="pipeline" element={<PipelineHealth />} />
