@@ -2320,9 +2320,7 @@ export type Database = {
           id: string
           is_public_landmark: boolean
           is_published: boolean
-          lat: number | null
           latitude: number | null
-          lng: number | null
           longitude: number | null
           look_for: string | null
           map_x_pct: number | null
@@ -2348,9 +2346,7 @@ export type Database = {
           id?: string
           is_public_landmark?: boolean
           is_published?: boolean
-          lat?: number | null
           latitude?: number | null
-          lng?: number | null
           longitude?: number | null
           look_for?: string | null
           map_x_pct?: number | null
@@ -2376,9 +2372,7 @@ export type Database = {
           id?: string
           is_public_landmark?: boolean
           is_published?: boolean
-          lat?: number | null
           latitude?: number | null
-          lng?: number | null
           longitude?: number | null
           look_for?: string | null
           map_x_pct?: number | null
