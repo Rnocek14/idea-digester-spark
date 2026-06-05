@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { PublicHeader } from "@/components/PublicHeader";
 import { PageMeta } from "@/components/PageMeta";
@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Play, Heart, MapPin, Bath } from "lucide-react";
 import { articleJsonLd, breadcrumbJsonLd, faqJsonLd } from "@/lib/seo/jsonLd";
 import { LG_LANDMARK_KEYWORDS, LG_CORE_KEYWORDS } from "@/lib/seoKeywords";
-import { useShorePathStops } from "@/hooks/useShorePathStops";
+import { useShorePathStops, type ShorePathStopRow } from "@/hooks/useShorePathStops";
 import { ShorePathMap } from "@/components/shore-path/ShorePathMap";
 import { ShorePathWalkingMode } from "@/components/shore-path/ShorePathWalkingMode";
+import { StickyMapStrip } from "@/components/shore-path/StickyMapStrip";
 import { SoftRealEstateCTA } from "@/components/guides/SoftRealEstateCTA";
 
 const TODAY = "2026-06-05";
@@ -91,6 +92,30 @@ const LEG_DISTANCES: { from: string; to: string; miles: number }[] = [
 export default function LakeGenevaShorePath() {
   const { data: stops = [], isLoading } = useShorePathStops();
   const [walkingOpen, setWalkingOpen] = useState(false);
+  const [walkingInitialIndex, setWalkingInitialIndex] = useState<number | null>(null);
+  const [activeStopId, setActiveStopId] = useState<string | null>(null);
+  const [arrivedStopId, setArrivedStopId] = useState<string | null>(null);
+  const [mapInView, setMapInView] = useState(true);
+  const mapRef = useRef<HTMLDivElement | null>(null);
+
+  // Observe the hero map so we know whether to show the sticky strip.
+  useEffect(() => {
+    const el = mapRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      ([entry]) => setMapInView(entry.isIntersecting),
+      { threshold: 0.05 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  // Clear the "just arrived" highlight after the animation finishes.
+  useEffect(() => {
+    if (!arrivedStopId) return;
+    const t = window.setTimeout(() => setArrivedStopId(null), 1800);
+    return () => window.clearTimeout(t);
+  }, [arrivedStopId]);
 
   const jsonLd = useMemo(
     () => [
@@ -111,12 +136,29 @@ export default function LakeGenevaShorePath() {
     [],
   );
 
-  const handleMarkerClick = (s: { slug: string }) => {
+  const handleJumpToStop = (s: ShorePathStopRow) => {
+    setActiveStopId(s.id);
+    setArrivedStopId(s.id);
     const el = document.getElementById(`stop-${s.slug}`);
     if (el) {
       el.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   };
+
+  const handleStartWalkFromStop = (s: ShorePathStopRow) => {
+    const idx = stops.findIndex((x) => x.id === s.id);
+    setWalkingInitialIndex(idx >= 0 ? idx : 0);
+    setWalkingWalk: void 0;
+    setWalkingOpen(true);
+  };
+
+  const handleBackToMap = () => {
+    mapRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const activeStop = activeStopId
+    ? stops.find((s) => s.id === activeStopId) ?? null
+    : null;
 
   return (
     <div className="min-h-screen bg-stone-50">
