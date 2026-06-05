@@ -19,7 +19,15 @@ async function ensureBucket(sb: ReturnType<typeof admin>) {
   }
 }
 
-async function synthesize(text: string, voiceId: string): Promise<ArrayBuffer> {
+type VoiceSettings = {
+  stability?: number;
+  similarity_boost?: number;
+  style?: number;
+  use_speaker_boost?: boolean;
+  speed?: number;
+};
+
+async function synthesize(text: string, voiceId: string, settings?: VoiceSettings): Promise<ArrayBuffer> {
   const apiKey = Deno.env.get("ELEVENLABS_API_KEY");
   if (!apiKey) throw new Error("ElevenLabs not connected");
   const res = await fetch(
@@ -34,11 +42,11 @@ async function synthesize(text: string, voiceId: string): Promise<ArrayBuffer> {
         text,
         model_id: "eleven_multilingual_v2",
         voice_settings: {
-          stability: 0.55,
-          similarity_boost: 0.8,
-          style: 0.35,
-          use_speaker_boost: true,
-          speed: 0.98,
+          stability: settings?.stability ?? 0.55,
+          similarity_boost: settings?.similarity_boost ?? 0.8,
+          style: settings?.style ?? 0.35,
+          use_speaker_boost: settings?.use_speaker_boost ?? true,
+          speed: settings?.speed ?? 0.98,
         },
       }),
     },
@@ -55,6 +63,8 @@ Deno.serve(async (req) => {
     const orderIndex: number | undefined = body.order_index;
     const voiceId: string = body.voice_id || SARAH_VOICE_ID;
     const force: boolean = !!body.force;
+    const settings: VoiceSettings | undefined = body.voice_settings;
+    const previewLabel: string | undefined = body.preview_label; // if set, save to preview path and skip DB update
 
     if (!stopId && !orderIndex) {
       return new Response(
@@ -82,8 +92,10 @@ Deno.serve(async (req) => {
     const transcript: string = (stop.story_long || stop.description || "").trim();
     if (!transcript) throw new Error("Stop has no story_long or description to narrate");
 
-    const mp3 = await synthesize(transcript, voiceId);
-    const path = `stops/${stop.order_index}-${stop.id}.mp3`;
+    const mp3 = await synthesize(transcript, voiceId, settings);
+    const path = previewLabel
+      ? `stops/previews/${stop.order_index}-${stop.id}-${previewLabel}.mp3`
+      : `stops/${stop.order_index}-${stop.id}.mp3`;
     const { error: upErr } = await sb.storage
       .from(BUCKET)
       .upload(path, mp3, { contentType: "audio/mpeg", upsert: true });
@@ -94,16 +106,18 @@ Deno.serve(async (req) => {
     const words = transcript.split(/\s+/).length;
     const duration = Math.round((words / 145) * 60);
 
-    const { error: updErr } = await sb
-      .from("shore_path_stops")
-      .update({
-        audio_url: pub.publicUrl,
-        audio_duration_sec: duration,
-        audio_transcript: transcript,
-        audio_voice_id: voiceId,
-      })
-      .eq("id", stop.id);
-    if (updErr) throw new Error(`DB update failed: ${updErr.message}`);
+    if (!previewLabel) {
+      const { error: updErr } = await sb
+        .from("shore_path_stops")
+        .update({
+          audio_url: pub.publicUrl,
+          audio_duration_sec: duration,
+          audio_transcript: transcript,
+          audio_voice_id: voiceId,
+        })
+        .eq("id", stop.id);
+      if (updErr) throw new Error(`DB update failed: ${updErr.message}`);
+    }
 
     return new Response(
       JSON.stringify({
