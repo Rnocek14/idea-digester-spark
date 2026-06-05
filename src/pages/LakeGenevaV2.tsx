@@ -961,6 +961,14 @@ const LakeGenevaV2 = () => {
             {/* Show pyramid only in 'all' mode, hide in 'recent' mode for pure chronological */}
             {!storiesLoading && filteredStories.length > 0 && viewMode !== 'recent' && viewMode !== 'topic' && (
               <div className="mb-6 space-y-5">
+                {/* Editorial greeting — one warm line to set publication voice */}
+                <p className="text-base sm:text-lg text-slate-700 leading-relaxed font-serif italic">
+                  {(() => {
+                    const h = new Date().getHours();
+                    const greeting = h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+                    return `${greeting}, Lake Geneva. Here's what locals should know today.`;
+                  })()}
+                </p>
                 {/* First story - FULL WIDTH, dominant header photo */}
                 {filteredStories[0] && (() => {
                   const story = filteredStories[0];
