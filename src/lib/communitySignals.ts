@@ -91,14 +91,14 @@ export async function loadSignals(
       .limit(500),
     supabase
       .from("community_posts")
-      .select("id, slug, title, excerpt, body, published_at")
+      .select("id, slug, title, excerpt, body_md, published_at")
       .eq("status", "published")
       .gte("published_at", sinceIso)
       .order("published_at", { ascending: false })
       .limit(300),
     supabase
       .from("content_queue")
-      .select("id, title, summary, source_url, published_at, created_at")
+      .select("id, title, summary, original_url, publish_date, created_at")
       .in("status", ["approved", "published"])
       .gte("created_at", sinceIso)
       .order("created_at", { ascending: false })
@@ -106,8 +106,8 @@ export async function loadSignals(
   ]);
 
   const ll = (llRes.data || []) as Array<{ id: string; body: string; subject_name: string | null; submitter_name: string | null; created_at: string }>;
-  const cv = (cvRes.data || []) as Array<{ id: string; slug: string; title: string; excerpt: string | null; body: string | null; published_at: string | null }>;
-  const cq = (cqRes.data || []) as Array<{ id: string; title: string; summary: string | null; source_url: string | null; published_at: string | null; created_at: string }>;
+  const cv = (cvRes.data || []) as Array<{ id: string; slug: string; title: string; excerpt: string | null; body_md: string | null; published_at: string | null }>;
+  const cq = (cqRes.data || []) as Array<{ id: string; title: string; summary: string | null; original_url: string | null; publish_date: string | null; created_at: string }>;
 
   return venues.map((v) => {
     const recent: Mention[] = [];
@@ -130,13 +130,13 @@ export async function loadSignals(
       }
     }
     for (const row of cv) {
-      if (aliasMatches(row.title, v.aliases) || aliasMatches(row.excerpt, v.aliases) || aliasMatches(row.body, v.aliases)) {
+      if (aliasMatches(row.title, v.aliases) || aliasMatches(row.excerpt, v.aliases) || aliasMatches(row.body_md, v.aliases)) {
         voices++;
         recent.push({
           source: "voices",
           id: row.id,
           title: row.title,
-          snippet: shortQuote(row.excerpt || row.body || ""),
+          snippet: shortQuote(row.excerpt || row.body_md || ""),
           url: `/community/voices`,
           at: row.published_at || new Date().toISOString(),
         });
@@ -150,8 +150,8 @@ export async function loadSignals(
           id: row.id,
           title: row.title,
           snippet: shortQuote(row.summary || ""),
-          url: row.source_url,
-          at: row.published_at || row.created_at,
+          url: row.original_url,
+          at: row.publish_date || row.created_at,
         });
       }
     }
