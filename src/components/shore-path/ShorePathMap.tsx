@@ -86,16 +86,17 @@ export function ShorePathMap({
           strokeWidth="0.6"
         />
 
-        {/* Shore Path trace — dashed line just inside the shoreline */}
+        {/* Shore Path trace — dashed line sitting directly on the shoreline.
+            We draw it on top of the lake outline (no transform) so it tracks
+            every cove and peninsula exactly instead of drifting inward. */}
         <path
           d={lakePath}
           fill="none"
           stroke="hsl(25 75% 42%)"
-          strokeWidth="0.7"
+          strokeWidth="0.9"
           strokeDasharray="1.6 1.4"
           strokeLinecap="round"
-          opacity="0.85"
-          transform="translate(100 50) scale(0.965) translate(-100 -50)"
+          opacity="0.95"
         />
 
         {/* Four town anchors — quiet, recognizable, never per-stop labels.
