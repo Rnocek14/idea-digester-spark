@@ -183,6 +183,15 @@ export default function LakeGenevaShorePath() {
       />
       <PublicHeader />
 
+      {activeStop && (
+        <StickyMapStrip
+          stop={activeStop}
+          totalStops={stops.length}
+          visible={!mapInView}
+          onBackToMap={handleBackToMap}
+        />
+      )}
+
       <main className="mx-auto max-w-5xl px-4 sm:px-6 py-6">
         {/* Breadcrumb */}
         <nav aria-label="Breadcrumb" className="text-xs font-mono text-slate-500 mb-4">
@@ -291,7 +300,15 @@ export default function LakeGenevaShorePath() {
               <article
                 key={stop.id}
                 id={`stop-${stop.slug}`}
-                className="scroll-mt-24 rounded-md border border-slate-200 bg-white p-5"
+                className={[
+                  "scroll-mt-24 rounded-md border bg-white p-5 transition-all",
+                  stop.id === activeStopId
+                    ? "border-amber-400 border-l-4"
+                    : "border-slate-200",
+                  stop.id === arrivedStopId
+                    ? "ring-2 ring-amber-300 ring-offset-2"
+                    : "",
+                ].join(" ")}
               >
                 <div className="flex items-start gap-4">
                   <div className="flex-shrink-0 w-10 h-10 rounded-full bg-slate-800 text-white flex items-center justify-center font-bold text-sm">
@@ -472,6 +489,7 @@ export default function LakeGenevaShorePath() {
         open={walkingOpen}
         onOpenChange={setWalkingOpen}
         stops={stops}
+        initialIndex={walkingInitialIndex}
       />
     </div>
   );
