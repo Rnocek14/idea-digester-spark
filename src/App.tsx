@@ -42,6 +42,9 @@ import SponsorPortal from "./pages/SponsorPortal";
 import BusinessCoverage from "./pages/BusinessCoverage";
 import SourceHealth from "./pages/SourceHealth";
 import PipelineHealth from "./pages/PipelineHealth";
+import Submit from "./pages/Submit";
+import CommunityLocalLove from "./pages/CommunityLocalLove";
+import CommunityVoices from "./pages/CommunityVoices";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -90,6 +93,9 @@ const App = () => (
             <Route path="/employer-dashboard" element={<EmployerDashboard />} />
             <Route path="/deals" element={<Deals />} />
             <Route path="/sponsor-portal" element={<SponsorPortal />} />
+            <Route path="/submit" element={<Submit />} />
+            <Route path="/community/local-love" element={<CommunityLocalLove />} />
+            <Route path="/community/voices" element={<CommunityVoices />} />
             <Route path="/dashboard" element={<DashboardLayout />}>
               <Route index element={<Dashboard />} />
               <Route path="pipeline" element={<PipelineHealth />} />
