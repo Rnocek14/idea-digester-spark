@@ -1,0 +1,16 @@
+UPDATE public.shore_path_stops SET map_x_pct=188, map_y_pct=42 WHERE slug='library-park';
+UPDATE public.shore_path_stops SET map_x_pct=178, map_y_pct=37 WHERE slug='flat-iron-park';
+UPDATE public.shore_path_stops SET map_x_pct=189, map_y_pct=28 WHERE slug='riviera-beach';
+UPDATE public.shore_path_stops SET map_x_pct=175, map_y_pct=20 WHERE slug='lake-geneva-public-beach';
+UPDATE public.shore_path_stops SET map_x_pct=150, map_y_pct=32 WHERE slug='maple-lawn-area';
+UPDATE public.shore_path_stops SET map_x_pct=138, map_y_pct=62 WHERE slug='black-point-estate';
+UPDATE public.shore_path_stops SET map_x_pct=105, map_y_pct=73 WHERE slug='south-shore-club-area';
+UPDATE public.shore_path_stops SET map_x_pct=75,  map_y_pct=80 WHERE slug='linn-pier';
+UPDATE public.shore_path_stops SET map_x_pct=22,  map_y_pct=85 WHERE slug='fontana-beach';
+UPDATE public.shore_path_stops SET map_x_pct=11,  map_y_pct=72 WHERE slug='reid-park';
+UPDATE public.shore_path_stops SET map_x_pct=32,  map_y_pct=58 WHERE slug='abbey-harbor-view';
+UPDATE public.shore_path_stops SET map_x_pct=48,  map_y_pct=50 WHERE slug='kishwauketoe-edge';
+UPDATE public.shore_path_stops SET map_x_pct=55,  map_y_pct=40 WHERE slug='edgewater-park';
+UPDATE public.shore_path_stops SET map_x_pct=52,  map_y_pct=30 WHERE slug='williams-bay-lakefront';
+UPDATE public.shore_path_stops SET map_x_pct=62,  map_y_pct=46 WHERE slug='yerkes-area';
+UPDATE public.shore_path_stops SET map_x_pct=75,  map_y_pct=48 WHERE slug='cedar-point-park';
