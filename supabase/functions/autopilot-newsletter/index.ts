@@ -1602,6 +1602,23 @@ function buildNewsletterV2(params: NewsletterV2Params) {
   }
 
   // ========== EXISTING SECTIONS (Jobs, Evergreen, Advocates) ==========
+  // Build Local Love of the Week section
+  const localLoveHtml = localLove ? `
+    <div style="margin-bottom: 32px; background-color: #fff1f2; border-left: 4px solid #f43f5e; border-radius: 4px; padding: 18px 20px;">
+      <p style="margin: 0 0 6px 0; font-size: 11px; font-weight: 700; color: #be123c; text-transform: uppercase; letter-spacing: 0.08em;">
+        ❤️ Local Love of the Week
+      </p>
+      ${localLove.subject_name ? `<p style="margin: 0 0 4px 0; font-size: 15px; font-weight: 600; color: #1a202c;">${escapeHtml(localLove.subject_name)}</p>` : ''}
+      <p style="margin: 0; font-size: 14px; line-height: 1.55; color: #374151;">${escapeHtml(localLove.body)}</p>
+      <p style="margin: 10px 0 0 0; font-size: 12px; color: #6b7280;">— ${escapeHtml(localLove.submitter_name || 'A neighbor')}</p>
+      <p style="margin: 12px 0 0 0; font-size: 12px;">
+        <a href="https://lakegeneva.news/community/local-love" style="color: #be123c; text-decoration: none; font-weight: 600;">See more →</a>
+        <span style="color: #9ca3af;"> · </span>
+        <a href="https://lakegeneva.news/submit" style="color: #be123c; text-decoration: none; font-weight: 600;">Send your own</a>
+      </p>
+    </div>
+  ` : '';
+
   // Build evergreen section
   const evergreenHtml = evergreen && evergreen.length > 0 ? `
     <div style="margin-bottom: 32px; background-color: #f0fdf4; border-radius: 8px; padding: 20px;">
