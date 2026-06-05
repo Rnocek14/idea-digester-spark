@@ -105,10 +105,10 @@ export function ShorePathMap({
           <text x="198" y="5" fontSize="3.2" fontWeight="700" textAnchor="end" letterSpacing="0.2">
             LAKE GENEVA
           </text>
-          <text x="52" y="22" fontSize="2.8" fontWeight="700" textAnchor="middle" letterSpacing="0.2">
+          <text x="52" y="14" fontSize="2.8" fontWeight="700" textAnchor="middle" letterSpacing="0.2">
             WILLIAMS BAY
           </text>
-          <text x="2" y="55" fontSize="2.6" fontWeight="700" textAnchor="start" letterSpacing="0.2">
+          <text x="6" y="55" fontSize="2.6" fontWeight="700" textAnchor="start" letterSpacing="0.2">
             FONTANA
           </text>
           <text x="75" y="98" fontSize="2.8" fontWeight="700" textAnchor="middle" letterSpacing="0.2">
@@ -117,9 +117,9 @@ export function ShorePathMap({
         </g>
 
         {/* Compass rose */}
-        <g transform="translate(8 90)" fill="hsl(215 25% 35%)" opacity="0.6">
-          <text x="0" y="0" fontSize="3" fontWeight="700" textAnchor="middle">N</text>
-          <path d="M 0 1 L -1.5 5 L 0 4 L 1.5 5 Z" />
+        <g transform="translate(195 95)" fill="hsl(215 25% 35%)" opacity="0.55">
+          <text x="0" y="0" fontSize="2.6" fontWeight="700" textAnchor="middle">N</text>
+          <path d="M 0 0.6 L -1.2 4 L 0 3.2 L 1.2 4 Z" />
         </g>
 
         {/* Stop markers */}
@@ -130,7 +130,7 @@ export function ShorePathMap({
           return (
             <g
               key={stop.id}
-              className={onStopClick ? "cursor-pointer" : undefined}
+              className={onStopClick ? "cursor-pointer group" : "group"}
               onClick={onStopClick ? () => onStopClick(stop) : undefined}
             >
               {isActive && (
@@ -141,6 +141,14 @@ export function ShorePathMap({
                   fill="hsl(25 80% 55% / 0.25)"
                 />
               )}
+              {/* Hover ring (desktop) — invisible until the marker is hovered */}
+              <circle
+                cx={x}
+                cy={y}
+                r={markerR + 1.8}
+                fill="hsl(25 80% 55% / 0.35)"
+                className="opacity-0 group-hover:opacity-100 transition-opacity"
+              />
               <circle
                 cx={x}
                 cy={y}
