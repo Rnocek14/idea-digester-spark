@@ -18,7 +18,8 @@ type LakeIcon = {
 const currentIcon: LakeIcon = {
   src: boatImg,
   label: "Streblow Runabout",
-  tooltip: "Streblow Runabout",
+  tooltip: "Lake Icon: Streblow Runabout",
+  href: "/guides/streblow-boats-geneva-lake",
   width: 62,
   height: 19,
 };
