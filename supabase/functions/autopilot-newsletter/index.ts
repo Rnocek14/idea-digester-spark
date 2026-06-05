@@ -731,6 +731,26 @@ serve(async (req) => {
 
     console.log(`✅ Found ${advocates?.length || 0} advocates for newsletter`);
 
+    // Fetch one Local Love entry for "Local Love of the Week"
+    console.log("❤️ Fetching Local Love of the Week...");
+    const { data: localLoveRow } = await supabase
+      .from("community_submissions")
+      .select("body, subject_name, submitter_name, category")
+      .eq("kind", "local_love")
+      .in("status", ["approved", "published"])
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const localLove = localLoveRow
+      ? {
+          body: String(localLoveRow.body || ""),
+          subject_name: localLoveRow.subject_name as string | null,
+          submitter_name: (localLoveRow.submitter_name as string | null) || "The Brief Editors",
+          category: localLoveRow.category as string | null,
+        }
+      : null;
+    console.log(`✅ Local Love: ${localLove ? "found" : "none available"}`);
+
     // Build newsletter - route based on feature flag
     let newsletter: { subject: string; preheader: string; htmlBody: string; textBody: string };
     
@@ -752,7 +772,8 @@ serve(async (req) => {
         laterPickReason,
         tonightSchedule,
         weekendEvents,
-        isWeekendSendDay
+        isWeekendSendDay,
+        localLove,
       });
     } else {
       console.log("📝 Building newsletter content (V1: legacy structure)...");
@@ -1382,6 +1403,12 @@ interface NewsletterV2Params {
   tonightSchedule: LaterEvent[];
   weekendEvents: LaterEvent[];
   isWeekendSendDay: boolean;
+  localLove?: {
+    body: string;
+    subject_name: string | null;
+    submitter_name: string | null;
+    category: string | null;
+  } | null;
 }
 
 function buildNewsletterV2(params: NewsletterV2Params) {
@@ -1400,7 +1427,8 @@ function buildNewsletterV2(params: NewsletterV2Params) {
     laterPickReason,
     tonightSchedule,
     weekendEvents,
-    isWeekendSendDay
+    isWeekendSendDay,
+    localLove,
   } = params;
 
   const optimizedMap = new Map(optimizedStories.map(o => [o.id, o.newsletter_voice]));
@@ -1574,6 +1602,23 @@ function buildNewsletterV2(params: NewsletterV2Params) {
   }
 
   // ========== EXISTING SECTIONS (Jobs, Evergreen, Advocates) ==========
+  // Build Local Love of the Week section
+  const localLoveHtml = localLove ? `
+    <div style="margin-bottom: 32px; background-color: #fff1f2; border-left: 4px solid #f43f5e; border-radius: 4px; padding: 18px 20px;">
+      <p style="margin: 0 0 6px 0; font-size: 11px; font-weight: 700; color: #be123c; text-transform: uppercase; letter-spacing: 0.08em;">
+        ❤️ Local Love of the Week
+      </p>
+      ${localLove.subject_name ? `<p style="margin: 0 0 4px 0; font-size: 15px; font-weight: 600; color: #1a202c;">${escapeHtml(localLove.subject_name)}</p>` : ''}
+      <p style="margin: 0; font-size: 14px; line-height: 1.55; color: #374151;">${escapeHtml(localLove.body)}</p>
+      <p style="margin: 10px 0 0 0; font-size: 12px; color: #6b7280;">— ${escapeHtml(localLove.submitter_name || 'A neighbor')}</p>
+      <p style="margin: 12px 0 0 0; font-size: 12px;">
+        <a href="https://lakegeneva.news/community/local-love" style="color: #be123c; text-decoration: none; font-weight: 600;">See more →</a>
+        <span style="color: #9ca3af;"> · </span>
+        <a href="https://lakegeneva.news/submit" style="color: #be123c; text-decoration: none; font-weight: 600;">Send your own</a>
+      </p>
+    </div>
+  ` : '';
+
   // Build evergreen section
   const evergreenHtml = evergreen && evergreen.length > 0 ? `
     <div style="margin-bottom: 32px; background-color: #f0fdf4; border-radius: 8px; padding: 20px;">
@@ -1689,6 +1734,8 @@ function buildNewsletterV2(params: NewsletterV2Params) {
       
       ${laterHtml}
       
+      ${localLoveHtml}
+      
       ${evergreenHtml}
       
       ${jobsHtml}
@@ -1745,13 +1792,17 @@ function buildNewsletterV2(params: NewsletterV2Params) {
     ? `== NOW HIRING ==\n\n${jobs.map((j: any) => `• ${j.title} at ${j.business_name}`).join("\n")}\n\n`
     : '';
 
+  const localLoveText = localLove
+    ? `== LOCAL LOVE OF THE WEEK ==\n\n${localLove.subject_name ? localLove.subject_name + '\n' : ''}${localLove.body}\n— ${localLove.submitter_name || 'A neighbor'}\nMore: https://lakegeneva.news/community/local-love\n\n`
+    : '';
+
   const textBody = `
 LAKE GENEVA BRIEF
 ${dateLabel}
 
 Good morning, Lake Geneva! 👋
 
-${liveText}${latestText}${laterText}${jobsText}---
+${liveText}${latestText}${laterText}${localLoveText}${jobsText}---
 Unsubscribe: [UNSUBSCRIBE_URL]
   `.trim();
 

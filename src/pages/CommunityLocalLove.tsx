@@ -54,7 +54,8 @@ export default function CommunityLocalLove() {
             </h1>
             <p className="text-slate-600 mt-2 text-sm max-w-2xl leading-relaxed">
               Short shout-outs from neighbors — people, places, and moments worth thanking.
-              Every note is reviewed before it lands here.
+              Every note is reviewed before it lands here. To kick things off, the first
+              batch is signed <em>The Brief Editors</em>; the rest will be yours.
             </p>
           </div>
           <Link to="/submit">

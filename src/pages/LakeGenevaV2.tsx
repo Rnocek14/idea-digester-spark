@@ -15,6 +15,7 @@ import NightlifeWidget from "@/components/NightlifeWidget";
 import HappeningTodayWidget from "@/components/HappeningTodayWidget";
 import ComingUpRail from "@/components/ComingUpRail";
 import EditorialLaterRail from "@/components/EditorialLaterRail";
+import CommunityDeskBlock from "@/components/CommunityDeskBlock";
 import NowHiringWidget from "@/components/NowHiringWidget";
 import { InlineSubscribeCTA } from "@/components/InlineSubscribeCTA";
 import { StickySubscribeBanner } from "@/components/StickySubscribeBanner";
@@ -1030,6 +1031,9 @@ const LakeGenevaV2 = () => {
             {!storiesLoading && viewMode === 'all' && (
               <HappeningTodayWidget />
             )}
+
+            {/* COMMUNITY DESK — people contributing back, between editorial arc and utility */}
+            {viewMode === 'all' && <CommunityDeskBlock />}
 
             {/* COMING UP — Tonight / This Weekend / Next Week */}
             {viewMode === 'all' && <ComingUpRail />}
