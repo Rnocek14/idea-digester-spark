@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { PublicHeader } from "@/components/PublicHeader";
 import { PageMeta } from "@/components/PageMeta";
@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Play, Heart, MapPin, Bath } from "lucide-react";
 import { articleJsonLd, breadcrumbJsonLd, faqJsonLd } from "@/lib/seo/jsonLd";
 import { LG_LANDMARK_KEYWORDS, LG_CORE_KEYWORDS } from "@/lib/seoKeywords";
-import { useShorePathStops } from "@/hooks/useShorePathStops";
+import { useShorePathStops, type ShorePathStopRow } from "@/hooks/useShorePathStops";
 import { ShorePathMap } from "@/components/shore-path/ShorePathMap";
 import { ShorePathWalkingMode } from "@/components/shore-path/ShorePathWalkingMode";
+import { StickyMapStrip } from "@/components/shore-path/StickyMapStrip";
 import { SoftRealEstateCTA } from "@/components/guides/SoftRealEstateCTA";
 
 const TODAY = "2026-06-05";
@@ -91,6 +92,30 @@ const LEG_DISTANCES: { from: string; to: string; miles: number }[] = [
 export default function LakeGenevaShorePath() {
   const { data: stops = [], isLoading } = useShorePathStops();
   const [walkingOpen, setWalkingOpen] = useState(false);
+  const [walkingInitialIndex, setWalkingInitialIndex] = useState<number | null>(null);
+  const [activeStopId, setActiveStopId] = useState<string | null>(null);
+  const [arrivedStopId, setArrivedStopId] = useState<string | null>(null);
+  const [mapInView, setMapInView] = useState(true);
+  const mapRef = useRef<HTMLDivElement | null>(null);
+
+  // Observe the hero map so we know whether to show the sticky strip.
+  useEffect(() => {
+    const el = mapRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      ([entry]) => setMapInView(entry.isIntersecting),
+      { threshold: 0.05 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  // Clear the "just arrived" highlight after the animation finishes.
+  useEffect(() => {
+    if (!arrivedStopId) return;
+    const t = window.setTimeout(() => setArrivedStopId(null), 1800);
+    return () => window.clearTimeout(t);
+  }, [arrivedStopId]);
 
   const jsonLd = useMemo(
     () => [
@@ -111,12 +136,28 @@ export default function LakeGenevaShorePath() {
     [],
   );
 
-  const handleMarkerClick = (s: { slug: string }) => {
+  const handleJumpToStop = (s: ShorePathStopRow) => {
+    setActiveStopId(s.id);
+    setArrivedStopId(s.id);
     const el = document.getElementById(`stop-${s.slug}`);
     if (el) {
       el.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   };
+
+  const handleStartWalkFromStop = (s: ShorePathStopRow) => {
+    const idx = stops.findIndex((x) => x.id === s.id);
+    setWalkingInitialIndex(idx >= 0 ? idx : 0);
+    setWalkingOpen(true);
+  };
+
+  const handleBackToMap = () => {
+    mapRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const activeStop = activeStopId
+    ? stops.find((s) => s.id === activeStopId) ?? null
+    : null;
 
   return (
     <div className="min-h-screen bg-stone-50">
@@ -141,6 +182,15 @@ export default function LakeGenevaShorePath() {
         ]}
       />
       <PublicHeader />
+
+      {activeStop && (
+        <StickyMapStrip
+          stop={activeStop}
+          totalStops={stops.length}
+          visible={!mapInView}
+          onBackToMap={handleBackToMap}
+        />
+      )}
 
       <main className="mx-auto max-w-5xl px-4 sm:px-6 py-6">
         {/* Breadcrumb */}
@@ -168,15 +218,17 @@ export default function LakeGenevaShorePath() {
         </header>
 
         {/* Stylized map */}
-        <div className="mb-4">
+        <div className="mb-4" ref={mapRef}>
           <ShorePathMap
             stops={stops}
-            onStopClick={handleMarkerClick}
+            activeStopId={activeStopId}
+            onJumpToStop={handleJumpToStop}
+            onStartWalkFromStop={handleStartWalkFromStop}
             size="hero"
           />
           <p className="text-xs text-slate-500 mt-2 italic">
-            Tap any numbered marker to jump to that stop. Illustrative — not
-            a navigation map.
+            Tap any numbered marker for a quick preview, then jump to the
+            full write-up. Illustrative — not a navigation map.
           </p>
         </div>
 
@@ -248,7 +300,15 @@ export default function LakeGenevaShorePath() {
               <article
                 key={stop.id}
                 id={`stop-${stop.slug}`}
-                className="scroll-mt-24 rounded-md border border-slate-200 bg-white p-5"
+                className={[
+                  "scroll-mt-24 rounded-md border bg-white p-5 transition-all",
+                  stop.id === activeStopId
+                    ? "border-amber-400 border-l-4"
+                    : "border-slate-200",
+                  stop.id === arrivedStopId
+                    ? "ring-2 ring-amber-300 ring-offset-2"
+                    : "",
+                ].join(" ")}
               >
                 <div className="flex items-start gap-4">
                   <div className="flex-shrink-0 w-10 h-10 rounded-full bg-slate-800 text-white flex items-center justify-center font-bold text-sm">
@@ -429,6 +489,7 @@ export default function LakeGenevaShorePath() {
         open={walkingOpen}
         onOpenChange={setWalkingOpen}
         stops={stops}
+        initialIndex={walkingInitialIndex}
       />
     </div>
   );
