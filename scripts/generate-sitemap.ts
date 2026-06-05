@@ -101,15 +101,15 @@ async function fetchDynamic(): Promise<SitemapEntry[]> {
     const cutoff = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString();
     const { data: incidents } = await sb
       .from("incidents")
-      .select("slug, updated_at, created_at")
+      .select("slug, updated_at")
       .not("slug", "is", null)
-      .gte("created_at", cutoff)
-      .order("created_at", { ascending: false })
+      .gte("updated_at", cutoff)
+      .order("updated_at", { ascending: false })
       .limit(500);
     for (const i of incidents ?? []) {
       entries.push({
         path: `/incidents/${i.slug}`,
-        lastmod: (i.updated_at || i.created_at || "").toString().slice(0, 10) || undefined,
+        lastmod: (i.updated_at || "").toString().slice(0, 10) || undefined,
         changefreq: "weekly",
         priority: "0.5",
       });
