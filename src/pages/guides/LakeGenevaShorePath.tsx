@@ -343,6 +343,23 @@ export default function LakeGenevaShorePath() {
                         {stop.description}
                       </p>
                     )}
+                    {stop.story_long && stop.story_long !== stop.description && (
+                      <p className="text-slate-700 leading-relaxed mt-2">
+                        {stop.story_long}
+                      </p>
+                    )}
+                    {stop.audio_url && (
+                      <div className="mt-3">
+                        <p className="text-[10px] font-mono uppercase tracking-widest text-slate-500 mb-1.5">
+                          Listen · narrated by The Brief
+                        </p>
+                        <StoryPlayer
+                          audioUrl={stop.audio_url}
+                          transcript={stop.audio_transcript}
+                          durationSec={stop.audio_duration_sec}
+                        />
+                      </div>
+                    )}
                     {stop.look_for && (
                       <div className="mt-3 rounded-md bg-amber-50 border border-amber-200 px-4 py-2.5">
                         <p className="text-[10px] font-mono uppercase tracking-widest text-amber-700 mb-1">
