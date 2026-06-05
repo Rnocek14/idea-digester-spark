@@ -2308,14 +2308,21 @@ export type Database = {
       shore_path_stops: {
         Row: {
           approx_mile: number | null
+          audio_duration_sec: number | null
+          audio_transcript: string | null
+          audio_url: string | null
+          audio_voice_id: string | null
           community: string | null
           created_at: string
           description: string | null
+          geofence_radius_m: number
           hero_image_url: string | null
           id: string
           is_public_landmark: boolean
           is_published: boolean
+          lat: number | null
           latitude: number | null
+          lng: number | null
           longitude: number | null
           look_for: string | null
           map_x_pct: number | null
@@ -2324,18 +2331,26 @@ export type Database = {
           order_index: number
           short_label: string | null
           slug: string
+          story_long: string | null
           updated_at: string
         }
         Insert: {
           approx_mile?: number | null
+          audio_duration_sec?: number | null
+          audio_transcript?: string | null
+          audio_url?: string | null
+          audio_voice_id?: string | null
           community?: string | null
           created_at?: string
           description?: string | null
+          geofence_radius_m?: number
           hero_image_url?: string | null
           id?: string
           is_public_landmark?: boolean
           is_published?: boolean
+          lat?: number | null
           latitude?: number | null
+          lng?: number | null
           longitude?: number | null
           look_for?: string | null
           map_x_pct?: number | null
@@ -2344,18 +2359,26 @@ export type Database = {
           order_index: number
           short_label?: string | null
           slug: string
+          story_long?: string | null
           updated_at?: string
         }
         Update: {
           approx_mile?: number | null
+          audio_duration_sec?: number | null
+          audio_transcript?: string | null
+          audio_url?: string | null
+          audio_voice_id?: string | null
           community?: string | null
           created_at?: string
           description?: string | null
+          geofence_radius_m?: number
           hero_image_url?: string | null
           id?: string
           is_public_landmark?: boolean
           is_published?: boolean
+          lat?: number | null
           latitude?: number | null
+          lng?: number | null
           longitude?: number | null
           look_for?: string | null
           map_x_pct?: number | null
@@ -2364,6 +2387,7 @@ export type Database = {
           order_index?: number
           short_label?: string | null
           slug?: string
+          story_long?: string | null
           updated_at?: string
         }
         Relationships: []
