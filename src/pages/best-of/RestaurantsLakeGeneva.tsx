@@ -86,6 +86,17 @@ export default function RestaurantsLakeGeneva() {
         </nav>
 
         <header className="mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <Link
+              to="/eats"
+              className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-slate-500 hover:text-blue-700 transition-colors"
+            >
+              <Utensils className="h-3.5 w-3.5" />
+              Lake Geneva Eats
+            </Link>
+            <span className="text-slate-300">·</span>
+            <span className="text-xs font-mono uppercase tracking-wider text-slate-500">Community Guide</span>
+          </div>
           <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl text-slate-900 tracking-tight leading-tight">
             {TITLE}
           </h1>

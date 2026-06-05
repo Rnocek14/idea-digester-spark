@@ -8,6 +8,7 @@ const navItems = [
   { label: "Today", to: "/lake-geneva" },
   { label: "Events", to: "/events" },
   { label: "Local Love", to: "/community/local-love" },
+  { label: "Eats", to: "/eats" },
   { label: "Directory", to: "/directory" },
   { label: "Submit", to: "/submit" },
 ];
