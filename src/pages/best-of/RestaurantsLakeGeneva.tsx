@@ -210,6 +210,14 @@ export default function RestaurantsLakeGeneva() {
               })}
             </div>
           )}
+          {!isLoading && withMentions.length > 0 && (
+            <div className="mt-5 rounded-md border border-dashed border-slate-300 bg-white px-4 py-3 text-sm text-slate-700 leading-relaxed">
+              Know a place locals should be talking about?{" "}
+              <Link to="/submit" className="text-blue-700 hover:underline font-medium">
+                Send a Local Love note →
+              </Link>
+            </div>
+          )}
         </section>
 
         {/* Section 3 — Recently Mentioned */}
