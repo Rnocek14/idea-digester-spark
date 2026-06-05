@@ -108,7 +108,7 @@ export function ShorePathMap({
           <text x="52" y="22" fontSize="2.8" fontWeight="700" textAnchor="middle" letterSpacing="0.2">
             WILLIAMS BAY
           </text>
-          <text x="2" y="50" fontSize="2.8" fontWeight="700" textAnchor="start" letterSpacing="0.2">
+          <text x="2" y="98" fontSize="2.8" fontWeight="700" textAnchor="start" letterSpacing="0.2">
             FONTANA
           </text>
           <text x="75" y="98" fontSize="2.8" fontWeight="700" textAnchor="middle" letterSpacing="0.2">
