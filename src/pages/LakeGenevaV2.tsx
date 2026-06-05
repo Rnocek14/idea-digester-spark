@@ -1207,7 +1207,7 @@ const LakeGenevaV2 = () => {
                     <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-foreground">LATER</h2>
                     <span className="text-[10px] font-mono text-amber-600 uppercase">[PLANS]</span>
                   </div>
-                  <p className="text-[10px] font-mono text-muted-foreground mt-1 uppercase">Tonight → Next 3 Days</p>
+                  <p className="text-[10px] font-mono text-muted-foreground mt-1 uppercase">What's worth looking forward to</p>
                 </div>
                 
                 {/* Nightlife Widget - with Tonight/Weekend toggle */}
@@ -1224,7 +1224,7 @@ const LakeGenevaV2 = () => {
               <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-foreground">LATER</h2>
               <span className="text-[10px] font-mono text-amber-600 uppercase">[PLANS]</span>
             </div>
-            <p className="text-[10px] font-mono text-muted-foreground mt-1 uppercase">Tonight → Next 3 Days</p>
+            <p className="text-[10px] font-mono text-muted-foreground mt-1 uppercase">What's worth looking forward to</p>
           </div>
           <NightlifeWidget showLaterPick showModeToggle />
         </div>
