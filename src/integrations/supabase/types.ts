@@ -513,6 +513,7 @@ export type Database = {
           review_notes: string | null
           reviewed_at: string | null
           reviewed_by: string | null
+          shore_path_stop_id: string | null
           status: string
           subject_name: string | null
           subject_type: string | null
@@ -535,6 +536,7 @@ export type Database = {
           review_notes?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
+          shore_path_stop_id?: string | null
           status?: string
           subject_name?: string | null
           subject_type?: string | null
@@ -557,6 +559,7 @@ export type Database = {
           review_notes?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
+          shore_path_stop_id?: string | null
           status?: string
           subject_name?: string | null
           subject_type?: string | null
@@ -566,7 +569,15 @@ export type Database = {
           submitter_town?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "community_submissions_shore_path_stop_id_fkey"
+            columns: ["shore_path_stop_id"]
+            isOneToOne: false
+            referencedRelation: "shore_path_stops"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       community_venues: {
         Row: {
@@ -2293,6 +2304,69 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      shore_path_stops: {
+        Row: {
+          approx_mile: number | null
+          community: string | null
+          created_at: string
+          description: string | null
+          hero_image_url: string | null
+          id: string
+          is_public_landmark: boolean
+          is_published: boolean
+          latitude: number | null
+          longitude: number | null
+          look_for: string | null
+          map_x_pct: number | null
+          map_y_pct: number | null
+          name: string
+          order_index: number
+          short_label: string | null
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          approx_mile?: number | null
+          community?: string | null
+          created_at?: string
+          description?: string | null
+          hero_image_url?: string | null
+          id?: string
+          is_public_landmark?: boolean
+          is_published?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          look_for?: string | null
+          map_x_pct?: number | null
+          map_y_pct?: number | null
+          name: string
+          order_index: number
+          short_label?: string | null
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          approx_mile?: number | null
+          community?: string | null
+          created_at?: string
+          description?: string | null
+          hero_image_url?: string | null
+          id?: string
+          is_public_landmark?: boolean
+          is_published?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          look_for?: string | null
+          map_x_pct?: number | null
+          map_y_pct?: number | null
+          name?: string
+          order_index?: number
+          short_label?: string | null
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       sources: {
         Row: {

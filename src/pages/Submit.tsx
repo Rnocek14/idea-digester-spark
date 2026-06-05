@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { PublicHeader } from "@/components/PublicHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -142,8 +143,15 @@ function EventForm() {
   );
 }
 
-function LocalLoveForm() {
-  const [v, setV] = useState<Record<string, string>>({ category: "people" });
+function LocalLoveForm({
+  initialSubject,
+  initialBodyPrefix,
+}: { initialSubject?: string; initialBodyPrefix?: string } = {}) {
+  const [v, setV] = useState<Record<string, string>>({
+    category: "places",
+    subject_name: initialSubject || "",
+    body: initialBodyPrefix || "",
+  });
   const [hp, setHp] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const set = (k: string, val: string) => setV((p) => ({ ...p, [k]: val }));
@@ -276,7 +284,22 @@ function TipForm() {
 }
 
 export default function Submit() {
-  const [tab, setTab] = useState<Kind>("event");
+  const [params] = useSearchParams();
+  const initialKind = (params.get("kind") as Kind) || "event";
+  const [tab, setTab] = useState<Kind>(
+    initialKind === "local_love" || initialKind === "tip" || initialKind === "event"
+      ? initialKind
+      : "event",
+  );
+  const stopSlug = params.get("stop") || "";
+  const stopName = params.get("stop_name") || "";
+  const shorePathContext = stopName
+    ? { subject: stopName, prefix: `Shore Path · ${stopName}: ` }
+    : null;
+
+  useEffect(() => {
+    if (stopSlug && initialKind === "local_love") setTab("local_love");
+  }, [stopSlug, initialKind]);
 
   return (
     <div className="min-h-screen bg-stone-50">
@@ -297,8 +320,18 @@ export default function Submit() {
             <TabsTrigger value="tip" className="gap-2"><Mail className="h-4 w-4" />Tip</TabsTrigger>
           </TabsList>
           <div className="rounded-md border border-slate-200 bg-white p-5 sm:p-6">
+            {shorePathContext && tab === "local_love" && (
+              <p className="text-xs text-slate-600 mb-3 italic">
+                Sharing a memory from <strong>{shorePathContext.subject}</strong> on the Shore Path.
+              </p>
+            )}
             <TabsContent value="event"><EventForm /></TabsContent>
-            <TabsContent value="local_love"><LocalLoveForm /></TabsContent>
+            <TabsContent value="local_love">
+              <LocalLoveForm
+                initialSubject={shorePathContext?.subject}
+                initialBodyPrefix={shorePathContext?.prefix}
+              />
+            </TabsContent>
             <TabsContent value="tip"><TipForm /></TabsContent>
           </div>
         </Tabs>
