@@ -139,16 +139,15 @@ export default function ComingUpRail() {
 
   const heroVenue = heroPick ? extractVenue(heroPick) : "";
   const heroTime = heroPick ? formatEventTime(heroPick.event_time) : "";
-  const heroDayLabel =
-    heroPick && heroPick.event_date
-      ? new Date(
-          ...(heroPick.event_date.split("-").map((n, i) => (i === 1 ? Number(n) - 1 : Number(n))) as [
-            number,
-            number,
-            number,
-          ]),
-        ).toLocaleDateString([], { weekday: "long", month: "short", day: "numeric" })
-      : "";
+  let heroDayLabel = "";
+  if (heroPick && heroPick.event_date) {
+    const [hy, hm, hd] = heroPick.event_date.split("-").map(Number);
+    heroDayLabel = new Date(hy, (hm || 1) - 1, hd || 1).toLocaleDateString([], {
+      weekday: "long",
+      month: "short",
+      day: "numeric",
+    });
+  }
 
   return (
     <section className="mb-8">
