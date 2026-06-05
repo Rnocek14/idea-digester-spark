@@ -43,10 +43,16 @@ export const BriefHero = ({ stories }: BriefHeroProps) => {
   };
 
   return (
-    <section className="border-b border-gray-200 bg-white">
+    <section className="relative border-b border-gray-200 bg-white">
+      {/* Lake accent strip — echoes the Shore Path map palette */}
+      <div
+        className="absolute inset-x-0 top-0 h-1"
+        style={{ background: "var(--gradient-lake)" }}
+        aria-hidden
+      />
       <div className="mx-auto max-w-5xl px-4 sm:px-6 py-6 sm:py-8">
         <div className="max-w-3xl">
-          <p className="text-xs font-semibold tracking-[0.2em] text-brand-accent uppercase">
+          <p className="text-xs font-semibold tracking-[0.2em] text-lake-deep uppercase">
             Good morning, Lake Geneva
           </p>
           <h1 className="mt-2 font-display text-3xl sm:text-4xl tracking-tight text-brand">
