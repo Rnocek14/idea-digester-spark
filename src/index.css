@@ -24,6 +24,17 @@ All colors MUST be HSL.
     --brand-accent: 221 83% 53%; /* blue-600 */
     --brand-accent-foreground: 0 0% 100%;
 
+    /* Lake palette — sampled from the Shore Path map.
+       Use as accents only (hero strips, headers, single bars, icons).
+       Do NOT recolor story cards, alerts, or feed surfaces. */
+    --lake-light: 200 80% 82%;       /* shallow water */
+    --lake-blue: 205 65% 68%;        /* lake body */
+    --lake-deep: 205 55% 38%;        /* shoreline edge */
+    --lake-navy: 215 70% 35%;        /* deep marker navy */
+    --shore-terracotta: 25 75% 42%;  /* path accent */
+    --lake-sand: 45 30% 96%;         /* warm neutral */
+    --gradient-lake: linear-gradient(135deg, hsl(var(--lake-light)) 0%, hsl(var(--lake-blue)) 100%);
+
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
 
