@@ -27,7 +27,7 @@ const PageShell: React.FC<PageShellProps> = ({
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       {/* Top header */}
-      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/80 backdrop-blur-sm">
+      <header className="sticky top-0 z-30 relative bg-white/80 backdrop-blur-sm">
         {/* Top strip: date + tagline */}
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-2 text-xs text-slate-500">
           <span>{today}</span>
