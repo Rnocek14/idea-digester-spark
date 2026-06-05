@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Link, NavLink } from "react-router-dom";
 import { format } from "date-fns";
+import { LakeLine } from "@/components/LakeLine";
 
 const navItems = [
   { label: "Today", to: "/lake-geneva" },
@@ -96,6 +97,7 @@ const PageShell: React.FC<PageShellProps> = ({
             ))}
           </nav>
         </div>
+        <LakeLine />
       </header>
 
       {/* Main content */}
