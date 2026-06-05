@@ -1403,6 +1403,12 @@ interface NewsletterV2Params {
   tonightSchedule: LaterEvent[];
   weekendEvents: LaterEvent[];
   isWeekendSendDay: boolean;
+  localLove?: {
+    body: string;
+    subject_name: string | null;
+    submitter_name: string | null;
+    category: string | null;
+  } | null;
 }
 
 function buildNewsletterV2(params: NewsletterV2Params) {
@@ -1421,7 +1427,8 @@ function buildNewsletterV2(params: NewsletterV2Params) {
     laterPickReason,
     tonightSchedule,
     weekendEvents,
-    isWeekendSendDay
+    isWeekendSendDay,
+    localLove,
   } = params;
 
   const optimizedMap = new Map(optimizedStories.map(o => [o.id, o.newsletter_voice]));
