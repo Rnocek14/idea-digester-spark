@@ -55,6 +55,15 @@ export function LakeLine() {
           overflow: hidden;
           pointer-events: none;
         }
+        .lake-boat-layer {
+          position: absolute;
+          left: 0;
+          right: 0;
+          top: 100%;
+          height: 0;
+          pointer-events: none;
+          z-index: 1;
+        }
         .lake-glow {
           position: absolute;
           inset: 0;
@@ -79,7 +88,7 @@ export function LakeLine() {
         }
         .lake-boat {
           position: absolute;
-          top: -10px;
+          top: -16px;
           left: 0;
           width: 56px;
           height: 20px;
@@ -118,8 +127,10 @@ export function LakeLine() {
       `}</style>
       <div className="lake-line" aria-hidden="true">
         <div className="lake-wave-track" />
-        <div className="lake-boat" />
         <div className="lake-glow" />
+      </div>
+      <div className="lake-boat-layer" aria-hidden="true">
+        <div className="lake-boat" />
       </div>
     </>
   );
