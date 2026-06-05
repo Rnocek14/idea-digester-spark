@@ -30,7 +30,7 @@ export function LakeLine() {
           right: 0;
           /* Sit just below the header so the soft glow can hang underneath */
           top: 100%;
-          height: 28px;
+          height: 20px;
           overflow: hidden;
           pointer-events: none;
         }
