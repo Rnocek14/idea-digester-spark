@@ -1233,6 +1233,17 @@ const LakeGenevaV2 = () => {
 
                 {/* Nightlife Widget - with Tonight/Weekend toggle */}
                 <NightlifeWidget showLaterPick showModeToggle />
+
+                {/* Featured guide: Shore Path */}
+                <Link
+                  to="/guides/lake-geneva-shore-path"
+                  className="block rounded-md border border-slate-200 bg-gradient-to-br from-sky-50 to-stone-50 p-4 hover:border-blue-500 transition-colors"
+                >
+                  <p className="text-[10px] font-mono uppercase tracking-widest text-lake-deep">Featured Guide</p>
+                  <p className="mt-1 font-display text-base text-slate-900 leading-snug">Walk the Shore Path</p>
+                  <p className="mt-1 text-xs text-slate-600 leading-relaxed">26 miles around Geneva Lake — 16 narrated stops, maps, and a guided walk mode.</p>
+                  <span className="mt-2 inline-block text-xs font-medium text-blue-600">Open the guide →</span>
+                </Link>
               </ScrollableContainer>
             </div>
           </aside>
@@ -1249,6 +1260,15 @@ const LakeGenevaV2 = () => {
           </div>
           <EditorialLaterRail />
           <NightlifeWidget showLaterPick showModeToggle />
+          <Link
+            to="/guides/lake-geneva-shore-path"
+            className="mt-6 block rounded-md border border-slate-200 bg-gradient-to-br from-sky-50 to-stone-50 p-4 hover:border-blue-500 transition-colors"
+          >
+            <p className="text-[10px] font-mono uppercase tracking-widest text-lake-deep">Featured Guide</p>
+            <p className="mt-1 font-display text-base text-slate-900 leading-snug">Walk the Shore Path</p>
+            <p className="mt-1 text-xs text-slate-600 leading-relaxed">26 miles around Geneva Lake — 16 narrated stops, maps, and a guided walk mode.</p>
+            <span className="mt-2 inline-block text-xs font-medium text-blue-600">Open the guide →</span>
+          </Link>
         </div>
       </div>
     </PageShell>
