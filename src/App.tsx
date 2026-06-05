@@ -58,6 +58,7 @@ import CostOfLivingLakeGeneva from "./pages/guides/CostOfLivingLakeGeneva";
 import LakeGenevaVsWilliamsBay from "./pages/guides/LakeGenevaVsWilliamsBay";
 import FontanaVsLakeGeneva from "./pages/guides/FontanaVsLakeGeneva";
 import WhyPeopleLoveLakeGeneva from "./pages/guides/WhyPeopleLoveLakeGeneva";
+import RestaurantsLakeGeneva from "./pages/best-of/RestaurantsLakeGeneva";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -122,6 +123,7 @@ const App = () => (
             <Route path="/guides/fontana-vs-lake-geneva" element={<FontanaVsLakeGeneva />} />
             <Route path="/guides/why-people-love-lake-geneva" element={<WhyPeopleLoveLakeGeneva />} />
             <Route path="/market-report" element={<LakeGenevaMarketReport />} />
+            <Route path="/best-of/restaurants-lake-geneva" element={<RestaurantsLakeGeneva />} />
             <Route path="/dashboard" element={<DashboardLayout />}>
               <Route index element={<Dashboard />} />
               <Route path="pipeline" element={<PipelineHealth />} />
