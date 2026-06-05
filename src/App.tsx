@@ -60,6 +60,7 @@ import FontanaVsLakeGeneva from "./pages/guides/FontanaVsLakeGeneva";
 import WhyPeopleLoveLakeGeneva from "./pages/guides/WhyPeopleLoveLakeGeneva";
 import RestaurantsLakeGeneva from "./pages/best-of/RestaurantsLakeGeneva";
 import LakeGenevaShorePath from "./pages/guides/LakeGenevaShorePath";
+import StreblowBoats from "./pages/guides/StreblowBoats";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -124,6 +125,7 @@ const App = () => (
             <Route path="/guides/fontana-vs-lake-geneva" element={<FontanaVsLakeGeneva />} />
             <Route path="/guides/why-people-love-lake-geneva" element={<WhyPeopleLoveLakeGeneva />} />
             <Route path="/guides/lake-geneva-shore-path" element={<LakeGenevaShorePath />} />
+            <Route path="/guides/streblow-boats-geneva-lake" element={<StreblowBoats />} />
             <Route path="/market-report" element={<LakeGenevaMarketReport />} />
             <Route path="/best-of/restaurants-lake-geneva" element={<RestaurantsLakeGeneva />} />
             <Route path="/dashboard" element={<DashboardLayout />}>

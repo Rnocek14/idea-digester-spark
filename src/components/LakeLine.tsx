@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import boatImg from "@/assets/streblow-boat.png";
 
 /**
@@ -18,7 +19,8 @@ type LakeIcon = {
 const currentIcon: LakeIcon = {
   src: boatImg,
   label: "Streblow Runabout",
-  tooltip: "Streblow Runabout",
+  tooltip: "Lake Icon: Streblow Runabout",
+  href: "/guides/streblow-boats-geneva-lake",
   width: 62,
   height: 19,
 };
@@ -133,8 +135,8 @@ export function LakeLine() {
       </div>
       <div className="lake-boat-layer" aria-hidden="true">
         {currentIcon.href ? (
-          <a
-            href={currentIcon.href}
+          <Link
+            to={currentIcon.href}
             className="lake-boat"
             aria-label={currentIcon.label}
             title={currentIcon.tooltip}
