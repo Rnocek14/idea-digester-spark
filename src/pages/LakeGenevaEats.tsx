@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Utensils, MapPin, Clock, ArrowRight, Star, Calendar, ExternalLink } from "lucide-react";
+import { Utensils, MapPin, Clock, ArrowRight, Star, Calendar, ExternalLink, Heart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Link } from "react-router-dom";
 import PageShell from "@/components/PageShell";
 import { PageMeta } from "@/components/PageMeta";
 import { LG_CORE_KEYWORDS, LG_GEO_KEYWORDS } from "@/lib/seoKeywords";
@@ -216,6 +217,15 @@ const LakeGenevaEats = () => {
               <MapPin className="h-4 w-4" />
               {restaurants.length} restaurants
             </span>
+          </div>
+          <div className="mt-4">
+            <Link
+              to="/best-of/restaurants-lake-geneva"
+              className="inline-flex items-center gap-2 rounded-full bg-white/15 hover:bg-white/25 px-4 py-2 text-sm font-medium text-white transition-colors backdrop-blur-sm"
+            >
+              <Heart className="h-4 w-4 text-rose-300" />
+              See what locals are talking about →
+            </Link>
           </div>
         </div>
       </div>
