@@ -467,6 +467,7 @@ const ContentQueue = () => {
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
+                      <FeatureInLaterButton story={story as any} />
                       {story.status === "pending" && (
                         <>
                           <Button
