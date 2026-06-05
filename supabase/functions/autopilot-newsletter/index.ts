@@ -1734,6 +1734,8 @@ function buildNewsletterV2(params: NewsletterV2Params) {
       
       ${laterHtml}
       
+      ${localLoveHtml}
+      
       ${evergreenHtml}
       
       ${jobsHtml}
@@ -1790,13 +1792,17 @@ function buildNewsletterV2(params: NewsletterV2Params) {
     ? `== NOW HIRING ==\n\n${jobs.map((j: any) => `• ${j.title} at ${j.business_name}`).join("\n")}\n\n`
     : '';
 
+  const localLoveText = localLove
+    ? `== LOCAL LOVE OF THE WEEK ==\n\n${localLove.subject_name ? localLove.subject_name + '\n' : ''}${localLove.body}\n— ${localLove.submitter_name || 'A neighbor'}\nMore: https://lakegeneva.news/community/local-love\n\n`
+    : '';
+
   const textBody = `
 LAKE GENEVA BRIEF
 ${dateLabel}
 
 Good morning, Lake Geneva! 👋
 
-${liveText}${latestText}${laterText}${jobsText}---
+${liveText}${latestText}${laterText}${localLoveText}${jobsText}---
 Unsubscribe: [UNSUBSCRIBE_URL]
   `.trim();
 
