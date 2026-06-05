@@ -102,13 +102,13 @@ export function ShorePathMap({
         {/* Four town anchors — quiet, recognizable, never per-stop labels.
             Stop names appear on hover/tap via the marker <title> tooltip. */}
         <g fontFamily="ui-sans-serif, system-ui" fill="hsl(215 28% 28%)">
-          <text x="198" y="20" fontSize="3.2" fontWeight="700" textAnchor="end" letterSpacing="0.2">
+          <text x="198" y="5" fontSize="3.2" fontWeight="700" textAnchor="end" letterSpacing="0.2">
             LAKE GENEVA
           </text>
           <text x="52" y="22" fontSize="2.8" fontWeight="700" textAnchor="middle" letterSpacing="0.2">
             WILLIAMS BAY
           </text>
-          <text x="2" y="72" fontSize="2.8" fontWeight="700" textAnchor="start" letterSpacing="0.2">
+          <text x="2" y="80" fontSize="2.8" fontWeight="700" textAnchor="start" letterSpacing="0.2">
             FONTANA
           </text>
           <text x="75" y="98" fontSize="2.8" fontWeight="700" textAnchor="middle" letterSpacing="0.2">
