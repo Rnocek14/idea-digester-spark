@@ -72,14 +72,13 @@ export function LakeLine() {
         .lake-boat {
           position: absolute;
           top: -20px;
-          left: 0;
-          width: 72px;
-          height: 22px;
+          right: 6vw;
+          width: 62px;
+          height: 19px;
           background-image: ${boatBg};
           background-repeat: no-repeat;
-          background-size: 72px 22px;
-          opacity: 0.9;
-          transform: translateX(8vw);
+          background-size: 62px 19px;
+          opacity: 0.85;
           will-change: transform;
         }
         /* Desktop only — water gently wakes up on header hover */
@@ -88,20 +87,16 @@ export function LakeLine() {
             animation: lake-drift var(--lake-speed, 16s) linear infinite;
           }
           header:hover .lake-boat {
-            animation: lake-boat-drift 48s linear infinite, lake-boat-bob 6s ease-in-out infinite;
+            animation: lake-boat-bob 5s ease-in-out infinite;
           }
         }
         @keyframes lake-drift {
           from { transform: translateX(0); }
           to   { transform: translateX(-50%); }
         }
-        @keyframes lake-boat-drift {
-          from { left: -40px; }
-          to   { left: 100%; }
-        }
         @keyframes lake-boat-bob {
-          0%, 100% { transform: translateY(0); }
-          50%      { transform: translateY(-1px); }
+          0%, 100% { transform: translateY(0) rotate(-0.4deg); }
+          50%      { transform: translateY(-1.5px) rotate(0.4deg); }
         }
         @media (prefers-reduced-motion: reduce) {
           .lake-wave-track { animation: none !important; }
