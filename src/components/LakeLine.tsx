@@ -21,15 +21,23 @@ export function LakeLine() {
   );
   const bg = `url("data:image/svg+xml,${wave}")`;
 
-  // Tiny wooden runabout silhouette — warm mahogany tone, ~32px wide.
-  // Inspired by a classic Lake Geneva Stinson/Streblow boat.
+  // Tiny wooden runabout silhouette — classic Lake Geneva Streblow.
+  // 56x20 viewBox; mahogany hull, cream sheer stripe, pale-blue windshield.
   const boat = encodeURIComponent(
-    `<svg xmlns='http://www.w3.org/2000/svg' width='34' height='12' viewBox='0 0 34 12'>
-      <g fill='none' stroke='rgba(140,70,35,0.55)' stroke-linecap='round' stroke-linejoin='round'>
-        <path d='M2 7 Q 4 9.5, 9 9.6 L 27 9.6 Q 31 9.5, 32.5 7.5 L 30 7 L 4 7 Z' fill='rgba(155,80,40,0.45)' stroke-width='0.8'/>
-        <path d='M4 7 L 30 7' stroke='rgba(230,215,185,0.55)' stroke-width='0.5'/>
-        <path d='M16 7 L 19 3.5 L 24 3.5 L 25 7' stroke='rgba(120,170,205,0.7)' stroke-width='0.7' fill='rgba(120,170,205,0.25)'/>
-      </g>
+    `<svg xmlns='http://www.w3.org/2000/svg' width='56' height='20' viewBox='0 0 56 20'>
+      <!-- hull -->
+      <path d='M3 10 Q 6 16, 14 16.5 L 46 16.5 Q 52 16, 54 11 L 50 10 Z'
+            fill='#8a4a22' stroke='#4a2410' stroke-width='0.6' stroke-linejoin='round'/>
+      <!-- cream sheer stripe -->
+      <path d='M5 10.2 L 51 10.2' stroke='#f1e4cb' stroke-width='1' stroke-linecap='round'/>
+      <!-- waterline shadow -->
+      <path d='M3 10 L 54 10' stroke='#3a1e0e' stroke-width='0.4' opacity='0.5'/>
+      <!-- windshield -->
+      <path d='M22 10 L 28 5 L 38 5 L 40 10 Z'
+            fill='#bcd6ea' stroke='#5a87aa' stroke-width='0.6' stroke-linejoin='round'/>
+      <path d='M30 5 L 30 10 M 34 5 L 34 10' stroke='#5a87aa' stroke-width='0.4'/>
+      <!-- bow flag/cap -->
+      <circle cx='51' cy='9.5' r='0.6' fill='#b8331f'/>
     </svg>`
   );
   const boatBg = `url("data:image/svg+xml,${boat}")`;
@@ -71,14 +79,14 @@ export function LakeLine() {
         }
         .lake-boat {
           position: absolute;
-          top: -4px;
+          top: -10px;
           left: 0;
-          width: 34px;
-          height: 12px;
+          width: 56px;
+          height: 20px;
           background-image: ${boatBg};
           background-repeat: no-repeat;
-          background-size: 34px 12px;
-          opacity: 0.55;
+          background-size: 56px 20px;
+          opacity: 0.9;
           transform: translateX(8vw);
           will-change: transform;
         }
