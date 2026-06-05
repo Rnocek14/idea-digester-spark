@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import PageShell from "@/components/PageShell";
+import { PageMeta } from "@/components/PageMeta";
 import { StoryCard } from "@/components/StoryCard";
 import WeatherWidget from "@/components/WeatherWidget";
 import WeatherForecast from "@/components/WeatherForecast";
@@ -107,7 +108,6 @@ const LakeGeneva = () => {
 
   // Handle URL query parameters for deep linking (e.g., ?category=events)
   useEffect(() => {
-    document.title = "Lake Geneva Brief – Today's Local News";
     getReferralSource();
     
     const categoryParam = searchParams.get('category');
@@ -721,6 +721,11 @@ const LakeGeneva = () => {
       title="Lake Geneva Brief – Local News, Simplified"
       description="Fast, trustworthy updates on Lake Geneva city hall, schools, events, and real estate."
     >
+      <PageMeta
+        title="Lake Geneva Brief – Today's Local News & Events"
+        description="Today's Lake Geneva, WI news: city hall, schools, dining, events, real estate, and live incidents — curated daily by The Brief."
+        path="/v1"
+      />
       <WelcomeModal />
       <StickySubscribeBanner />
       {/* Centered layout with floating margin sidebar */}
