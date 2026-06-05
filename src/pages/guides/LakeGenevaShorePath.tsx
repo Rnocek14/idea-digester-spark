@@ -507,6 +507,13 @@ export default function LakeGenevaShorePath() {
         stops={stops}
         initialIndex={walkingInitialIndex}
       />
+
+      <GuidedWalkController
+        open={guidedOpen}
+        onClose={() => setGuidedOpen(false)}
+        stops={stops}
+        onJumpToStop={handleJumpToStop}
+      />
     </div>
   );
 }
