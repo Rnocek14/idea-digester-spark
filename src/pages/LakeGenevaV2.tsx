@@ -14,6 +14,7 @@ import LiveIncidentsSidebar from "@/components/LiveIncidentsSidebar";
 import NightlifeWidget from "@/components/NightlifeWidget";
 import HappeningTodayWidget from "@/components/HappeningTodayWidget";
 import ComingUpRail from "@/components/ComingUpRail";
+import EditorialLaterRail from "@/components/EditorialLaterRail";
 import NowHiringWidget from "@/components/NowHiringWidget";
 import { InlineSubscribeCTA } from "@/components/InlineSubscribeCTA";
 import { StickySubscribeBanner } from "@/components/StickySubscribeBanner";
@@ -1210,6 +1211,8 @@ const LakeGenevaV2 = () => {
                   <p className="text-[10px] font-mono text-muted-foreground mt-1 uppercase">What's worth looking forward to</p>
                 </div>
                 
+                <EditorialLaterRail />
+
                 {/* Nightlife Widget - with Tonight/Weekend toggle */}
                 <NightlifeWidget showLaterPick showModeToggle />
               </ScrollableContainer>
@@ -1226,6 +1229,7 @@ const LakeGenevaV2 = () => {
             </div>
             <p className="text-[10px] font-mono text-muted-foreground mt-1 uppercase">What's worth looking forward to</p>
           </div>
+          <EditorialLaterRail />
           <NightlifeWidget showLaterPick showModeToggle />
         </div>
       </div>

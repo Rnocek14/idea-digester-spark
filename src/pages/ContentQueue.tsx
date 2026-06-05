@@ -25,6 +25,7 @@ import { toast } from "sonner";
 import { ContentQueueDetail } from "@/components/ContentQueueDetail";
 import { NewStoryDialog } from "@/components/NewStoryDialog";
 import { format } from "date-fns";
+import FeatureInLaterButton from "@/components/admin/FeatureInLaterButton";
 import { logActivity } from "@/lib/logActivity";
 import { cn } from "@/lib/utils";
 
@@ -467,6 +468,7 @@ const ContentQueue = () => {
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
+                      <FeatureInLaterButton story={story as any} />
                       {story.status === "pending" && (
                         <>
                           <Button
