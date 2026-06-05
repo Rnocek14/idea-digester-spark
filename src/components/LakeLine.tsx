@@ -2,6 +2,28 @@ import React from "react";
 import boatImg from "@/assets/streblow-boat.png";
 
 /**
+ * Lake Icon config — the little object that sits on the waterline.
+ * Swap by changing this one object. Add `href` later when there's a real
+ * article to link to; until then the icon is decorative (no link, no cursor).
+ */
+type LakeIcon = {
+  src: string;
+  label: string;   // short name shown in tooltip
+  tooltip: string; // full tooltip text
+  href?: string;   // optional — when set, icon becomes a link
+  width: number;
+  height: number;
+};
+
+const currentIcon: LakeIcon = {
+  src: boatImg,
+  label: "Streblow Runabout",
+  tooltip: "Streblow Runabout",
+  width: 62,
+  height: 19,
+};
+
+/**
  * LakeLine — a soft lake-blue SVG wave at the bottom of the sticky header.
  * Static by default; on desktop header hover, the wave track slides left to
  * read as drifting water. Mobile + prefers-reduced-motion stay static.
@@ -22,8 +44,9 @@ export function LakeLine() {
   );
   const bg = `url("data:image/svg+xml,${wave}")`;
 
-  // Real Streblow photo (transparent PNG) — Lake Geneva boat company.
-  const boatBg = `url("${boatImg}")`;
+  const boatBg = `url("${currentIcon.src}")`;
+  const boatW = `${currentIcon.width}px`;
+  const boatH = `${currentIcon.height}px`;
 
   return (
     <>
@@ -73,13 +96,14 @@ export function LakeLine() {
           position: absolute;
           top: -20px;
           right: 2.5vw;
-          width: 62px;
-          height: 19px;
+          width: ${boatW};
+          height: ${boatH};
           background-image: ${boatBg};
           background-repeat: no-repeat;
-          background-size: 62px 19px;
+          background-size: ${boatW} ${boatH};
           opacity: 0.85;
           will-change: transform;
+          pointer-events: auto;
         }
         /* Desktop only — water gently wakes up on header hover */
         @media (hover: hover) and (pointer: fine) {
@@ -108,7 +132,21 @@ export function LakeLine() {
         <div className="lake-glow" />
       </div>
       <div className="lake-boat-layer" aria-hidden="true">
-        <div className="lake-boat" />
+        {currentIcon.href ? (
+          <a
+            href={currentIcon.href}
+            className="lake-boat"
+            aria-label={currentIcon.label}
+            title={currentIcon.tooltip}
+          />
+        ) : (
+          <div
+            className="lake-boat"
+            role="img"
+            aria-label={currentIcon.label}
+            title={currentIcon.tooltip}
+          />
+        )}
       </div>
     </>
   );
