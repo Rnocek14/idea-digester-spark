@@ -130,7 +130,7 @@ export function ShorePathMap({
           return (
             <g
               key={stop.id}
-              className={onStopClick ? "cursor-pointer group" : "group"}
+              className={onStopClick ? "cursor-pointer" : undefined}
               onClick={onStopClick ? () => onStopClick(stop) : undefined}
             >
               {isActive && (
@@ -141,14 +141,6 @@ export function ShorePathMap({
                   fill="hsl(25 80% 55% / 0.25)"
                 />
               )}
-              {/* Hover ring (desktop) — invisible until the marker is hovered */}
-              <circle
-                cx={x}
-                cy={y}
-                r={markerR + 1.8}
-                fill="hsl(25 80% 55% / 0.35)"
-                className="opacity-0 group-hover:opacity-100 transition-opacity"
-              />
               <circle
                 cx={x}
                 cy={y}
@@ -168,13 +160,51 @@ export function ShorePathMap({
               >
                 {stop.order_index}
               </text>
-              {onStopClick && (
-                <title>{`${stop.order_index}. ${stop.name}`}</title>
-              )}
             </g>
           );
         })}
       </svg>
+
+      {/* Overlay popover triggers — one transparent hitbox per visible stop.
+          Positioned in % so they scale with the SVG. Only enabled when the
+          page supplies peek callbacks; otherwise the map is purely visual
+          (used by Walking Mode where the SVG <g> handles selection). */}
+      {(onJumpToStop || onStartWalkFromStop) &&
+        visibleStops.map((stop) => {
+          const leftPct = (stop.map_x_pct! / 200) * 100;
+          const topPct = stop.map_y_pct!;
+          const hitSize = isHero ? 36 : 26;
+          return (
+            <Popover key={`peek-${stop.id}`}>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  aria-label={`Stop ${stop.order_index}: ${stop.name}. Preview and jump.`}
+                  className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 hover:bg-amber-400/20 transition-colors"
+                  style={{
+                    left: `${leftPct}%`,
+                    top: `${topPct}%`,
+                    width: hitSize,
+                    height: hitSize,
+                  }}
+                />
+              </PopoverTrigger>
+              <PopoverContent
+                side="top"
+                align="center"
+                sideOffset={6}
+                collisionPadding={12}
+                className="w-64 p-3"
+              >
+                <StopPeekCard
+                  stop={stop}
+                  onJump={() => onJumpToStop?.(stop)}
+                  onStartWalk={() => onStartWalkFromStop?.(stop)}
+                />
+              </PopoverContent>
+            </Popover>
+          );
+        })}
     </div>
   );
 }
