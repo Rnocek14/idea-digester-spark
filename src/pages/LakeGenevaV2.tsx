@@ -19,7 +19,6 @@ import CommunityDeskBlock from "@/components/CommunityDeskBlock";
 import NowHiringWidget from "@/components/NowHiringWidget";
 import { InlineSubscribeCTA } from "@/components/InlineSubscribeCTA";
 import { StickySubscribeBanner } from "@/components/StickySubscribeBanner";
-import { WelcomeModal } from "@/components/WelcomeModal";
 import { PresentedBySection } from "@/components/PresentedBySection";
 import { getSubscribeSource, getReferralSource } from "@/lib/referralTracking";
 import { NavLink } from "@/components/NavLink";
@@ -75,14 +74,18 @@ const LiveColumnHeader = () => {
   const updateTime = getRelativeUpdateTime();
 
   return (
-    <div className="mb-4">
-      {/* Bold dark LIVE header - warmer than pure black */}
+      <div className="mb-4">
+      {/* Bold dark header - warmer than pure black */}
       <div className="bg-slate-800 text-white px-3 py-2.5 mb-3 rounded-sm">
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-mono uppercase tracking-widest">[LIVE]</span>
-          <span className={`w-1.5 h-1.5 ${isActive ? 'bg-red-500 animate-pulse' : 'bg-emerald-400'}`} />
-          {!isActive && (
-            <span className="text-[10px] font-mono text-emerald-400 uppercase">All Clear</span>
+          <span className="text-[10px] font-mono uppercase tracking-widest">[RIGHT NOW]</span>
+          {isActive ? (
+            <span className="w-1.5 h-1.5 bg-red-500 animate-pulse" />
+          ) : (
+            <>
+              <span className="w-1.5 h-1.5 bg-emerald-400" />
+              <span className="text-[10px] font-mono text-emerald-400 uppercase">All Clear</span>
+            </>
           )}
         </div>
       </div>
@@ -737,7 +740,6 @@ const LakeGenevaV2 = () => {
           }
         }}
       />
-      <WelcomeModal />
       <StickySubscribeBanner />
       {/* Three-Column Layout - Full width responsive with generous spacing */}
       <div className="w-full px-4 sm:px-6 lg:px-6 xl:px-8 py-6">

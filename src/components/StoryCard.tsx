@@ -167,7 +167,7 @@ export const StoryCard = ({
   // Remove card border, add subtle image radius for warmth
   return (
     <article className="group flex h-full flex-col overflow-hidden bg-white">
-      <div className={`relative overflow-hidden bg-stone-100 rounded-md ${featured ? 'aspect-[16/9]' : 'aspect-[2/1]'}`}>
+      <div className={`relative overflow-hidden bg-stone-100 rounded-md ${featured ? 'aspect-[16/9] max-h-[320px]' : 'aspect-[2/1] max-h-[280px]'}`}>
         {url ? (
           <a href={url} target="_blank" rel="noopener noreferrer" className="block h-full w-full">
             <img
