@@ -16,7 +16,7 @@ export function LakeLine() {
   // Quiet wave: ~1.3px amplitude, soft blue, thin stroke.
   const wave = encodeURIComponent(
     `<svg xmlns='http://www.w3.org/2000/svg' width='80' height='4' viewBox='0 0 80 4' preserveAspectRatio='none'>
-      <path d='M0 2 Q 20 0.7, 40 2 T 80 2' fill='none' stroke='rgba(96,150,200,0.55)' stroke-width='1' stroke-linecap='round'/>
+      <path d='M0 2 Q 20 0.7, 40 2 T 80 2' fill='none' stroke='rgba(82,140,195,0.65)' stroke-width='1' stroke-linecap='round'/>
     </svg>`
   );
   const bg = `url("data:image/svg+xml,${wave}")`;
