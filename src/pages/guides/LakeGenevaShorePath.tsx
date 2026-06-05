@@ -243,18 +243,31 @@ export default function LakeGenevaShorePath() {
             <Stat label="Featured stops" value={stops.length ? String(stops.length) : "16"} />
             <Stat label="Public access" value="Continuous" />
           </div>
-          <Button
-            size="lg"
-            className="w-full sm:w-auto"
-            onClick={() => setWalkingOpen(true)}
-            disabled={isLoading || stops.length === 0}
-          >
-            <Play className="h-4 w-4 mr-2 fill-current" />
-            Start Shore Path Experience
-          </Button>
-          <p className="text-xs text-slate-500 mt-2">
-            Manual mode — tap "Next stop" as you walk. No GPS, no location
-            tracking. Your progress saves automatically.
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button
+              size="lg"
+              className="w-full sm:w-auto"
+              onClick={() => setGuidedOpen(true)}
+              disabled={isLoading || stops.length === 0}
+            >
+              <Play className="h-4 w-4 mr-2 fill-current" />
+              Start Guided Walk
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              className="w-full sm:w-auto"
+              onClick={() => setWalkingOpen(true)}
+              disabled={isLoading || stops.length === 0}
+            >
+              Use manual mode
+            </Button>
+          </div>
+          <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+            <strong>Guided Walk</strong> uses your location to gently alert
+            you when you reach a stop and play a short narrated story.
+            Location stays on your device. <strong>Manual mode</strong> works
+            anywhere — tap "Next stop" as you go.
           </p>
         </div>
 
