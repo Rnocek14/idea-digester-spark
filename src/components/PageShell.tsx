@@ -3,10 +3,11 @@ import { Link, NavLink } from "react-router-dom";
 import { format } from "date-fns";
 
 const navItems = [
-  { label: "Today", to: "/" },
-  { label: "Jobs", to: "/jobs" },
+  { label: "Today", to: "/lake-geneva" },
+  { label: "Events", to: "/events" },
+  { label: "Local Love", to: "/community/local-love" },
   { label: "Directory", to: "/directory" },
-  { label: "Advertise", to: "/advertise" },
+  { label: "Submit", to: "/submit" },
 ];
 
 type PageShellProps = {
@@ -74,15 +75,15 @@ const PageShell: React.FC<PageShellProps> = ({
             </button>
           </nav>
 
-          {/* Mobile nav – simple link list for now */}
-          <nav className="flex items-center gap-2 text-xs font-medium text-slate-600 sm:hidden">
-            {navItems.slice(0, 3).map((item) => (
+          {/* Mobile nav – horizontally scrollable so all items remain reachable */}
+          <nav className="flex items-center gap-2 overflow-x-auto text-xs font-medium text-slate-600 sm:hidden">
+            {navItems.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 className={({ isActive }) =>
                   [
-                    "rounded-full px-2 py-1",
+                    "whitespace-nowrap rounded-full px-2 py-1",
                     isActive
                       ? "bg-slate-900 text-white"
                       : "hover:bg-slate-100 hover:text-slate-900",
