@@ -48,6 +48,16 @@ import CommunityVoices from "./pages/CommunityVoices";
 import ThingsToDoLakeGeneva from "./pages/guides/ThingsToDoLakeGeneva";
 import MovingToLakeGeneva from "./pages/guides/MovingToLakeGeneva";
 import LakeGenevaNeighborhoods from "./pages/guides/LakeGenevaNeighborhoods";
+import ThisWeekendLakeGeneva from "./pages/guides/ThisWeekendLakeGeneva";
+import WinterLakeGeneva from "./pages/guides/WinterLakeGeneva";
+import SummerLakeGeneva from "./pages/guides/SummerLakeGeneva";
+import LakeGenevaWithKids from "./pages/guides/LakeGenevaWithKids";
+import LakeGenevaSchools from "./pages/guides/LakeGenevaSchools";
+import LakeGenevaMarketReport from "./pages/guides/LakeGenevaMarketReport";
+import CostOfLivingLakeGeneva from "./pages/guides/CostOfLivingLakeGeneva";
+import LakeGenevaVsWilliamsBay from "./pages/guides/LakeGenevaVsWilliamsBay";
+import FontanaVsLakeGeneva from "./pages/guides/FontanaVsLakeGeneva";
+import WhyPeopleLoveLakeGeneva from "./pages/guides/WhyPeopleLoveLakeGeneva";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -102,6 +112,16 @@ const App = () => (
             <Route path="/guides/things-to-do-lake-geneva" element={<ThingsToDoLakeGeneva />} />
             <Route path="/guides/moving-to-lake-geneva" element={<MovingToLakeGeneva />} />
             <Route path="/guides/lake-geneva-neighborhoods" element={<LakeGenevaNeighborhoods />} />
+            <Route path="/guides/things-to-do-lake-geneva-this-weekend" element={<ThisWeekendLakeGeneva />} />
+            <Route path="/guides/things-to-do-lake-geneva-in-winter" element={<WinterLakeGeneva />} />
+            <Route path="/guides/best-things-to-do-lake-geneva-in-summer" element={<SummerLakeGeneva />} />
+            <Route path="/guides/things-to-do-lake-geneva-with-kids" element={<LakeGenevaWithKids />} />
+            <Route path="/guides/lake-geneva-schools" element={<LakeGenevaSchools />} />
+            <Route path="/guides/cost-of-living-lake-geneva" element={<CostOfLivingLakeGeneva />} />
+            <Route path="/guides/lake-geneva-vs-williams-bay" element={<LakeGenevaVsWilliamsBay />} />
+            <Route path="/guides/fontana-vs-lake-geneva" element={<FontanaVsLakeGeneva />} />
+            <Route path="/guides/why-people-love-lake-geneva" element={<WhyPeopleLoveLakeGeneva />} />
+            <Route path="/market-report" element={<LakeGenevaMarketReport />} />
             <Route path="/dashboard" element={<DashboardLayout />}>
               <Route index element={<Dashboard />} />
               <Route path="pipeline" element={<PipelineHealth />} />
