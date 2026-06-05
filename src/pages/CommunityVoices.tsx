@@ -12,6 +12,7 @@ type Post = {
   excerpt: string | null;
   category: string;
   published_at: string | null;
+  community_authors: { display_name: string; slug: string } | null;
 };
 
 export default function CommunityVoices() {
@@ -20,13 +21,13 @@ export default function CommunityVoices() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("community_posts")
-        .select("id, slug, title, excerpt, category, published_at")
+        .select("id, slug, title, excerpt, category, published_at, community_authors!author_id(display_name, slug)")
         .eq("status", "published")
         .neq("category", "throwback")
         .order("published_at", { ascending: false })
         .limit(30);
       if (error) throw error;
-      return (data || []) as Post[];
+      return (data || []) as unknown as Post[];
     },
   });
 
@@ -36,7 +37,7 @@ export default function CommunityVoices() {
       <main className="mx-auto max-w-3xl px-4 sm:px-6 py-8">
         <header className="mb-8">
           <h1 className="font-display text-3xl text-slate-900 tracking-tight flex items-center gap-2">
-            <Mic className="h-7 w-7 text-slate-700" /> Voices
+            <Mic className="h-7 w-7 text-slate-700" /> Community Voices
           </h1>
           <p className="text-slate-600 mt-2 text-sm leading-relaxed max-w-2xl">
             Essays, memories, and notes from people who live, work, and run businesses
@@ -72,6 +73,12 @@ export default function CommunityVoices() {
                 {p.excerpt && (
                   <p className="text-sm text-slate-700 mt-2 leading-relaxed">{p.excerpt}</p>
                 )}
+                <p className="text-[11px] text-slate-500 mt-3">
+                  — {p.community_authors?.display_name || "The Brief Editors"}
+                  {p.published_at
+                    ? ` · ${new Date(p.published_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
+                    : ""}
+                </p>
               </article>
             ))}
           </div>
