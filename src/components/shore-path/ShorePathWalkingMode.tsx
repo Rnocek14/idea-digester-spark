@@ -32,6 +32,18 @@ export function ShorePathWalkingMode({ open, onOpenChange, stops }: Props) {
   const total = stops.length;
   const pct = total > 0 ? Math.round(((safeIndex + 1) / total) * 100) : 0;
 
+  // Approximate distance walked / remaining along the 21-mile path.
+  // Prefers each stop's stored approx_mile (from the DB); falls back to a
+  // linear estimate if mile data isn't available yet.
+  const TOTAL_MILES = 21;
+  const milesWalked =
+    current?.approx_mile != null
+      ? Number(current.approx_mile)
+      : total > 0
+        ? Math.round(((safeIndex + 1) / total) * TOTAL_MILES * 10) / 10
+        : 0;
+  const milesRemaining = Math.max(0, Math.round((TOTAL_MILES - milesWalked) * 10) / 10);
+
   if (!current) return null;
 
   return (
@@ -45,6 +57,9 @@ export function ShorePathWalkingMode({ open, onOpenChange, stops }: Props) {
             </p>
             <p className="text-sm font-medium text-slate-900 truncate">
               Stop {safeIndex + 1} of {total} · {pct}% complete
+            </p>
+            <p className="text-[11px] text-slate-500 mt-0.5">
+              ≈ {milesWalked.toFixed(1)} mi in · {milesRemaining.toFixed(1)} mi to go
             </p>
           </div>
           <Button
