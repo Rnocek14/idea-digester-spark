@@ -1,6 +1,7 @@
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { CalendarDays, ArrowRight } from "lucide-react";
+import { CalendarDays, ArrowRight, Sparkles, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   categoryEmoji,
@@ -18,7 +19,18 @@ type Bucket = {
   events: EventRow[];
 };
 
+const FILTERS: { value: string; label: string; match: (cat: string) => boolean }[] = [
+  { value: "all", label: "All", match: () => true },
+  { value: "music", label: "Music", match: (c) => c.includes("music") || c.includes("entertainment") },
+  { value: "family", label: "Family", match: (c) => c.includes("family") },
+  { value: "civic", label: "Civic", match: (c) => c.includes("civic") },
+  { value: "arts", label: "Arts", match: (c) => c.includes("art") },
+  { value: "outdoors", label: "Outdoors", match: (c) => c.includes("outdoor") || c.includes("sports") },
+];
+
 export default function ComingUpRail() {
+  const [filter, setFilter] = useState<string>("all");
+
   const { data: events = [], isLoading } = useQuery({
     queryKey: ["coming-up-rail"],
     queryFn: async () => {
@@ -67,7 +79,24 @@ export default function ComingUpRail() {
   nextWeekStart.setDate(sunday.getDate() + 1);
   const nextWeekStartStr = localDateStr(nextWeekStart);
 
+  // Hero pick: highest-priority Tier-1 weekend event in the next 14 days.
+  const heroPick =
+    events.find(
+      (e) =>
+        e.geo_tier === 1 &&
+        e.event_date &&
+        e.event_date >= fridayStr &&
+        e.event_date <= sundayStr,
+    ) ||
+    events.find((e) => e.geo_tier === 1) ||
+    events[0] ||
+    null;
+
+  const activeFilter = FILTERS.find((f) => f.value === filter) || FILTERS[0];
+  const passesFilter = (e: EventRow) => activeFilter.match((e.category || "").toLowerCase());
+
   const seen = new Set<string>();
+  if (heroPick) seen.add(heroPick.id);
   const tonight: EventRow[] = [];
   const weekend: EventRow[] = [];
   const nextWeek: EventRow[] = [];
@@ -75,6 +104,7 @@ export default function ComingUpRail() {
   for (const e of events) {
     if (!e.event_date) continue;
     if (seen.has(e.id)) continue;
+    if (!passesFilter(e)) continue;
     if (e.event_date === todayStr) {
       tonight.push(e);
       seen.add(e.id);
@@ -88,32 +118,45 @@ export default function ComingUpRail() {
   }
 
   const buckets: Bucket[] = ([
-    { key: "tonight", label: "Tonight", hint: "Happening today", events: tonight.slice(0, 5) },
+    { key: "tonight", label: "Tonight", hint: "Happening today", events: tonight.slice(0, 7) },
     {
       key: "weekend",
       label: "This Weekend",
       hint: friday.toLocaleDateString([], { month: "short", day: "numeric" }) +
         " – " +
         sunday.toLocaleDateString([], { month: "short", day: "numeric" }),
-      events: weekend.slice(0, 5),
+      events: weekend.slice(0, 7),
     },
     {
       key: "next_week",
       label: "Next Week",
       hint: "Plan ahead",
-      events: nextWeek.slice(0, 5),
+      events: nextWeek.slice(0, 7),
     },
   ] as Bucket[]).filter((b) => b.events.length > 0);
 
-  if (buckets.length === 0) return null;
+  if (buckets.length === 0 && !heroPick) return null;
+
+  const heroVenue = heroPick ? extractVenue(heroPick) : "";
+  const heroTime = heroPick ? formatEventTime(heroPick.event_time) : "";
+  const heroDayLabel =
+    heroPick && heroPick.event_date
+      ? new Date(
+          ...(heroPick.event_date.split("-").map((n, i) => (i === 1 ? Number(n) - 1 : Number(n))) as [
+            number,
+            number,
+            number,
+          ]),
+        ).toLocaleDateString([], { weekday: "long", month: "short", day: "numeric" })
+      : "";
 
   return (
     <section className="mb-8">
-      <div className="flex items-end justify-between mb-3 pb-2 border-b border-border">
+      <div className="flex items-end justify-between mb-2 pb-2 border-b border-border">
         <div className="flex items-center gap-2">
           <CalendarDays className="h-4 w-4 text-foreground" />
           <h2 className="text-[10px] font-mono uppercase tracking-[0.15em] text-foreground font-semibold">
-            ▪ COMING UP
+            ▪ COMING UP — EVERYTHING ON THE CALENDAR
           </h2>
         </div>
         <Link
@@ -123,6 +166,53 @@ export default function ComingUpRail() {
           All events <ArrowRight className="h-3 w-3" />
         </Link>
       </div>
+
+      {/* Category filter chips */}
+      <div className="flex flex-wrap gap-1.5 mb-3">
+        {FILTERS.map((f) => (
+          <button
+            key={f.value}
+            type="button"
+            onClick={() => setFilter(f.value)}
+            className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${
+              filter === f.value
+                ? "bg-slate-900 text-white border-slate-900"
+                : "bg-white text-slate-600 border-slate-200 hover:border-slate-400"
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Hero pick */}
+      {heroPick && filter === "all" && (
+        <Link
+          to={`/events/${heroPick.id}`}
+          className="group block mb-4 rounded-2xl bg-gradient-to-br from-amber-50 via-white to-white p-4 ring-1 ring-amber-200 hover:ring-amber-300 transition-shadow"
+        >
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <Sparkles className="h-3 w-3 text-amber-600" />
+            <span className="text-[10px] font-mono uppercase tracking-[0.18em] text-amber-700 font-semibold">
+              Brief Pick · Worth leaving the house for
+            </span>
+          </div>
+          <h3 className="text-base sm:text-lg font-semibold text-slate-900 leading-snug group-hover:text-blue-700 transition-colors">
+            {categoryEmoji(heroPick.category)} {getShortTitle(heroPick)}
+          </h3>
+          <p className="mt-1 text-[12px] text-slate-600 flex items-center gap-1.5 flex-wrap">
+            <span className="font-medium text-slate-900">{heroDayLabel}</span>
+            {heroTime && <span className="opacity-40">·</span>}
+            {heroTime && <span className="font-mono">{heroTime}</span>}
+            {heroVenue && <span className="opacity-40">·</span>}
+            {heroVenue && (
+              <span className="inline-flex items-center gap-1">
+                <MapPin className="h-3 w-3 opacity-60" /> {heroVenue}
+              </span>
+            )}
+          </p>
+        </Link>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {buckets.map((bucket) => (
