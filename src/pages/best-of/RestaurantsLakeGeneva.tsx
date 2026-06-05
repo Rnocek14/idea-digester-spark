@@ -4,7 +4,7 @@ import { PublicHeader } from "@/components/PublicHeader";
 import { PageMeta } from "@/components/PageMeta";
 import { breadcrumbJsonLd } from "@/lib/seo/jsonLd";
 import { loadCollection, loadSignals, withinDays, type VenueSignals } from "@/lib/communitySignals";
-import { Heart, Mic, Newspaper } from "lucide-react";
+import { Heart, Mic, Newspaper, Utensils } from "lucide-react";
 
 const COLLECTION = "restaurants-lake-geneva";
 const PATH = "/best-of/restaurants-lake-geneva";

@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Utensils, MapPin, Clock, ArrowRight, Star, Calendar, ExternalLink } from "lucide-react";
+import { Utensils, MapPin, Clock, ArrowRight, Star, Calendar, ExternalLink, Heart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Link } from "react-router-dom";
 import PageShell from "@/components/PageShell";
 import { PageMeta } from "@/components/PageMeta";
 import { LG_CORE_KEYWORDS, LG_GEO_KEYWORDS } from "@/lib/seoKeywords";
