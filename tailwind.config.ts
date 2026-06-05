@@ -27,6 +27,16 @@ export default {
           sand: 'hsl(36 29% 95%)',
           accent: 'hsl(221 83% 53%)',
         },
+        lake: {
+          light: 'hsl(var(--lake-light))',
+          DEFAULT: 'hsl(var(--lake-blue))',
+          deep: 'hsl(var(--lake-deep))',
+          navy: 'hsl(var(--lake-navy))',
+          sand: 'hsl(var(--lake-sand))',
+        },
+        shore: {
+          terracotta: 'hsl(var(--shore-terracotta))',
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
