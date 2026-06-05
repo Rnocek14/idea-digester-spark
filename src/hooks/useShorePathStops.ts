@@ -18,6 +18,12 @@ export type ShorePathStopRow = {
   hero_image_url: string | null;
   is_public_landmark: boolean;
   is_published: boolean;
+  geofence_radius_m: number | null;
+  story_long: string | null;
+  audio_url: string | null;
+  audio_duration_sec: number | null;
+  audio_transcript: string | null;
+  audio_voice_id: string | null;
 };
 
 export function useShorePathStops() {
