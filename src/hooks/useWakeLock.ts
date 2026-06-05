@@ -9,10 +9,9 @@ export function useWakeLock(active: boolean) {
 
     const request = async () => {
       try {
-        // @ts-expect-error not in older lib.dom typings
-        if (navigator.wakeLock) {
-          // @ts-expect-error not in older lib.dom typings
-          sentinel = await navigator.wakeLock.request("screen");
+        const wl = (navigator as any).wakeLock;
+        if (wl?.request) {
+          sentinel = await wl.request("screen");
         }
       } catch {
         // ignore — not critical
