@@ -12,15 +12,24 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   stops: ShorePathStopRow[];
+  /** When provided, jumps Walking Mode to this index when opened. */
+  initialIndex?: number | null;
 };
 
-export function ShorePathWalkingMode({ open, onOpenChange, stops }: Props) {
+export function ShorePathWalkingMode({ open, onOpenChange, stops, initialIndex }: Props) {
   const [index, setIndex] = useState<number>(() => {
     if (typeof window === "undefined") return 0;
     const raw = window.localStorage.getItem(STORAGE_KEY);
     const n = raw ? parseInt(raw, 10) : 0;
     return Number.isFinite(n) ? n : 0;
   });
+
+  // When opened with an explicit starting stop, honor it.
+  useEffect(() => {
+    if (open && initialIndex != null && Number.isFinite(initialIndex)) {
+      setIndex(initialIndex);
+    }
+  }, [open, initialIndex]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
