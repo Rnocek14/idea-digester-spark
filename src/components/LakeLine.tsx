@@ -72,7 +72,7 @@ export function LakeLine() {
         .lake-boat {
           position: absolute;
           top: -20px;
-          right: 6vw;
+          right: 2.5vw;
           width: 62px;
           height: 19px;
           background-image: ${boatBg};
