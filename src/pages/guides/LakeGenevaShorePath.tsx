@@ -10,6 +10,8 @@ import { useShorePathStops, type ShorePathStopRow } from "@/hooks/useShorePathSt
 import { ShorePathMap } from "@/components/shore-path/ShorePathMap";
 import { ShorePathWalkingMode } from "@/components/shore-path/ShorePathWalkingMode";
 import { StickyMapStrip } from "@/components/shore-path/StickyMapStrip";
+import { GuidedWalkController } from "@/components/shore-path/GuidedWalkController";
+import { StoryPlayer } from "@/components/shore-path/StoryPlayer";
 import { SoftRealEstateCTA } from "@/components/guides/SoftRealEstateCTA";
 
 const TODAY = "2026-06-05";
@@ -92,6 +94,7 @@ const LEG_DISTANCES: { from: string; to: string; miles: number }[] = [
 export default function LakeGenevaShorePath() {
   const { data: stops = [], isLoading } = useShorePathStops();
   const [walkingOpen, setWalkingOpen] = useState(false);
+  const [guidedOpen, setGuidedOpen] = useState(false);
   const [walkingInitialIndex, setWalkingInitialIndex] = useState<number | null>(null);
   const [activeStopId, setActiveStopId] = useState<string | null>(null);
   const [arrivedStopId, setArrivedStopId] = useState<string | null>(null);
