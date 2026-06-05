@@ -3,6 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import PageShell from "@/components/PageShell";
+import { PageMeta } from "@/components/PageMeta";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -83,9 +84,7 @@ const PostJob = () => {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    document.title = "Post a Job | Lake Geneva Brief";
-  }, []);
+  // Title/description handled by PageMeta below.
 
   const submitMutation = useMutation({
     mutationFn: async (data: JobFormData) => {
@@ -181,6 +180,11 @@ const PostJob = () => {
 
   return (
     <PageShell>
+      <PageMeta
+        title="Post a Job in Lake Geneva, WI | Lake Geneva Brief"
+        description="Hire locally in Lake Geneva. Post your full-time, part-time, seasonal, or contract job to The Brief's audience starting at $50 for 30 days."
+        path="/jobs/post"
+      />
       <div className="max-w-3xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-8">

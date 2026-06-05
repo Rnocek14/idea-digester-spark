@@ -261,8 +261,9 @@ export const StoryCard = ({
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:underline py-2 -my-2 pr-4"
+              aria-label={`Read full story: ${title}`}
             >
-              Read more
+              Read full story
               <ExternalLink className="h-3.5 w-3.5" />
             </a>
           ) : (
