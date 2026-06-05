@@ -10,6 +10,8 @@ import { useShorePathStops, type ShorePathStopRow } from "@/hooks/useShorePathSt
 import { ShorePathMap } from "@/components/shore-path/ShorePathMap";
 import { ShorePathWalkingMode } from "@/components/shore-path/ShorePathWalkingMode";
 import { StickyMapStrip } from "@/components/shore-path/StickyMapStrip";
+import { GuidedWalkController } from "@/components/shore-path/GuidedWalkController";
+import { StoryPlayer } from "@/components/shore-path/StoryPlayer";
 import { SoftRealEstateCTA } from "@/components/guides/SoftRealEstateCTA";
 
 const TODAY = "2026-06-05";
@@ -92,6 +94,7 @@ const LEG_DISTANCES: { from: string; to: string; miles: number }[] = [
 export default function LakeGenevaShorePath() {
   const { data: stops = [], isLoading } = useShorePathStops();
   const [walkingOpen, setWalkingOpen] = useState(false);
+  const [guidedOpen, setGuidedOpen] = useState(false);
   const [walkingInitialIndex, setWalkingInitialIndex] = useState<number | null>(null);
   const [activeStopId, setActiveStopId] = useState<string | null>(null);
   const [arrivedStopId, setArrivedStopId] = useState<string | null>(null);
@@ -240,18 +243,31 @@ export default function LakeGenevaShorePath() {
             <Stat label="Featured stops" value={stops.length ? String(stops.length) : "16"} />
             <Stat label="Public access" value="Continuous" />
           </div>
-          <Button
-            size="lg"
-            className="w-full sm:w-auto"
-            onClick={() => setWalkingOpen(true)}
-            disabled={isLoading || stops.length === 0}
-          >
-            <Play className="h-4 w-4 mr-2 fill-current" />
-            Start Shore Path Experience
-          </Button>
-          <p className="text-xs text-slate-500 mt-2">
-            Manual mode — tap "Next stop" as you walk. No GPS, no location
-            tracking. Your progress saves automatically.
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button
+              size="lg"
+              className="w-full sm:w-auto"
+              onClick={() => setGuidedOpen(true)}
+              disabled={isLoading || stops.length === 0}
+            >
+              <Play className="h-4 w-4 mr-2 fill-current" />
+              Start Guided Walk
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              className="w-full sm:w-auto"
+              onClick={() => setWalkingOpen(true)}
+              disabled={isLoading || stops.length === 0}
+            >
+              Use manual mode
+            </Button>
+          </div>
+          <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+            <strong>Guided Walk</strong> uses your location to gently alert
+            you when you reach a stop and play a short narrated story.
+            Location stays on your device. <strong>Manual mode</strong> works
+            anywhere — tap "Next stop" as you go.
           </p>
         </div>
 
@@ -326,6 +342,23 @@ export default function LakeGenevaShorePath() {
                       <p className="text-slate-700 leading-relaxed mt-2">
                         {stop.description}
                       </p>
+                    )}
+                    {stop.story_long && stop.story_long !== stop.description && (
+                      <p className="text-slate-700 leading-relaxed mt-2">
+                        {stop.story_long}
+                      </p>
+                    )}
+                    {stop.audio_url && (
+                      <div className="mt-3">
+                        <p className="text-[10px] font-mono uppercase tracking-widest text-slate-500 mb-1.5">
+                          Listen · narrated by The Brief
+                        </p>
+                        <StoryPlayer
+                          audioUrl={stop.audio_url}
+                          transcript={stop.audio_transcript}
+                          durationSec={stop.audio_duration_sec}
+                        />
+                      </div>
                     )}
                     {stop.look_for && (
                       <div className="mt-3 rounded-md bg-amber-50 border border-amber-200 px-4 py-2.5">
@@ -490,6 +523,13 @@ export default function LakeGenevaShorePath() {
         onOpenChange={setWalkingOpen}
         stops={stops}
         initialIndex={walkingInitialIndex}
+      />
+
+      <GuidedWalkController
+        open={guidedOpen}
+        onClose={() => setGuidedOpen(false)}
+        stops={stops}
+        onJumpToStop={handleJumpToStop}
       />
     </div>
   );
