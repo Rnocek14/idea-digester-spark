@@ -1,19 +1,17 @@
-export type ShorePathStop = {
-  id: string;
-  order_index: number;
-  slug: string;
-  name: string;
-  short_label?: string | null;
-  map_x_pct?: number | null;
-  map_y_pct?: number | null;
-};
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { StopPeekCard } from "./StopPeekCard";
+import type { ShorePathStopRow } from "@/hooks/useShorePathStops";
 
 type Props = {
-  stops: ShorePathStop[];
-  /** Highlighted stop (Walking Mode current position). */
+  stops: ShorePathStopRow[];
+  /** Highlighted stop (Walking Mode current position, or last-jumped). */
   activeStopId?: string | null;
-  /** Click handler — used both for in-page anchor scroll and Walking Mode. */
-  onStopClick?: (stop: ShorePathStop) => void;
+  /** Walking Mode legacy click handler (no peek — direct select). */
+  onStopClick?: (stop: ShorePathStopRow) => void;
+  /** Called when the user clicks "Jump to this stop" in the peek card. */
+  onJumpToStop?: (stop: ShorePathStopRow) => void;
+  /** Called when the user clicks "Start walk from here" in the peek card. */
+  onStartWalkFromStop?: (stop: ShorePathStopRow) => void;
   /** Visual size variant. */
   size?: "hero" | "mini";
   className?: string;
@@ -33,6 +31,8 @@ export function ShorePathMap({
   stops,
   activeStopId,
   onStopClick,
+  onJumpToStop,
+  onStartWalkFromStop,
   size = "hero",
   className = "",
 }: Props) {
