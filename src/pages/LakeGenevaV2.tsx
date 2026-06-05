@@ -19,7 +19,6 @@ import CommunityDeskBlock from "@/components/CommunityDeskBlock";
 import NowHiringWidget from "@/components/NowHiringWidget";
 import { InlineSubscribeCTA } from "@/components/InlineSubscribeCTA";
 import { StickySubscribeBanner } from "@/components/StickySubscribeBanner";
-import { WelcomeModal } from "@/components/WelcomeModal";
 import { PresentedBySection } from "@/components/PresentedBySection";
 import { getSubscribeSource, getReferralSource } from "@/lib/referralTracking";
 import { NavLink } from "@/components/NavLink";
@@ -75,14 +74,18 @@ const LiveColumnHeader = () => {
   const updateTime = getRelativeUpdateTime();
 
   return (
-    <div className="mb-4">
-      {/* Bold dark LIVE header - warmer than pure black */}
+      <div className="mb-4">
+      {/* Bold dark header - warmer than pure black */}
       <div className="bg-slate-800 text-white px-3 py-2.5 mb-3 rounded-sm">
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-mono uppercase tracking-widest">[LIVE]</span>
-          <span className={`w-1.5 h-1.5 ${isActive ? 'bg-red-500 animate-pulse' : 'bg-emerald-400'}`} />
-          {!isActive && (
-            <span className="text-[10px] font-mono text-emerald-400 uppercase">All Clear</span>
+          <span className="text-[10px] font-mono uppercase tracking-widest">[RIGHT NOW]</span>
+          {isActive ? (
+            <span className="w-1.5 h-1.5 bg-red-500 animate-pulse" />
+          ) : (
+            <>
+              <span className="w-1.5 h-1.5 bg-emerald-400" />
+              <span className="text-[10px] font-mono text-emerald-400 uppercase">All Clear</span>
+            </>
           )}
         </div>
       </div>
@@ -737,7 +740,6 @@ const LakeGenevaV2 = () => {
           }
         }}
       />
-      <WelcomeModal />
       <StickySubscribeBanner />
       {/* Three-Column Layout - Full width responsive with generous spacing */}
       <div className="w-full px-4 sm:px-6 lg:px-6 xl:px-8 py-6">
@@ -959,6 +961,14 @@ const LakeGenevaV2 = () => {
             {/* Show pyramid only in 'all' mode, hide in 'recent' mode for pure chronological */}
             {!storiesLoading && filteredStories.length > 0 && viewMode !== 'recent' && viewMode !== 'topic' && (
               <div className="mb-6 space-y-5">
+                {/* Editorial greeting — one warm line to set publication voice */}
+                <p className="text-base sm:text-lg text-slate-700 leading-relaxed font-serif italic">
+                  {(() => {
+                    const h = new Date().getHours();
+                    const greeting = h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+                    return `${greeting}, Lake Geneva. Here's what locals should know today.`;
+                  })()}
+                </p>
                 {/* First story - FULL WIDTH, dominant header photo */}
                 {filteredStories[0] && (() => {
                   const story = filteredStories[0];
