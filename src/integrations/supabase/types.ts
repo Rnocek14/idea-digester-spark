@@ -398,6 +398,176 @@ export type Database = {
           },
         ]
       }
+      community_authors: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          display_name: string
+          email: string | null
+          id: string
+          is_active: boolean
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          display_name: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          display_name?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      community_posts: {
+        Row: {
+          author_id: string | null
+          body_md: string
+          category: string
+          created_at: string
+          excerpt: string | null
+          hero_image_url: string | null
+          historical_year: number | null
+          id: string
+          published_at: string | null
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          slug: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string | null
+          body_md: string
+          category: string
+          created_at?: string
+          excerpt?: string | null
+          hero_image_url?: string | null
+          historical_year?: number | null
+          id?: string
+          published_at?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          slug: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string | null
+          body_md?: string
+          category?: string
+          created_at?: string
+          excerpt?: string | null
+          hero_image_url?: string | null
+          historical_year?: number | null
+          id?: string
+          published_at?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          slug?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_posts_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "community_authors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_submissions: {
+        Row: {
+          body: string
+          category: string | null
+          created_at: string
+          historical_year: number | null
+          honeypot: string | null
+          id: string
+          kind: string
+          photo_url: string | null
+          published_at: string | null
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          subject_name: string | null
+          subject_type: string | null
+          submitter_email: string | null
+          submitter_ip: unknown
+          submitter_name: string | null
+          submitter_town: string | null
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          category?: string | null
+          created_at?: string
+          historical_year?: number | null
+          honeypot?: string | null
+          id?: string
+          kind: string
+          photo_url?: string | null
+          published_at?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          subject_name?: string | null
+          subject_type?: string | null
+          submitter_email?: string | null
+          submitter_ip?: unknown
+          submitter_name?: string | null
+          submitter_town?: string | null
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          category?: string | null
+          created_at?: string
+          historical_year?: number | null
+          honeypot?: string | null
+          id?: string
+          kind?: string
+          photo_url?: string | null
+          published_at?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          subject_name?: string | null
+          subject_type?: string | null
+          submitter_email?: string | null
+          submitter_ip?: unknown
+          submitter_name?: string | null
+          submitter_town?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       content_queue: {
         Row: {
           author: string | null
@@ -412,8 +582,12 @@ export type Database = {
           created_at: string
           data_snapshot_id: string | null
           decision_path: string | null
+          editorial_pick_reason: string | null
           event_date: string | null
           event_time: string | null
+          featured_in_later: boolean
+          featured_rank: number | null
+          featured_until: string | null
           geo_label: string | null
           geo_tier: number | null
           hold_reason: string | null
@@ -428,6 +602,7 @@ export type Database = {
           normalized_url: string | null
           original_url: string | null
           performer: string | null
+          pick_tag: string[]
           priority_score: number | null
           publish_date: string | null
           reviewed_at: string | null
@@ -439,6 +614,8 @@ export type Database = {
           source_type: string | null
           sponsor_id: string | null
           status: string
+          submitted_by_email: string | null
+          submitter_name: string | null
           summary: string | null
           title: string
           trust_labels: Json | null
@@ -459,8 +636,12 @@ export type Database = {
           created_at?: string
           data_snapshot_id?: string | null
           decision_path?: string | null
+          editorial_pick_reason?: string | null
           event_date?: string | null
           event_time?: string | null
+          featured_in_later?: boolean
+          featured_rank?: number | null
+          featured_until?: string | null
           geo_label?: string | null
           geo_tier?: number | null
           hold_reason?: string | null
@@ -475,6 +656,7 @@ export type Database = {
           normalized_url?: string | null
           original_url?: string | null
           performer?: string | null
+          pick_tag?: string[]
           priority_score?: number | null
           publish_date?: string | null
           reviewed_at?: string | null
@@ -486,6 +668,8 @@ export type Database = {
           source_type?: string | null
           sponsor_id?: string | null
           status?: string
+          submitted_by_email?: string | null
+          submitter_name?: string | null
           summary?: string | null
           title: string
           trust_labels?: Json | null
@@ -506,8 +690,12 @@ export type Database = {
           created_at?: string
           data_snapshot_id?: string | null
           decision_path?: string | null
+          editorial_pick_reason?: string | null
           event_date?: string | null
           event_time?: string | null
+          featured_in_later?: boolean
+          featured_rank?: number | null
+          featured_until?: string | null
           geo_label?: string | null
           geo_tier?: number | null
           hold_reason?: string | null
@@ -522,6 +710,7 @@ export type Database = {
           normalized_url?: string | null
           original_url?: string | null
           performer?: string | null
+          pick_tag?: string[]
           priority_score?: number | null
           publish_date?: string | null
           reviewed_at?: string | null
@@ -533,6 +722,8 @@ export type Database = {
           source_type?: string | null
           sponsor_id?: string | null
           status?: string
+          submitted_by_email?: string | null
+          submitter_name?: string | null
           summary?: string | null
           title?: string
           trust_labels?: Json | null
