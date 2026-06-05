@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 const navItems = [
   { label: "Today", to: "/lake-geneva" },
   { label: "Events", to: "/events" },
+  { label: "Local Love", to: "/community/local-love" },
   { label: "Directory", to: "/directory" },
-  { label: "Advertise", to: "/advertise" },
+  { label: "Submit", to: "/submit" },
 ];
 
 export const PublicHeader = () => {
