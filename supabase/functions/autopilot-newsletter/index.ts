@@ -731,6 +731,26 @@ serve(async (req) => {
 
     console.log(`✅ Found ${advocates?.length || 0} advocates for newsletter`);
 
+    // Fetch one Local Love entry for "Local Love of the Week"
+    console.log("❤️ Fetching Local Love of the Week...");
+    const { data: localLoveRow } = await supabase
+      .from("community_submissions")
+      .select("body, subject_name, submitter_name, category")
+      .eq("kind", "local_love")
+      .in("status", ["approved", "published"])
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const localLove = localLoveRow
+      ? {
+          body: String(localLoveRow.body || ""),
+          subject_name: localLoveRow.subject_name as string | null,
+          submitter_name: (localLoveRow.submitter_name as string | null) || "The Brief Editors",
+          category: localLoveRow.category as string | null,
+        }
+      : null;
+    console.log(`✅ Local Love: ${localLove ? "found" : "none available"}`);
+
     // Build newsletter - route based on feature flag
     let newsletter: { subject: string; preheader: string; htmlBody: string; textBody: string };
     
@@ -752,7 +772,8 @@ serve(async (req) => {
         laterPickReason,
         tonightSchedule,
         weekendEvents,
-        isWeekendSendDay
+        isWeekendSendDay,
+        localLove,
       });
     } else {
       console.log("📝 Building newsletter content (V1: legacy structure)...");
