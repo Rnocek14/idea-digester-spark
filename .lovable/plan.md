@@ -1,29 +1,19 @@
-## Surface Polish Sprint — 4 Changes Only
+Fix inconsistent navigation between homepage and inner pages.
 
-No new features. No backend. No schema. Just four surgical UI fixes to make the homepage feel more human and less dashboard-like.
+**Problem:** The app has two headers with different nav items:
+- `PageShell` (homepage `/lake-geneva`): Today, Jobs, Directory, Advertise
+- `PublicHeader` (all other pages): Today, Events, Local Love, Directory, Submit
 
-### Changes
+This means Local Love, Events, and Submit are invisible from the homepage — users only discover them after clicking a link that happens to use `PublicHeader`.
 
-1. **Cap event poster height in Latest feed**
-   File: `src/components/StoryCard.tsx`
-   Add `max-h-[280px]` (non-featured) and `max-h-[320px]` (featured) to the image container so tall event flyers don't visually outweigh editorial stories.
+**Fix:** Update `PageShell.tsx` to include the same nav items as `PublicHeader.tsx`:
+1. Replace `PageShell`'s `navItems` with the full set: Today, Events, Local Love, Directory, Submit
+2. Remove "Jobs" and "Advertise" from the top nav (Jobs already has a widget on the homepage; Advertise is in the footer)
+3. Adjust mobile nav in `PageShell` — currently it slices to first 3 items, which would hide Local Love and Submit on mobile. Show all items or use a scrollable row.
 
-2. **Rename LIVE → RIGHT NOW and only pulse when incidents exist**
-   File: `src/pages/LakeGenevaV2.tsx`
-   - Change `[LIVE]` label to `[RIGHT NOW]`.
-   - Only show the pulsing red dot when `isActive === true`. When all clear, show a static green dot (no pulse) or hide the dot entirely and just show `All Clear`.
+**Out of scope:** Unifying the two header components into one. Keep `PageShell` and `PublicHeader` separate for now; just align their nav contents.
 
-3. **Add one-line editorial greeting above Latest**
-   File: `src/pages/LakeGenevaV2.tsx`
-   Insert a warm sentence between the view-mode toggle and the lead stories, e.g.:
-   `Good morning, Lake Geneva. Here's what locals should know today.`
-   Static text, no backend needed.
+**Files to change:**
+- `src/components/PageShell.tsx` — update `navItems` array and mobile nav rendering
 
-4. **Remove WelcomeModal entirely**
-   File: `src/pages/LakeGenevaV2.tsx`
-   Delete the `<WelcomeModal />` JSX at line ~740 and remove its import at line ~22. Keep the `WelcomeModal.tsx` component file intact (unused, but not deleted). The sticky banner and inline CTAs already handle subscribe surfacing.
-
-### Technical Details
-- Purely frontend/presentation changes.
-- No new dependencies.
-- Estimated effort: ~30 minutes.
+**No backend changes. No new dependencies. ~15 min.**
