@@ -148,7 +148,6 @@ export default function LakeGenevaShorePath() {
   const handleStartWalkFromStop = (s: ShorePathStopRow) => {
     const idx = stops.findIndex((x) => x.id === s.id);
     setWalkingInitialIndex(idx >= 0 ? idx : 0);
-    setWalkingWalk: void 0;
     setWalkingOpen(true);
   };
 
@@ -210,15 +209,17 @@ export default function LakeGenevaShorePath() {
         </header>
 
         {/* Stylized map */}
-        <div className="mb-4">
+        <div className="mb-4" ref={mapRef}>
           <ShorePathMap
             stops={stops}
-            onStopClick={handleMarkerClick}
+            activeStopId={activeStopId}
+            onJumpToStop={handleJumpToStop}
+            onStartWalkFromStop={handleStartWalkFromStop}
             size="hero"
           />
           <p className="text-xs text-slate-500 mt-2 italic">
-            Tap any numbered marker to jump to that stop. Illustrative — not
-            a navigation map.
+            Tap any numbered marker for a quick preview, then jump to the
+            full write-up. Illustrative — not a navigation map.
           </p>
         </div>
 
