@@ -30,14 +30,14 @@ export function LakeLine() {
           right: 0;
           /* Sit just below the header so the soft glow can hang underneath */
           top: 100%;
-          height: 12px;
+          height: 14px;
           overflow: hidden;
           pointer-events: none;
         }
         .lake-glow {
           position: absolute;
           inset: 0;
-          background: linear-gradient(to bottom, rgba(125,170,210,0.18), transparent);
+          background: linear-gradient(to bottom, rgba(110,165,210,0.28), rgba(125,170,210,0.06) 70%, transparent);
         }
         .lake-wave-track {
           position: absolute;
