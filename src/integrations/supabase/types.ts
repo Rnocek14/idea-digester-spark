@@ -568,6 +568,65 @@ export type Database = {
         }
         Relationships: []
       }
+      community_venues: {
+        Row: {
+          aliases: string[]
+          business_profile_id: string | null
+          canonical_name: string
+          collection: string
+          created_at: string
+          display_rank: number | null
+          editor_note: string | null
+          id: string
+          is_editorial_pick: boolean
+          neighborhood: string | null
+          short_descriptor: string | null
+          slug: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          aliases?: string[]
+          business_profile_id?: string | null
+          canonical_name: string
+          collection: string
+          created_at?: string
+          display_rank?: number | null
+          editor_note?: string | null
+          id?: string
+          is_editorial_pick?: boolean
+          neighborhood?: string | null
+          short_descriptor?: string | null
+          slug: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          aliases?: string[]
+          business_profile_id?: string | null
+          canonical_name?: string
+          collection?: string
+          created_at?: string
+          display_rank?: number | null
+          editor_note?: string | null
+          id?: string
+          is_editorial_pick?: boolean
+          neighborhood?: string | null
+          short_descriptor?: string | null
+          slug?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_venues_business_profile_id_fkey"
+            columns: ["business_profile_id"]
+            isOneToOne: false
+            referencedRelation: "business_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       content_queue: {
         Row: {
           author: string | null
