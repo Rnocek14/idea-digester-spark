@@ -48,6 +48,7 @@ const staticEntries: SitemapEntry[] = [
   { path: "/guides/lake-geneva-vs-williams-bay", changefreq: "monthly", priority: "0.8" },
   { path: "/guides/fontana-vs-lake-geneva", changefreq: "monthly", priority: "0.8" },
   { path: "/guides/why-people-love-lake-geneva", changefreq: "monthly", priority: "0.7" },
+  { path: "/guides/lake-geneva-shore-path", changefreq: "weekly", priority: "0.95" },
   { path: "/best-of/restaurants-lake-geneva", changefreq: "weekly", priority: "0.9" },
 ];
 
