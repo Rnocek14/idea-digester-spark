@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { PublicHeader } from "@/components/PublicHeader";
 import { PageMeta } from "@/components/PageMeta";
 import { Button } from "@/components/ui/button";
-import { Play, Heart, MapPin } from "lucide-react";
+import { Play, Heart, MapPin, Bath } from "lucide-react";
 import { articleJsonLd, breadcrumbJsonLd, faqJsonLd } from "@/lib/seo/jsonLd";
 import { LG_LANDMARK_KEYWORDS, LG_CORE_KEYWORDS } from "@/lib/seoKeywords";
 import { useShorePathStops } from "@/hooks/useShorePathStops";
@@ -58,6 +58,34 @@ const FAQS: { question: string; answer: string }[] = [
     answer:
       "Swim only at designated public beaches — Lake Geneva Public Beach, Williams Bay, Fontana, and Big Foot Beach State Park. The shoreline in front of private homes is private waterfront; swimming there is not permitted.",
   },
+  {
+    question: "Where did the distances and access points on this page come from?",
+    answer:
+      "Access point letters, public restroom locations, and the seven leg distances that add to 21 miles come from the official Geneva Lake Shore Path map published by the Williams Bay Recreation Department (williamsbay.org/recreation-department). The stop-by-stop walking companion, history, and editorial notes are our own.",
+  },
+];
+
+// Public restrooms along the path — sourced from the official Williams Bay
+// Recreation Department Geneva Lake Shore Path map.
+const RESTROOMS: { name: string; community: string }[] = [
+  { name: "Edgewater Park", community: "Williams Bay" },
+  { name: "Lakefront Recreation Building", community: "Williams Bay" },
+  { name: "Elm Park", community: "Lake Geneva" },
+  { name: "The Riviera", community: "Lake Geneva" },
+  { name: "Lake Geneva Visitor Center", community: "Lake Geneva" },
+  { name: "Big Foot Beach State Park", community: "Lake Geneva (south shore)" },
+  { name: "Reid Park", community: "Fontana" },
+];
+
+// Official leg distances around the lake, totaling 21 miles.
+const LEG_DISTANCES: { from: string; to: string; miles: number }[] = [
+  { from: "Williams Bay", to: "Fontana", miles: 3.5 },
+  { from: "Fontana", to: "Shadow Lane", miles: 2.3 },
+  { from: "Shadow Lane", to: "Linn Road", miles: 2.9 },
+  { from: "Linn Road", to: "Big Foot Beach", miles: 3.3 },
+  { from: "Big Foot Beach", to: "Lake Geneva", miles: 2.0 },
+  { from: "Lake Geneva", to: "Chapin Road", miles: 3.5 },
+  { from: "Chapin Road", to: "Williams Bay", miles: 3.5 },
 ];
 
 export default function LakeGenevaShorePath() {
@@ -288,6 +316,65 @@ export default function LakeGenevaShorePath() {
                 . We add the good ones to the stop they belong to.
               </p>
             </div>
+          </div>
+        </section>
+
+        {/* Restrooms + leg distances — practical planning info, sourced from
+            the official Williams Bay Recreation Department map. */}
+        <section className="mb-12 grid md:grid-cols-2 gap-4">
+          <div className="rounded-md border border-slate-200 bg-white p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <Bath className="h-4 w-4 text-blue-700" />
+              <h3 className="font-display text-lg text-slate-900">
+                Public restrooms along the path
+              </h3>
+            </div>
+            <ul className="space-y-1.5 text-sm text-slate-700">
+              {RESTROOMS.map((r) => (
+                <li key={r.name} className="flex justify-between gap-3">
+                  <span className="text-slate-900">{r.name}</span>
+                  <span className="text-slate-500 text-xs whitespace-nowrap">
+                    {r.community}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <p className="text-[11px] text-slate-500 italic mt-3">
+              Hours vary by season. Source: Williams Bay Rec Dept.
+            </p>
+          </div>
+
+          <div className="rounded-md border border-slate-200 bg-white p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <MapPin className="h-4 w-4 text-blue-700" />
+              <h3 className="font-display text-lg text-slate-900">
+                Leg distances (official)
+              </h3>
+            </div>
+            <ul className="space-y-1.5 text-sm text-slate-700">
+              {LEG_DISTANCES.map((leg) => (
+                <li
+                  key={`${leg.from}-${leg.to}`}
+                  className="flex justify-between gap-3"
+                >
+                  <span className="text-slate-900">
+                    {leg.from} → {leg.to}
+                  </span>
+                  <span className="text-slate-600 font-mono text-xs whitespace-nowrap">
+                    {leg.miles.toFixed(1)} mi
+                  </span>
+                </li>
+              ))}
+              <li className="flex justify-between gap-3 pt-2 mt-1 border-t border-slate-200">
+                <span className="font-semibold text-slate-900">Total</span>
+                <span className="font-mono font-semibold text-slate-900 text-xs">
+                  21.0 mi
+                </span>
+              </li>
+            </ul>
+            <p className="text-[11px] text-slate-500 italic mt-3">
+              Approximate — useful for planning a section walk.
+            </p>
           </div>
         </section>
 
