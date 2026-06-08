@@ -76,11 +76,8 @@ export default function WeatherWidget() {
         <span className="mx-1 opacity-50">/</span>
         <span className="text-blue-600 font-semibold">L {Math.round(weather.low)}°</span>
       </span>
-      <span className="hidden sm:inline text-muted-foreground/60">·</span>
-      <span className="hidden sm:inline-flex items-center gap-1 text-muted-foreground">
-        <Wind className="h-3 w-3" />
-        <span className="font-mono text-xs">{Math.round(weather.wind)} mph</span>
-      </span>
+      {/* Wind intentionally omitted from the compressed line; the 3-day
+          forecast block below carries detailed weather. */}
     </div>
   );
 }
