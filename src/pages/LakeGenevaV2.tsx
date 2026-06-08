@@ -1101,71 +1101,175 @@ const LakeGenevaV2 = () => {
                 <p className="text-slate-500 text-sm">Check back later for updates.</p>
               </div>
             ) : viewMode === 'all' && filteredStories.length > 3 ? (
-              /* ALL MODE: Dense "More from today" headline list (stories 4+) */
-              <section className="mt-2">
-                <div className="flex items-baseline justify-between mb-3 pb-2 border-b border-slate-200">
-                  <h3
-                    className="text-[11px] uppercase tracking-[0.18em] text-slate-700 font-semibold"
-                    style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-                  >
-                    More from today
-                  </h3>
-                  <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">
-                    {filteredStories.length - 3} more
-                  </span>
-                </div>
-                <ul className="divide-y divide-slate-100">
-                  {filteredStories.slice(3).map((story: Story, idx: number) => {
-                    const time = getRelativeTime(story.publish_date || story.created_at);
-                    let source: string | null = (story as any).source?.name || null;
-                    if (!source && story.original_url) {
-                      try {
-                        const url = new URL(story.original_url);
-                        source = url.hostname.replace(/^www\./, '');
-                      } catch {}
-                    }
-                    const isException = story.geo_tier === 2 || story.geo_tier === 0;
-                    const exceptionLabel =
-                      story.geo_tier === 2 ? 'Walworth' : story.geo_tier === 0 ? 'Wisconsin' : null;
-                    return (
-                      <li key={story.id} id={`story-${story.id}`}>
-                        <a
-                          href={story.original_url || '#'}
-                          target={story.original_url ? '_blank' : undefined}
-                          rel={story.original_url ? 'noopener noreferrer' : undefined}
-                          className="group flex items-start gap-3 py-3 hover:bg-slate-50/60 -mx-2 px-2 rounded-sm transition-colors"
-                        >
-                          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-slate-300 group-hover:bg-[hsl(var(--shore-terracotta))] transition-colors" />
-                          <div className="flex-1 min-w-0">
-                            <h4
-                              className="text-[15px] sm:text-base text-slate-900 leading-snug group-hover:text-slate-600 transition-colors"
-                              style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 700 }}
-                            >
-                              {story.title}
-                            </h4>
-                            <p className="mt-0.5 text-[12px] text-slate-500 flex items-center gap-x-1.5 flex-wrap">
-                              {isException && exceptionLabel && (
-                                <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider rounded border bg-amber-50 text-amber-700 border-amber-200">
-                                  {exceptionLabel}
-                                </span>
+              /* ALL MODE: section-divided "More from today" + "Catching Up" tail */
+              (() => {
+                const rest = filteredStories.slice(3);
+                const SEVENTY_TWO_H = 72 * 60 * 60 * 1000;
+                const nowMs = Date.now();
+                const fresh: Story[] = [];
+                const stale: Story[] = [];
+                for (const s of rest) {
+                  const ts = new Date(s.publish_date || s.created_at).getTime();
+                  if (nowMs - ts > SEVENTY_TWO_H) stale.push(s);
+                  else fresh.push(s);
+                }
+
+                // Section labels for category dividers
+                const SECTION_LABELS: Record<string, string> = {
+                  news: 'Local News',
+                  civic: 'Civic',
+                  business: 'Business',
+                  dining: 'Food & Drink',
+                  events: 'Events',
+                  community: 'Community',
+                  schools: 'Schools',
+                  real_estate: 'Real Estate',
+                };
+                const SECTION_ORDER = [
+                  'news', 'civic', 'business', 'real_estate',
+                  'dining', 'events', 'community', 'schools',
+                ];
+                const grouped: Record<string, Story[]> = {};
+                for (const s of fresh) {
+                  const k = (s.category || 'other').toLowerCase();
+                  (grouped[k] = grouped[k] || []).push(s);
+                }
+                const orderedKeys = [
+                  ...SECTION_ORDER.filter((k) => grouped[k]?.length),
+                  ...Object.keys(grouped).filter((k) => !SECTION_ORDER.includes(k)),
+                ];
+
+                const renderHeadline = (story: Story) => {
+                  const time = getRelativeTime(story.publish_date || story.created_at);
+                  let source: string | null = (story as any).source?.name || null;
+                  if (!source && story.original_url) {
+                    try { source = new URL(story.original_url).hostname.replace(/^www\./, ''); } catch {}
+                  }
+                  const isException = story.geo_tier === 2 || story.geo_tier === 0;
+                  const exceptionLabel =
+                    story.geo_tier === 2 ? 'Walworth' : story.geo_tier === 0 ? 'Wisconsin' : null;
+                  return (
+                    <li key={story.id} id={`story-${story.id}`}>
+                      <a
+                        href={story.original_url || '#'}
+                        target={story.original_url ? '_blank' : undefined}
+                        rel={story.original_url ? 'noopener noreferrer' : undefined}
+                        className="group flex items-start gap-3 py-3 hover:bg-slate-50/60 -mx-2 px-2 rounded-sm transition-colors"
+                      >
+                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-slate-300 group-hover:bg-[hsl(var(--shore-terracotta))] transition-colors" />
+                        <div className="flex-1 min-w-0">
+                          <h4
+                            className="text-[15px] sm:text-base text-slate-900 leading-snug group-hover:text-slate-600 transition-colors"
+                            style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 700 }}
+                          >
+                            {story.title}
+                          </h4>
+                          <p className="mt-0.5 text-[12px] text-slate-500 flex items-center gap-x-1.5 flex-wrap">
+                            {isException && exceptionLabel && (
+                              <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider rounded border bg-amber-50 text-amber-700 border-amber-200">
+                                {exceptionLabel}
+                              </span>
+                            )}
+                            {source && <span>{source}</span>}
+                            {source && time && <span className="text-slate-300">·</span>}
+                            {time && <span>{time}</span>}
+                          </p>
+                        </div>
+                      </a>
+                    </li>
+                  );
+                };
+
+                let headlineCounter = 0;
+
+                return (
+                  <>
+                    {fresh.length > 0 && (
+                      <section className="mt-2">
+                        <div className="flex items-baseline justify-between mb-3 pb-2 border-b border-slate-200">
+                          <h3
+                            className="text-[11px] uppercase tracking-[0.18em] text-slate-700 font-semibold"
+                            style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                          >
+                            More from today
+                          </h3>
+                          <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">
+                            {fresh.length} {fresh.length === 1 ? 'story' : 'stories'}
+                          </span>
+                        </div>
+
+                        {orderedKeys.map((key, sectionIdx) => {
+                          const label = SECTION_LABELS[key] || key.replace(/_/g, ' ');
+                          const items = grouped[key];
+                          const insertCta =
+                            sectionIdx > 0 &&
+                            sectionIdx < orderedKeys.length - 1 &&
+                            headlineCounter >= 8 &&
+                            headlineCounter < 16;
+                          headlineCounter += items.length;
+                          return (
+                            <div key={key} className="mb-6">
+                              {insertCta && (
+                                <div className="mb-5">
+                                  <InlineSubscribeCTA />
+                                </div>
                               )}
-                              {source && <span>{source}</span>}
-                              {source && time && <span className="text-slate-300">·</span>}
-                              {time && <span>{time}</span>}
-                            </p>
-                          </div>
-                        </a>
-                        {/* Inline subscribe CTA after every 8th headline */}
-                        {(idx + 1) % 8 === 0 && idx < filteredStories.length - 4 && (
-                          <div className="my-4">
-                            <InlineSubscribeCTA />
-                          </div>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
-              </section>
+                              <h4 className="text-[10px] font-mono uppercase tracking-[0.18em] text-slate-500 mb-1.5">
+                                {label}
+                              </h4>
+                              <ul className="divide-y divide-slate-100 border-t border-slate-100">
+                                {items.map(renderHeadline)}
+                              </ul>
+                            </div>
+                          );
+                        })}
+                      </section>
+                    )}
+
+                    {stale.length > 0 && (
+                      <section className="mt-8 pt-6 border-t-2 border-slate-200">
+                        <div className="flex items-baseline justify-between mb-2">
+                          <h3
+                            className="text-[11px] uppercase tracking-[0.18em] text-slate-500 font-semibold"
+                            style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                          >
+                            Catching up
+                          </h3>
+                          <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">
+                            Earlier this week
+                          </span>
+                        </div>
+                        <ul className="divide-y divide-slate-100">
+                          {stale.map((story) => {
+                            const time = getRelativeTime(story.publish_date || story.created_at);
+                            let source: string | null = (story as any).source?.name || null;
+                            if (!source && story.original_url) {
+                              try { source = new URL(story.original_url).hostname.replace(/^www\./, ''); } catch {}
+                            }
+                            return (
+                              <li key={story.id} id={`story-${story.id}`}>
+                                <a
+                                  href={story.original_url || '#'}
+                                  target={story.original_url ? '_blank' : undefined}
+                                  rel={story.original_url ? 'noopener noreferrer' : undefined}
+                                  className="group flex items-baseline gap-2 py-2 hover:bg-slate-50/60 -mx-2 px-2 rounded-sm transition-colors"
+                                >
+                                  <span className="flex-1 min-w-0 text-[13.5px] text-slate-600 group-hover:text-slate-900 leading-snug truncate">
+                                    {story.title}
+                                  </span>
+                                  <span className="shrink-0 text-[11px] font-mono text-slate-400 uppercase">
+                                    {source || time}
+                                  </span>
+                                </a>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </section>
+                    )}
+                  </>
+                );
+              })()
             ) : viewMode === 'topic' ? (
               /* TOPIC MODE: Grouped by category with headers */
               <div className="space-y-8">
