@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Cloud, Sun, CloudRain, Snowflake, CloudLightning, CloudFog, CloudSun, Wind } from "lucide-react";
+import { Cloud, Sun, CloudRain, Snowflake, CloudLightning, CloudFog, CloudSun, Sunrise, Sunset } from "lucide-react";
 
 type WeatherData = {
   temp: number;
@@ -7,6 +7,8 @@ type WeatherData = {
   code: number;
   high: number;
   low: number;
+  sunrise: string;
+  sunset: string;
 };
 
 const getWeatherIcon = (code: number, size: "sm" | "lg" = "lg") => {
@@ -37,12 +39,24 @@ const getWeatherLabel = (code: number) => {
   return "Fair";
 };
 
+const formatTime = (iso: string): string => {
+  try {
+    return new Date(iso).toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      timeZone: "America/Chicago",
+    });
+  } catch {
+    return "";
+  }
+};
+
 export default function WeatherWidget() {
   const [weather, setWeather] = useState<WeatherData | null>(null);
 
   useEffect(() => {
     fetch(
-      "https://api.open-meteo.com/v1/forecast?latitude=42.5917&longitude=-88.4334&current_weather=true&daily=temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America%2FChicago"
+      "https://api.open-meteo.com/v1/forecast?latitude=42.5917&longitude=-88.4334&current_weather=true&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America%2FChicago"
     )
       .then((res) => res.json())
       .then((data) => {
@@ -53,6 +67,8 @@ export default function WeatherWidget() {
             code: data.current_weather.weathercode,
             high: data.daily.temperature_2m_max[0],
             low: data.daily.temperature_2m_min[0],
+            sunrise: formatTime(data.daily.sunrise[0]),
+            sunset: formatTime(data.daily.sunset[0]),
           });
         }
       })
@@ -62,22 +78,35 @@ export default function WeatherWidget() {
   if (!weather) return null;
 
   return (
-    // Compressed single-line masthead-style weather line.
-    // Format: [icon] 68° Partly Cloudy · H 75° L 55° · 6 mph
-    <div className="flex items-center gap-2.5 text-sm">
-      {getWeatherIcon(weather.code, "sm")}
-      <span className="font-mono font-semibold text-foreground tabular-nums">
-        {Math.round(weather.temp)}°
-      </span>
-      <span className="text-foreground">{getWeatherLabel(weather.code)}</span>
-      <span className="text-muted-foreground/60">·</span>
-      <span className="font-mono text-xs text-muted-foreground tabular-nums">
-        <span className="text-orange-600 font-semibold">H {Math.round(weather.high)}°</span>
-        <span className="mx-1 opacity-50">/</span>
-        <span className="text-blue-600 font-semibold">L {Math.round(weather.low)}°</span>
-      </span>
-      {/* Wind intentionally omitted from the compressed line; the 3-day
-          forecast block below carries detailed weather. */}
+    <div className="space-y-1.5">
+      {/* Masthead temp line: [icon] 68° Partly Cloudy · H 75° / L 55° */}
+      <div className="flex items-center gap-2.5 text-sm">
+        {getWeatherIcon(weather.code, "sm")}
+        <span className="font-mono font-semibold text-foreground tabular-nums">
+          {Math.round(weather.temp)}°
+        </span>
+        <span className="text-foreground">{getWeatherLabel(weather.code)}</span>
+        <span className="text-muted-foreground/60">·</span>
+        <span className="font-mono text-xs text-muted-foreground tabular-nums">
+          <span className="text-orange-600 font-semibold">H {Math.round(weather.high)}°</span>
+          <span className="mx-1 opacity-50">/</span>
+          <span className="text-blue-600 font-semibold">L {Math.round(weather.low)}°</span>
+        </span>
+      </div>
+      {/* Daylight line: sunrise · sunset */}
+      {weather.sunrise && weather.sunset && (
+        <div className="flex items-center gap-3 text-[11px] font-mono text-muted-foreground tabular-nums">
+          <span className="flex items-center gap-1">
+            <Sunrise className="h-3 w-3 text-amber-500" />
+            {weather.sunrise}
+          </span>
+          <span className="opacity-50">·</span>
+          <span className="flex items-center gap-1">
+            <Sunset className="h-3 w-3 text-orange-400" />
+            {weather.sunset}
+          </span>
+        </div>
+      )}
     </div>
   );
 }
