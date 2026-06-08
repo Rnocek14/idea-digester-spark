@@ -1205,12 +1205,12 @@ const LakeGenevaV2 = () => {
                     {fresh.length > 0 && (
                       <section className="mt-2">
                         <div className="flex items-baseline justify-between mb-3 pb-2 border-b border-slate-200">
-                          <h3
+                          <h2
                             className="text-[11px] uppercase tracking-[0.18em] text-slate-700 font-semibold"
                             style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
                           >
                             More from today
-                          </h3>
+                          </h2>
                           <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">
                             {fresh.length} {fresh.length === 1 ? 'story' : 'stories'}
                           </span>
@@ -1237,9 +1237,9 @@ const LakeGenevaV2 = () => {
                                   <InlineSubscribeCTA />
                                 </div>
                               )}
-                              <h4 className="text-[10px] font-mono uppercase tracking-[0.18em] text-slate-500 mb-3">
+                              <h3 className="text-[10px] font-mono uppercase tracking-[0.18em] text-slate-500 mb-3">
                                 {label}
-                              </h4>
+                              </h3>
                               {cardItems.length > 0 && (
                                 <div className="grid gap-5 sm:grid-cols-2 mb-3">
                                   {cardItems.map((story) => {
