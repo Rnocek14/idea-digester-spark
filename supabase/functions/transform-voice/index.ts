@@ -1,7 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.84.0'
 import { corsHeaders } from '../_shared/cors.ts'
 
-const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY')
+const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY')
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
@@ -145,16 +145,16 @@ Task:
 
 Return the content for all channels following the guidelines provided.`
 
-  console.log('[transform-voice] Calling OpenAI API...')
+  console.log('[transform-voice] Calling Lovable AI Gateway...')
 
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+  const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${OPENAI_API_KEY}`,
+      'Authorization': `Bearer ${LOVABLE_API_KEY}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'gpt-4o-mini',
+      model: 'google/gemini-3-flash-preview',
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: userPrompt }
@@ -192,18 +192,18 @@ Return the content for all channels following the guidelines provided.`
 
   if (!response.ok) {
     const errorText = await response.text()
-    console.error('[transform-voice] OpenAI API error:', response.status, errorText)
-    throw new Error(`OpenAI API error: ${response.status} - ${errorText}`)
+    console.error('[transform-voice] AI Gateway error:', response.status, errorText)
+    throw new Error(`AI Gateway error: ${response.status} - ${errorText}`)
   }
 
   const data = await response.json()
-  console.log('[transform-voice] OpenAI response received')
+  console.log('[transform-voice] AI Gateway response received')
   
   const toolCall = data.choices?.[0]?.message?.tool_calls?.[0]
   
   if (!toolCall || toolCall.function.name !== 'generate_lake_geneva_voice') {
     console.error('[transform-voice] No valid tool call in response:', JSON.stringify(data))
-    throw new Error('OpenAI did not return expected tool call')
+    throw new Error('AI Gateway did not return expected tool call')
   }
 
   return JSON.parse(toolCall.function.arguments)
@@ -224,10 +224,10 @@ Deno.serve(async (req) => {
       )
     }
 
-    if (!OPENAI_API_KEY) {
-      console.error('[transform-voice] OPENAI_API_KEY not configured')
+    if (!LOVABLE_API_KEY) {
+      console.error('[transform-voice] LOVABLE_API_KEY not configured')
       return new Response(
-        JSON.stringify({ error: 'OPENAI_API_KEY not configured' }),
+        JSON.stringify({ error: 'LOVABLE_API_KEY not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
