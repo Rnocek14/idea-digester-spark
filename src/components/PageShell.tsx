@@ -50,7 +50,12 @@ const PageShell: React.FC<PageShellProps> = ({
               {issueLine}
             </span>
           </span>
-          <span className="hidden sm:inline italic">Your local news, simplified</span>
+          <span
+            className="hidden sm:inline text-[11px] uppercase tracking-[0.18em] text-slate-500"
+            style={{ fontFamily: "'Playfair Display', serif", letterSpacing: "0.14em" }}
+          >
+            Geneva Lake · Walworth County, Wisconsin
+          </span>
         </div>
 
         {/* Main nav */}
