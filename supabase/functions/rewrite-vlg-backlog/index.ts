@@ -14,10 +14,12 @@ Deno.serve(async (req) => {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
   let batchSize = 5
+  let categoryFilter: string | null = null
   try {
     if (req.method === 'POST') {
       const body = await req.json().catch(() => ({}))
       if (typeof body.batchSize === 'number') batchSize = Math.min(20, Math.max(1, body.batchSize))
+      if (typeof body.category === 'string') categoryFilter = body.category
     }
   } catch (_) { /* ignore */ }
 
@@ -26,13 +28,18 @@ Deno.serve(async (req) => {
   //  - have no content_website yet
   //  - aren't blocked
   //  - are still relevant (not expired)
-  const { data: items, error } = await supabase
+  let query = supabase
     .from('content_queue')
     .select('id, title')
     .ilike('original_url', '%visitlakegeneva.com%')
     .is('content_website', null)
     .neq('safety_level', 'blocked')
     .neq('status', 'expired')
+
+  // Prioritize dining (visible on /eats) by default; allow override
+  query = query.eq('category', categoryFilter ?? 'dining')
+
+  const { data: items, error } = await query
     .order('created_at', { ascending: false })
     .limit(batchSize)
 
