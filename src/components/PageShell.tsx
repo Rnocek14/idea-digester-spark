@@ -24,6 +24,14 @@ const PageShell: React.FC<PageShellProps> = ({
   fullWidth = false,
 }) => {
   const today = format(new Date(), "EEEE, MMMM d, yyyy");
+  const shortDate = format(new Date(), "EEE, MMM d");
+  const now = new Date();
+  const volume = now.getFullYear() - 2024; // launched 2025 → Vol I
+  const startOfYear = new Date(now.getFullYear(), 0, 0);
+  const issueNo = Math.floor((now.getTime() - startOfYear.getTime()) / 86400000);
+  const toRoman = (n: number) =>
+    ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"][n] ?? String(n);
+  const issueLine = `Vol. ${toRoman(volume)} · No. ${String(issueNo).padStart(3, "0")}`;
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -31,15 +39,28 @@ const PageShell: React.FC<PageShellProps> = ({
       <header className="sticky top-0 z-30 relative bg-white/80 backdrop-blur-sm">
         {/* Top strip: date + tagline */}
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-2 text-xs text-slate-500">
-          <span>{today}</span>
-          <span className="hidden sm:inline">Your local news, simplified</span>
+          <span className="flex items-baseline gap-2">
+            <span className="hidden sm:inline">{today}</span>
+            <span className="sm:hidden">{shortDate}</span>
+            <span className="hidden md:inline text-slate-300">·</span>
+            <span
+              className="hidden md:inline text-[11px] uppercase tracking-[0.18em] text-[hsl(var(--shore-terracotta))]/80"
+              style={{ fontFamily: "'Playfair Display', serif", letterSpacing: "0.14em" }}
+            >
+              {issueLine}
+            </span>
+          </span>
+          <span className="hidden sm:inline italic">Your local news, simplified</span>
         </div>
 
         {/* Main nav */}
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 pb-3 pt-2">
           {/* Logo / brand */}
           <Link to="/" className="flex items-baseline gap-2 group">
-            <span className="text-lg font-semibold tracking-tight text-slate-900 group-hover:text-blue-600 transition-colors">
+            <span
+              className="text-2xl tracking-tight text-slate-900 group-hover:text-[hsl(var(--lake-deep))] transition-colors leading-none"
+              style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700 }}
+            >
               Lake Geneva Brief
             </span>
             <span className="hidden text-[11px] font-medium uppercase tracking-[0.18em] text-slate-500 sm:inline">
@@ -110,35 +131,53 @@ const PageShell: React.FC<PageShellProps> = ({
 
       {/* Footer */}
       <footer className="border-t border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-3 px-4 py-4 text-xs text-slate-500 sm:flex-row sm:items-center">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="font-medium text-slate-700">
+        <div className="mx-auto max-w-6xl px-4 py-8">
+          {/* Signed editor's note */}
+          <div className="flex flex-col items-center text-center gap-3">
+            <span
+              className="text-xl text-slate-800"
+              style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700 }}
+            >
               Lake Geneva Brief
             </span>
-            <span>•</span>
-            <Link
-              to="/selling-lake-geneva"
-              className="hover:text-slate-900 hover:underline"
+            <div className="flex items-center gap-3">
+              <span className="h-px w-8 bg-[hsl(var(--shore-terracotta))]/40" />
+              <span className="text-[11px] uppercase tracking-[0.22em] text-[hsl(var(--shore-terracotta))]/80">
+                From the Shore Path
+              </span>
+              <span className="h-px w-8 bg-[hsl(var(--shore-terracotta))]/40" />
+            </div>
+            <p
+              className="max-w-md text-sm italic text-slate-600 leading-relaxed"
+              style={{ fontFamily: "'Playfair Display', serif" }}
             >
-              Selling Your Home?
-            </Link>
-            <span>•</span>
-            <Link
-              to="/directory"
-              className="hover:text-slate-900 hover:underline"
-            >
-              Directory
-            </Link>
-            <span>•</span>
-            <Link
-              to="/advertise"
-              className="hover:text-slate-900 hover:underline"
-            >
-              Advertise
-            </Link>
+              Curated from the shore path by Gina Nocek — a daily note for the
+              people who call Geneva Lake home.
+            </p>
           </div>
-          <div className="text-[11px]">
-            Lake Geneva Real Estate — Powered by Gina @properties
+
+          {/* Utility row */}
+          <div className="mt-8 pt-5 border-t border-slate-100 flex flex-col items-center justify-between gap-3 text-xs text-slate-500 sm:flex-row">
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <Link to="/selling-lake-geneva" className="hover:text-slate-900 hover:underline">
+                Selling Your Home?
+              </Link>
+              <span className="text-slate-300">·</span>
+              <Link to="/directory" className="hover:text-slate-900 hover:underline">
+                Directory
+              </Link>
+              <span className="text-slate-300">·</span>
+              <Link to="/advertise" className="hover:text-slate-900 hover:underline">
+                Advertise
+              </Link>
+              <span className="text-slate-300">·</span>
+              <Link to="/submit" className="hover:text-slate-900 hover:underline">
+                Submit a Tip
+              </Link>
+            </div>
+            <div className="text-[11px] text-slate-400">
+              Lake Geneva Real Estate — Powered by Gina @properties
+            </div>
           </div>
         </div>
       </footer>
