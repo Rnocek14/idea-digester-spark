@@ -1225,19 +1225,52 @@ const LakeGenevaV2 = () => {
                             headlineCounter >= 8 &&
                             headlineCounter < 16;
                           headlineCounter += items.length;
+                          // First 2 items per section get full image cards, the
+                          // rest fall back to compact headline rows so the
+                          // section stays dense but visual.
+                          const cardItems = items.slice(0, 2);
+                          const tailItems = items.slice(2);
                           return (
-                            <div key={key} className="mb-6">
+                            <div key={key} className="mb-7">
                               {insertCta && (
                                 <div className="mb-5">
                                   <InlineSubscribeCTA />
                                 </div>
                               )}
-                              <h4 className="text-[10px] font-mono uppercase tracking-[0.18em] text-slate-500 mb-1.5">
+                              <h4 className="text-[10px] font-mono uppercase tracking-[0.18em] text-slate-500 mb-3">
                                 {label}
                               </h4>
-                              <ul className="divide-y divide-slate-100 border-t border-slate-100">
-                                {items.map(renderHeadline)}
-                              </ul>
+                              {cardItems.length > 0 && (
+                                <div className="grid gap-5 sm:grid-cols-2 mb-3">
+                                  {cardItems.map((story) => {
+                                    const time = getRelativeTime(story.publish_date || story.created_at);
+                                    let source: string | null = (story as any).source?.name || null;
+                                    if (!source && story.original_url) {
+                                      try { source = new URL(story.original_url).hostname.replace(/^www\./, ''); } catch {}
+                                    }
+                                    return (
+                                      <div key={story.id} id={`story-${story.id}`}>
+                                        <StoryCard
+                                          id={story.id}
+                                          title={story.title}
+                                          summary={story.content_website || story.content_lg_base || story.summary}
+                                          imageUrl={story.image_url}
+                                          category={story.category}
+                                          url={story.original_url}
+                                          geoTier={story.geo_tier}
+                                          geoLabel={story.geo_label}
+                                          meta={{ time, source }}
+                                        />
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                              {tailItems.length > 0 && (
+                                <ul className="divide-y divide-slate-100 border-t border-slate-100">
+                                  {tailItems.map(renderHeadline)}
+                                </ul>
+                              )}
                             </div>
                           );
                         })}
