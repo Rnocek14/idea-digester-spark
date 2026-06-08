@@ -10,6 +10,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { InlineSubscribeCTA } from "@/components/InlineSubscribeCTA";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useState } from "react";
 
 type EatsContent = {
   id: string;
@@ -576,9 +578,23 @@ const EatsCard = ({
   compact?: boolean;
 }) => {
   const restaurant = extractRestaurant(item.title);
+  const [open, setOpen] = useState(false);
+  const body = item.content_website || item.summary || item.content;
   
   return (
-    <Card className="group hover:shadow-md transition-shadow">
+    <>
+    <Card
+      role="button"
+      tabIndex={0}
+      onClick={() => setOpen(true)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          setOpen(true);
+        }
+      }}
+      className="group hover:shadow-md transition-shadow cursor-pointer"
+    >
       <CardContent className={compact ? "p-4" : "p-4 sm:p-5"}>
         <div className="flex gap-4">
           {item.image_url && !compact && (
@@ -615,20 +631,54 @@ const EatsCard = ({
                 {item.content_website || item.summary}
               </p>
             )}
-            {item.original_url && (
-              <a 
-                href={item.original_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-xs text-orange-600 hover:text-orange-700 mt-2"
-              >
-                Read more <ArrowRight className="h-3 w-3" />
-              </a>
-            )}
+            <span className="inline-flex items-center gap-1 text-xs text-orange-600 group-hover:text-orange-700 mt-2">
+              Read more <ArrowRight className="h-3 w-3" />
+            </span>
           </div>
         </div>
       </CardContent>
     </Card>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          {item.category && (
+            <Badge variant="outline" className="w-fit text-xs capitalize mb-1">
+              {item.category}
+            </Badge>
+          )}
+          <DialogTitle className="text-2xl leading-tight">{item.title}</DialogTitle>
+          {restaurant && (
+            <DialogDescription className="flex items-center gap-1 text-slate-600">
+              <MapPin className="h-3 w-3" />
+              {restaurant}
+            </DialogDescription>
+          )}
+        </DialogHeader>
+        {item.image_url && (
+          <div className="w-full max-h-72 overflow-hidden rounded-lg bg-slate-100">
+            <img src={item.image_url} alt="" className="w-full h-full object-cover" />
+          </div>
+        )}
+        {body && (
+          <div className="text-[15px] text-slate-700 leading-relaxed whitespace-pre-wrap">
+            {body}
+          </div>
+        )}
+        {item.original_url && (
+          <div className="pt-3 border-t">
+            <a
+              href={item.original_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-sm text-orange-600 hover:text-orange-700"
+            >
+              View original source <ExternalLink className="h-3 w-3" />
+            </a>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+    </>
   );
 };
 
