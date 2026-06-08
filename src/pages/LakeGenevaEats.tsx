@@ -621,7 +621,13 @@ const EatsCard = ({
 }) => {
   const restaurant = extractRestaurant(item.title);
   const [open, setOpen] = useState(false);
-  const body = item.content_website || item.summary || item.content;
+  const rawBody = item.content_website || item.summary || '';
+  const body = rawBody ? truncate(rawBody, 400) : '';
+  const sourceHost = getHostname(item.original_url);
+  const useFallbackImage = isThirdPartyImage(item.image_url, item.original_url);
+  const displayImage = useFallbackImage || !item.image_url
+    ? pickFallbackImage(item.id || item.title)
+    : item.image_url;
   
   return (
     <>
@@ -642,7 +648,7 @@ const EatsCard = ({
           {item.image_url && !compact && (
             <div className="hidden sm:block w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-slate-100">
               <img 
-                src={item.image_url} 
+                src={displayImage} 
                 alt=""
                 className="w-full h-full object-cover"
                 loading="lazy"
@@ -696,25 +702,31 @@ const EatsCard = ({
             </DialogDescription>
           )}
         </DialogHeader>
-        {item.image_url && (
-          <div className="w-full max-h-72 overflow-hidden rounded-lg bg-slate-100">
-            <img src={item.image_url} alt="" className="w-full h-full object-cover" />
-          </div>
+        <div className="w-full max-h-72 overflow-hidden rounded-lg bg-slate-100">
+          <img src={displayImage} alt="" className="w-full h-full object-cover" />
+        </div>
+        {sourceHost && (
+          <p className="text-xs text-slate-500">
+            Source: <span className="font-medium text-slate-700">{sourceHost}</span>
+          </p>
         )}
         {body && (
-          <div className="text-[15px] text-slate-700 leading-relaxed whitespace-pre-wrap">
+          <div className="text-[15px] text-slate-700 leading-relaxed">
             {body}
           </div>
         )}
         {item.original_url && (
           <div className="pt-3 border-t">
+            <p className="text-xs text-slate-500 mb-2">
+              Summary based on reporting from {sourceHost || 'the original source'}. Read the full story for complete details.
+            </p>
             <a
               href={item.original_url}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 text-sm text-orange-600 hover:text-orange-700"
             >
-              View original source <ExternalLink className="h-3 w-3" />
+              Read the full story at {sourceHost || 'source'} <ExternalLink className="h-3 w-3" />
             </a>
           </div>
         )}
