@@ -764,7 +764,10 @@ const LakeGenevaV2 = () => {
               <ScrollableContainer className="space-y-4 max-h-[calc(100vh-6rem)] overflow-y-auto pr-4">
                 {/* LIVE Header with dynamic indicator */}
                 <LiveColumnHeader />
-                
+
+                {/* Sprint 4: hyperlocal intelligence panel */}
+                <LakeAtAGlance />
+
                 {/* Weather at top of LIVE */}
                 <div className="bg-stone-50 rounded-md border border-slate-200 px-3 py-2.5">
                   <WeatherWidget />
@@ -797,6 +800,7 @@ const LakeGenevaV2 = () => {
             <div className="xl:hidden mb-8">
               <LiveColumnHeader />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                <LakeAtAGlance />
                 <div className="bg-white rounded-sm border border-slate-200 p-3">
                   <WeatherWidget />
                 </div>
