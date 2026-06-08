@@ -88,6 +88,48 @@ const extractRestaurant = (title: string): string | null => {
   return null;
 };
 
+// Third-party sources whose images we should NOT rehost — use a category fallback instead.
+const THIRD_PARTY_IMAGE_HOSTS = [
+  'visitlakegeneva.com',
+  'lakegenevanews.net',
+  'gazettextra.com',
+  'jsonline.com',
+  'tmj4.com',
+  'fox6now.com',
+  'cbs58.com',
+];
+
+const DINING_FALLBACK_IMAGES = [
+  'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&q=80',
+  'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200&q=80',
+  'https://images.unsplash.com/photo-1424847651672-bf20a4b0982b?w=1200&q=80',
+  'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1200&q=80',
+];
+
+const getHostname = (url: string | null): string | null => {
+  if (!url) return null;
+  try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return null; }
+};
+
+const isThirdPartyImage = (imageUrl: string | null, sourceUrl: string | null): boolean => {
+  const imgHost = getHostname(imageUrl);
+  const srcHost = getHostname(sourceUrl);
+  return THIRD_PARTY_IMAGE_HOSTS.some(h => imgHost?.includes(h) || srcHost?.includes(h));
+};
+
+const pickFallbackImage = (seed: string): string => {
+  let hash = 5381;
+  for (let i = 0; i < seed.length; i++) hash = ((hash << 5) + hash) ^ seed.charCodeAt(i);
+  return DINING_FALLBACK_IMAGES[Math.abs(hash) % DINING_FALLBACK_IMAGES.length];
+};
+
+const truncate = (text: string, max = 400): string => {
+  if (text.length <= max) return text;
+  const sliced = text.slice(0, max);
+  const lastSpace = sliced.lastIndexOf(' ');
+  return (lastSpace > 200 ? sliced.slice(0, lastSpace) : sliced).trimEnd() + '…';
+};
+
 const LakeGenevaEats = () => {
   const today = new Date();
   const todayStr = format(today, "yyyy-MM-dd");
