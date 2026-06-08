@@ -62,33 +62,22 @@ export default function WeatherWidget() {
   if (!weather) return null;
 
   return (
-    <div className="space-y-3">
-      {/* Main temp + icon row */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          {getWeatherIcon(weather.code)}
-          <div>
-            <div className="text-3xl font-bold text-foreground font-mono tracking-tight">
-              {Math.round(weather.temp)}°
-            </div>
-            <div className="text-sm text-muted-foreground font-medium">
-              {getWeatherLabel(weather.code)}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Hi/Lo + Wind row */}
-      <div className="flex items-center gap-4 text-sm">
-        <div className="flex items-center gap-2 font-mono">
-          <span className="text-orange-600 font-semibold">H:{Math.round(weather.high)}°</span>
-          <span className="text-blue-600 font-semibold">L:{Math.round(weather.low)}°</span>
-        </div>
-        <div className="flex items-center gap-1 text-muted-foreground">
-          <Wind className="h-3.5 w-3.5" />
-          <span className="font-mono text-xs">{Math.round(weather.wind)} mph</span>
-        </div>
-      </div>
+    // Compressed single-line masthead-style weather line.
+    // Format: [icon] 68° Partly Cloudy · H 75° L 55° · 6 mph
+    <div className="flex items-center gap-2.5 text-sm">
+      {getWeatherIcon(weather.code, "sm")}
+      <span className="font-mono font-semibold text-foreground tabular-nums">
+        {Math.round(weather.temp)}°
+      </span>
+      <span className="text-foreground">{getWeatherLabel(weather.code)}</span>
+      <span className="text-muted-foreground/60">·</span>
+      <span className="font-mono text-xs text-muted-foreground tabular-nums">
+        <span className="text-orange-600 font-semibold">H {Math.round(weather.high)}°</span>
+        <span className="mx-1 opacity-50">/</span>
+        <span className="text-blue-600 font-semibold">L {Math.round(weather.low)}°</span>
+      </span>
+      {/* Wind intentionally omitted from the compressed line; the 3-day
+          forecast block below carries detailed weather. */}
     </div>
   );
 }
