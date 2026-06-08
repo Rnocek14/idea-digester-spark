@@ -141,8 +141,26 @@
     <priority>0.9</priority>
   </url>
   <url>
+    <loc>https://lakegeneva.citybrief.info/events/949b8f02-55bd-4b21-9704-fbbae431c2a1</loc>
+    <lastmod>2026-06-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://lakegeneva.citybrief.info/events/ec1123a1-f4d2-4d81-aec6-dd4b4932a0f9</loc>
     <lastmod>2026-06-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lakegeneva.citybrief.info/events/0433f76b-e2b1-41c3-8365-444c4e631631</loc>
+    <lastmod>2026-06-08</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lakegeneva.citybrief.info/events/725c1610-60f1-43f2-a8b6-cb18ae71835c</loc>
+    <lastmod>2026-06-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -153,26 +171,14 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://lakegeneva.citybrief.info/events/949b8f02-55bd-4b21-9704-fbbae431c2a1</loc>
-    <lastmod>2026-06-01</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
     <loc>https://lakegeneva.citybrief.info/events/3e712dbf-c818-48a7-8859-2d7d9415462a</loc>
     <lastmod>2026-05-31</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://lakegeneva.citybrief.info/events/725c1610-60f1-43f2-a8b6-cb18ae71835c</loc>
-    <lastmod>2026-06-07</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://lakegeneva.citybrief.info/events/0433f76b-e2b1-41c3-8365-444c4e631631</loc>
-    <lastmod>2026-06-07</lastmod>
+    <loc>https://lakegeneva.citybrief.info/events/33c76785-7bb3-46b8-ba78-76b7b75da472</loc>
+    <lastmod>2026-06-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -183,8 +189,8 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://lakegeneva.citybrief.info/events/33c76785-7bb3-46b8-ba78-76b7b75da472</loc>
-    <lastmod>2026-06-08</lastmod>
+    <loc>https://lakegeneva.citybrief.info/events/bdd10a37-8a21-4a38-8c43-6cff711f9efe</loc>
+    <lastmod>2026-06-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -201,13 +207,25 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://lakegeneva.citybrief.info/events/bdd10a37-8a21-4a38-8c43-6cff711f9efe</loc>
+    <loc>https://lakegeneva.citybrief.info/events/facec20f-fb8b-45b7-bd25-ef2ec4336f70</loc>
     <lastmod>2026-06-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://lakegeneva.citybrief.info/events/409d3524-4439-4c9a-a6a3-cf121e148c3c</loc>
+    <loc>https://lakegeneva.citybrief.info/events/bf4fb8cf-1dd8-49ff-a9fb-6e49b5d7babe</loc>
+    <lastmod>2026-05-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lakegeneva.citybrief.info/events/0d847b35-ac13-465c-b204-63e756835fd1</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lakegeneva.citybrief.info/events/ac6f3bab-25e5-486c-b060-5775f960cc97</loc>
     <lastmod>2026-06-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
@@ -219,25 +237,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://lakegeneva.citybrief.info/events/0d847b35-ac13-465c-b204-63e756835fd1</loc>
-    <lastmod>2026-05-30</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://lakegeneva.citybrief.info/events/bf4fb8cf-1dd8-49ff-a9fb-6e49b5d7babe</loc>
-    <lastmod>2026-05-31</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://lakegeneva.citybrief.info/events/ac6f3bab-25e5-486c-b060-5775f960cc97</loc>
-    <lastmod>2026-06-01</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://lakegeneva.citybrief.info/events/facec20f-fb8b-45b7-bd25-ef2ec4336f70</loc>
+    <loc>https://lakegeneva.citybrief.info/events/409d3524-4439-4c9a-a6a3-cf121e148c3c</loc>
     <lastmod>2026-06-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
@@ -249,19 +249,13 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://lakegeneva.citybrief.info/events/6b8d43ed-f1b4-450c-8d1a-d3b59b2f6b80</loc>
-    <lastmod>2026-06-04</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
     <loc>https://lakegeneva.citybrief.info/events/6206da6f-45ab-4371-9245-7b30addf703e</loc>
     <lastmod>2026-05-31</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://lakegeneva.citybrief.info/events/be5a9bb4-8fcf-4e45-9a6a-ee3d75e31fa6</loc>
+    <loc>https://lakegeneva.citybrief.info/events/6b8d43ed-f1b4-450c-8d1a-d3b59b2f6b80</loc>
     <lastmod>2026-06-04</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
@@ -273,14 +267,44 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://lakegeneva.citybrief.info/events/fb14b009-f450-4614-81bf-6b4233d87546</loc>
-    <lastmod>2026-06-01</lastmod>
+    <loc>https://lakegeneva.citybrief.info/events/be5a9bb4-8fcf-4e45-9a6a-ee3d75e31fa6</loc>
+    <lastmod>2026-06-04</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://lakegeneva.citybrief.info/events/47bc5bf8-ed87-4b5d-bc6b-34e67b893f20</loc>
     <lastmod>2026-06-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lakegeneva.citybrief.info/events/fb14b009-f450-4614-81bf-6b4233d87546</loc>
+    <lastmod>2026-06-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lakegeneva.citybrief.info/events/547832be-51d1-493a-a5e0-2c8a7b02fee7</loc>
+    <lastmod>2026-06-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lakegeneva.citybrief.info/events/b7dc7146-2259-4574-895c-c7ee26f6f18e</loc>
+    <lastmod>2026-06-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lakegeneva.citybrief.info/events/db7d045f-6892-411e-9189-b6a1db97c1cc</loc>
+    <lastmod>2026-05-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lakegeneva.citybrief.info/events/4361960d-cedb-46f7-9d10-066c7cf9332a</loc>
+    <lastmod>2026-06-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -303,8 +327,8 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://lakegeneva.citybrief.info/events/4361960d-cedb-46f7-9d10-066c7cf9332a</loc>
-    <lastmod>2026-06-07</lastmod>
+    <loc>https://lakegeneva.citybrief.info/events/62294a66-5f2b-4f3c-8101-ea1b0a2e8965</loc>
+    <lastmod>2026-05-29</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -315,31 +339,19 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://lakegeneva.citybrief.info/events/62294a66-5f2b-4f3c-8101-ea1b0a2e8965</loc>
-    <lastmod>2026-05-29</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://lakegeneva.citybrief.info/events/db7d045f-6892-411e-9189-b6a1db97c1cc</loc>
-    <lastmod>2026-05-25</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
     <loc>https://lakegeneva.citybrief.info/events/cfc6655a-b711-45c2-a965-04177fce99e2</loc>
-    <lastmod>2026-06-05</lastmod>
+    <lastmod>2026-06-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://lakegeneva.citybrief.info/events/547832be-51d1-493a-a5e0-2c8a7b02fee7</loc>
-    <lastmod>2026-06-01</lastmod>
+    <loc>https://lakegeneva.citybrief.info/events/223d8a16-381e-4168-8c51-95c17ef6740a</loc>
+    <lastmod>2026-05-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://lakegeneva.citybrief.info/events/b7dc7146-2259-4574-895c-c7ee26f6f18e</loc>
+    <loc>https://lakegeneva.citybrief.info/events/2e2ed4eb-f729-44a6-b573-42de4e4aeddf</loc>
     <lastmod>2026-06-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
@@ -347,12 +359,6 @@
   <url>
     <loc>https://lakegeneva.citybrief.info/events/07de9296-8fb5-4608-8253-3feb94244280</loc>
     <lastmod>2026-05-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://lakegeneva.citybrief.info/events/223d8a16-381e-4168-8c51-95c17ef6740a</loc>
-    <lastmod>2026-05-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -371,12 +377,6 @@
   <url>
     <loc>https://lakegeneva.citybrief.info/events/d04bc363-5834-4fde-b80b-0ab7a5b3ecaf</loc>
     <lastmod>2026-05-29</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://lakegeneva.citybrief.info/events/2e2ed4eb-f729-44a6-b573-42de4e4aeddf</loc>
-    <lastmod>2026-06-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -447,12 +447,6 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://lakegeneva.citybrief.info/events/bb99fe4e-5817-4ac1-ab9f-581430f53c32</loc>
-    <lastmod>2026-06-01</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
     <loc>https://lakegeneva.citybrief.info/events/75e6c258-7f5e-43ad-86f9-7bcef738cdab</loc>
     <lastmod>2026-05-21</lastmod>
     <changefreq>weekly</changefreq>
@@ -465,14 +459,20 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://lakegeneva.citybrief.info/events/c72a5a9c-df15-4266-9f54-ef4275723dad</loc>
-    <lastmod>2026-05-31</lastmod>
+    <loc>https://lakegeneva.citybrief.info/events/bb99fe4e-5817-4ac1-ab9f-581430f53c32</loc>
+    <lastmod>2026-06-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://lakegeneva.citybrief.info/events/8f365839-b8a7-4dbc-a2c5-c692d6591251</loc>
     <lastmod>2026-05-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lakegeneva.citybrief.info/events/c72a5a9c-df15-4266-9f54-ef4275723dad</loc>
+    <lastmod>2026-05-31</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -501,14 +501,14 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://lakegeneva.citybrief.info/events/87add6f5-f682-40b1-9a0c-c24f02f0a05c</loc>
-    <lastmod>2026-05-27</lastmod>
+    <loc>https://lakegeneva.citybrief.info/events/ac1f5c53-1747-41b0-a3be-5d31483ffbdd</loc>
+    <lastmod>2026-05-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://lakegeneva.citybrief.info/events/ac1f5c53-1747-41b0-a3be-5d31483ffbdd</loc>
-    <lastmod>2026-05-25</lastmod>
+    <loc>https://lakegeneva.citybrief.info/events/87add6f5-f682-40b1-9a0c-c24f02f0a05c</loc>
+    <lastmod>2026-05-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -565,6 +565,12 @@
     <lastmod>2026-05-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lakegeneva.citybrief.info/incidents/one-dead-three-injured-after-driver-runs-stop-sign-collides-with-semi-in-town-of</loc>
+    <lastmod>2026-06-08</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
   </url>
   <url>
     <loc>https://lakegeneva.citybrief.info/incidents/one-dead-another-injured-following-motorcycle-crash-in-jefferson</loc>
