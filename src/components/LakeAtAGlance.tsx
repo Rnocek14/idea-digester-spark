@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Sunrise, Sunset, Thermometer, Shield, AlertCircle } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { Sunrise, Sunset } from "lucide-react";
 
 type Glance = {
   high: number;
@@ -51,20 +49,6 @@ export default function LakeAtAGlance() {
       .catch(() => {});
   }, []);
 
-  const { data: incidentStatus } = useQuery({
-    queryKey: ["glance-incidents"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("incidents")
-        .select("id")
-        .eq("status", "active")
-        .limit(1);
-      return { hasActive: (data?.length || 0) > 0 };
-    },
-    refetchInterval: 60000,
-  });
-  const isActive = incidentStatus?.hasActive === true;
-
   return (
     <div className="rounded-md border border-slate-200 bg-white px-3 py-3">
       <div className="flex items-baseline justify-between mb-2 pb-1.5 border-b border-slate-100">
@@ -75,20 +59,6 @@ export default function LakeAtAGlance() {
       </div>
 
       <ul className="space-y-2 text-[12.5px]">
-        {glance && (
-          <li className="flex items-center justify-between">
-            <span className="flex items-center gap-1.5 text-slate-600">
-              <Thermometer className="h-3.5 w-3.5 text-orange-500" />
-              <span className="text-[11px] uppercase tracking-wider font-mono">Today</span>
-            </span>
-            <span className="font-mono text-slate-900 tabular-nums">
-              <span className="text-orange-600 font-semibold">{Math.round(glance.high)}°</span>
-              <span className="mx-1 opacity-50">/</span>
-              <span className="text-blue-600 font-semibold">{Math.round(glance.low)}°</span>
-            </span>
-          </li>
-        )}
-
         {glance?.sunrise && (
           <li className="flex items-center justify-between">
             <span className="flex items-center gap-1.5 text-slate-600">
@@ -108,24 +78,6 @@ export default function LakeAtAGlance() {
             <span className="font-mono text-slate-900 tabular-nums">{glance.sunset}</span>
           </li>
         )}
-
-        <li className="flex items-center justify-between">
-          <span className="flex items-center gap-1.5 text-slate-600">
-            {isActive ? (
-              <AlertCircle className="h-3.5 w-3.5 text-red-500" />
-            ) : (
-              <Shield className="h-3.5 w-3.5 text-emerald-500" />
-            )}
-            <span className="text-[11px] uppercase tracking-wider font-mono">Community</span>
-          </span>
-          <span
-            className={`font-mono text-[11px] uppercase ${
-              isActive ? "text-red-600 font-semibold" : "text-emerald-700"
-            }`}
-          >
-            {isActive ? "Active" : "All clear"}
-          </span>
-        </li>
       </ul>
 
       <p className="mt-2.5 pt-2 border-t border-slate-100 text-[10px] text-slate-400 leading-snug">
