@@ -15,6 +15,7 @@ import NightlifeWidget from "@/components/NightlifeWidget";
 import HappeningTodayWidget from "@/components/HappeningTodayWidget";
 import ComingUpRail from "@/components/ComingUpRail";
 import EditorialLaterRail from "@/components/EditorialLaterRail";
+import RightRailTemporal from "@/components/RightRailTemporal";
 import CommunityDeskBlock from "@/components/CommunityDeskBlock";
 import NowHiringWidget from "@/components/NowHiringWidget";
 import { InlineSubscribeCTA } from "@/components/InlineSubscribeCTA";
@@ -757,11 +758,12 @@ const LakeGenevaV2 = () => {
                 <LiveColumnHeader />
                 
                 {/* Weather at top of LIVE */}
-                <div className="bg-stone-50 rounded-md border border-slate-200 p-4">
+                <div className="bg-stone-50 rounded-md border border-slate-200 px-3 py-2.5">
                   <WeatherWidget />
-                  <div className="mt-4 pt-4 border-t border-slate-100">
-                    <WeatherForecast />
-                  </div>
+                </div>
+                {/* Sprint 2: 3-day forecast moves below the masthead temp line */}
+                <div className="bg-white rounded-md border border-slate-200 p-3">
+                  <WeatherForecast />
                 </div>
                 
                 {/* Live Incidents */}
