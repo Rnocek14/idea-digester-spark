@@ -19,7 +19,6 @@ import RightRailTemporal from "@/components/RightRailTemporal";
 import CommunityDeskBlock from "@/components/CommunityDeskBlock";
 import NowHiringWidget from "@/components/NowHiringWidget";
 import TodaysBriefBlock from "@/components/TodaysBriefBlock";
-import LakeAtAGlance from "@/components/LakeAtAGlance";
 import { InlineSubscribeCTA } from "@/components/InlineSubscribeCTA";
 import { StickySubscribeBanner } from "@/components/StickySubscribeBanner";
 import { PresentedBySection } from "@/components/PresentedBySection";
@@ -765,10 +764,7 @@ const LakeGenevaV2 = () => {
                 {/* LIVE Header with dynamic indicator */}
                 <LiveColumnHeader />
 
-                {/* Sprint 4: hyperlocal intelligence panel */}
-                <LakeAtAGlance />
-
-                {/* Weather at top of LIVE */}
+                {/* Weather + daylight (merged Lake at a Glance) */}
                 <div className="bg-stone-50 rounded-md border border-slate-200 px-3 py-2.5">
                   <WeatherWidget />
                 </div>
@@ -800,7 +796,6 @@ const LakeGenevaV2 = () => {
             <div className="xl:hidden mb-8">
               <LiveColumnHeader />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-                <LakeAtAGlance />
                 <div className="bg-white rounded-sm border border-slate-200 p-3">
                   <WeatherWidget />
                 </div>
