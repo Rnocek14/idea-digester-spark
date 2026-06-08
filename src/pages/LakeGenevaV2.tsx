@@ -999,6 +999,8 @@ const LakeGenevaV2 = () => {
             {/* Show pyramid only in 'all' mode, hide in 'recent' mode for pure chronological */}
             {!storiesLoading && filteredStories.length > 0 && viewMode !== 'recent' && viewMode !== 'topic' && (
               <div className="mb-6 space-y-5">
+                {/* Sprint 4: Today's Brief — editorial 3-bullet morning summary */}
+                <TodaysBriefBlock stories={filteredStories.slice(0, 3) as any} />
                 {/* Editorial greeting — one warm line to set publication voice */}
                 <p className="text-base sm:text-lg text-slate-700 leading-relaxed font-serif italic">
                   {(() => {
