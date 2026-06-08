@@ -357,6 +357,14 @@ const LakeGenevaV2 = () => {
             const verticals = rawVerticals.map((v: string) => (v || '').toLowerCase());
             const isNightlifeOnly = verticals.length > 0 && verticals.every((v) => v === 'nightlife');
             if (category === 'events' && isNightlifeOnly) return false;
+            // Drop empty-body stories — clicking through would show "nothing".
+            // Events are allowed to be summary-light (date/time/venue carry the
+            // story), but news/civic/etc. need at least a short deck.
+            const hasBody =
+              (story.content_website && story.content_website.trim().length > 20) ||
+              (story.content_lg_base && story.content_lg_base.trim().length > 20) ||
+              (story.summary && story.summary.trim().length > 20);
+            if (!hasBody && category !== 'events') return false;
             return true;
           })
           .map((story: any) => {
@@ -368,8 +376,9 @@ const LakeGenevaV2 = () => {
               ? story.image_url
               : null;
             const imageUrl = candidate || getCategoryFallbackImage(story.id, story.category);
-            // Normalize title - fix HTML entities + curly quotes
+            // Normalize title — strip Patch.com's "🌱 " prefix, fix HTML entities + curly quotes
             const normalizedTitle = (story.title || '')
+              .replace(/^[🌱🌿🌳]\s*/u, '')
               .replace(/&#8217;/g, "'")
               .replace(/&#8216;/g, "'")
               .replace(/['']/g, "'")
