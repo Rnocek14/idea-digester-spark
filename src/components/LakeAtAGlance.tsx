@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Sunrise, Sunset, Thermometer, Shield, AlertCircle } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { Sunrise, Sunset } from "lucide-react";
 
 type Glance = {
   high: number;
@@ -50,20 +48,6 @@ export default function LakeAtAGlance() {
       })
       .catch(() => {});
   }, []);
-
-  const { data: incidentStatus } = useQuery({
-    queryKey: ["glance-incidents"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("incidents")
-        .select("id")
-        .eq("status", "active")
-        .limit(1);
-      return { hasActive: (data?.length || 0) > 0 };
-    },
-    refetchInterval: 60000,
-  });
-  const isActive = incidentStatus?.hasActive === true;
 
   return (
     <div className="rounded-md border border-slate-200 bg-white px-3 py-3">
