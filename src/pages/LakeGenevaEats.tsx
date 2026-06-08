@@ -457,7 +457,7 @@ const LakeGenevaEats = () => {
                   <Utensils className="h-4 w-4 text-orange-600" />
                   Restaurant Directory
                   <Badge variant="secondary" className="ml-auto text-xs">
-                    {restaurantsData.length} scraped
+                    {restaurantsData.length} spots
                   </Badge>
                 </h3>
                 <div className="space-y-2">
