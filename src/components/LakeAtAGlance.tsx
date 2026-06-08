@@ -75,20 +75,6 @@ export default function LakeAtAGlance() {
       </div>
 
       <ul className="space-y-2 text-[12.5px]">
-        {glance && (
-          <li className="flex items-center justify-between">
-            <span className="flex items-center gap-1.5 text-slate-600">
-              <Thermometer className="h-3.5 w-3.5 text-orange-500" />
-              <span className="text-[11px] uppercase tracking-wider font-mono">Today</span>
-            </span>
-            <span className="font-mono text-slate-900 tabular-nums">
-              <span className="text-orange-600 font-semibold">{Math.round(glance.high)}°</span>
-              <span className="mx-1 opacity-50">/</span>
-              <span className="text-blue-600 font-semibold">{Math.round(glance.low)}°</span>
-            </span>
-          </li>
-        )}
-
         {glance?.sunrise && (
           <li className="flex items-center justify-between">
             <span className="flex items-center gap-1.5 text-slate-600">
@@ -108,24 +94,6 @@ export default function LakeAtAGlance() {
             <span className="font-mono text-slate-900 tabular-nums">{glance.sunset}</span>
           </li>
         )}
-
-        <li className="flex items-center justify-between">
-          <span className="flex items-center gap-1.5 text-slate-600">
-            {isActive ? (
-              <AlertCircle className="h-3.5 w-3.5 text-red-500" />
-            ) : (
-              <Shield className="h-3.5 w-3.5 text-emerald-500" />
-            )}
-            <span className="text-[11px] uppercase tracking-wider font-mono">Community</span>
-          </span>
-          <span
-            className={`font-mono text-[11px] uppercase ${
-              isActive ? "text-red-600 font-semibold" : "text-emerald-700"
-            }`}
-          >
-            {isActive ? "Active" : "All clear"}
-          </span>
-        </li>
       </ul>
 
       <p className="mt-2.5 pt-2 border-t border-slate-100 text-[10px] text-slate-400 leading-snug">
