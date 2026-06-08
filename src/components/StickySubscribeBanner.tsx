@@ -13,20 +13,29 @@ export const StickySubscribeBanner = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [subscriberCount, setSubscriberCount] = useState<number | null>(null);
 
-  // Show banner after scrolling past hero
+  // Smarter trigger: show once user has scrolled past ~50% of the page.
+  // Dismissals persist for 7 days (localStorage), not just one session.
   useEffect(() => {
-    const dismissed = sessionStorage.getItem('subscribe-banner-dismissed');
-    if (dismissed) {
+    const DISMISS_KEY = 'subscribe-banner-dismissed-until';
+    const dismissedUntil = Number(localStorage.getItem(DISMISS_KEY) || 0);
+    if (dismissedUntil && Date.now() < dismissedUntil) {
       setIsDismissed(true);
       return;
     }
 
+    let shown = false;
     const handleScroll = () => {
-      const scrollY = window.scrollY;
-      setIsVisible(scrollY > 600);
+      if (shown) return;
+      const doc = document.documentElement;
+      const scrolled = window.scrollY + window.innerHeight;
+      const total = doc.scrollHeight;
+      if (total > 0 && scrolled / total > 0.5) {
+        setIsVisible(true);
+        shown = true;
+      }
     };
-
-    window.addEventListener('scroll', handleScroll);
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -67,7 +76,11 @@ export const StickySubscribeBanner = () => {
       } else {
         toast.success("Welcome to the Lake Geneva Brief!");
         setIsDismissed(true);
-        sessionStorage.setItem('subscribe-banner-dismissed', 'true');
+        // After successful subscribe, hide for 90 days
+        localStorage.setItem(
+          'subscribe-banner-dismissed-until',
+          String(Date.now() + 90 * 24 * 60 * 60 * 1000),
+        );
       }
     } catch (err) {
       toast.error("Something went wrong. Please try again.");
@@ -78,7 +91,11 @@ export const StickySubscribeBanner = () => {
 
   const handleDismiss = () => {
     setIsDismissed(true);
-    sessionStorage.setItem('subscribe-banner-dismissed', 'true');
+    // Honor dismissal for 7 days
+    localStorage.setItem(
+      'subscribe-banner-dismissed-until',
+      String(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    );
   };
 
   if (isDismissed || !isVisible) return null;
