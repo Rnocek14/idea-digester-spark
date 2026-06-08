@@ -15,6 +15,7 @@ type EatsContent = {
   id: string;
   title: string;
   summary: string | null;
+  content_website?: string | null;
   content: string;
   event_date: string | null;
   original_url: string | null;
@@ -108,7 +109,7 @@ const LakeGenevaEats = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("content_queue")
-        .select("id, title, summary, content, event_date, original_url, image_url, category, metadata")
+        .select("id, title, summary, content, content_website, event_date, original_url, image_url, category, metadata")
         .in("status", ["published", "auto_published"])
         .or("category.eq.dining,category.eq.restaurant,category.eq.food,metadata->verticals.cs.[\"eats\"],metadata->verticals.cs.[\"dining\"],metadata->verticals.cs.[\"food\"]")
         .order("created_at", { ascending: false })
@@ -609,8 +610,10 @@ const EatsCard = ({
                 )}
               </div>
             </div>
-            {!compact && item.summary && (
-              <p className="text-sm text-slate-600 mt-2 line-clamp-2">{item.summary}</p>
+            {!compact && (item.content_website || item.summary) && (
+              <p className="text-sm text-slate-600 mt-2 line-clamp-2">
+                {item.content_website || item.summary}
+              </p>
             )}
             {item.original_url && (
               <a 
