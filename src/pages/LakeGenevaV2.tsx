@@ -1099,40 +1099,71 @@ const LakeGenevaV2 = () => {
                 <p className="text-slate-500 text-sm">Check back later for updates.</p>
               </div>
             ) : viewMode === 'all' && filteredStories.length > 3 ? (
-              /* ALL MODE: Chronological grid (stories 4+) */
-              <div className="grid gap-5 sm:grid-cols-2">
-                {filteredStories.slice(3).map((story: Story, idx: number) => {
-                  const time = getRelativeTime(story.publish_date || story.created_at);
-                  let source: string | null = (story as any).source?.name || null;
-                  if (!source && story.original_url) {
-                    try {
-                      const url = new URL(story.original_url);
-                      source = url.hostname.replace(/^www\./, '');
-                    } catch {}
-                  }
-                  return (
-                    <div key={story.id} id={`story-${story.id}`}>
-                      <StoryCard
-                        id={story.id}
-                        title={story.title}
-                        summary={story.content_website || story.content_lg_base || story.summary}
-                        imageUrl={story.image_url}
-                        category={story.category}
-                        url={story.original_url}
-                        geoTier={story.geo_tier}
-                        geoLabel={story.geo_label}
-                        meta={{ time, source }}
-                      />
-                      {/* Inline subscribe CTA after every 6th story */}
-                      {(idx + 1) % 6 === 0 && idx < filteredStories.length - 3 && (
-                        <div className="mt-5 sm:col-span-2">
-                          <InlineSubscribeCTA />
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+              /* ALL MODE: Dense "More from today" headline list (stories 4+) */
+              <section className="mt-2">
+                <div className="flex items-baseline justify-between mb-3 pb-2 border-b border-slate-200">
+                  <h3
+                    className="text-[11px] uppercase tracking-[0.18em] text-slate-700 font-semibold"
+                    style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                  >
+                    More from today
+                  </h3>
+                  <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">
+                    {filteredStories.length - 3} more
+                  </span>
+                </div>
+                <ul className="divide-y divide-slate-100">
+                  {filteredStories.slice(3).map((story: Story, idx: number) => {
+                    const time = getRelativeTime(story.publish_date || story.created_at);
+                    let source: string | null = (story as any).source?.name || null;
+                    if (!source && story.original_url) {
+                      try {
+                        const url = new URL(story.original_url);
+                        source = url.hostname.replace(/^www\./, '');
+                      } catch {}
+                    }
+                    const isException = story.geo_tier === 2 || story.geo_tier === 0;
+                    const exceptionLabel =
+                      story.geo_tier === 2 ? 'Walworth' : story.geo_tier === 0 ? 'Wisconsin' : null;
+                    return (
+                      <li key={story.id} id={`story-${story.id}`}>
+                        <a
+                          href={story.original_url || '#'}
+                          target={story.original_url ? '_blank' : undefined}
+                          rel={story.original_url ? 'noopener noreferrer' : undefined}
+                          className="group flex items-start gap-3 py-3 hover:bg-slate-50/60 -mx-2 px-2 rounded-sm transition-colors"
+                        >
+                          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-slate-300 group-hover:bg-[hsl(var(--shore-terracotta))] transition-colors" />
+                          <div className="flex-1 min-w-0">
+                            <h4
+                              className="text-[15px] sm:text-base text-slate-900 leading-snug group-hover:text-slate-600 transition-colors"
+                              style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 700 }}
+                            >
+                              {story.title}
+                            </h4>
+                            <p className="mt-0.5 text-[12px] text-slate-500 flex items-center gap-x-1.5 flex-wrap">
+                              {isException && exceptionLabel && (
+                                <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider rounded border bg-amber-50 text-amber-700 border-amber-200">
+                                  {exceptionLabel}
+                                </span>
+                              )}
+                              {source && <span>{source}</span>}
+                              {source && time && <span className="text-slate-300">·</span>}
+                              {time && <span>{time}</span>}
+                            </p>
+                          </div>
+                        </a>
+                        {/* Inline subscribe CTA after every 8th headline */}
+                        {(idx + 1) % 8 === 0 && idx < filteredStories.length - 4 && (
+                          <div className="my-4">
+                            <InlineSubscribeCTA />
+                          </div>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
             ) : viewMode === 'topic' ? (
               /* TOPIC MODE: Grouped by category with headers */
               <div className="space-y-8">
