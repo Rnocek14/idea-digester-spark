@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { CalendarDays, ArrowRight, Sparkles, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   categoryEmoji,
   extractVenue,
@@ -30,6 +31,7 @@ const FILTERS: { value: string; label: string; match: (cat: string) => boolean }
 
 export default function ComingUpRail() {
   const [filter, setFilter] = useState<string>("all");
+  const [tab, setTab] = useState<string>("tonight");
 
   const { data: events = [], isLoading } = useQuery({
     queryKey: ["coming-up-rail"],
@@ -137,6 +139,9 @@ export default function ComingUpRail() {
 
   if (buckets.length === 0 && !heroPick) return null;
 
+  // Make sure the active tab actually has content; otherwise fall back to first available.
+  const activeTabKey = buckets.find((b) => b.key === tab)?.key || buckets[0]?.key || "tonight";
+
   const heroVenue = heroPick ? extractVenue(heroPick) : "";
   const heroTime = heroPick ? formatEventTime(heroPick.event_time) : "";
   let heroDayLabel = "";
@@ -184,79 +189,124 @@ export default function ComingUpRail() {
         ))}
       </div>
 
-      {/* Hero pick */}
+      {/* Hero pick — Brief Pick (now visually elevated with image) */}
       {heroPick && filter === "all" && (
         <Link
           to={`/events/${heroPick.id}`}
-          className="group block mb-4 rounded-2xl bg-gradient-to-br from-amber-50 via-white to-white p-4 ring-1 ring-amber-200 hover:ring-amber-300 transition-shadow"
+          className="group block mb-5 overflow-hidden rounded-2xl bg-gradient-to-br from-amber-50 via-white to-white ring-1 ring-amber-200 hover:ring-amber-300 hover:shadow-lg transition-all"
         >
-          <div className="flex items-center gap-1.5 mb-1.5">
-            <Sparkles className="h-3 w-3 text-amber-600" />
-            <span className="text-[10px] font-mono uppercase tracking-[0.18em] text-amber-700 font-semibold">
-              Brief Pick · Worth leaving the house for
-            </span>
-          </div>
-          <h3 className="text-base sm:text-lg font-semibold text-slate-900 leading-snug group-hover:text-blue-700 transition-colors">
-            {categoryEmoji(heroPick.category)} {getShortTitle(heroPick)}
-          </h3>
-          <p className="mt-1 text-[12px] text-slate-600 flex items-center gap-1.5 flex-wrap">
-            <span className="font-medium text-slate-900">{heroDayLabel}</span>
-            {heroTime && <span className="opacity-40">·</span>}
-            {heroTime && <span className="font-mono">{heroTime}</span>}
-            {heroVenue && <span className="opacity-40">·</span>}
-            {heroVenue && (
-              <span className="inline-flex items-center gap-1">
-                <MapPin className="h-3 w-3 opacity-60" /> {heroVenue}
-              </span>
+          <div className="grid sm:grid-cols-[200px_1fr] gap-0">
+            {heroPick.image_url ? (
+              <div className="h-40 sm:h-full bg-slate-100 overflow-hidden">
+                <img
+                  src={heroPick.image_url}
+                  alt={heroPick.title}
+                  className="h-full w-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
+                  loading="lazy"
+                />
+              </div>
+            ) : (
+              <div className="hidden sm:flex items-center justify-center bg-gradient-to-br from-amber-100 to-amber-200 text-5xl">
+                {categoryEmoji(heroPick.category)}
+              </div>
             )}
-          </p>
+            <div className="p-4 sm:p-5">
+              <div className="flex items-center gap-1.5 mb-2">
+                <Sparkles className="h-3.5 w-3.5 text-amber-600" />
+                <span className="text-[10px] font-mono uppercase tracking-[0.18em] text-amber-700 font-semibold">
+                  Brief Pick · Worth leaving the house for
+                </span>
+              </div>
+              <h3 className="text-lg sm:text-xl font-semibold text-slate-900 leading-snug group-hover:text-blue-700 transition-colors">
+                {categoryEmoji(heroPick.category)} {getShortTitle(heroPick)}
+              </h3>
+              {heroPick.summary && (
+                <p className="mt-1.5 text-sm text-slate-600 line-clamp-2">
+                  {heroPick.summary}
+                </p>
+              )}
+              <p className="mt-2 text-[12px] text-slate-600 flex items-center gap-1.5 flex-wrap">
+                <span className="font-medium text-slate-900">{heroDayLabel}</span>
+                {heroTime && <span className="opacity-40">·</span>}
+                {heroTime && <span className="font-mono">{heroTime}</span>}
+                {heroVenue && <span className="opacity-40">·</span>}
+                {heroVenue && (
+                  <span className="inline-flex items-center gap-1">
+                    <MapPin className="h-3 w-3 opacity-60" /> {heroVenue}
+                  </span>
+                )}
+              </p>
+            </div>
+          </div>
         </Link>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {buckets.map((bucket) => (
-          <div
-            key={bucket.key}
-            className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100"
-          >
-            <div className="flex items-baseline justify-between mb-2">
-              <h3 className="text-sm font-semibold text-slate-900">{bucket.label}</h3>
-              <span className="text-[10px] text-slate-500 uppercase tracking-wider">
+      {/* Tabbed future events — only one list visible at a time */}
+      {buckets.length > 0 && (
+        <Tabs value={activeTabKey} onValueChange={setTab} className="w-full">
+          <TabsList className="bg-slate-100 h-auto p-1 mb-3 flex-wrap">
+            {buckets.map((b) => (
+              <TabsTrigger
+                key={b.key}
+                value={b.key}
+                className="text-sm data-[state=active]:bg-white data-[state=active]:text-slate-900"
+              >
+                {b.label}
+                <span className="ml-1.5 text-[10px] opacity-60 font-mono">
+                  {b.events.length}
+                </span>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+
+          {buckets.map((bucket) => (
+            <TabsContent key={bucket.key} value={bucket.key} className="mt-0">
+              <div className="mb-2 text-[11px] text-slate-500 uppercase tracking-wider">
                 {bucket.hint}
-              </span>
-            </div>
-            <ul className="space-y-2.5">
-              {bucket.events.map((e) => {
-                const time = formatEventTime(e.event_time);
-                const venue = extractVenue(e);
-                const title = getShortTitle(e);
-                return (
-                  <li key={e.id}>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {bucket.events.map((e) => {
+                  const time = formatEventTime(e.event_time);
+                  const venue = extractVenue(e);
+                  const title = getShortTitle(e);
+                  return (
                     <Link
+                      key={e.id}
                       to={`/events/${e.id}`}
-                      className="group flex gap-2 items-start"
+                      className="group flex gap-3 rounded-xl bg-white p-3 ring-1 ring-slate-100 hover:ring-slate-300 hover:shadow-sm transition-all"
                     >
-                      <span className="mt-0.5 text-sm shrink-0">
-                        {categoryEmoji(e.category)}
-                      </span>
+                      {e.image_url ? (
+                        <div className="h-16 w-16 shrink-0 rounded-lg overflow-hidden bg-slate-100">
+                          <img
+                            src={e.image_url}
+                            alt={e.title}
+                            className="h-full w-full object-cover"
+                            loading="lazy"
+                          />
+                        </div>
+                      ) : (
+                        <div className="h-16 w-16 shrink-0 rounded-lg bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center text-2xl">
+                          {categoryEmoji(e.category)}
+                        </div>
+                      )}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-slate-900 leading-snug line-clamp-2 group-hover:text-blue-700 transition-colors">
                           {title}
                         </p>
-                        <p className="mt-0.5 text-[11px] text-slate-500 flex items-center gap-1.5 flex-wrap">
+                        <p className="mt-1 text-[11px] text-slate-500 flex items-center gap-1.5 flex-wrap">
                           {time && <span className="font-medium">{time}</span>}
                           {time && venue && <span>·</span>}
                           {venue && <span className="truncate">{venue}</span>}
                         </p>
                       </div>
                     </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        ))}
-      </div>
+                  );
+                })}
+              </div>
+            </TabsContent>
+          ))}
+        </Tabs>
+      )}
     </section>
   );
 }
