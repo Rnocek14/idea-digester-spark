@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { PageMeta } from "@/components/PageMeta";
 
 type Entry = {
   id: string;
@@ -45,6 +46,11 @@ export default function CommunityLocalLove() {
 
   return (
     <div className="min-h-screen bg-stone-50">
+      <PageMeta
+        title="Local Love — Neighborly Shout-outs | Lake Geneva Brief"
+        description="Short shout-outs from Lake Geneva neighbors — the people, places, and small moments locals want to thank. Reviewed by The Brief editors."
+        path="/community/local-love"
+      />
       <PublicHeader />
       <main className="mx-auto max-w-4xl px-4 sm:px-6 py-8">
         <header className="mb-6 flex items-start justify-between gap-4 flex-wrap">

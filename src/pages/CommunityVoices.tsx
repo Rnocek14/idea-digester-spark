@@ -4,6 +4,7 @@ import { PublicHeader } from "@/components/PublicHeader";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { Mic } from "lucide-react";
+import { PageMeta } from "@/components/PageMeta";
 
 type Post = {
   id: string;
@@ -33,6 +34,11 @@ export default function CommunityVoices() {
 
   return (
     <div className="min-h-screen bg-stone-50">
+      <PageMeta
+        title="Community Voices — Essays from Lake Geneva | The Brief"
+        description="Essays, memories, and notes from people who live, work, and run businesses around Lake Geneva. Real bylines, edited, never anonymous."
+        path="/community/voices"
+      />
       <PublicHeader />
       <main className="mx-auto max-w-3xl px-4 sm:px-6 py-8">
         <header className="mb-8">

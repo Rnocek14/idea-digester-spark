@@ -9,6 +9,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Heart, CalendarPlus, Mail } from "lucide-react";
+import { PageMeta } from "@/components/PageMeta";
 
 type Kind = "event" | "local_love" | "tip";
 
@@ -303,6 +304,11 @@ export default function Submit() {
 
   return (
     <div className="min-h-screen bg-stone-50">
+      <PageMeta
+        title="Submit a Tip, Event, or Local Love — Lake Geneva Brief"
+        description="Send the Brief an event, a neighborly shout-out, or a story tip. Every submission is read by a human editor before it's published."
+        path="/submit"
+      />
       <PublicHeader />
       <main className="mx-auto max-w-3xl px-4 sm:px-6 py-8">
         <header className="mb-6">

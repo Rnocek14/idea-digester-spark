@@ -252,7 +252,7 @@ const LakeGenevaEats = () => {
                       <CardContent className="p-3">
                         <div className="flex justify-between items-start">
                           <div>
-                            <h4 className="font-medium text-slate-900">{restaurant.name}</h4>
+                            <h3 className="font-medium text-slate-900">{restaurant.name}</h3>
                             {restaurant.fish_fry?.price && (
                               <p className="text-sm text-green-700 font-medium">{restaurant.fish_fry.price}</p>
                             )}
@@ -303,7 +303,7 @@ const LakeGenevaEats = () => {
                     <CardContent className="p-4">
                       <div className="flex justify-between items-start">
                         <div>
-                          <h4 className="font-semibold text-slate-900">{restaurant.name}</h4>
+                          <h3 className="font-semibold text-slate-900">{restaurant.name}</h3>
                           {restaurant.happy_hour?.times && (
                             <p className="text-sm text-orange-700 flex items-center gap-1 mt-1">
                               <Clock className="h-3 w-3" />

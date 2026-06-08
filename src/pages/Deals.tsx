@@ -10,6 +10,7 @@ import { Gift, Lock, CheckCircle, Calendar, Tag, Loader2, Star } from "lucide-re
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { REFERRAL_TIERS, getCurrentTier, getNextTier } from "@/lib/referralTracking";
+import { PageMeta } from "@/components/PageMeta";
 
 export default function Deals() {
   const [email, setEmail] = useState("");
@@ -89,6 +90,11 @@ export default function Deals() {
       title="Exclusive Local Deals"
       description="Special offers for Lake Geneva Local Ambassadors"
     >
+      <PageMeta
+        title="Ambassador Deals — Local Lake Geneva Offers | The Brief"
+        description="Exclusive discounts from Lake Geneva businesses, available to Brief subscribers who've referred friends. Verify your email to unlock current deals."
+        path="/deals"
+      />
       <div className="container max-w-4xl py-12 px-4">
         {/* Hero Section */}
         <div className="text-center mb-12">
