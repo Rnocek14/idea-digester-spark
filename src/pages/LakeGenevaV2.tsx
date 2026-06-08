@@ -18,10 +18,13 @@ import EditorialLaterRail from "@/components/EditorialLaterRail";
 import RightRailTemporal from "@/components/RightRailTemporal";
 import CommunityDeskBlock from "@/components/CommunityDeskBlock";
 import NowHiringWidget from "@/components/NowHiringWidget";
+import TodaysBriefBlock from "@/components/TodaysBriefBlock";
+import LakeAtAGlance from "@/components/LakeAtAGlance";
 import { InlineSubscribeCTA } from "@/components/InlineSubscribeCTA";
 import { StickySubscribeBanner } from "@/components/StickySubscribeBanner";
 import { PresentedBySection } from "@/components/PresentedBySection";
 import { getSubscribeSource, getReferralSource } from "@/lib/referralTracking";
+import { isAllowedStoryImage } from "@/lib/imagePolicy";
 import { NavLink } from "@/components/NavLink";
 import { Home, Star, Phone, ChevronDown } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -360,7 +363,12 @@ const LakeGenevaV2 = () => {
           .map((story: any) => {
             const createdMs = new Date(story.created_at).getTime();
             const isFresh = (nowMs - createdMs) < freshThresholdMs;
-            const imageUrl = story.image_url || getCategoryFallbackImage(story.id, story.category);
+            // Image policy: drop TV-station weather screenshots and radar art
+            // before falling back to the curated civic/category set.
+            const candidate = isAllowedStoryImage(story.image_url, story.category)
+              ? story.image_url
+              : null;
+            const imageUrl = candidate || getCategoryFallbackImage(story.id, story.category);
             // Normalize title - fix HTML entities + curly quotes
             const normalizedTitle = (story.title || '')
               .replace(/&#8217;/g, "'")
@@ -756,7 +764,10 @@ const LakeGenevaV2 = () => {
               <ScrollableContainer className="space-y-4 max-h-[calc(100vh-6rem)] overflow-y-auto pr-4">
                 {/* LIVE Header with dynamic indicator */}
                 <LiveColumnHeader />
-                
+
+                {/* Sprint 4: hyperlocal intelligence panel */}
+                <LakeAtAGlance />
+
                 {/* Weather at top of LIVE */}
                 <div className="bg-stone-50 rounded-md border border-slate-200 px-3 py-2.5">
                   <WeatherWidget />
@@ -789,6 +800,7 @@ const LakeGenevaV2 = () => {
             <div className="xl:hidden mb-8">
               <LiveColumnHeader />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                <LakeAtAGlance />
                 <div className="bg-white rounded-sm border border-slate-200 p-3">
                   <WeatherWidget />
                 </div>
@@ -987,6 +999,8 @@ const LakeGenevaV2 = () => {
             {/* Show pyramid only in 'all' mode, hide in 'recent' mode for pure chronological */}
             {!storiesLoading && filteredStories.length > 0 && viewMode !== 'recent' && viewMode !== 'topic' && (
               <div className="mb-6 space-y-5">
+                {/* Sprint 4: Today's Brief — editorial 3-bullet morning summary */}
+                <TodaysBriefBlock stories={filteredStories.slice(0, 3) as any} />
                 {/* Editorial greeting — one warm line to set publication voice */}
                 <p className="text-base sm:text-lg text-slate-700 leading-relaxed font-serif italic">
                   {(() => {
