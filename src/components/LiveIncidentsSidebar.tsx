@@ -146,6 +146,13 @@ export default function LiveIncidentsSidebar({ onHide, showCloseButton = false }
   const hasIncidents = incidents && incidents.length > 0;
   const hasActive = incidents?.some(i => i.status === "active");
 
+  // Sprint 2: Collapse "Community Status: All Clear" panel.
+  // The [RIGHT NOW] header already shows the green All Clear pill,
+  // so this card only renders when there is something to report.
+  if (!hasIncidents && !showCloseButton) {
+    return null;
+  }
+
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
