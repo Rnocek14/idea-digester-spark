@@ -18,10 +18,13 @@ import EditorialLaterRail from "@/components/EditorialLaterRail";
 import RightRailTemporal from "@/components/RightRailTemporal";
 import CommunityDeskBlock from "@/components/CommunityDeskBlock";
 import NowHiringWidget from "@/components/NowHiringWidget";
+import TodaysBriefBlock from "@/components/TodaysBriefBlock";
+import LakeAtAGlance from "@/components/LakeAtAGlance";
 import { InlineSubscribeCTA } from "@/components/InlineSubscribeCTA";
 import { StickySubscribeBanner } from "@/components/StickySubscribeBanner";
 import { PresentedBySection } from "@/components/PresentedBySection";
 import { getSubscribeSource, getReferralSource } from "@/lib/referralTracking";
+import { isAllowedStoryImage } from "@/lib/imagePolicy";
 import { NavLink } from "@/components/NavLink";
 import { Home, Star, Phone, ChevronDown } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -360,7 +363,12 @@ const LakeGenevaV2 = () => {
           .map((story: any) => {
             const createdMs = new Date(story.created_at).getTime();
             const isFresh = (nowMs - createdMs) < freshThresholdMs;
-            const imageUrl = story.image_url || getCategoryFallbackImage(story.id, story.category);
+            // Image policy: drop TV-station weather screenshots and radar art
+            // before falling back to the curated civic/category set.
+            const candidate = isAllowedStoryImage(story.image_url, story.category)
+              ? story.image_url
+              : null;
+            const imageUrl = candidate || getCategoryFallbackImage(story.id, story.category);
             // Normalize title - fix HTML entities + curly quotes
             const normalizedTitle = (story.title || '')
               .replace(/&#8217;/g, "'")
