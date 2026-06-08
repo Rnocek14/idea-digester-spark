@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { ExternalLink, CheckCircle2, Newspaper } from "lucide-react";
-import { ShareButtons } from "@/components/ShareButtons";
+import { CheckCircle2, Newspaper } from "lucide-react";
 
 type TrustLabel = 'verified' | 'data_journalism' | 'sourced' | 'sponsored';
 
@@ -187,11 +186,6 @@ export const StoryCard = ({
             onError={handleImageError}
           />
         )}
-        {category && (
-          <span className="absolute bottom-2 left-2 rounded-sm bg-white/90 px-2 py-1 text-[11px] font-mono text-slate-700 pointer-events-none uppercase tracking-wider">
-            {category.replace('_', ' ')}
-          </span>
-        )}
       </div>
 
       <div className="flex flex-1 flex-col gap-1.5 pt-3">
@@ -223,54 +217,41 @@ export const StoryCard = ({
             rel="noopener noreferrer"
             className="block"
           >
-            <h3 className={`text-slate-900 group-hover:text-slate-600 transition-colors line-clamp-2 leading-snug font-bold ${featured ? 'text-xl sm:text-2xl' : 'text-base sm:text-lg'}`}>
+            <h3
+              className={`text-slate-900 group-hover:text-slate-600 transition-colors line-clamp-2 leading-[1.15] font-bold tracking-tight ${featured ? 'text-2xl sm:text-[28px]' : 'text-lg sm:text-xl'}`}
+              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+            >
               {title}
             </h3>
           </a>
         ) : (
-          <h3 className={`text-slate-900 line-clamp-2 leading-snug font-bold ${featured ? 'text-xl sm:text-2xl' : 'text-base sm:text-lg'}`}>
+          <h3
+            className={`text-slate-900 line-clamp-2 leading-[1.15] font-bold tracking-tight ${featured ? 'text-2xl sm:text-[28px]' : 'text-lg sm:text-xl'}`}
+            style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+          >
             {title}
           </h3>
         )}
 
         {summary && (
-          <p className="mt-1.5 text-sm text-slate-600 line-clamp-2 sm:line-clamp-3 leading-relaxed">
+          <p className="mt-1.5 text-[14px] text-slate-600 line-clamp-2 leading-relaxed">
             {summary}
           </p>
         )}
 
-        {(meta?.time || meta?.source || geoInfo) && (
-          <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
-            {geoInfo && (
-              <span className={`inline-flex items-center px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider rounded border ${geoInfo.className}`}>
+        {(meta?.time || meta?.source || (geoInfo && geoTier !== 1)) && (
+          <p className="mt-2 text-[12px] text-slate-500 flex items-center gap-x-1.5 flex-wrap">
+            {/* Only show geo chip when it's an EXCEPTION (Walworth/Wisconsin), never default Lake Geneva */}
+            {geoInfo && geoTier !== 1 && (
+              <span className={`inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider rounded border ${geoInfo.className}`}>
                 {geoInfo.customLabel || geoInfo.label}
               </span>
             )}
-            <p className="text-[13px] text-slate-600 flex items-center gap-x-1.5">
-              {meta?.source && <span>{meta.source}</span>}
-              {meta?.source && meta?.time && <span className="text-slate-400">•</span>}
-              {meta?.time && <span className="text-slate-500">{meta.time}</span>}
-            </p>
-          </div>
+            {meta?.source && <span>{meta.source}</span>}
+            {meta?.source && meta?.time && <span className="text-slate-300">·</span>}
+            {meta?.time && <span>{meta.time}</span>}
+          </p>
         )}
-
-        <div className="mt-auto pt-4 flex items-center justify-between">
-          {url ? (
-            <a
-              href={url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:underline py-2 -my-2 pr-4"
-              aria-label={`Read full story: ${title}`}
-            >
-              Read full story
-              <ExternalLink className="h-3.5 w-3.5" />
-            </a>
-          ) : (
-            <span />
-          )}
-          {url && <ShareButtons title={title} url={url} />}
-        </div>
       </div>
     </article>
   );
