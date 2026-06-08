@@ -1281,11 +1281,10 @@ const LakeGenevaV2 = () => {
                   </div>
                   <p className="text-[10px] font-mono text-muted-foreground mt-1 uppercase">What's worth looking forward to</p>
                 </div>
-                
-                <EditorialLaterRail />
 
-                {/* Nightlife Widget - with Tonight/Weekend toggle */}
-                <NightlifeWidget showLaterPick showModeToggle />
+                {/* Sprint 2: strict temporal flow — Tonight → Weekend → Next Week → Worth a Look */}
+                <RightRailTemporal />
+                <EditorialLaterRail />
               </ScrollableContainer>
             </div>
           </aside>
@@ -1300,8 +1299,8 @@ const LakeGenevaV2 = () => {
             </div>
             <p className="text-[10px] font-mono text-muted-foreground mt-1 uppercase">What's worth looking forward to</p>
           </div>
+          <RightRailTemporal />
           <EditorialLaterRail />
-          <NightlifeWidget showLaterPick showModeToggle />
         </div>
       </div>
     </PageShell>
