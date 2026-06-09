@@ -199,9 +199,9 @@ export default function LakeGenevaShorePath() {
         {/* Breadcrumb */}
         <nav aria-label="Breadcrumb" className="text-xs font-mono text-slate-500 mb-4">
           <Link to="/" className="hover:text-blue-700">Home</Link>
-          <span className="mx-2 text-slate-400">/</span>
+          <span className="mx-2 text-slate-500">/</span>
           <span className="text-slate-700">Guides</span>
-          <span className="mx-2 text-slate-400">/</span>
+          <span className="mx-2 text-slate-500">/</span>
           <span className="text-slate-900">Lake Geneva Shore Path</span>
         </nav>
 

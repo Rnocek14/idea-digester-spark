@@ -1002,7 +1002,7 @@ const LakeGeneva = () => {
                                   <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
                                   <span className="text-green-600 font-medium">Live</span>
                                 </span>
-                                <span className="text-slate-400">·</span>
+                                <span className="text-slate-500">·</span>
                                 <span>Updates every 30 seconds</span>
                               </>
                             ) : (
@@ -1024,7 +1024,7 @@ const LakeGeneva = () => {
                               </button>
                             )}
                             {storiesUpdatedAt && (
-                              <span className="text-xs text-slate-400">
+                              <span className="text-xs text-slate-500">
                                 Updated {getPreciseRelativeTime(new Date(storiesUpdatedAt).toISOString())}
                               </span>
                             )}
@@ -1048,7 +1048,7 @@ const LakeGeneva = () => {
                                   {/* Timestamp Column */}
                                   <div className="flex-shrink-0 w-16 text-right">
                                     <span className={`text-xs font-medium ${
-                                      isFreshItem(item.timestamp) ? 'text-red-600' : 'text-slate-400'
+                                      isFreshItem(item.timestamp) ? 'text-red-600' : 'text-slate-500'
                                     }`}>
                                       {getPreciseRelativeTime(item.timestamp)}
                                     </span>
@@ -1063,7 +1063,7 @@ const LakeGeneva = () => {
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 mb-1">
                                       <span className="text-base">{getFeedItemIcon(item)}</span>
-                                      <span className="text-[10px] uppercase tracking-wide text-slate-400 font-medium">
+                                      <span className="text-[10px] uppercase tracking-wide text-slate-500 font-medium">
                                         {getFeedItemLabel(item)}
                                       </span>
                                     </div>
@@ -1202,7 +1202,7 @@ const LakeGeneva = () => {
                   </Button>
                 </form>
 
-                <p className="mt-3 text-[11px] text-slate-400">
+                <p className="mt-3 text-[11px] text-slate-500">
                   2–4 emails per week. Unsubscribe anytime.
                 </p>
               </div>

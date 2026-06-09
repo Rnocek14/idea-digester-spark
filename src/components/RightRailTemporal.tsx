@@ -93,7 +93,7 @@ export default function RightRailTemporal() {
             <h3 className="text-[10px] font-mono uppercase tracking-[0.18em] text-slate-900 font-semibold">
               {s.label}
             </h3>
-            <span className="text-[10px] font-mono text-slate-400 uppercase">{s.hint}</span>
+            <span className="text-[10px] font-mono text-slate-500 uppercase">{s.hint}</span>
           </div>
           <ul className="space-y-2">
             {s.items.map((e) => {

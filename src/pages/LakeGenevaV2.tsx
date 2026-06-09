@@ -1038,6 +1038,7 @@ const LakeGenevaV2 = () => {
                         geoLabel={story.geo_label}
                         meta={{ time, source }}
                         featured
+                        priority
                       />
                     </div>
                   );

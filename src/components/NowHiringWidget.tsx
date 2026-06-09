@@ -74,7 +74,7 @@ const NowHiringWidget = () => {
                   <p className="text-xs text-slate-500 line-clamp-1">
                     {job.business_name}
                     {job.pay_display && (
-                      <span className="text-slate-400"> · {job.pay_display}</span>
+                      <span className="text-slate-500"> · {job.pay_display}</span>
                     )}
                   </p>
                 </div>

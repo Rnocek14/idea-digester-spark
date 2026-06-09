@@ -12,6 +12,7 @@ type StoryCardProps = {
   url: string | null;
   sponsored?: boolean;
   featured?: boolean; // New: for lead story styling
+  priority?: boolean; // Hint that this is the LCP candidate
   geoTier?: number | null;
   geoLabel?: string | null;
   sourceType?: 'sourced' | 'data_journalism' | 'original_reporting' | 'sponsored' | 'user_submitted' | null;
@@ -143,6 +144,7 @@ export const StoryCard = ({
   url,
   sponsored = false,
   featured = false,
+  priority = false,
   geoTier,
   geoLabel,
   sourceType,
@@ -172,8 +174,13 @@ export const StoryCard = ({
             <img
               src={imgSrc}
               alt={title}
+              width={1280}
+              height={featured ? 720 : 640}
               className="h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-[1.02]"
-              loading="lazy"
+              loading={priority ? "eager" : "lazy"}
+              // @ts-expect-error fetchpriority is a valid HTML attr; React types lag
+              fetchpriority={priority ? "high" : undefined}
+              decoding={priority ? "sync" : "async"}
               onError={handleImageError}
             />
           </a>
@@ -181,8 +188,13 @@ export const StoryCard = ({
           <img
             src={imgSrc}
             alt={title}
+            width={1280}
+            height={featured ? 720 : 640}
             className="h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-[1.02]"
-            loading="lazy"
+            loading={priority ? "eager" : "lazy"}
+            // @ts-expect-error fetchpriority is a valid HTML attr; React types lag
+            fetchpriority={priority ? "high" : undefined}
+            decoding={priority ? "sync" : "async"}
             onError={handleImageError}
           />
         )}
