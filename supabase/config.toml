@@ -220,3 +220,6 @@ verify_jwt = false
 
 [functions.submit-community]
 verify_jwt = false
+
+[functions.ingest-news]
+verify_jwt = false
