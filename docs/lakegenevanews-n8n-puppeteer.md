@@ -32,7 +32,8 @@ The function accepts either a single item or an array of items.
   "category": "news",
   "metadata": {
     "scraped_at": "2026-06-09T12:05:00Z",
-    "source_type": "puppeteer"
+    "source_type": "puppeteer",
+    "ingest_method": "n8n_puppeteer"
   }
 }
 ```
