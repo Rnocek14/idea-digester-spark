@@ -176,6 +176,7 @@ Deno.serve(async (req) => {
         ...(item.metadata || {}),
         source_slug: item.source || "lakegenevanews",
         ingested_via: "n8n-news-webhook",
+        ingest_method: (item.metadata as Record<string, unknown> | undefined)?.ingest_method ?? "n8n_puppeteer",
         ingested_at: new Date().toISOString(),
         trust_score: trustScore,
       },
