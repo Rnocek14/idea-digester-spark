@@ -127,7 +127,7 @@ export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionPr
     >
       <div className="rounded-2xl bg-gradient-to-r from-slate-50 via-white to-blue-50/30 border border-slate-200 px-5 py-4 lg:px-6 lg:py-5 transition-all duration-300 hover:shadow-[0_8px_30px_-5px_rgba(59,130,246,0.15),0_4px_15px_-3px_rgba(147,197,253,0.2)] hover:-translate-y-1 hover:border-blue-200/60">
         {/* Label */}
-        <p className="text-[10px] font-medium uppercase tracking-[0.15em] text-slate-400 mb-3">
+        <p className="text-[10px] font-medium uppercase tracking-[0.15em] text-slate-500 mb-3">
           Presented By
         </p>
 
@@ -155,7 +155,7 @@ export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionPr
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <Home className="w-5 h-5 text-slate-400" />
+                  <Home className="w-5 h-5 text-slate-500" />
                 )}
               </div>
 
@@ -182,7 +182,7 @@ export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionPr
                             className={`w-3 h-3 transition-all duration-300 ${
                               shouldShowFilled
                                 ? "fill-yellow-400 text-yellow-400"
-                                : "fill-transparent text-slate-300"
+                                : "fill-transparent text-slate-400"
                             }`}
                             style={{ 
                               transitionDelay: starsAnimated ? `${i * 100}ms` : '0ms'
@@ -269,13 +269,13 @@ export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionPr
         {/* Market Data Footer - Outside the flex container */}
         {(yoyChangeText || medianPriceText) && (
           <div className="mt-3 pt-3 border-t border-slate-100">
-            <p className="text-[10px] text-slate-400">
+            <p className="text-[10px] text-slate-500">
               Lake Geneva homes
               {medianPriceText && (
                 <>
                   <span className="mx-1.5">·</span>
                   <span className="text-slate-600 font-medium">{medianPriceText}</span>
-                  <span className="text-slate-400"> median</span>
+                  <span className="text-slate-500"> median</span>
                 </>
               )}
               {yoyChangeText && (

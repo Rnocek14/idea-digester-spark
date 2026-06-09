@@ -995,7 +995,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
           <div className="flex items-baseline justify-between mb-2">
             <span className={secondaryLabel}>Pick</span>
             {laterPick?.event_date && (
-              <span className="text-[10px] font-mono text-slate-400">{formatLaterPickDate(laterPick.event_date)}</span>
+              <span className="text-[10px] font-mono text-slate-500">{formatLaterPickDate(laterPick.event_date)}</span>
             )}
           </div>
           <div className="border-2 border-black rounded-md p-4 bg-stone-50">
@@ -1146,7 +1146,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
             
             return (
               <div key={dayName} className="mb-3">
-                <p className="text-[10px] font-mono text-slate-400 mb-1 uppercase">{dayName}</p>
+                <p className="text-[10px] font-mono text-slate-500 mb-1 uppercase">{dayName}</p>
                 <div className="space-y-1">
                   {dayEvents.map((e) => {
                     const displayInfo = getEventDisplayInfo(e);
@@ -1192,13 +1192,13 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
 
           {weekendEvents!.saturday.length > 0 && (
             <div className="mb-3">
-              <p className="text-[10px] font-mono text-slate-400 mb-1 uppercase">Saturday</p>
+              <p className="text-[10px] font-mono text-slate-500 mb-1 uppercase">Saturday</p>
               <div className="space-y-1">
                 {weekendEvents!.saturday.map((e) => {
                   const displayInfo = getEventDisplayInfo(e);
                   return (
                     <div key={e.id} className="flex items-baseline gap-3 py-1 border-b border-slate-100 last:border-0">
-                      <span className="text-[11px] font-mono text-slate-400 w-12 shrink-0">
+                      <span className="text-[11px] font-mono text-slate-500 w-12 shrink-0">
                         {e.event_time || 'Eve'}
                       </span>
                       <div className="flex-1 min-w-0">
@@ -1228,13 +1228,13 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
 
           {weekendEvents!.sunday.length > 0 && (
             <div>
-              <p className="text-[10px] font-mono text-slate-400 mb-1 uppercase">Sunday</p>
+              <p className="text-[10px] font-mono text-slate-500 mb-1 uppercase">Sunday</p>
               <div className="space-y-1">
                 {weekendEvents!.sunday.map((e) => {
                   const displayInfo = getEventDisplayInfo(e);
                   return (
                     <div key={e.id} className="flex items-baseline gap-3 py-1 border-b border-slate-100 last:border-0">
-                      <span className="text-[11px] font-mono text-slate-400 w-12 shrink-0">
+                      <span className="text-[11px] font-mono text-slate-500 w-12 shrink-0">
                         {e.event_time || 'Eve'}
                       </span>
                       <div className="flex-1 min-w-0">

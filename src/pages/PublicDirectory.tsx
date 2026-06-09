@@ -244,7 +244,7 @@ const PublicDirectory = () => {
                     <div className="flex flex-wrap gap-x-4 gap-y-1">
                       {business.address && (
                         <span className="flex items-center gap-1">
-                          <span className="text-slate-400">📍</span>
+                          <span className="text-slate-500">📍</span>
                           {business.address}
                         </span>
                       )}
@@ -253,7 +253,7 @@ const PublicDirectory = () => {
                           href={`tel:${business.phone}`}
                           className="flex items-center gap-1 hover:text-blue-700"
                         >
-                          <span className="text-slate-400">📞</span>
+                          <span className="text-slate-500">📞</span>
                           {business.phone}
                         </a>
                       )}
@@ -262,7 +262,7 @@ const PublicDirectory = () => {
                           href={`mailto:${business.email}`}
                           className="flex items-center gap-1 hover:text-blue-700"
                         >
-                          <span className="text-slate-400">✉️</span>
+                          <span className="text-slate-500">✉️</span>
                           {business.email}
                         </a>
                       )}

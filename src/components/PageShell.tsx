@@ -42,7 +42,7 @@ const PageShell: React.FC<PageShellProps> = ({
           <span className="flex items-baseline gap-2">
             <span className="hidden sm:inline">{today}</span>
             <span className="sm:hidden">{shortDate}</span>
-            <span className="hidden md:inline text-slate-300">·</span>
+            <span className="hidden md:inline text-slate-400">·</span>
             <span
               className="hidden md:inline text-[11px] uppercase tracking-[0.18em] text-[hsl(var(--shore-terracotta))]/80"
               style={{ fontFamily: "'Playfair Display', serif", letterSpacing: "0.14em" }}
@@ -167,20 +167,20 @@ const PageShell: React.FC<PageShellProps> = ({
               <Link to="/selling-lake-geneva" className="hover:text-slate-900 hover:underline">
                 Selling Your Home?
               </Link>
-              <span className="text-slate-300">·</span>
+              <span className="text-slate-400">·</span>
               <Link to="/directory" className="hover:text-slate-900 hover:underline">
                 Directory
               </Link>
-              <span className="text-slate-300">·</span>
+              <span className="text-slate-400">·</span>
               <Link to="/advertise" className="hover:text-slate-900 hover:underline">
                 Advertise
               </Link>
-              <span className="text-slate-300">·</span>
+              <span className="text-slate-400">·</span>
               <Link to="/submit" className="hover:text-slate-900 hover:underline">
                 Submit a Tip
               </Link>
             </div>
-            <div className="text-[11px] text-slate-400">
+            <div className="text-[11px] text-slate-500">
               Lake Geneva Real Estate — Powered by Gina @properties
             </div>
           </div>

@@ -79,9 +79,9 @@ export default function RestaurantsLakeGeneva() {
       <main className="mx-auto max-w-4xl px-4 sm:px-6 py-8">
         <nav aria-label="Breadcrumb" className="text-xs font-mono text-slate-500 mb-4">
           <Link to="/" className="hover:text-blue-700">Home</Link>
-          <span className="mx-2 text-slate-400">/</span>
+          <span className="mx-2 text-slate-500">/</span>
           <span className="text-slate-700">Best Of</span>
-          <span className="mx-2 text-slate-400">/</span>
+          <span className="mx-2 text-slate-500">/</span>
           <span className="text-slate-900">Restaurants</span>
         </nav>
 
@@ -94,7 +94,7 @@ export default function RestaurantsLakeGeneva() {
               <Utensils className="h-3.5 w-3.5" />
               Lake Geneva Eats
             </Link>
-            <span className="text-slate-300">·</span>
+            <span className="text-slate-400">·</span>
             <span className="text-xs font-mono uppercase tracking-wider text-slate-500">Community Guide</span>
           </div>
           <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl text-slate-900 tracking-tight leading-tight">
