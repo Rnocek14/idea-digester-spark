@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { trackStoryEvent } from "@/lib/trackStoryEvent";
 
 type Story = {
   id: string;
@@ -48,6 +49,14 @@ export default function BusinessStoryBlock() {
       if (!cancelled) {
         setStory((data as Story) ?? null);
         setLoading(false);
+        if (data?.id) {
+          trackStoryEvent({
+            pillar: "business",
+            eventType: "homepage_impression",
+            entityType: "business_story",
+            entityId: (data as Story).id,
+          });
+        }
       }
     })();
     return () => { cancelled = true; };

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { trackStoryEvent } from "@/lib/trackStoryEvent";
 
 type Entry = {
   id: string;
@@ -71,6 +72,14 @@ export default function HistoryTodayBlock() {
       if (!cancelled) {
         setEntry(chosen);
         setLoading(false);
+        if (chosen?.id) {
+          trackStoryEvent({
+            pillar: "history",
+            eventType: "homepage_impression",
+            entityType: "history_entry",
+            entityId: chosen.id,
+          });
+        }
       }
     })();
     return () => {
