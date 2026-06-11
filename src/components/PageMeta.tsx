@@ -10,7 +10,7 @@ interface PageMetaProps {
   keywords?: string[];
 }
 
-const SITE = "https://lakegeneva.citybrief.info";
+const SITE = "https://lakegenevabrief.com";
 
 export function PageMeta({ title, description, path, jsonLd, ogType = "website", ogImage, keywords }: PageMetaProps) {
   const url = `${SITE}${path}`;

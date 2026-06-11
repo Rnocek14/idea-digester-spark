@@ -1,7 +1,7 @@
 // JSON-LD helpers for guide pages.
 // Keep schema minimal but valid — Google rejects partially-malformed schemas.
 
-const SITE = "https://lakegeneva.citybrief.info";
+const SITE = "https://lakegenevabrief.com";
 
 export function articleJsonLd(opts: {
   title: string;
