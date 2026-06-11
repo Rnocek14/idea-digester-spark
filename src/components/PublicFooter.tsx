@@ -9,11 +9,11 @@ export const PublicFooter = () => {
             <NavLink to="/lake-geneva" className="hover:text-primary transition-colors">
               Lake Geneva Brief
             </NavLink>
-            <span className="text-muted-foreground/50">•</span>
+            <span className="text-muted-foreground">•</span>
             <NavLink to="/directory" className="hover:text-primary transition-colors">
               Business Directory
             </NavLink>
-            <span className="text-muted-foreground/50">•</span>
+            <span className="text-muted-foreground">•</span>
             <NavLink to="/advertise" className="hover:text-primary transition-colors">
               Advertise
             </NavLink>

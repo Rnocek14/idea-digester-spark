@@ -86,7 +86,7 @@ export default function WeatherWidget() {
           {Math.round(weather.temp)}°
         </span>
         <span className="text-foreground">{getWeatherLabel(weather.code)}</span>
-        <span className="text-muted-foreground/60">·</span>
+        <span className="text-muted-foreground">·</span>
         <span className="font-mono text-xs text-muted-foreground tabular-nums">
           <span className="text-orange-600 font-semibold">H {Math.round(weather.high)}°</span>
           <span className="mx-1 opacity-50">/</span>
