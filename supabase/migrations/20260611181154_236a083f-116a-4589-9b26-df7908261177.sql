@@ -1,0 +1,1 @@
+ALTER VIEW public.content_pillar_metrics_7d SET (security_invoker = true);
