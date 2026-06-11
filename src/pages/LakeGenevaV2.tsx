@@ -1212,7 +1212,7 @@ const LakeGenevaV2 = () => {
                           >
                             More from today
                           </h2>
-                          <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">
+                          <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
                             {fresh.length} {fresh.length === 1 ? 'story' : 'stories'}
                           </span>
                         </div>
@@ -1287,7 +1287,7 @@ const LakeGenevaV2 = () => {
                           >
                             Catching up
                           </h3>
-                          <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">
+                          <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
                             Earlier this week
                           </span>
                         </div>
@@ -1309,7 +1309,7 @@ const LakeGenevaV2 = () => {
                                   <span className="flex-1 min-w-0 text-[13.5px] text-slate-600 group-hover:text-slate-900 leading-snug truncate">
                                     {story.title}
                                   </span>
-                                  <span className="shrink-0 text-[11px] font-mono text-slate-400 uppercase">
+                                  <span className="shrink-0 text-[11px] font-mono text-slate-500 uppercase">
                                     {source || time}
                                   </span>
                                 </a>

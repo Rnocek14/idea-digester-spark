@@ -267,7 +267,7 @@ export const StoryCard = ({
           </p>
         )}
         {id && (
-          <p className="mt-1 text-[11px] text-slate-400">
+          <p className="mt-1 text-[11px] text-slate-500">
             <Link
               to={storyPath(id, title)}
               className="hover:text-blue-700 hover:underline underline-offset-2"
