@@ -63,6 +63,8 @@ import LakeGenevaShorePath from "./pages/guides/LakeGenevaShorePath";
 import StreblowBoats from "./pages/guides/StreblowBoats";
 import LakeGenevaPublicAccess from "./pages/guides/LakeGenevaPublicAccess";
 import LakeGenevaFAQ from "./pages/guides/LakeGenevaFAQ";
+import LakeGenevaWebcams from "./pages/guides/LakeGenevaWebcams";
+import LakeGenevaWeather from "./pages/guides/LakeGenevaWeather";
 import Today from "./pages/Today";
 import StoryDetail from "./pages/StoryDetail";
 
@@ -134,6 +136,8 @@ const App = () => (
             <Route path="/guides/streblow-boats-geneva-lake" element={<StreblowBoats />} />
             <Route path="/guides/lake-geneva-public-access-guide" element={<LakeGenevaPublicAccess />} />
             <Route path="/guides/lake-geneva-faq" element={<LakeGenevaFAQ />} />
+            <Route path="/lake-geneva-webcams" element={<LakeGenevaWebcams />} />
+            <Route path="/lake-geneva-weather" element={<LakeGenevaWeather />} />
             <Route path="/market-report" element={<LakeGenevaMarketReport />} />
             <Route path="/best-of/restaurants-lake-geneva" element={<RestaurantsLakeGeneva />} />
             <Route path="/dashboard" element={<DashboardLayout />}>
