@@ -63,6 +63,8 @@ import LakeGenevaShorePath from "./pages/guides/LakeGenevaShorePath";
 import StreblowBoats from "./pages/guides/StreblowBoats";
 import LakeGenevaPublicAccess from "./pages/guides/LakeGenevaPublicAccess";
 import LakeGenevaFAQ from "./pages/guides/LakeGenevaFAQ";
+import Today from "./pages/Today";
+import StoryDetail from "./pages/StoryDetail";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -94,6 +96,8 @@ const App = () => (
             <Route path="/" element={<LakeGenevaV2 />} />
             <Route path="/v1" element={<LakeGeneva />} />
             <Route path="/v2" element={<Navigate to="/" replace />} />
+            <Route path="/today" element={<Today />} />
+            <Route path="/stories/:idOrSlug" element={<StoryDetail />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/lake-geneva" element={<Navigate to="/" replace />} />
             <Route path="/selling-lake-geneva" element={<SellingLakeGeneva />} />

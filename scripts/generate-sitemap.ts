@@ -23,6 +23,7 @@ interface SitemapEntry {
 // /sponsor-portal — internal or non-indexable.
 const staticEntries: SitemapEntry[] = [
   { path: "/", changefreq: "hourly", priority: "1.0" },
+  { path: "/today", changefreq: "hourly", priority: "1.0" },
   { path: "/lake-geneva", changefreq: "hourly", priority: "1.0" },
   { path: "/selling-lake-geneva", changefreq: "weekly", priority: "0.9" },
   { path: "/directory", changefreq: "weekly", priority: "0.8" },
@@ -123,7 +124,45 @@ async function fetchDynamic(): Promise<SitemapEntry[]> {
     console.warn("[sitemap] incidents fetch failed:", err);
   }
 
+  // Published stories (last 90 days). Each story has a permalink at
+  // /stories/{slug}-{id} with NewsArticle JSON-LD — required for Google
+  // News / Top Stories eligibility.
+  try {
+    const cutoff = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: stories } = await sb
+      .from("content_queue")
+      .select("id, title, updated_at, publish_date")
+      .in("status", ["published", "auto_published"])
+      .in("safety_level", ["safe", "soft_sensitive"])
+      .gte("publish_date", cutoff)
+      .order("publish_date", { ascending: false, nullsFirst: false })
+      .limit(1000);
+    for (const s of stories ?? []) {
+      const slug = slugify(s.title || "");
+      const path = slug ? `/stories/${slug}-${s.id}` : `/stories/${s.id}`;
+      entries.push({
+        path,
+        lastmod: (s.updated_at || s.publish_date || "").toString().slice(0, 10) || undefined,
+        changefreq: "weekly",
+        priority: "0.7",
+      });
+    }
+    console.log(`[sitemap] +${stories?.length ?? 0} story entries`);
+  } catch (err) {
+    console.warn("[sitemap] stories fetch failed:", err);
+  }
+
   return entries;
+}
+
+function slugify(s: string, max = 60): string {
+  return (s || "")
+    .toLowerCase()
+    .replace(/['"]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, max)
+    .replace(/-+$/g, "");
 }
 
 async function main() {

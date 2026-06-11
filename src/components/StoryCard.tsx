@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { CheckCircle2, Newspaper } from "lucide-react";
+import { Link } from "react-router-dom";
+import { storyPath } from "@/lib/slug";
 
 type TrustLabel = 'verified' | 'data_journalism' | 'sourced' | 'sponsored';
 
@@ -262,6 +264,17 @@ export const StoryCard = ({
             {meta?.source && <span>{meta.source}</span>}
             {meta?.source && meta?.time && <span className="text-slate-300">·</span>}
             {meta?.time && <span>{meta.time}</span>}
+          </p>
+        )}
+        {id && (
+          <p className="mt-1 text-[11px] text-slate-400">
+            <Link
+              to={storyPath(id, title)}
+              className="hover:text-blue-700 hover:underline underline-offset-2"
+              aria-label={`Permalink for "${title}"`}
+            >
+              Permalink
+            </Link>
           </p>
         )}
       </div>
