@@ -8,7 +8,7 @@ interface HostnameRouterProps {
 /**
  * Routes users based on hostname:
  * - citybrief.info (root domain) → /auth page
- * - lakegeneva.citybrief.info → normal routing (Lake Geneva site)
+ * - lakegeneva.citybrief.info | lakegenevabrief.com → normal routing (Lake Geneva site)
  */
 const HostnameRouter = ({ children }: HostnameRouterProps) => {
   const navigate = useNavigate();

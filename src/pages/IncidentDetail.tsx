@@ -142,7 +142,7 @@ export default function IncidentDetail() {
         headline: incident.title,
         datePublished: incident.started_at,
         dateModified: incident.updated_at,
-        url: `https://lakegeneva.citybrief.info/incidents/${incident.slug}`,
+        url: `https://lakegenevabrief.com/incidents/${incident.slug}`,
         publisher: {
           "@type": "NewsMediaOrganization",
           name: "Lake Geneva Brief",

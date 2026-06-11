@@ -13,5 +13,5 @@ Allow: /
 User-agent: *
 Allow: /
 
-Sitemap: https://lakegeneva.citybrief.info/sitemap.xml
-# Canonical host is lakegeneva.citybrief.info (custom domain).
+Sitemap: https://lakegenevabrief.com/sitemap.xml
+# Canonical host is lakegenevabrief.com (custom domain).
