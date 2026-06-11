@@ -162,6 +162,7 @@ const App = () => (
               <Route path="source-health" element={<SourceHealth />} />
               <Route path="business-stories" element={<BusinessStories />} />
               <Route path="history" element={<HistoryEntries />} />
+              <Route path="content-analytics" element={<ContentAnalytics />} />
             </Route>
             <Route path="*" element={<NotFound />} />
             </Routes>
