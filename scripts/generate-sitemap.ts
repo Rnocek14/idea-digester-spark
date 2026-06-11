@@ -52,6 +52,7 @@ const staticEntries: SitemapEntry[] = [
   { path: "/guides/lake-geneva-shore-path", changefreq: "weekly", priority: "0.95" },
   { path: "/best-of/restaurants-lake-geneva", changefreq: "weekly", priority: "0.9" },
   { path: "/guides/lake-geneva-public-access-guide", changefreq: "monthly", priority: "0.85" },
+  { path: "/guides/lake-geneva-faq", changefreq: "monthly", priority: "0.9" },
 ];
 
 function urlBlock(e: SitemapEntry) {
