@@ -44,6 +44,7 @@ import SourceHealth from "./pages/SourceHealth";
 import PipelineHealth from "./pages/PipelineHealth";
 import BusinessStories from "./pages/BusinessStories";
 import HistoryEntries from "./pages/HistoryEntries";
+import ContentAnalytics from "./pages/ContentAnalytics";
 import Submit from "./pages/Submit";
 import CommunityLocalLove from "./pages/CommunityLocalLove";
 import CommunityVoices from "./pages/CommunityVoices";
