@@ -65,17 +65,19 @@ export async function trackStoryEvent(args: TrackArgs): Promise<void> {
   try {
     const path = typeof window !== "undefined" ? window.location.pathname : null;
     const referrer = typeof document !== "undefined" ? document.referrer || null : null;
-    await supabase.from("story_events").insert({
-      pillar: args.pillar,
-      event_type: args.eventType,
-      entity_type: args.entityType,
-      entity_id: args.entityId ?? null,
-      slug: args.slug ?? null,
-      session_id: getSessionId(),
-      path,
-      referrer,
-      metadata: args.metadata ?? {},
-    });
+    await supabase.from("story_events").insert([
+      {
+        pillar: args.pillar,
+        event_type: args.eventType,
+        entity_type: args.entityType,
+        entity_id: args.entityId ?? undefined,
+        slug: args.slug ?? undefined,
+        session_id: getSessionId(),
+        path: path ?? undefined,
+        referrer: referrer ?? undefined,
+        metadata: (args.metadata ?? {}) as Record<string, unknown>,
+      },
+    ]);
   } catch {
     /* swallow */
   }
