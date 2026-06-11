@@ -183,13 +183,13 @@ const SellingLakeGeneva = () => {
               "@type": "Place",
               "name": "Lake Geneva, Wisconsin",
             },
-            "url": "https://lakegeneva.citybrief.info/selling-lake-geneva",
+            "url": "https://lakegenevabrief.com/selling-lake-geneva",
           },
           {
             "@context": "https://schema.org",
             "@type": "WebPage",
             "name": "Selling a Home in Lake Geneva",
-            "url": "https://lakegeneva.citybrief.info/selling-lake-geneva",
+            "url": "https://lakegenevabrief.com/selling-lake-geneva",
           },
         ]}
       />
