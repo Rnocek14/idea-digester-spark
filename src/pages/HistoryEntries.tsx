@@ -160,7 +160,7 @@ export default function HistoryEntries() {
           </div>
           <div>
             <Label>Event year (optional)</Label>
-            <Input value={eventYear} onChange={(e) => setEventYear(e.target.value)} placeholter="" placeholder="e.g. 1873" maxLength={4} />
+            <Input value={eventYear} onChange={(e) => setEventYear(e.target.value)} placeholder="e.g. 1873" maxLength={4} />
           </div>
           <div>
             <Label>Type</Label>
