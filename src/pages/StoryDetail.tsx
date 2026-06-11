@@ -10,6 +10,56 @@ import { extractStoryId, storyPath } from "@/lib/slug";
 import { format } from "date-fns";
 
 /**
+ * Map of category → in-house guides we can deep-link from a story's
+ * context block. Keeps thin story pages from being dead-ends and
+ * funnels link equity to our cornerstone guides.
+ */
+const CATEGORY_GUIDES: Record<string, { title: string; path: string }[]> = {
+  events: [
+    { title: "This weekend at Lake Geneva", path: "/guides/things-to-do-lake-geneva-this-weekend" },
+    { title: "Full Lake Geneva events calendar", path: "/events" },
+  ],
+  dining: [
+    { title: "Best restaurants in Lake Geneva", path: "/best-of/restaurants-lake-geneva" },
+    { title: "Friday fish fry guide", path: "/eats/fish-fry" },
+  ],
+  food: [
+    { title: "Best restaurants in Lake Geneva", path: "/best-of/restaurants-lake-geneva" },
+    { title: "Friday fish fry guide", path: "/eats/fish-fry" },
+  ],
+  real_estate: [
+    { title: "Lake Geneva market report", path: "/market-report" },
+    { title: "Moving to Lake Geneva", path: "/guides/moving-to-lake-geneva" },
+  ],
+  weather: [
+    { title: "Lake Geneva weather & 7-day forecast", path: "/lake-geneva-weather" },
+    { title: "Live Lake Geneva webcams", path: "/lake-geneva-webcams" },
+  ],
+  incidents: [
+    { title: "Recent incidents in Lake Geneva", path: "/incidents" },
+  ],
+  civic: [
+    { title: "Lake Geneva FAQ", path: "/guides/lake-geneva-faq" },
+  ],
+  community: [
+    { title: "Community voices", path: "/community/voices" },
+    { title: "Local love", path: "/community/local-love" },
+  ],
+  jobs: [
+    { title: "Lake Geneva job board", path: "/jobs" },
+  ],
+};
+
+function sourceDomain(url?: string | null): string | null {
+  if (!url) return null;
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Per-story permalink. Exists primarily for SEO: a stable, indexable URL
  * with NewsArticle + BreadcrumbList JSON-LD per story so Google can place
  * the page in Top Stories / News carousels. The body is a short summary
@@ -108,6 +158,14 @@ export default function StoryDetail() {
     story.summary ||
     (story.content ? story.content.slice(0, 180).replace(/\s+/g, " ").trim() + "…" : story.title);
 
+  const guides = CATEGORY_GUIDES[story.category || ""] || [];
+  const domain = sourceDomain(story.original_url);
+  const categoryLabel = (story.category || "news").replace(/_/g, " ");
+  const placeLabel = story.geo_label || "Lake Geneva, Wisconsin";
+  const dateLong = publishedISO
+    ? format(new Date(publishedISO), "MMMM d, yyyy")
+    : null;
+
   const jsonLd: Record<string, unknown>[] = [
     {
       "@context": "https://schema.org",
@@ -129,6 +187,10 @@ export default function StoryDetail() {
         url: "https://lakegenevabrief.com",
       },
       isAccessibleForFree: true,
+      speakable: {
+        "@type": "SpeakableSpecification",
+        cssSelector: ["h1", ".story-lede"],
+      },
     },
     {
       "@context": "https://schema.org",
@@ -140,6 +202,36 @@ export default function StoryDetail() {
       ],
     },
   ];
+
+  // Story-level FAQ schema — boosts AI-search citations and rich-result
+  // eligibility. We only emit it when we have a real source URL to point
+  // at, since one of the answers references "the original report."
+  if (story.original_url) {
+    jsonLd.push({
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: [
+        {
+          "@type": "Question",
+          name: `Where can I read the full story about "${story.title}"?`,
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: `The full report is published at ${domain || "the original source"}. Lake Geneva Brief tracks and summarizes coverage from local outlets so you can scan what's happening in and around Lake Geneva, Wisconsin in one place.`,
+          },
+        },
+        {
+          "@type": "Question",
+          name: `When was this story published?`,
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: dateLong
+              ? `This story was published on ${dateLong}. Lake Geneva Brief refreshes its local news feed throughout the day.`
+              : `Lake Geneva Brief refreshes its local news feed throughout the day; the publish date for this story is shown above the headline.`,
+          },
+        },
+      ],
+    });
+  }
 
   const dateLabel = publishedISO
     ? format(new Date(publishedISO), "EEEE, MMMM d, yyyy")
@@ -203,7 +295,7 @@ export default function StoryDetail() {
 
         {story.summary && (
           <p
-            className="text-lg text-slate-700 leading-relaxed mb-5"
+            className="story-lede text-lg text-slate-700 leading-relaxed mb-5"
             style={{ fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic" }}
           >
             {story.summary}
@@ -215,6 +307,52 @@ export default function StoryDetail() {
             {story.content}
           </div>
         )}
+
+        {/* About this story — always rendered. Adds on-page context and
+            internal links so the page isn't thin when content is empty,
+            and gives Google something to summarize for AI Overviews. */}
+        <aside className="rounded-md border border-slate-200 bg-white px-5 py-4 mb-6">
+          <p className="text-[10px] font-mono uppercase tracking-widest text-slate-500 mb-2">
+            About this story
+          </p>
+          <p className="text-[14.5px] text-slate-700 leading-relaxed">
+            This is a Lake Geneva Brief summary of a{" "}
+            <span className="capitalize">{categoryLabel}</span> story affecting{" "}
+            {placeLabel}
+            {domain ? (
+              <>
+                , as reported by{" "}
+                <a
+                  href={story.original_url || "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-700 hover:underline"
+                >
+                  {domain}
+                </a>
+              </>
+            ) : null}
+            {dateLong ? <> on {dateLong}</> : null}. We track local coverage
+            across {placeLabel} and surface what matters in one daily read — the{" "}
+            <Link to="/today" className="text-blue-700 hover:underline">
+              Lake Report
+            </Link>
+            .
+          </p>
+          {guides.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1.5 text-[13px]">
+              <span className="text-slate-500">Related:</span>
+              {guides.map((g, i) => (
+                <span key={g.path} className="text-slate-700">
+                  <Link to={g.path} className="text-blue-700 hover:underline">
+                    {g.title}
+                  </Link>
+                  {i < guides.length - 1 ? <span className="text-slate-300 ml-3">·</span> : null}
+                </span>
+              ))}
+            </div>
+          )}
+        </aside>
 
         {story.event_date && (
           <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 mb-6">
