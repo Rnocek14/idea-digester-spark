@@ -1269,6 +1269,7 @@ export type Database = {
           day_of_year: number
           event_date: string | null
           event_year: number | null
+          history_type: string | null
           id: string
           image_url: string | null
           last_published_at: string | null
@@ -1287,6 +1288,7 @@ export type Database = {
           day_of_year: number
           event_date?: string | null
           event_year?: number | null
+          history_type?: string | null
           id?: string
           image_url?: string | null
           last_published_at?: string | null
@@ -1305,6 +1307,7 @@ export type Database = {
           day_of_year?: number
           event_date?: string | null
           event_year?: number | null
+          history_type?: string | null
           id?: string
           image_url?: string | null
           last_published_at?: string | null
