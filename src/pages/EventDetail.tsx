@@ -128,7 +128,7 @@ export default function EventDetail() {
       },
     },
     description: description.substring(0, 300),
-    url: `https://lakegeneva.citybrief.info/events/${event.id}`,
+    url: `https://lakegenevabrief.com/events/${event.id}`,
     image: event.image_url || undefined,
   };
 

@@ -106,7 +106,7 @@ const Jobs = () => {
           "@context": "https://schema.org",
           "@type": "CollectionPage",
           "name": "Lake Geneva Jobs",
-          "url": "https://lakegeneva.citybrief.info/jobs"
+          "url": "https://lakegenevabrief.com/jobs"
         }}
       />
       <div className="max-w-6xl mx-auto px-4 py-8">

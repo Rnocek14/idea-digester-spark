@@ -749,10 +749,10 @@ const LakeGenevaV2 = () => {
           "@context": "https://schema.org",
           "@type": "WebSite",
           "name": "Lake Geneva Brief",
-          "url": "https://lakegeneva.citybrief.info/",
+          "url": "https://lakegenevabrief.com/",
           "potentialAction": {
             "@type": "SearchAction",
-            "target": "https://lakegeneva.citybrief.info/?q={search_term_string}",
+            "target": "https://lakegenevabrief.com/?q={search_term_string}",
             "query-input": "required name=search_term_string"
           }
         }}
