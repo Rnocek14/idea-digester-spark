@@ -118,7 +118,7 @@ const PresentedBySectionCompact = ({ sponsor, marketData }: { sponsor: any; mark
         >
           <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center overflow-hidden border-2 border-background shadow-sm">
             {sponsor.logo_url ? (
-              <img src={sponsor.logo_url} alt={`${sponsor.name} — Lake Geneva real estate sponsor logo`} className="w-full h-full object-cover" />
+              <img src={sponsor.logo_url} alt={`${sponsor.name} — Lake Geneva real estate sponsor logo`} width={40} height={40} className="w-full h-full object-cover" />
             ) : (
               <Home className="w-4 h-4 text-muted-foreground" />
             )}
