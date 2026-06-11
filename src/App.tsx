@@ -42,6 +42,7 @@ import SponsorPortal from "./pages/SponsorPortal";
 import BusinessCoverage from "./pages/BusinessCoverage";
 import SourceHealth from "./pages/SourceHealth";
 import PipelineHealth from "./pages/PipelineHealth";
+import BusinessStories from "./pages/BusinessStories";
 import Submit from "./pages/Submit";
 import CommunityLocalLove from "./pages/CommunityLocalLove";
 import CommunityVoices from "./pages/CommunityVoices";
@@ -157,6 +158,7 @@ const App = () => (
               <Route path="jobs" element={<AdminJobs />} />
               <Route path="deals" element={<AdminDeals />} />
               <Route path="source-health" element={<SourceHealth />} />
+              <Route path="business-stories" element={<BusinessStories />} />
             </Route>
             <Route path="*" element={<NotFound />} />
             </Routes>

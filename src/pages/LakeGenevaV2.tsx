@@ -20,6 +20,7 @@ import CommunityDeskBlock from "@/components/CommunityDeskBlock";
 import NowHiringWidget from "@/components/NowHiringWidget";
 import TodaysBriefBlock from "@/components/TodaysBriefBlock";
 import HistoryTodayBlock from "@/components/HistoryTodayBlock";
+import BusinessStoryBlock from "@/components/BusinessStoryBlock";
 import { InlineSubscribeCTA } from "@/components/InlineSubscribeCTA";
 import { StickySubscribeBanner } from "@/components/StickySubscribeBanner";
 import { PresentedBySection } from "@/components/PresentedBySection";
@@ -1009,6 +1010,8 @@ const LakeGenevaV2 = () => {
                 <TodaysBriefBlock stories={filteredStories.slice(0, 3) as any} />
                 {/* Anchored daily content: Today in Lake Geneva History */}
                 <HistoryTodayBlock />
+                {/* Rotating business spotlight (Phase 3 — Business Story Engine) */}
+                <BusinessStoryBlock />
                 {/* Editorial greeting — one warm line to set publication voice */}
                 <p className="text-base sm:text-lg text-slate-700 leading-relaxed font-serif italic">
                   {(() => {
