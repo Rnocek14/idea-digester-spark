@@ -175,7 +175,7 @@ export const StoryCard = ({
           <a href={url} target="_blank" rel="noopener noreferrer" className="block h-full w-full">
             <img
               src={imgSrc}
-              alt={title}
+              alt={`${title} — Lake Geneva ${category || 'news'} story`}
               width={1280}
               height={featured ? 720 : 640}
               className="h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-[1.02]"
@@ -189,7 +189,7 @@ export const StoryCard = ({
         ) : (
           <img
             src={imgSrc}
-            alt={title}
+            alt={`${title} — Lake Geneva ${category || 'news'} story`}
             width={1280}
             height={featured ? 720 : 640}
             className="h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-[1.02]"

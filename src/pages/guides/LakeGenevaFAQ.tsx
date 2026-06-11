@@ -11,8 +11,8 @@ export default function LakeGenevaFAQ() {
   return (
     <GuideShell
       title="Lake Geneva, Wisconsin: Everything You're Wondering"
-      metaTitle="Lake Geneva Wisconsin FAQ — Distance, Depth, Size & Visiting Tips"
-      metaDescription="Quick answers to the most-asked questions about Lake Geneva, Wisconsin: how far from Chicago and Milwaukee, how deep, how big, swimming, weather, when to visit, and what locals actually do."
+      metaTitle="Lake Geneva WI FAQ — Distance, Depth, Size & Visits"
+      metaDescription="Quick local answers about Lake Geneva, WI: distance from Chicago and Milwaukee, depth, size, swimming, weather, and when to visit."
       path="/guides/lake-geneva-faq"
       datePublished={TODAY}
       dateModified={TODAY}
