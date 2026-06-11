@@ -2798,6 +2798,51 @@ export type Database = {
         }
         Relationships: []
       }
+      story_events: {
+        Row: {
+          entity_id: string | null
+          entity_type: string
+          event_type: string
+          id: string
+          metadata: Json
+          occurred_at: string
+          path: string | null
+          pillar: string
+          referrer: string | null
+          session_id: string | null
+          slug: string | null
+          user_id: string | null
+        }
+        Insert: {
+          entity_id?: string | null
+          entity_type: string
+          event_type: string
+          id?: string
+          metadata?: Json
+          occurred_at?: string
+          path?: string | null
+          pillar: string
+          referrer?: string | null
+          session_id?: string | null
+          slug?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          entity_id?: string | null
+          entity_type?: string
+          event_type?: string
+          id?: string
+          metadata?: Json
+          occurred_at?: string
+          path?: string | null
+          pillar?: string
+          referrer?: string | null
+          session_id?: string | null
+          slug?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       subscribers: {
         Row: {
           city_id: string | null
@@ -2965,6 +3010,18 @@ export type Database = {
           safety_level: string | null
           source_name: string | null
           title: string | null
+        }
+        Relationships: []
+      }
+      content_pillar_metrics_7d: {
+        Row: {
+          ctr_pct: number | null
+          detail_views: number | null
+          homepage_clicks: number | null
+          impressions: number | null
+          newsletter_clicks: number | null
+          pillar: string | null
+          unique_sessions: number | null
         }
         Relationships: []
       }
