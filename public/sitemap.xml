@@ -171,14 +171,38 @@
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/events/fb14b009-f450-4614-81bf-6b4233d87546</loc>
+    <loc>https://lakegenevabrief.com/events/6b8d43ed-f1b4-450c-8d1a-d3b59b2f6b80</loc>
+    <lastmod>2026-06-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/events/2c9edd22-1a4a-45b0-86e4-423a19de35e4</loc>
+    <lastmod>2026-06-10</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/events/97e048d2-6bf1-4c34-a0b1-eace5118fad9</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/events/b6ffddea-4b55-44e0-8514-19cf9cc89ecb</loc>
+    <lastmod>2026-06-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/events/47bc5bf8-ed87-4b5d-bc6b-34e67b893f20</loc>
     <lastmod>2026-06-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/events/6b8d43ed-f1b4-450c-8d1a-d3b59b2f6b80</loc>
-    <lastmod>2026-06-04</lastmod>
+    <loc>https://lakegenevabrief.com/events/be5a9bb4-8fcf-4e45-9a6a-ee3d75e31fa6</loc>
+    <lastmod>2026-06-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -201,37 +225,13 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/events/be5a9bb4-8fcf-4e45-9a6a-ee3d75e31fa6</loc>
-    <lastmod>2026-06-08</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/events/2c9edd22-1a4a-45b0-86e4-423a19de35e4</loc>
-    <lastmod>2026-06-10</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
     <loc>https://lakegenevabrief.com/events/c6d6df0a-96b7-405c-9052-a1ca6d6408d8</loc>
     <lastmod>2026-06-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/events/b6ffddea-4b55-44e0-8514-19cf9cc89ecb</loc>
-    <lastmod>2026-06-11</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/events/97e048d2-6bf1-4c34-a0b1-eace5118fad9</loc>
-    <lastmod>2026-05-30</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/events/47bc5bf8-ed87-4b5d-bc6b-34e67b893f20</loc>
+    <loc>https://lakegenevabrief.com/events/fb14b009-f450-4614-81bf-6b4233d87546</loc>
     <lastmod>2026-06-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
@@ -243,8 +243,26 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/events/547832be-51d1-493a-a5e0-2c8a7b02fee7</loc>
-    <lastmod>2026-06-01</lastmod>
+    <loc>https://lakegenevabrief.com/events/9e5aef2f-7e4a-4f45-95f8-53516ad778c5</loc>
+    <lastmod>2026-05-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/events/db7d045f-6892-411e-9189-b6a1db97c1cc</loc>
+    <lastmod>2026-05-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/events/dc693198-fa62-425b-8004-ab3a4019357a</loc>
+    <lastmod>2026-06-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/events/a4a5dcfd-df5b-45b8-a456-f6495e00b0e0</loc>
+    <lastmod>2026-05-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -261,26 +279,8 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/events/cfc6655a-b711-45c2-a965-04177fce99e2</loc>
-    <lastmod>2026-06-08</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/events/db7d045f-6892-411e-9189-b6a1db97c1cc</loc>
-    <lastmod>2026-05-25</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/events/129ce932-4bf8-4d6a-b4e5-7f6505710d12</loc>
-    <lastmod>2026-05-31</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/events/9e5aef2f-7e4a-4f45-95f8-53516ad778c5</loc>
-    <lastmod>2026-05-31</lastmod>
+    <loc>https://lakegenevabrief.com/events/547832be-51d1-493a-a5e0-2c8a7b02fee7</loc>
+    <lastmod>2026-06-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -291,14 +291,8 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/events/a4a5dcfd-df5b-45b8-a456-f6495e00b0e0</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/events/62294a66-5f2b-4f3c-8101-ea1b0a2e8965</loc>
-    <lastmod>2026-05-29</lastmod>
+    <loc>https://lakegenevabrief.com/events/cfc6655a-b711-45c2-a965-04177fce99e2</loc>
+    <lastmod>2026-06-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -309,8 +303,62 @@
     <priority>0.6</priority>
   </url>
   <url>
+    <loc>https://lakegenevabrief.com/events/62294a66-5f2b-4f3c-8101-ea1b0a2e8965</loc>
+    <lastmod>2026-05-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/events/129ce932-4bf8-4d6a-b4e5-7f6505710d12</loc>
+    <lastmod>2026-05-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/events/223d8a16-381e-4168-8c51-95c17ef6740a</loc>
+    <lastmod>2026-05-19</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://lakegenevabrief.com/events/07de9296-8fb5-4608-8253-3feb94244280</loc>
     <lastmod>2026-05-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/events/a7218514-3dd8-452d-be8e-c403f1cae618</loc>
+    <lastmod>2026-05-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/events/576415c6-6d82-436b-add2-2da9454fb128</loc>
+    <lastmod>2026-06-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/events/d086179f-fd20-4922-b3c2-ae21d9c135b0</loc>
+    <lastmod>2026-06-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/events/2e2ed4eb-f729-44a6-b573-42de4e4aeddf</loc>
+    <lastmod>2026-06-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/events/d04bc363-5834-4fde-b80b-0ab7a5b3ecaf</loc>
+    <lastmod>2026-05-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/events/5cf4f9a2-e926-4329-b183-d8b254f6ee9e</loc>
+    <lastmod>2026-06-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -327,32 +375,8 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/events/223d8a16-381e-4168-8c51-95c17ef6740a</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/events/d04bc363-5834-4fde-b80b-0ab7a5b3ecaf</loc>
-    <lastmod>2026-05-29</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/events/2e2ed4eb-f729-44a6-b573-42de4e4aeddf</loc>
-    <lastmod>2026-06-01</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/events/a7218514-3dd8-452d-be8e-c403f1cae618</loc>
-    <lastmod>2026-05-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/events/5cf4f9a2-e926-4329-b183-d8b254f6ee9e</loc>
-    <lastmod>2026-06-09</lastmod>
+    <loc>https://lakegenevabrief.com/events/b8b646a3-b83c-44de-a388-7b687b22710a</loc>
+    <lastmod>2026-05-22</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -363,14 +387,20 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/events/b8b646a3-b83c-44de-a388-7b687b22710a</loc>
-    <lastmod>2026-05-22</lastmod>
+    <loc>https://lakegenevabrief.com/events/10adc88f-2d64-4eac-a9e8-1e49955109b1</loc>
+    <lastmod>2026-06-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/events/10adc88f-2d64-4eac-a9e8-1e49955109b1</loc>
-    <lastmod>2026-06-01</lastmod>
+    <loc>https://lakegenevabrief.com/events/54c0f5e1-cddf-40ff-9960-42cbc40fa9d4</loc>
+    <lastmod>2026-06-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/events/0f1e8a1e-daff-4034-81cf-2d8a41223565</loc>
+    <lastmod>2026-06-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -381,7 +411,25 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/events/032fedb1-e584-48c4-88e9-8185eb47876d</loc>
+    <loc>https://lakegenevabrief.com/events/bdd107ef-58f1-431c-874e-b7fa4b4267a0</loc>
+    <lastmod>2026-06-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/events/936a45f7-5594-40fe-bff8-b5ba9e22a512</loc>
+    <lastmod>2026-06-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/events/d2170040-2807-414f-b4d4-f9a3c35331a4</loc>
+    <lastmod>2026-06-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/events/6719eb15-f893-4ff2-b4e1-fb689337bad2</loc>
     <lastmod>2026-06-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
@@ -393,13 +441,25 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/events/0baa4546-1f7f-4c7e-8961-5339fa14ffba</loc>
-    <lastmod>2026-05-31</lastmod>
+    <loc>https://lakegenevabrief.com/events/032fedb1-e584-48c4-88e9-8185eb47876d</loc>
+    <lastmod>2026-06-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/events/2f3e3827-8b70-4b09-bbaf-dcbc33cfecb1</loc>
+    <loc>https://lakegenevabrief.com/events/5a89d415-e0a7-4bef-933e-b32467e78a4e</loc>
+    <lastmod>2026-06-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/events/4b4eb84e-e691-4fe5-abe3-ff482c168dc8</loc>
+    <lastmod>2026-06-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/events/0baa4546-1f7f-4c7e-8961-5339fa14ffba</loc>
     <lastmod>2026-05-31</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
@@ -411,14 +471,32 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/events/4b4eb84e-e691-4fe5-abe3-ff482c168dc8</loc>
-    <lastmod>2026-06-09</lastmod>
+    <loc>https://lakegenevabrief.com/events/d5c25bb2-7b85-40e0-901b-adc2d1399c8f</loc>
+    <lastmod>2026-06-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/events/9f6b2e00-b4e8-4803-aa72-f7485b4ffd15</loc>
-    <lastmod>2026-05-30</lastmod>
+    <loc>https://lakegenevabrief.com/events/2f3e3827-8b70-4b09-bbaf-dcbc33cfecb1</loc>
+    <lastmod>2026-05-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/events/ab22c718-22ab-476c-8a8b-f2a2f00289c5</loc>
+    <lastmod>2026-06-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/events/8c7d5f30-7f73-4f51-8063-f7b7742a4c60</loc>
+    <lastmod>2026-06-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/events/5a389f91-61b5-4a77-bdc9-0f9e41a5764d</loc>
+    <lastmod>2026-06-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -435,14 +513,32 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/events/b0716c51-b782-4223-8ec1-dcef788d67f4</loc>
-    <lastmod>2026-06-09</lastmod>
+    <loc>https://lakegenevabrief.com/events/9f6b2e00-b4e8-4803-aa72-f7485b4ffd15</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/events/4f3915f3-8238-4c70-8eb7-ebf3e1547da8</loc>
+    <lastmod>2026-06-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/events/e5529ec4-c4aa-4035-b264-f495d4fd0066</loc>
     <lastmod>2026-06-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/events/b0716c51-b782-4223-8ec1-dcef788d67f4</loc>
+    <lastmod>2026-06-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/events/49a7515c-35e6-424e-bc3b-e8cf97b62d54</loc>
+    <lastmod>2026-06-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -483,6 +579,12 @@
     <priority>0.6</priority>
   </url>
   <url>
+    <loc>https://lakegenevabrief.com/events/ff1c4ebb-a764-44ac-b535-2f1b78fc921b</loc>
+    <lastmod>2026-06-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://lakegenevabrief.com/events/5f355beb-e63e-4fd8-9e74-b6eaeca910a8</loc>
     <lastmod>2026-05-25</lastmod>
     <changefreq>weekly</changefreq>
@@ -495,14 +597,14 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/events/2798d8d6-f4d8-4fcf-9ec8-46dc3dd3dad6</loc>
-    <lastmod>2026-05-31</lastmod>
+    <loc>https://lakegenevabrief.com/events/335678ae-042e-4b06-8782-09e2902e729b</loc>
+    <lastmod>2026-05-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/events/335678ae-042e-4b06-8782-09e2902e729b</loc>
-    <lastmod>2026-05-27</lastmod>
+    <loc>https://lakegenevabrief.com/events/2798d8d6-f4d8-4fcf-9ec8-46dc3dd3dad6</loc>
+    <lastmod>2026-05-31</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -521,6 +623,24 @@
   <url>
     <loc>https://lakegenevabrief.com/events/e729002a-ffe8-4a01-9343-421292810616</loc>
     <lastmod>2026-06-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/events/62972574-d6d3-4bfa-9be1-0bd83e008bbc</loc>
+    <lastmod>2026-06-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/events/a9d9196e-0c1d-4159-8f64-48adc0e5607a</loc>
+    <lastmod>2026-06-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/events/0771e4fe-65a3-426d-8f12-f23adae12b2e</loc>
+    <lastmod>2026-06-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -571,6 +691,24 @@
     <lastmod>2026-05-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/incidents/vision-zero-summit-rallies-milwaukee-to-end-traffic-deaths-by-2037</loc>
+    <lastmod>2026-06-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/incidents/special-weather-statement-issued-june-11-at-11-37am-cdt-by-nws-milwaukee-sulliva</loc>
+    <lastmod>2026-06-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/incidents/special-weather-statement-issued-june-11-at-11-16am-cdt-by-nws-milwaukee-sulliva</loc>
+    <lastmod>2026-06-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/incidents/flood-watch-issued-june-11-at-11-02am-cdt-until-june-11-at-11-00pm-cdt-by-nws-mi</loc>
@@ -1629,18 +1767,6 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/stories/sunset-toast-pride-kickoff-social-with-jenny-hundt-0dfb25d8-343d-490c-aad2-c4ee2f7796fe</loc>
-    <lastmod>2026-06-11</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/stories/live-music-with-george-gary-next-door-pub-lakeside-032fedb1-e584-48c4-88e9-8185eb47876d</loc>
-    <lastmod>2026-06-11</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://lakegenevabrief.com/stories/lake-geneva-pride-2026-something-for-everyone-9f421cce-3fdd-4bcd-9783-bb1ade63364e</loc>
     <lastmod>2026-06-11</lastmod>
     <changefreq>weekly</changefreq>
@@ -1653,7 +1779,73 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://lakegenevabrief.com/stories/sunset-toast-pride-kickoff-social-with-jenny-hundt-0dfb25d8-343d-490c-aad2-c4ee2f7796fe</loc>
+    <lastmod>2026-06-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/live-music-with-george-gary-next-door-pub-lakeside-032fedb1-e584-48c4-88e9-8185eb47876d</loc>
+    <lastmod>2026-06-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://lakegenevabrief.com/stories/summer-skin-event-ca0f0753-d5bb-49f3-907a-42c391898133</loc>
+    <lastmod>2026-06-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/a-walker-8217-s-point-fixture-is-back-in-business-ac685712-a94b-41a6-aa5a-53ef11eda511</loc>
+    <lastmod>2026-06-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/nadi-plates-cancels-plans-to-open-in-former-food-hall-57ddb5b1-f2a7-452d-9f96-da1d4eaf1dc9</loc>
+    <lastmod>2026-06-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/a-wisconsin-death-worker-aims-to-change-our-relationship-wit-a9e96944-5bd3-41c5-8a9b-58bb9637b817</loc>
+    <lastmod>2026-06-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/summerfest-2026-garth-brooks-pop-up-merch-pre-sale-what-to-k-a20c432c-575f-4ffc-895e-f9fca195889c</loc>
+    <lastmod>2026-06-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/for-the-first-time-wisconsinites-can-buy-state-park-passes-a-79b0a098-77a4-4fc4-be0a-d3bdd4abdba1</loc>
+    <lastmod>2026-06-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/fifa-world-cup-2026-watch-parties-in-southeast-wisconsin-00983af4-4d49-4fda-8985-77f5f7414c47</loc>
+    <lastmod>2026-06-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/special-weather-statement-issued-june-11-at-11-37am-cdt-by-n-a76ac32f-49d6-48d1-a72b-24148865b6e9</loc>
+    <lastmod>2026-06-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/summerfest-returns-garth-brooks-stoked-for-rock-roll-amuseme-44456991-dd11-4e7e-b14b-3dbf6bbebcc1</loc>
+    <lastmod>2026-06-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/wisconsin-tourism-sets-record-for-fourth-straight-year-c076c104-a79d-41d6-a004-24c872355f22</loc>
     <lastmod>2026-06-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
@@ -1672,12 +1864,6 @@
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/ballot-challenges-fail-in-7th-district-gop-primary-fight-2e2480e0-f47b-4dd8-8ddf-e293edb6e2ed</loc>
-    <lastmod>2026-06-11</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/stories/special-weather-statement-issued-june-11-at-10-24am-cdt-by-n-a3f28a87-7c00-4141-be9c-b47a7d625978</loc>
     <lastmod>2026-06-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
@@ -1863,20 +2049,14 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/stories/highgrove-owner-attends-milwaukee-hearing-amid-nuisance-laws-93c93313-bb3d-49f1-aeca-c843adf585a3</loc>
-    <lastmod>2026-06-09</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://lakegenevabrief.com/stories/milwaukee-police-pursuit-ends-in-crash-2-arrests-after-shoot-4e32e842-2161-4dff-be55-d9fff2ee8596</loc>
     <lastmod>2026-06-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/stories/house-passes-70b-immigration-enforcement-funding-bill-5422b699-e527-4fa8-96b7-d82ea708715c</loc>
-    <lastmod>2026-06-10</lastmod>
+    <loc>https://lakegenevabrief.com/stories/highgrove-owner-attends-milwaukee-hearing-amid-nuisance-laws-93c93313-bb3d-49f1-aeca-c843adf585a3</loc>
+    <lastmod>2026-06-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -1889,6 +2069,12 @@
   <url>
     <loc>https://lakegenevabrief.com/stories/whos-running-for-wisconsin-governor-these-candidates-made-th-161076c9-5292-42b9-8f65-767f87d4ca77</loc>
     <lastmod>2026-06-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/house-passes-70b-immigration-enforcement-funding-bill-5422b699-e527-4fa8-96b7-d82ea708715c</loc>
+    <lastmod>2026-06-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -1923,19 +2109,19 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/stories/high-temperatures-bring-risk-of-buckling-pavement-wisdot-897bf3af-6daf-40b7-8d0d-318ce97d2a64</loc>
-    <lastmod>2026-06-09</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/stories/milwaukee-shootings-tuesday-1-dead-1-wounded-8e674da4-58d3-4834-b46e-9bdee3a25cd0</loc>
-    <lastmod>2026-06-09</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://lakegenevabrief.com/stories/racine-zoo-announces-death-of-african-penguin-had-terminal-i-6a035c0e-5622-4ba6-8242-cf9656ef9d89</loc>
+    <lastmod>2026-06-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/wisconsins-most-wanted-edward-mcghee-arrested-with-help-from-7e1b1744-9d21-4a4b-a017-aa58efae4849</loc>
+    <lastmod>2026-06-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/high-temperatures-bring-risk-of-buckling-pavement-wisdot-897bf3af-6daf-40b7-8d0d-318ce97d2a64</loc>
     <lastmod>2026-06-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
@@ -1947,7 +2133,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/stories/wisconsins-most-wanted-edward-mcghee-arrested-with-help-from-7e1b1744-9d21-4a4b-a017-aa58efae4849</loc>
+    <loc>https://lakegenevabrief.com/stories/milwaukee-shootings-tuesday-1-dead-1-wounded-8e674da4-58d3-4834-b46e-9bdee3a25cd0</loc>
     <lastmod>2026-06-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
@@ -2019,13 +2205,13 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/stories/friday-train-rides-4361960d-cedb-46f7-9d10-066c7cf9332a</loc>
+    <loc>https://lakegenevabrief.com/stories/friday-night-live-lake-geneva-house-of-music-cfc6655a-b711-45c2-a965-04177fce99e2</loc>
     <lastmod>2026-06-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/stories/friday-night-live-lake-geneva-house-of-music-cfc6655a-b711-45c2-a965-04177fce99e2</loc>
+    <loc>https://lakegenevabrief.com/stories/friday-train-rides-4361960d-cedb-46f7-9d10-066c7cf9332a</loc>
     <lastmod>2026-06-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
@@ -2349,13 +2535,13 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/stories/sunday-brunch-bottomless-mimosas-at-the-historic-baker-house-387a31a8-a3ac-490a-b83c-8ffbae7717fc</loc>
+    <loc>https://lakegenevabrief.com/stories/sip-sit-sundays-at-green-grocer-d56bb9b9-8495-48a1-bd49-69b6bc0c1dde</loc>
     <lastmod>2026-05-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/stories/sip-sit-sundays-at-green-grocer-d56bb9b9-8495-48a1-bd49-69b6bc0c1dde</loc>
+    <loc>https://lakegenevabrief.com/stories/sunday-brunch-bottomless-mimosas-at-the-historic-baker-house-387a31a8-a3ac-490a-b83c-8ffbae7717fc</loc>
     <lastmod>2026-05-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
@@ -2391,7 +2577,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/stories/saturday-bloodys-and-burgers-c7098e16-75b0-4656-9995-1977b2aaf2b2</loc>
+    <loc>https://lakegenevabrief.com/stories/prime-rib-saturdays-baker-house-3f9ba8f7-090a-4247-a26a-44dec24f0e11</loc>
     <lastmod>2026-05-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
@@ -2403,7 +2589,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/stories/prime-rib-saturdays-baker-house-3f9ba8f7-090a-4247-a26a-44dec24f0e11</loc>
+    <loc>https://lakegenevabrief.com/stories/saturday-bloodys-and-burgers-c7098e16-75b0-4656-9995-1977b2aaf2b2</loc>
     <lastmod>2026-05-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
@@ -2469,12 +2655,6 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/stories/fish-fry-at-lg-axe-throwing-53082a33-42c1-449d-ba5a-af651be9849f</loc>
-    <lastmod>2026-05-25</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://lakegenevabrief.com/stories/fresh-fish-friday-barrique-a8df5880-efea-4284-88dc-de3844f31b65</loc>
     <lastmod>2026-05-25</lastmod>
     <changefreq>weekly</changefreq>
@@ -2488,6 +2668,12 @@
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/seafood-palooza-friday-nights-at-the-baker-house-8a6a3edb-eeea-4b5d-8b6c-2aa8b1355f4c</loc>
+    <lastmod>2026-05-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/fish-fry-at-lg-axe-throwing-53082a33-42c1-449d-ba5a-af651be9849f</loc>
     <lastmod>2026-05-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
@@ -2571,25 +2757,25 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/stories/thursday-dinner-at-the-green-grocer-44d6fb23-7212-4663-adfc-328dd0240a2e</loc>
-    <lastmod>2026-05-21</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://lakegenevabrief.com/stories/foleys-lamb-shank-dinner-every-thursday-54ba8044-3eab-4016-b389-b85e9e3e934d</loc>
     <lastmod>2026-05-20</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/stories/taco-night-at-the-bunker-bar-grill-02984374-2d5f-492e-8631-7fd5449c4a2c</loc>
+    <loc>https://lakegenevabrief.com/stories/thursday-dinner-at-the-green-grocer-44d6fb23-7212-4663-adfc-328dd0240a2e</loc>
     <lastmod>2026-05-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/thursday-bbq-rib-special-54104b02-6f58-4ee3-afdf-8d5694fc0d40</loc>
+    <lastmod>2026-05-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/taco-night-at-the-bunker-bar-grill-02984374-2d5f-492e-8631-7fd5449c4a2c</loc>
     <lastmod>2026-05-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>

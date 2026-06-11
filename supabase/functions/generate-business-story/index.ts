@@ -36,9 +36,9 @@ serve(async (req) => {
       });
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: "LOVABLE_API_KEY not set" }), {
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+    if (!OPENAI_API_KEY) {
+      return new Response(JSON.stringify({ error: "OPENAI_API_KEY not set" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -58,14 +58,14 @@ Plain prose, 2-3 short paragraphs. No headings, no bullet lists, no emojis.`;
       story.source_citation ? `Source: ${story.source_citation}` : "",
     ].filter(Boolean).join("\n\n");
 
-    const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+        "Authorization": `Bearer ${OPENAI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "gpt-4o-mini",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userInput },
@@ -75,7 +75,7 @@ Plain prose, 2-3 short paragraphs. No headings, no bullet lists, no emojis.`;
 
     if (!aiRes.ok) {
       const txt = await aiRes.text();
-      return new Response(JSON.stringify({ error: "AI gateway error", detail: txt }), {
+      return new Response(JSON.stringify({ error: "OpenAI error", detail: txt }), {
         status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
