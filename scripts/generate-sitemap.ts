@@ -23,6 +23,7 @@ interface SitemapEntry {
 // /sponsor-portal — internal or non-indexable.
 const staticEntries: SitemapEntry[] = [
   { path: "/", changefreq: "hourly", priority: "1.0" },
+  { path: "/today", changefreq: "hourly", priority: "1.0" },
   { path: "/lake-geneva", changefreq: "hourly", priority: "1.0" },
   { path: "/selling-lake-geneva", changefreq: "weekly", priority: "0.9" },
   { path: "/directory", changefreq: "weekly", priority: "0.8" },
