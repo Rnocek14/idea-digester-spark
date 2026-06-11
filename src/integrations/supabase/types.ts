@@ -398,6 +398,101 @@ export type Database = {
           },
         ]
       }
+      business_stories: {
+        Row: {
+          ai_draft: string | null
+          ai_draft_generated_at: string | null
+          approved_at: string | null
+          approved_by: string | null
+          business_id: string | null
+          business_name: string
+          created_at: string
+          final_body: string | null
+          headline: string
+          id: string
+          last_rotated_at: string | null
+          metadata: Json
+          owner_quote: string | null
+          photo_url: string | null
+          published_at: string | null
+          raw_input: string
+          rotation_count: number
+          scheduled_for: string | null
+          source_citation: string | null
+          status: string
+          story_type: string
+          submitted_by: string | null
+          submitter_email: string | null
+          submitter_role: string | null
+          tags: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          ai_draft?: string | null
+          ai_draft_generated_at?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          business_id?: string | null
+          business_name: string
+          created_at?: string
+          final_body?: string | null
+          headline: string
+          id?: string
+          last_rotated_at?: string | null
+          metadata?: Json
+          owner_quote?: string | null
+          photo_url?: string | null
+          published_at?: string | null
+          raw_input: string
+          rotation_count?: number
+          scheduled_for?: string | null
+          source_citation?: string | null
+          status?: string
+          story_type: string
+          submitted_by?: string | null
+          submitter_email?: string | null
+          submitter_role?: string | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          ai_draft?: string | null
+          ai_draft_generated_at?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          business_id?: string | null
+          business_name?: string
+          created_at?: string
+          final_body?: string | null
+          headline?: string
+          id?: string
+          last_rotated_at?: string | null
+          metadata?: Json
+          owner_quote?: string | null
+          photo_url?: string | null
+          published_at?: string | null
+          raw_input?: string
+          rotation_count?: number
+          scheduled_for?: string | null
+          source_citation?: string | null
+          status?: string
+          story_type?: string
+          submitted_by?: string | null
+          submitter_email?: string | null
+          submitter_role?: string | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_stories_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_authors: {
         Row: {
           avatar_url: string | null
@@ -2901,6 +2996,43 @@ export type Database = {
           stories_24h: number
           stories_7d: number
         }[]
+      }
+      get_todays_business_story: {
+        Args: never
+        Returns: {
+          ai_draft: string | null
+          ai_draft_generated_at: string | null
+          approved_at: string | null
+          approved_by: string | null
+          business_id: string | null
+          business_name: string
+          created_at: string
+          final_body: string | null
+          headline: string
+          id: string
+          last_rotated_at: string | null
+          metadata: Json
+          owner_quote: string | null
+          photo_url: string | null
+          published_at: string | null
+          raw_input: string
+          rotation_count: number
+          scheduled_for: string | null
+          source_citation: string | null
+          status: string
+          story_type: string
+          submitted_by: string | null
+          submitter_email: string | null
+          submitter_role: string | null
+          tags: string[] | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "business_stories"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       has_role: {
         Args: {
