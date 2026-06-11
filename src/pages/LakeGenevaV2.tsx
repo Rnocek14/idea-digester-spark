@@ -19,6 +19,7 @@ import RightRailTemporal from "@/components/RightRailTemporal";
 import CommunityDeskBlock from "@/components/CommunityDeskBlock";
 import NowHiringWidget from "@/components/NowHiringWidget";
 import TodaysBriefBlock from "@/components/TodaysBriefBlock";
+import HistoryTodayBlock from "@/components/HistoryTodayBlock";
 import { InlineSubscribeCTA } from "@/components/InlineSubscribeCTA";
 import { StickySubscribeBanner } from "@/components/StickySubscribeBanner";
 import { PresentedBySection } from "@/components/PresentedBySection";
