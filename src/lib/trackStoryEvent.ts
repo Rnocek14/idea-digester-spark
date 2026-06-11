@@ -75,7 +75,7 @@ export async function trackStoryEvent(args: TrackArgs): Promise<void> {
         session_id: getSessionId(),
         path: path ?? undefined,
         referrer: referrer ?? undefined,
-        metadata: (args.metadata ?? {}) as Record<string, unknown>,
+        metadata: JSON.parse(JSON.stringify(args.metadata ?? {})),
       },
     ]);
   } catch {
