@@ -6,6 +6,11 @@
     <priority>1.0</priority>
   </url>
   <url>
+    <loc>https://lakegenevabrief.com/lake-geneva</loc>
+    <changefreq>hourly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
     <loc>https://lakegenevabrief.com/selling-lake-geneva</loc>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
@@ -144,6 +149,11 @@
     <loc>https://lakegenevabrief.com/guides/lake-geneva-public-access-guide</loc>
     <changefreq>monthly</changefreq>
     <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/guides/lake-geneva-faq</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/events/fb14b009-f450-4614-81bf-6b4233d87546</loc>
@@ -548,13 +558,13 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/incidents/record-breaking-timber-rattler-andrew-fischer-staying-patient-for-his-next-oppor</loc>
+    <loc>https://lakegenevabrief.com/incidents/ridglan-farms-beagle-dies-in-suspected-alligator-attack-in-florida</loc>
     <lastmod>2026-06-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/incidents/ridglan-farms-beagle-dies-in-suspected-alligator-attack-in-florida</loc>
+    <loc>https://lakegenevabrief.com/incidents/record-breaking-timber-rattler-andrew-fischer-staying-patient-for-his-next-oppor</loc>
     <lastmod>2026-06-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
