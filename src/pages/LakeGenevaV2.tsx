@@ -146,6 +146,7 @@ const PresentedBySectionCompact = ({ sponsor, marketData }: { sponsor: any; mark
           <a
             href={`tel:+1${sponsor.phone.replace(/\D/g, '')}`}
             className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
+            aria-label={`Call ${sponsor.name} at ${sponsor.phone}`}
           >
             <Phone className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">{sponsor.phone.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3')}</span>
@@ -1281,12 +1282,12 @@ const LakeGenevaV2 = () => {
                     {stale.length > 0 && (
                       <section className="mt-8 pt-6 border-t-2 border-slate-200">
                         <div className="flex items-baseline justify-between mb-2">
-                          <h3
+                          <h2
                             className="text-[11px] uppercase tracking-[0.18em] text-slate-500 font-semibold"
                             style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
                           >
                             Catching up
-                          </h3>
+                          </h2>
                           <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
                             Earlier this week
                           </span>

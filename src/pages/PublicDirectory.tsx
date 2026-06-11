@@ -214,7 +214,7 @@ const PublicDirectory = () => {
                       <div className="mt-1 h-12 w-12 flex-shrink-0 overflow-hidden rounded-xl bg-slate-100">
                         <img
                           src={business.logo_url}
-                          alt={business.name}
+                          alt={`${business.name} logo`}
                           className="h-full w-full object-cover"
                           loading="lazy"
                         />
