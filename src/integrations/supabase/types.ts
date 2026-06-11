@@ -1261,6 +1261,63 @@ export type Database = {
           },
         ]
       }
+      history_entries: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string | null
+          day_of_year: number
+          event_date: string | null
+          event_year: number | null
+          id: string
+          image_url: string | null
+          last_published_at: string | null
+          publish_count: number
+          source_citation: string | null
+          source_url: string | null
+          status: string
+          tags: string[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          created_by?: string | null
+          day_of_year: number
+          event_date?: string | null
+          event_year?: number | null
+          id?: string
+          image_url?: string | null
+          last_published_at?: string | null
+          publish_count?: number
+          source_citation?: string | null
+          source_url?: string | null
+          status?: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          day_of_year?: number
+          event_date?: string | null
+          event_year?: number | null
+          id?: string
+          image_url?: string | null
+          last_published_at?: string | null
+          publish_count?: number
+          source_citation?: string | null
+          source_url?: string | null
+          status?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       incident_updates: {
         Row: {
           created_at: string
