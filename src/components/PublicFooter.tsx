@@ -1,4 +1,5 @@
 import { NavLink } from "@/components/NavLink";
+import { SuggestionBoxModal } from "@/components/SuggestionBox";
 
 export const PublicFooter = () => {
   return (
@@ -17,6 +18,14 @@ export const PublicFooter = () => {
             <NavLink to="/advertise" className="hover:text-primary transition-colors">
               Advertise
             </NavLink>
+            <span className="text-muted-foreground">•</span>
+            <SuggestionBoxModal
+              trigger={
+                <button type="button" className="hover:text-primary transition-colors">
+                  Tell us what you think
+                </button>
+              }
+            />
           </div>
           <p className="text-xs">
             © {new Date().getFullYear()} Lake Geneva Brief. All rights reserved.
