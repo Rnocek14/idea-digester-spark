@@ -70,6 +70,9 @@ import LakeGenevaPublicAccess from "./pages/guides/LakeGenevaPublicAccess";
 import LakeGenevaFAQ from "./pages/guides/LakeGenevaFAQ";
 import LakeGenevaWebcams from "./pages/guides/LakeGenevaWebcams";
 import LakeGenevaWeather from "./pages/guides/LakeGenevaWeather";
+import GuidesIndex from "./pages/guides/GuidesIndex";
+import YerkesObservatory from "./pages/guides/YerkesObservatory";
+import BigFootBeach from "./pages/guides/BigFootBeach";
 import Today from "./pages/Today";
 import StoryDetail from "./pages/StoryDetail";
 
@@ -125,6 +128,9 @@ const App = () => (
             <Route path="/submit" element={<Submit />} />
             <Route path="/community/local-love" element={<CommunityLocalLove />} />
             <Route path="/community/voices" element={<CommunityVoices />} />
+            <Route path="/guides" element={<GuidesIndex />} />
+            <Route path="/guides/yerkes-observatory" element={<YerkesObservatory />} />
+            <Route path="/guides/big-foot-beach-state-park" element={<BigFootBeach />} />
             <Route path="/guides/things-to-do-lake-geneva" element={<ThingsToDoLakeGeneva />} />
             <Route path="/guides/moving-to-lake-geneva" element={<MovingToLakeGeneva />} />
             <Route path="/guides/lake-geneva-neighborhoods" element={<LakeGenevaNeighborhoods />} />
