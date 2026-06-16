@@ -1,0 +1,1 @@
+ALTER TABLE public.shore_path_stops ADD COLUMN IF NOT EXISTS local_love_prompt text;
