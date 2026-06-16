@@ -24,6 +24,7 @@ export type ShorePathStopRow = {
   audio_duration_sec: number | null;
   audio_transcript: string | null;
   audio_voice_id: string | null;
+  local_love_prompt: string | null;
 };
 
 export function useShorePathStops() {
