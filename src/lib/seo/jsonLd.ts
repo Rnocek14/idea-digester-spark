@@ -53,3 +53,52 @@ export function faqJsonLd(items: Array<{ question: string; answer: string }>) {
     })),
   };
 }
+
+/**
+ * ItemList of TouristAttractions for stop-by-stop guides (e.g. Shore Path).
+ * Each stop becomes a TouristAttraction with name, description, and (when
+ * available) GeoCoordinates. The list anchors at the parent guide URL so
+ * crawlers attribute the collection to that page.
+ */
+export function stopsItemListJsonLd(opts: {
+  parentPath: string;
+  parentName: string;
+  stops: Array<{
+    slug: string;
+    name: string;
+    description?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
+    image?: string | null;
+  }>;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: opts.parentName,
+    url: `${SITE}${opts.parentPath}`,
+    numberOfItems: opts.stops.length,
+    itemListOrder: "https://schema.org/ItemListOrderAscending",
+    itemListElement: opts.stops.map((s, i) => {
+      const attraction: Record<string, unknown> = {
+        "@type": "TouristAttraction",
+        name: s.name,
+        url: `${SITE}${opts.parentPath}#stop-${s.slug}`,
+      };
+      if (s.description) attraction.description = s.description;
+      if (s.image) attraction.image = s.image;
+      if (typeof s.latitude === "number" && typeof s.longitude === "number") {
+        attraction.geo = {
+          "@type": "GeoCoordinates",
+          latitude: s.latitude,
+          longitude: s.longitude,
+        };
+      }
+      return {
+        "@type": "ListItem",
+        position: i + 1,
+        item: attraction,
+      };
+    }),
+  };
+}

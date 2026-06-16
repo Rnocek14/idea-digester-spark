@@ -4,7 +4,7 @@ import { PublicHeader } from "@/components/PublicHeader";
 import { PageMeta } from "@/components/PageMeta";
 import { Button } from "@/components/ui/button";
 import { Play, Heart, MapPin, Bath, Footprints, Sun, Clock, Backpack } from "lucide-react";
-import { articleJsonLd, breadcrumbJsonLd, faqJsonLd } from "@/lib/seo/jsonLd";
+import { articleJsonLd, breadcrumbJsonLd, faqJsonLd, stopsItemListJsonLd } from "@/lib/seo/jsonLd";
 import { LG_LANDMARK_KEYWORDS, LG_CORE_KEYWORDS } from "@/lib/seoKeywords";
 import { useShorePathStops, type ShorePathStopRow } from "@/hooks/useShorePathStops";
 import { ShorePathMap } from "@/components/shore-path/ShorePathMap";
@@ -200,8 +200,24 @@ export default function LakeGenevaShorePath() {
         { name: "Lake Geneva Shore Path", path: PATH },
       ]),
       faqJsonLd(FAQS),
+      ...(stops.length
+        ? [
+            stopsItemListJsonLd({
+              parentPath: PATH,
+              parentName: "Lake Geneva Shore Path Stops",
+              stops: stops.map((s) => ({
+                slug: s.slug,
+                name: s.name,
+                description: s.short_label ?? s.description ?? null,
+                latitude: s.latitude,
+                longitude: s.longitude,
+                image: s.hero_image_url,
+              })),
+            }),
+          ]
+        : []),
     ],
-    [],
+    [stops],
   );
 
   const handleJumpToStop = (s: ShorePathStopRow) => {
