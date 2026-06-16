@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { PublicHeader } from "@/components/PublicHeader";
 import { PageMeta } from "@/components/PageMeta";
 import { Button } from "@/components/ui/button";
-import { Play, Heart, MapPin, Bath } from "lucide-react";
+import { Play, Heart, MapPin, Bath, Footprints, Sun, Clock, Backpack } from "lucide-react";
 import { articleJsonLd, breadcrumbJsonLd, faqJsonLd } from "@/lib/seo/jsonLd";
 import { LG_LANDMARK_KEYWORDS, LG_CORE_KEYWORDS } from "@/lib/seoKeywords";
 import { useShorePathStops, type ShorePathStopRow } from "@/hooks/useShorePathStops";
@@ -66,6 +66,21 @@ const FAQS: { question: string; answer: string }[] = [
     answer:
       "Access point letters, public restroom locations, and the seven leg distances that add to 21 miles come from the official Geneva Lake Shore Path map published by the Williams Bay Recreation Department (williamsbay.org/recreation-department). The stop-by-stop walking companion, history, and editorial notes are our own.",
   },
+  {
+    question: "What is the easiest section of the Shore Path for first-time walkers?",
+    answer:
+      "Start in downtown Lake Geneva at Library Park and walk west toward Flat Iron Park and the Riviera. The path is flat, paved in stretches, has benches, restrooms, and clear sightlines of the lake. It's the friendliest 30–60 minutes on the whole path.",
+  },
+  {
+    question: "What's a good shorter section to walk with kids?",
+    answer:
+      "Williams Bay Lakefront Park to Edgewater Park is the family pick — flat, short, public beach access, restrooms, and a playground at the trailhead. Fontana Beach to Reid Park is the other easy win on the west end.",
+  },
+  {
+    question: "Can I bike the Shore Path?",
+    answer:
+      "No. The path is for walking only. Sections cross private property under a foot-traffic easement; bikes, scooters, and strollers are not permitted on most of it. For cycling, the public roads paralleling the lake are the alternative.",
+  },
 ];
 
 // Public restrooms along the path — sourced from the official Williams Bay
@@ -89,6 +104,56 @@ const LEG_DISTANCES: { from: string; to: string; miles: number }[] = [
   { from: "Big Foot Beach", to: "Lake Geneva", miles: 2.0 },
   { from: "Lake Geneva", to: "Chapin Road", miles: 3.5 },
   { from: "Chapin Road", to: "Williams Bay", miles: 3.5 },
+];
+
+// Suggested section walks — built from the official leg distances so we
+// never claim a mileage we can't source. Each starts and ends at a public
+// access point with parking.
+const SECTION_WALKS: {
+  name: string;
+  audience: string;
+  from: string;
+  to: string;
+  miles: string;
+  time: string;
+  why: string;
+}[] = [
+  {
+    name: "First-timer downtown loop",
+    audience: "First visit · 60–90 min",
+    from: "Library Park (Lake Geneva)",
+    to: "Big Foot Beach State Park & back",
+    miles: "~4 mi round-trip",
+    time: "60–90 min",
+    why: "Flat, paved stretches, benches, restrooms at the Riviera and Visitor Center, and the prettiest in-town views of the lake.",
+  },
+  {
+    name: "Family-friendly bay walk",
+    audience: "With kids · 30–45 min",
+    from: "Williams Bay Lakefront Park",
+    to: "Edgewater Park & back",
+    miles: "~1.5 mi round-trip",
+    time: "30–45 min",
+    why: "Short, flat, with a beach and playground at the trailhead. Restrooms at both ends. Easy to bail out if little legs tire.",
+  },
+  {
+    name: "Sunset on the west shore",
+    audience: "Evening walk · 90 min",
+    from: "Fontana Beach",
+    to: "Reid Park & back",
+    miles: "~2 mi round-trip",
+    time: "75–90 min",
+    why: "West-facing shoreline catches the sunset over the water. Park at Fontana Beach, walk the path, and come back for dinner in the village.",
+  },
+  {
+    name: "Half-day section",
+    audience: "Steady walker · half day",
+    from: "Williams Bay",
+    to: "Fontana (one-way)",
+    miles: "3.5 mi one-way",
+    time: "2–3 hours",
+    why: "The single most-recommended segment of the path. Estate views, the quiet middle stretch, and a meal in Fontana at the end. Arrange a car at each end or call a ride.",
+  },
 ];
 
 export default function LakeGenevaShorePath() {
@@ -471,6 +536,101 @@ export default function LakeGenevaShorePath() {
           </div>
         </section>
 
+        {/* Suggested section walks — captures long-tail intent like
+            "shore path short walk", "shore path with kids", "shore path sunset". */}
+        <section className="mb-12">
+          <h2 className="font-display text-2xl text-slate-900 tracking-tight mb-2 pb-2 border-b border-slate-200">
+            Suggested section walks
+          </h2>
+          <p className="text-sm text-slate-600 mb-5 leading-relaxed">
+            Most people don't walk all 21 miles. Here are four section walks
+            we get asked about most — each starts and ends at a public
+            access point with parking.
+          </p>
+          <div className="grid sm:grid-cols-2 gap-4">
+            {SECTION_WALKS.map((w) => (
+              <article
+                key={w.name}
+                className="rounded-md border border-slate-200 bg-white p-5"
+              >
+                <p className="text-[10px] font-mono uppercase tracking-widest text-slate-500 mb-1.5">
+                  {w.audience}
+                </p>
+                <h3 className="font-display text-lg text-slate-900 tracking-tight mb-2">
+                  {w.name}
+                </h3>
+                <p className="text-sm text-slate-700 leading-relaxed mb-3">
+                  {w.why}
+                </p>
+                <dl className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
+                  <dt className="text-slate-500 font-mono uppercase tracking-wider">Start</dt>
+                  <dd className="text-slate-900">{w.from}</dd>
+                  <dt className="text-slate-500 font-mono uppercase tracking-wider">End</dt>
+                  <dd className="text-slate-900">{w.to}</dd>
+                  <dt className="text-slate-500 font-mono uppercase tracking-wider">Distance</dt>
+                  <dd className="text-slate-900 font-mono">{w.miles}</dd>
+                  <dt className="text-slate-500 font-mono uppercase tracking-wider">Time</dt>
+                  <dd className="text-slate-900 font-mono">{w.time}</dd>
+                </dl>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        {/* Plan your walk — practical block. Captures "what to bring",
+            "what to wear", "best time", and reinforces etiquette. */}
+        <section className="mb-12">
+          <h2 className="font-display text-2xl text-slate-900 tracking-tight mb-4 pb-2 border-b border-slate-200">
+            Plan your walk
+          </h2>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <PlanCard
+              icon={<Backpack className="h-4 w-4 text-blue-700" />}
+              title="What to bring"
+              items={[
+                "Water — limited fountains",
+                "Sunscreen (open shoreline)",
+                "Cash or card for a stop",
+                "Phone — service is spotty in coves",
+              ]}
+            />
+            <PlanCard
+              icon={<Footprints className="h-4 w-4 text-blue-700" />}
+              title="What to wear"
+              items={[
+                "Closed-toe walking shoes",
+                "Layers — lake wind is real",
+                "No flip-flops on rocky stretches",
+                "Leash for the dog",
+              ]}
+            />
+            <PlanCard
+              icon={<Clock className="h-4 w-4 text-blue-700" />}
+              title="When to go"
+              items={[
+                "Mornings: quiet, soft light",
+                "Summer weekdays beat weekends",
+                "Sunset on the west shore",
+                "October is the local secret",
+              ]}
+            />
+            <PlanCard
+              icon={<Sun className="h-4 w-4 text-blue-700" />}
+              title="Path etiquette"
+              items={[
+                "Stay on the path — no lawns",
+                "Keep voices down (homes)",
+                "Don't photograph people",
+                "Pick up after your dog",
+              ]}
+            />
+          </div>
+          <p className="text-xs text-slate-500 italic mt-4">
+            The path is a public easement through people's front yards.
+            How you walk it is how it stays open.
+          </p>
+        </section>
+
         {/* FAQs */}
         <section className="mb-12">
           <h2 className="font-display text-2xl text-slate-900 tracking-tight mb-4 pb-2 border-b border-slate-200">
@@ -557,5 +717,29 @@ function RelatedCard({ to, title, blurb }: { to: string; title: string; blurb: s
       <p className="font-display text-lg text-slate-900">{title}</p>
       <p className="text-sm text-slate-600 mt-1 leading-relaxed">{blurb}</p>
     </Link>
+  );
+}
+
+function PlanCard({
+  icon,
+  title,
+  items,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  items: string[];
+}) {
+  return (
+    <div className="rounded-md border border-slate-200 bg-white p-4">
+      <div className="flex items-center gap-2 mb-2">
+        {icon}
+        <h3 className="font-display text-base text-slate-900">{title}</h3>
+      </div>
+      <ul className="space-y-1 text-sm text-slate-700">
+        {items.map((it) => (
+          <li key={it} className="leading-snug">• {it}</li>
+        ))}
+      </ul>
+    </div>
   );
 }
