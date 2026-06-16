@@ -45,6 +45,7 @@ import PipelineHealth from "./pages/PipelineHealth";
 import BusinessStories from "./pages/BusinessStories";
 import HistoryEntries from "./pages/HistoryEntries";
 import ContentAnalytics from "./pages/ContentAnalytics";
+import ReaderFeedback from "./pages/ReaderFeedback";
 import Submit from "./pages/Submit";
 import CommunityLocalLove from "./pages/CommunityLocalLove";
 import CommunityVoices from "./pages/CommunityVoices";
@@ -163,6 +164,7 @@ const App = () => (
               <Route path="business-stories" element={<BusinessStories />} />
               <Route path="history" element={<HistoryEntries />} />
               <Route path="content-analytics" element={<ContentAnalytics />} />
+              <Route path="reader-feedback" element={<ReaderFeedback />} />
             </Route>
             <Route path="*" element={<NotFound />} />
             </Routes>
