@@ -24,6 +24,7 @@ import BusinessStoryBlock from "@/components/BusinessStoryBlock";
 import { InlineSubscribeCTA } from "@/components/InlineSubscribeCTA";
 import { StickySubscribeBanner } from "@/components/StickySubscribeBanner";
 import { PresentedBySection } from "@/components/PresentedBySection";
+import { SuggestionBoxCard } from "@/components/SuggestionBox";
 import { getSubscribeSource, getReferralSource } from "@/lib/referralTracking";
 import { isAllowedStoryImage } from "@/lib/imagePolicy";
 import { NavLink } from "@/components/NavLink";
@@ -1464,6 +1465,11 @@ const LakeGenevaV2 = () => {
           </div>
           <RightRailTemporal />
           <EditorialLaterRail />
+        </div>
+
+        {/* Reader mailbox — suggestion box */}
+        <div className="mt-12">
+          <SuggestionBoxCard />
         </div>
       </div>
     </PageShell>
