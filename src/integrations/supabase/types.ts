@@ -1956,6 +1956,42 @@ export type Database = {
         }
         Relationships: []
       }
+      reader_suggestions: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          message: string
+          page_path: string | null
+          session_id: string | null
+          status: string
+          updated_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          message: string
+          page_path?: string | null
+          session_id?: string | null
+          status?: string
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          message?: string
+          page_path?: string | null
+          session_id?: string | null
+          status?: string
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       real_estate_metrics: {
         Row: {
           active_listings: number
@@ -2840,6 +2876,33 @@ export type Database = {
           session_id?: string | null
           slug?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      story_reactions: {
+        Row: {
+          created_at: string
+          id: string
+          reaction: string
+          session_id: string
+          story_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          reaction: string
+          session_id: string
+          story_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          reaction?: string
+          session_id?: string
+          story_id?: string
+          updated_at?: string
         }
         Relationships: []
       }
