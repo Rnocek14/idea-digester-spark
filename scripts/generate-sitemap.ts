@@ -154,6 +154,28 @@ async function fetchDynamic(): Promise<SitemapEntry[]> {
     console.warn("[sitemap] stories fetch failed:", err);
   }
 
+  // Shore Path stop subpages — high-intent landmark pages
+  // (e.g. Yerkes Observatory, Big Foot Beach area, Kishwauketoe).
+  try {
+    const { data: stops } = await sb
+      .from("shore_path_stops")
+      .select("slug, updated_at, order_index")
+      .eq("is_published", true)
+      .order("order_index", { ascending: true });
+    for (const s of stops ?? []) {
+      if (!s.slug) continue;
+      entries.push({
+        path: `/guides/lake-geneva-shore-path/${s.slug}`,
+        lastmod: (s.updated_at || "").toString().slice(0, 10) || undefined,
+        changefreq: "monthly",
+        priority: "0.8",
+      });
+    }
+    console.log(`[sitemap] +${stops?.length ?? 0} shore-path stop entries`);
+  } catch (err) {
+    console.warn("[sitemap] shore-path stops fetch failed:", err);
+  }
+
   return entries;
 }
 
