@@ -436,6 +436,11 @@ export default function LakeGenevaShorePath() {
                       </div>
                     )}
                     <div className="mt-4 flex flex-wrap gap-2">
+                      {stop.local_love_prompt && (
+                        <p className="w-full text-sm italic text-slate-600 leading-snug mb-1">
+                          {stop.local_love_prompt}
+                        </p>
+                      )}
                       <Link
                         to={`/submit?kind=local_love&stop=${encodeURIComponent(stop.slug)}&stop_name=${encodeURIComponent(stop.name)}`}
                         className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-700 hover:text-blue-900 hover:underline"
