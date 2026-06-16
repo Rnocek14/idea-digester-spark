@@ -464,6 +464,12 @@ export default function LakeGenevaShorePath() {
                         <Heart className="h-3.5 w-3.5" />
                         Share a memory from this spot
                       </Link>
+                      <Link
+                        to={`/guides/lake-geneva-shore-path/${stop.slug}`}
+                        className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-700 hover:text-slate-900 hover:underline"
+                      >
+                        Read the full story →
+                      </Link>
                     </div>
                   </div>
                 </div>
