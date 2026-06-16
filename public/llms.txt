@@ -18,6 +18,31 @@ Lake Geneva Brief is a hyperlocal news and community guide for Lake Geneva and t
 - [Deals](/deals): Local deals and offers from area businesses.
 - [Advertise](/advertise): Sponsorship and advertising options.
 
+## Guides
+
+- [All Guides](/guides): Cornerstone guides to Lake Geneva — landmarks, things to do, moving, neighborhoods, and reference.
+- [Lake Geneva Shore Path](/guides/lake-geneva-shore-path): The 21-mile public path that circles Geneva Lake, stop by stop.
+- [Yerkes Observatory](/guides/yerkes-observatory): Williams Bay's 1897 observatory — tours, hours, history, and visiting tips.
+- [Big Foot Beach State Park](/guides/big-foot-beach-state-park): Beach, campground, trails, fees, and parking at Lake Geneva's state park.
+- [Public Access to the Lake](/guides/lake-geneva-public-access-guide): Every public beach, boat launch, and shoreline entry point.
+- [Things to Do in Lake Geneva](/guides/things-to-do-lake-geneva): A current running list of what's worth doing.
+- [This Weekend in Lake Geneva](/guides/things-to-do-lake-geneva-this-weekend): Friday-through-Sunday picks, refreshed weekly.
+- [Lake Geneva with Kids](/guides/things-to-do-lake-geneva-with-kids): Family-friendly activities around the lake.
+- [Lake Geneva in Summer](/guides/best-things-to-do-lake-geneva-in-summer): Peak-season picks.
+- [Lake Geneva in Winter](/guides/things-to-do-lake-geneva-in-winter): Off-season picks — ice castles, snow trails, cozy bars.
+- [Moving to Lake Geneva](/guides/moving-to-lake-geneva): Honest move-here guide — pace, costs, neighborhoods, schools.
+- [Lake Geneva Neighborhoods](/guides/lake-geneva-neighborhoods): How the lake's neighborhoods actually differ.
+- [Lake Geneva Schools](/guides/lake-geneva-schools): Public and private schools serving the lake.
+- [Cost of Living in Lake Geneva](/guides/cost-of-living-lake-geneva): Housing, taxes, utilities, and what surprises newcomers.
+- [Lake Geneva vs Williams Bay](/guides/lake-geneva-vs-williams-bay): Comparison of the two main lake towns.
+- [Fontana vs Lake Geneva](/guides/fontana-vs-lake-geneva): West end vs. east end of the lake.
+- [Why People Love Lake Geneva](/guides/why-people-love-lake-geneva): What keeps people coming back and moving here.
+- [Lake Geneva FAQ](/guides/lake-geneva-faq): The questions visitors and newcomers actually ask.
+- [Lake Geneva Market Report](/market-report): Current real estate market conditions.
+- [Lake Geneva Webcams](/lake-geneva-webcams): Every working live cam pointed at the lake.
+- [Lake Geneva Weather](/lake-geneva-weather): Live conditions, marine forecast, and seasonal outlook.
+- [Streblow Boats](/guides/streblow-boats-geneva-lake): The classic wooden boats built on Geneva Lake since the 1940s.
+
 ## Optional
 
 - [Post a Job](/jobs/post): Employer-facing job posting form.
