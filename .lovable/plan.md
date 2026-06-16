@@ -1,47 +1,93 @@
 ## Goal
 
-Capture reader feedback now that traffic is climbing — both open-ended suggestions and lightweight per-story signal — without adding a public comment thread that would need heavy moderation.
+Finish the Shore Path walking companion: every one of the 16 stops gets a long-form story and narrated audio in the same voice (Sarah, ElevenLabs) used on Black Point Estate (#6). The other 15 stops currently have only a one-line `description` and a `look_for` blurb.
 
-## What gets built
+After this ships, the Guided Walk plays a real story at every stop, the on-page write-ups feel complete, and each stop has a tailored "share a memory" prompt that funnels into the Local Love submission flow.
 
-### 1. Suggestion box (anonymous, sitewide)
+## Sourcing rules (non-negotiable)
 
-- New table `reader_suggestions` (message, optional email, page_path, user_agent, session_id, created_at, status: new/read/archived).
-- Public can INSERT only. Admins can read/update via existing `has_role`.
-- Validation: message 5–1000 chars, email optional but format-checked, simple rate-limit (one submission per session per 60s, enforced client-side + DB trigger checking last insert for the session_id).
-- Two entry points:
-  - **Footer link** — "Tell us what you think" opens a modal with the form.
-  - **Homepage block** — warm, neighborly card placed near the bottom of the feed: "What should we cover next?" with the same form inline.
-- Success state thanks the reader; no email required.
+- Public, verifiable facts only: Williams Bay Rec Dept materials, municipal park pages (Lake Geneva, Fontana, Linn), Kishwauketoe Nature Conservancy public site, Yerkes Observatory public history, established lake history (1870s railroad and easement).
+- Never name private homes, owners, or current residents. We describe what a walker sees from the public path, not what's behind a hedge.
+- Match the Black Point tone: warm, neighborly, plain-spoken. No "our" / "us". No marketing language.
+- ~120–180 words per story (a comfortable 50–70 second narration at the existing voice settings).
 
-### 2. Per-story reactions
+## What changes
 
-- New table `story_reactions` (story_id, session_id, reaction enum: `helpful` | `more_like_this` | `not_for_me`, created_at). Unique on (story_id, session_id) — one vote per reader per story, switchable.
-- Public can INSERT/UPDATE/DELETE rows scoped to their own session_id (passed in from client; not auth-gated since the site is anonymous).
-- UI: small reaction bar at the bottom of every story detail page — three buttons with counts, optimistic update, persists choice in localStorage so the reader sees their selection on return.
-- Also surfaced on the homepage StoryCard as a subtle "helpful" count when ≥3.
+### 1. Schema — add per-stop Local Love prompt
 
-### 3. Admin: Reader Feedback page
+New column on `shore_path_stops`:
 
-- New `/dashboard/reader-feedback` route in the existing dashboard sidebar.
-- Two tabs:
-  - **Suggestions** — list with message, page submitted from, timestamp, optional email, mark-as-read / archive actions.
-  - **Story reactions** — table of stories ranked by `more_like_this` and `helpful` counts over last 7/30 days, to inform what to publish more of.
+- `local_love_prompt text NULL` — one short sentence prompting a memory specific to this stop (e.g. for Riviera: "Remember a Fourth of July fireworks night from the pier? Tell us about it.").
 
-## What is NOT in scope
+Nullable so stops without a prompt fall back to the existing generic Heart link. No new RLS — column inherits the table's existing policies.
 
-- Public comment threads (rejected — moderation cost too high right now).
-- Auth-gated reactions (anonymous session_id is enough at this traffic level).
-- Analytics deep-dive page (user chose to defer).
+### 2. Content — fill the 15 remaining stops
 
-## Technical notes
+Single `UPDATE` per stop via the insert tool, writing:
 
-- Both tables follow the project's standard structure: `CREATE TABLE` → `GRANT` → `ENABLE RLS` → `CREATE POLICY`, with `service_role` granted for admin reads.
-- Reuses the existing `session_id` from `src/lib/trackStoryEvent.ts` (localStorage) so reactions tie back to the same anonymous identity already used by `story_events`.
-- New components: `SuggestionBoxModal.tsx`, `SuggestionBoxCard.tsx` (homepage), `StoryReactions.tsx` (detail page), `ReaderFeedback.tsx` (dashboard page).
-- Touches: `Footer.tsx`, homepage feed composition file, story detail page, `App.tsx` (route), `DashboardSidebar.tsx`.
-- No edge functions needed — direct supabase-js inserts with RLS doing the gating.
+- `story_long` — 2–3 short paragraphs of public-facts narrative, voice-matched to Black Point.
+- `local_love_prompt` — one-sentence memory prompt tied to that exact stop.
+- `look_for` — refresh only when the current line is thinner than the new story warrants; otherwise leave as-is.
 
-## After this ships
+Stops to write (order_index · slug · community):
 
-You'll have a feedback loop running alongside the pillar metrics already in place: suggestions tell you what's missing, reactions tell you what to double down on.
+```text
+ 1  library-park              Lake Geneva
+ 2  flat-iron-park            Lake Geneva
+ 3  riviera-beach             Lake Geneva
+ 4  lake-geneva-public-beach  Lake Geneva
+ 5  maple-lawn-area           Lake Geneva
+ 7  south-shore-club-area     Linn
+ 8  linn-pier                 Linn
+ 9  fontana-beach             Fontana
+10  reid-park                 Fontana
+11  abbey-harbor-view         Fontana
+12  kishwauketoe-edge         Williams Bay
+13  edgewater-park            Williams Bay
+14  williams-bay-lakefront    Williams Bay
+15  yerkes-area               Williams Bay
+16  cedar-point-park          Williams Bay
+```
+
+Black Point (#6) already has its story and audio — left alone.
+
+### 3. Audio generation — 15 invocations of the existing edge function
+
+The `generate-shore-path-audio` function already:
+- Reads `story_long` as the narration source
+- Calls ElevenLabs with the Sarah voice + the tuned settings (stability 0.55, similarity 0.8, style 0.35, speed 0.98)
+- Uploads MP3 to the `shore-path-audio` bucket
+- Writes back `audio_url`, `audio_duration_sec`, `audio_transcript`, `audio_voice_id`
+
+I invoke it once per stop (by `order_index`) after the content is in. If a stop already has audio, the function skips unless `force: true` — fine for us, only stop 6 currently has audio.
+
+ElevenLabs is already connected, no secret work needed.
+
+### 4. Frontend — surface the Local Love prompt
+
+Tiny edit to `src/pages/guides/LakeGenevaShorePath.tsx`:
+
+- Render `stop.local_love_prompt` (italic, slate-600) immediately above the existing "Share a memory from this spot" link, when present.
+- Pass the stop's slug+name into the link query as it already does.
+
+Update `src/hooks/useShorePathStops.ts` `ShorePathStopRow` type to include `local_love_prompt: string | null`.
+
+No other UI changes. The map, guided walk, story player, stop cards, and FAQ are unchanged — the audio just starts showing up everywhere because the existing `{stop.audio_url && ...}` block already handles it.
+
+### 5. Verify
+
+- Spot-check 2–3 stops in the preview: long-form text renders, audio player appears, narration plays in the Black Point voice.
+- Run the Guided Walk dialog through a couple of stops to confirm audio fires on arrival as before.
+
+## Out of scope
+
+- No regeneration of Black Point audio.
+- No changes to the Guided Walk geofencing, the map, or the `look_for` cards (refreshed only when story_long demands it).
+- No new public-facing routes.
+- Newsroom-story linking, photo upload, and audio re-narration UI — not part of this pass.
+
+## Risk + cost notes
+
+- 15 ElevenLabs TTS calls at ~140 words each. Well under any rate concern, but I'll invoke serially with brief gaps to be polite.
+- Storage is already configured (`shore-path-audio` public bucket).
+- If a single call fails, the others are unaffected and the failing stop can be retried with `force: true`.

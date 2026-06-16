@@ -2512,6 +2512,7 @@ export type Database = {
           is_public_landmark: boolean
           is_published: boolean
           latitude: number | null
+          local_love_prompt: string | null
           longitude: number | null
           look_for: string | null
           map_x_pct: number | null
@@ -2538,6 +2539,7 @@ export type Database = {
           is_public_landmark?: boolean
           is_published?: boolean
           latitude?: number | null
+          local_love_prompt?: string | null
           longitude?: number | null
           look_for?: string | null
           map_x_pct?: number | null
@@ -2564,6 +2566,7 @@ export type Database = {
           is_public_landmark?: boolean
           is_published?: boolean
           latitude?: number | null
+          local_love_prompt?: string | null
           longitude?: number | null
           look_for?: string | null
           map_x_pct?: number | null
