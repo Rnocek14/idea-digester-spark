@@ -680,7 +680,7 @@ const EatsCard = ({
               </p>
             )}
             <span className="inline-flex items-center gap-1 text-xs text-orange-600 group-hover:text-orange-700 mt-2">
-              Read more <ArrowRight className="h-3 w-3" />
+              Read full dining update <ArrowRight className="h-3 w-3" />
             </span>
           </div>
         </div>
