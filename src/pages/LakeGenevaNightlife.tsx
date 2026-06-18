@@ -184,10 +184,10 @@ const LakeGenevaNightlife = () => {
             <span className="text-sm font-medium text-purple-300 uppercase tracking-wider">Lake Geneva After Dark</span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold mb-3">Nightlife & Live Music</h1>
-          <p className="text-lg text-slate-300 mb-4">
+          <p className="text-lg text-slate-200 mb-4">
             Your guide to live music, bars, and nightlife around the lake. Updated daily.
           </p>
-          <div className="flex items-center gap-4 text-sm text-slate-400">
+          <div className="flex items-center gap-4 text-sm text-slate-300">
             <span className="flex items-center gap-1">
               <Music className="h-4 w-4" />
               {allEvents.length} upcoming events
