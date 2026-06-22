@@ -404,7 +404,7 @@ const LakeGenevaV2 = () => {
         .gte("created_at", twoWeeksAgo)
         .gte("publish_date", twoWeeksAgo)
         .lte("publish_date", now)
-        .order("geo_tier", { ascending: true })  // Tier 1 first, then 2, then 0 (but 0 comes after in sort below)
+        .order("geo_tier", { ascending: false })  // Tier 2 → 1 → 0 so hyperlocal fits inside LIMIT
         .order("created_at", { ascending: false })
         .limit(80);  // Fetch more to allow filtering
 
@@ -425,7 +425,7 @@ const LakeGenevaV2 = () => {
           .gte("created_at", threeWeeksAgo)
           .gte("publish_date", threeWeeksAgo)
           .lte("publish_date", now)
-          .order("geo_tier", { ascending: true })
+          .order("geo_tier", { ascending: false })
           .order("created_at", { ascending: false })
           .limit(100);
 
