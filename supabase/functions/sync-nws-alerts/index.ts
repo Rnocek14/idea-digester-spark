@@ -657,10 +657,21 @@ Deno.serve(async (req) => {
     }
 
     // Update source last_fetched_at
-    await supabase
-      .from('sources')
-      .update({ last_fetched_at: new Date().toISOString() })
-      .eq('id', nwsSource?.id);
+    {
+      const nowIso = new Date().toISOString();
+      await supabase
+        .from('sources')
+        .update({
+          last_fetched_at: nowIso,
+          last_successful_fetch_at: nowIso,
+          last_nonzero_run_at: result.new_items > 0 ? nowIso : undefined,
+          last_items_ingested_count: result.new_items,
+          health_severity: 'ok',
+          last_error_code: null,
+          last_error_detail: null,
+        })
+        .eq('id', nwsSource?.id);
+    }
 
     // Log activity
     await supabase.from('activity_log').insert({
