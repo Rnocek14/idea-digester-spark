@@ -446,13 +446,29 @@ Deno.serve(async (req) => {
     if (alerts.length === 0) {
       console.log('[sync-nws] No active alerts - this is normal');
       
+      // Heartbeat: mark the source healthy so Source Health doesn't flag it red
+      // when "no alerts" is the correct state for the regional grid.
+      const nowIso = new Date().toISOString();
+      await supabase
+        .from('sources')
+        .update({
+          last_fetched_at: nowIso,
+          last_successful_fetch_at: nowIso,
+          last_zero_items_at: nowIso,
+          last_items_ingested_count: 0,
+          health_severity: 'ok',
+          last_error_code: null,
+          last_error_detail: null,
+        })
+        .eq('name', 'NWS Weather Alerts – Lake Geneva');
+
       // Log the sync attempt
       await supabase.from('activity_log').insert({
         entity_type: 'source',
         action: 'sync_completed',
         actor_type: 'system',
-        message: 'NWS Weather Alerts synced: No active alerts',
-        details: { source: 'NWS Weather Alerts', alerts_found: 0 }
+        message: `NWS Weather Alerts synced: No active alerts across ${NWS_ZONES.length} zones`,
+        details: { source: 'NWS Weather Alerts', alerts_found: 0, zones: NWS_ZONES }
       });
 
       return new Response(
