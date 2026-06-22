@@ -1,93 +1,45 @@
-## Goal
+## What's actually happening
 
-Finish the Shore Path walking companion: every one of the 16 stops gets a long-form story and narrated audio in the same voice (Sarah, ElevenLabs) used on Black Point Estate (#6). The other 15 stops currently have only a one-line `description` and a `look_for` blurb.
+The site is not short on content. The database has, in the last 14 days of `auto_published` stories that match the homepage's filters (safe/soft_sensitive, geo_tier 0–2, publish_date within window, has body):
 
-After this ships, the Guided Walk plays a real story at every stop, the on-page write-ups feel complete, and each stop has a tailored "share a memory" prompt that funnels into the Local Love submission flow.
+- **180 Tier-1 (Lake Geneva)** stories
+- **13 Tier-2 (Walworth County)** stories
+- **149 Tier-0 (regional)** stories
 
-## Sourcing rules (non-negotiable)
+But the homepage console reports `tier1=0, tier2=0, tier0=5`. So the data is in the DB, RLS lets the anon user read it, and the gate is doing its job — yet zero hyperlocal stories reach the page.
 
-- Public, verifiable facts only: Williams Bay Rec Dept materials, municipal park pages (Lake Geneva, Fontana, Linn), Kishwauketoe Nature Conservancy public site, Yerkes Observatory public history, established lake history (1870s railroad and easement).
-- Never name private homes, owners, or current residents. We describe what a walker sees from the public path, not what's behind a hedge.
-- Match the Black Point tone: warm, neighborly, plain-spoken. No "our" / "us". No marketing language.
-- ~120–180 words per story (a comfortable 50–70 second narration at the existing voice settings).
+## The blocker
 
-## What changes
+`src/pages/LakeGenevaV2.tsx` line 407–409 in the main fetch:
 
-### 1. Schema — add per-stop Local Love prompt
-
-New column on `shore_path_stops`:
-
-- `local_love_prompt text NULL` — one short sentence prompting a memory specific to this stop (e.g. for Riviera: "Remember a Fourth of July fireworks night from the pier? Tell us about it.").
-
-Nullable so stops without a prompt fall back to the existing generic Heart link. No new RLS — column inherits the table's existing policies.
-
-### 2. Content — fill the 15 remaining stops
-
-Single `UPDATE` per stop via the insert tool, writing:
-
-- `story_long` — 2–3 short paragraphs of public-facts narrative, voice-matched to Black Point.
-- `local_love_prompt` — one-sentence memory prompt tied to that exact stop.
-- `look_for` — refresh only when the current line is thinner than the new story warrants; otherwise leave as-is.
-
-Stops to write (order_index · slug · community):
-
-```text
- 1  library-park              Lake Geneva
- 2  flat-iron-park            Lake Geneva
- 3  riviera-beach             Lake Geneva
- 4  lake-geneva-public-beach  Lake Geneva
- 5  maple-lawn-area           Lake Geneva
- 7  south-shore-club-area     Linn
- 8  linn-pier                 Linn
- 9  fontana-beach             Fontana
-10  reid-park                 Fontana
-11  abbey-harbor-view         Fontana
-12  kishwauketoe-edge         Williams Bay
-13  edgewater-park            Williams Bay
-14  williams-bay-lakefront    Williams Bay
-15  yerkes-area               Williams Bay
-16  cedar-point-park          Williams Bay
+```ts
+.order("geo_tier", { ascending: true })   // ← 0 comes first, not 1
+.order("created_at", { ascending: false })
+.limit(80);
 ```
 
-Black Point (#6) already has its story and audio — left alone.
+`ascending: true` puts geo_tier **0 first**, then 1, then 2. With ~149 fresh Tier-0 rows in the window, the first 80 rows returned to the client are almost all Tier-0. The Tier-1 and Tier-2 stories never even reach the client, so the quota algorithm has nothing to promote into the top slots.
 
-### 3. Audio generation — 15 invocations of the existing edge function
+The comment on the line even says "Tier 1 first, then 2, then 0" — the code does the opposite. Same bug in the 3-week thin-feed fallback (line 428).
 
-The `generate-shore-path-audio` function already:
-- Reads `story_long` as the narration source
-- Calls ElevenLabs with the Sarah voice + the tuned settings (stability 0.55, similarity 0.8, style 0.35, speed 0.98)
-- Uploads MP3 to the `shore-path-audio` bucket
-- Writes back `audio_url`, `audio_duration_sec`, `audio_transcript`, `audio_voice_id`
+## Secondary issue worth fixing while we're in there
 
-I invoke it once per stop (by `order_index`) after the content is in. If a stop already has audio, the function skips unless `force: true` — fine for us, only stop 6 currently has audio.
+The body-filter (`hasBody`) drops stories with no `summary` / `content_website` / `content_lg_base`. Tier-2 has 34 rows but only **13 with a usable body** (~62% drop rate). That's a content-pipeline issue, not a homepage bug — the ingestion is saving titles but not summaries for many Walworth County items. Worth flagging separately, but the immediate "no articles" symptom is 100% the sort-order bug.
 
-ElevenLabs is already connected, no secret work needed.
+## Fix
 
-### 4. Frontend — surface the Local Love prompt
+Two-line change in `src/pages/LakeGenevaV2.tsx`:
 
-Tiny edit to `src/pages/guides/LakeGenevaShorePath.tsx`:
+1. Line ~407 (main query): change `ascending: true` → `ascending: false` so Tier-2 → Tier-1 → Tier-0 ordering is returned, ensuring all hyperlocal rows fit inside the 80-row `LIMIT`.
+2. Line ~428 (thin-feed fallback query): same change.
 
-- Render `stop.local_love_prompt` (italic, slate-600) immediately above the existing "Share a memory from this spot" link, when present.
-- Pass the stop's slug+name into the link query as it already does.
+After the fix, the existing scoring + quota logic (MIN_TIER1_IN_TOP=5, MIN_TIER2_IN_TOP=2, MAX_TIER0_IN_TOP=3) will actually have hyperlocal candidates to choose from, and the homepage will populate with the ~180 Lake Geneva stories it's been hiding.
 
-Update `src/hooks/useShorePathStops.ts` `ShorePathStopRow` type to include `local_love_prompt: string | null`.
+## Verification after fix
 
-No other UI changes. The map, guided walk, story player, stop cards, and FAQ are unchanged — the audio just starts showing up everywhere because the existing `{stop.audio_url && ...}` block already handles it.
+- Reload `/`, check console for `[GEO-TIER] Full feed: tier1=…, tier2=…, tier0=…`. Expect tier1 ≥ 5, tier2 ≥ 1, and total feed in the 20–30 range.
+- Visually confirm hyperlocal stories now appear in the top of the feed.
 
-### 5. Verify
+## Follow-up (separate, ask before doing)
 
-- Spot-check 2–3 stops in the preview: long-form text renders, audio player appears, narration plays in the Black Point voice.
-- Run the Guided Walk dialog through a couple of stops to confirm audio fires on arrival as before.
-
-## Out of scope
-
-- No regeneration of Black Point audio.
-- No changes to the Guided Walk geofencing, the map, or the `look_for` cards (refreshed only when story_long demands it).
-- No new public-facing routes.
-- Newsroom-story linking, photo upload, and audio re-narration UI — not part of this pass.
-
-## Risk + cost notes
-
-- 15 ElevenLabs TTS calls at ~140 words each. Well under any rate concern, but I'll invoke serially with brief gaps to be polite.
-- Storage is already configured (`shore-path-audio` public bucket).
-- If a single call fails, the others are unaffected and the failing stop can be retried with `force: true`.
+The Tier-2 body-completion gap (~62% missing summaries) is a real content-quality problem in the ingestion pipeline. I'd recommend a separate pass to either (a) backfill summaries from `content` / first 300 chars of the article body for affected Tier-2 rows, or (b) tighten the ingest functions so no row is saved without a summary. Not part of this fix.
