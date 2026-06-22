@@ -46,6 +46,7 @@ import BusinessStories from "./pages/BusinessStories";
 import HistoryEntries from "./pages/HistoryEntries";
 import ContentAnalytics from "./pages/ContentAnalytics";
 import ReaderFeedback from "./pages/ReaderFeedback";
+import IncidentsQueue from "./pages/IncidentsQueue";
 import Submit from "./pages/Submit";
 import CommunityLocalLove from "./pages/CommunityLocalLove";
 import CommunityVoices from "./pages/CommunityVoices";
