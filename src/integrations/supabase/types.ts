@@ -1416,6 +1416,68 @@ export type Database = {
         }
         Relationships: []
       }
+      incident_reject_rules: {
+        Row: {
+          added_by: string | null
+          created_at: string
+          id: string
+          keyword: string
+          reason: string | null
+        }
+        Insert: {
+          added_by?: string | null
+          created_at?: string
+          id?: string
+          keyword: string
+          reason?: string | null
+        }
+        Update: {
+          added_by?: string | null
+          created_at?: string
+          id?: string
+          keyword?: string
+          reason?: string | null
+        }
+        Relationships: []
+      }
+      incident_source_observations: {
+        Row: {
+          external_id: string | null
+          id: string
+          incident_id: string
+          observed_at: string
+          raw: Json | null
+          source: string
+          source_type: string | null
+        }
+        Insert: {
+          external_id?: string | null
+          id?: string
+          incident_id: string
+          observed_at?: string
+          raw?: Json | null
+          source: string
+          source_type?: string | null
+        }
+        Update: {
+          external_id?: string | null
+          id?: string
+          incident_id?: string
+          observed_at?: string
+          raw?: Json | null
+          source?: string
+          source_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incident_source_observations_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "incidents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       incident_updates: {
         Row: {
           created_at: string
@@ -1473,53 +1535,80 @@ export type Database = {
       }
       incidents: {
         Row: {
+          ai_rewrite: string | null
+          body: string | null
+          confidence_score: number | null
           external_id: string | null
+          hold_reason: string | null
           id: string
           incident_type: string
+          lat: number | null
           location: string | null
+          lon: number | null
+          original_body: string | null
           priority_score: number | null
           resolution_reason: string | null
           resolved_at: string | null
           slug: string
           source: string | null
           source_story_id: string | null
+          source_type: string | null
           started_at: string
           status: string
           sub_type: string | null
+          tier: number | null
           title: string
           updated_at: string
         }
         Insert: {
+          ai_rewrite?: string | null
+          body?: string | null
+          confidence_score?: number | null
           external_id?: string | null
+          hold_reason?: string | null
           id?: string
           incident_type: string
+          lat?: number | null
           location?: string | null
+          lon?: number | null
+          original_body?: string | null
           priority_score?: number | null
           resolution_reason?: string | null
           resolved_at?: string | null
           slug: string
           source?: string | null
           source_story_id?: string | null
+          source_type?: string | null
           started_at?: string
           status?: string
           sub_type?: string | null
+          tier?: number | null
           title: string
           updated_at?: string
         }
         Update: {
+          ai_rewrite?: string | null
+          body?: string | null
+          confidence_score?: number | null
           external_id?: string | null
+          hold_reason?: string | null
           id?: string
           incident_type?: string
+          lat?: number | null
           location?: string | null
+          lon?: number | null
+          original_body?: string | null
           priority_score?: number | null
           resolution_reason?: string | null
           resolved_at?: string | null
           slug?: string
           source?: string | null
           source_story_id?: string | null
+          source_type?: string | null
           started_at?: string
           status?: string
           sub_type?: string | null
+          tier?: number | null
           title?: string
           updated_at?: string
         }
