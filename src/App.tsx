@@ -174,6 +174,7 @@ const App = () => (
               <Route path="history" element={<HistoryEntries />} />
               <Route path="content-analytics" element={<ContentAnalytics />} />
               <Route path="reader-feedback" element={<ReaderFeedback />} />
+              <Route path="incidents-queue" element={<IncidentsQueue />} />
             </Route>
             <Route path="*" element={<NotFound />} />
             </Routes>
