@@ -5,8 +5,11 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// NWS Zone for Walworth County, WI (Lake Geneva area)
-const NWS_ZONE = 'WIZ063'; // Walworth County
+// NWS Zones: Walworth (WIZ063) + adjacent Rock (WIZ062) + Jefferson (WIZ057).
+// NWS supports comma-separated zone queries; we keep the geo_label as Lake Geneva
+// since these adjacent zones routinely share the same regional grid alert.
+const NWS_ZONES = ['WIZ063', 'WIZ062', 'WIZ057'];
+const NWS_ZONE = NWS_ZONES.join(','); // kept for metadata/back-compat
 const NWS_ALERTS_URL = `https://api.weather.gov/alerts/active?zone=${NWS_ZONE}`;
 
 // Weather-type-specific fallback images for alerts - multiple images per type for variety
@@ -443,13 +446,29 @@ Deno.serve(async (req) => {
     if (alerts.length === 0) {
       console.log('[sync-nws] No active alerts - this is normal');
       
+      // Heartbeat: mark the source healthy so Source Health doesn't flag it red
+      // when "no alerts" is the correct state for the regional grid.
+      const nowIso = new Date().toISOString();
+      await supabase
+        .from('sources')
+        .update({
+          last_fetched_at: nowIso,
+          last_successful_fetch_at: nowIso,
+          last_zero_items_at: nowIso,
+          last_items_ingested_count: 0,
+          health_severity: 'ok',
+          last_error_code: null,
+          last_error_detail: null,
+        })
+        .eq('name', 'NWS Weather Alerts – Lake Geneva');
+
       // Log the sync attempt
       await supabase.from('activity_log').insert({
         entity_type: 'source',
         action: 'sync_completed',
         actor_type: 'system',
-        message: 'NWS Weather Alerts synced: No active alerts',
-        details: { source: 'NWS Weather Alerts', alerts_found: 0 }
+        message: `NWS Weather Alerts synced: No active alerts across ${NWS_ZONES.length} zones`,
+        details: { source: 'NWS Weather Alerts', alerts_found: 0, zones: NWS_ZONES }
       });
 
       return new Response(
@@ -638,10 +657,21 @@ Deno.serve(async (req) => {
     }
 
     // Update source last_fetched_at
-    await supabase
-      .from('sources')
-      .update({ last_fetched_at: new Date().toISOString() })
-      .eq('id', nwsSource?.id);
+    {
+      const nowIso = new Date().toISOString();
+      await supabase
+        .from('sources')
+        .update({
+          last_fetched_at: nowIso,
+          last_successful_fetch_at: nowIso,
+          last_nonzero_run_at: result.new_items > 0 ? nowIso : undefined,
+          last_items_ingested_count: result.new_items,
+          health_severity: 'ok',
+          last_error_code: null,
+          last_error_detail: null,
+        })
+        .eq('id', nwsSource?.id);
+    }
 
     // Log activity
     await supabase.from('activity_log').insert({

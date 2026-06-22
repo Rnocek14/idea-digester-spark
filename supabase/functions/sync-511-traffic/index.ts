@@ -112,6 +112,9 @@ serve(async (req) => {
 
     // Try multiple API endpoints - the 511 API has different endpoints for different data
     let eventsData = [];
+    let upstreamHealthy = false;
+    let lastErrorCode: string | null = null;
+    let lastErrorDetail: string | null = null;
     
     // Try getevents endpoint (official documented endpoint)
     try {
@@ -126,16 +129,49 @@ serve(async (req) => {
       
       if (eventsResponse.ok) {
         eventsData = await eventsResponse.json();
+        upstreamHealthy = true;
         console.log(`[sync-511-traffic] getevents returned ${eventsData?.length || 0} events`);
       } else {
         const errorText = await eventsResponse.text();
+        lastErrorCode = `getevents_${eventsResponse.status}`;
+        lastErrorDetail = errorText.substring(0, 300);
         console.error('[sync-511-traffic] getevents Error:', eventsResponse.status, errorText.substring(0, 300));
       }
     } catch (fetchError: any) {
+      lastErrorCode = 'getevents_fetch_error';
+      lastErrorDetail = fetchError.message;
       console.error('[sync-511-traffic] getevents fetch error:', fetchError.message);
     }
     
-    // If getevents failed or empty, try getalerts endpoint
+    // Fallback 1: try geteventsbybbox over the Walworth bounding box
+    if (!eventsData || eventsData.length === 0) {
+      try {
+        const bboxUrl = `${WI_511_API_BASE}/geteventsbybbox?key=${apiKey}&format=json` +
+          `&xmin=${WALWORTH_BOUNDS.minLon}&ymin=${WALWORTH_BOUNDS.minLat}` +
+          `&xmax=${WALWORTH_BOUNDS.maxLon}&ymax=${WALWORTH_BOUNDS.maxLat}`;
+        console.log(`[sync-511-traffic] Fetching bbox fallback: ${bboxUrl.replace(apiKey, 'API_KEY')}`);
+        const bboxResp = await fetch(bboxUrl, { headers: { 'Accept': 'application/json' } });
+        console.log(`[sync-511-traffic] geteventsbybbox status: ${bboxResp.status}`);
+        if (bboxResp.ok) {
+          const bboxData = await bboxResp.json();
+          if (Array.isArray(bboxData) && bboxData.length > 0) {
+            eventsData = bboxData;
+            upstreamHealthy = true;
+            console.log(`[sync-511-traffic] geteventsbybbox returned ${bboxData.length} events`);
+          } else {
+            upstreamHealthy = true; // 200 with empty array = healthy quiet
+          }
+        } else {
+          const t = await bboxResp.text();
+          lastErrorCode = lastErrorCode ?? `geteventsbybbox_${bboxResp.status}`;
+          lastErrorDetail = lastErrorDetail ?? t.substring(0, 300);
+        }
+      } catch (e: any) {
+        console.error('[sync-511-traffic] bbox fetch error:', e.message);
+      }
+    }
+
+    // Fallback 2: getalerts endpoint
     if (!eventsData || eventsData.length === 0) {
       try {
         const alertsUrl = `${WI_511_API_BASE}/getalerts?key=${apiKey}&format=json`;
@@ -149,9 +185,12 @@ serve(async (req) => {
         
         if (alertsResponse.ok) {
           eventsData = await alertsResponse.json();
+          upstreamHealthy = true;
           console.log(`[sync-511-traffic] getalerts returned ${eventsData?.length || 0} alerts`);
         } else {
           const errorText = await alertsResponse.text();
+          lastErrorCode = lastErrorCode ?? `getalerts_${alertsResponse.status}`;
+          lastErrorDetail = lastErrorDetail ?? errorText.substring(0, 300);
           console.error('[sync-511-traffic] getalerts Error:', alertsResponse.status, errorText.substring(0, 300));
         }
       } catch (fetchError: any) {
@@ -257,12 +296,26 @@ serve(async (req) => {
       }
     }
 
-    // Update source last_fetched_at
+    // Update source heartbeat + health flags so dashboard reflects upstream state
     if (sourceId) {
-      await supabase
-        .from('sources')
-        .update({ last_fetched_at: new Date().toISOString() })
-        .eq('id', sourceId);
+      const nowIso = new Date().toISOString();
+      const update: Record<string, any> = {
+        last_fetched_at: nowIso,
+        last_items_ingested_count: created,
+      };
+      if (upstreamHealthy) {
+        update.last_successful_fetch_at = nowIso;
+        update.health_severity = 'ok';
+        update.last_error_code = null;
+        update.last_error_detail = null;
+        if (created > 0) update.last_nonzero_run_at = nowIso;
+        else update.last_zero_items_at = nowIso;
+      } else {
+        update.health_severity = 'warning';
+        update.last_error_code = lastErrorCode;
+        update.last_error_detail = lastErrorDetail;
+      }
+      await supabase.from('sources').update(update).eq('id', sourceId);
     }
 
     // Log activity
