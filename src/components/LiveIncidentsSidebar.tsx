@@ -114,7 +114,7 @@ export default function LiveIncidentsSidebar({ onHide, showCloseButton = false }
             is_verified
           )
         `)
-        .in("status", ["active", "monitoring"])
+        .in("status", ["active", "developing", "monitoring"])
         .order("status", { ascending: true })
         .order("updated_at", { ascending: false })
         .limit(10); // Fetch more to filter
