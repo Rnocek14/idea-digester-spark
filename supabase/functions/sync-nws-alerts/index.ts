@@ -5,8 +5,11 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// NWS Zone for Walworth County, WI (Lake Geneva area)
-const NWS_ZONE = 'WIZ063'; // Walworth County
+// NWS Zones: Walworth (WIZ063) + adjacent Rock (WIZ062) + Jefferson (WIZ057).
+// NWS supports comma-separated zone queries; we keep the geo_label as Lake Geneva
+// since these adjacent zones routinely share the same regional grid alert.
+const NWS_ZONES = ['WIZ063', 'WIZ062', 'WIZ057'];
+const NWS_ZONE = NWS_ZONES.join(','); // kept for metadata/back-compat
 const NWS_ALERTS_URL = `https://api.weather.gov/alerts/active?zone=${NWS_ZONE}`;
 
 // Weather-type-specific fallback images for alerts - multiple images per type for variety
