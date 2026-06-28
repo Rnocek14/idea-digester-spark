@@ -306,6 +306,15 @@ Deno.serve(async (req) => {
     // Tier classification
     const decision = await classify(supabase, haystack);
 
+    // Tier 4 short-circuits: never merge, never boost — just log + drop.
+    if (decision.tier === 4) {
+      results.push({
+        ok: true, rejected: true, tier: 4,
+        hold_reason: decision.hold_reason, source: p.source, external_id: p.external_id,
+      });
+      continue;
+    }
+
     // AI rewrite for Tier 2 only
     let aiText: string | null = null;
     if (decision.tier === 2) {
