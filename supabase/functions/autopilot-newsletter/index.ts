@@ -1736,6 +1736,13 @@ function buildNewsletterV2(params: NewsletterV2Params) {
       <p style="margin: 0 0 20px 0; font-size: 15px; line-height: 1.5; color: #4a5568;">
         Good morning, Lake Geneva! 👋
       </p>
+      ${dailyBriefBody ? `
+      <div style="margin: 0 0 24px 0; padding: 18px 20px; border-left: 3px solid #1e293b; background: #f8fafc; border-radius: 4px;">
+        <div style="font-size: 11px; font-family: 'SF Mono', Menlo, monospace; text-transform: uppercase; letter-spacing: 0.15em; color: #64748b; margin: 0 0 10px 0;">Today's Brief</div>
+        <p style="margin: 0 0 12px 0; font-size: 15.5px; line-height: 1.65; color: #1e293b; font-family: Georgia, serif; white-space: pre-line;">${dailyBriefBody.replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]!))}</p>
+        <p style="margin: 0; font-size: 11px; font-family: 'SF Mono', Menlo, monospace; text-transform: uppercase; letter-spacing: 0.08em; color: #64748b;">— Maggie, Editor</p>
+      </div>
+      ` : ''}
       
       ${sponsorBlock}
       
