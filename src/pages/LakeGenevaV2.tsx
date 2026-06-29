@@ -19,6 +19,7 @@ import RightRailTemporal from "@/components/RightRailTemporal";
 import CommunityDeskBlock from "@/components/CommunityDeskBlock";
 import NowHiringWidget from "@/components/NowHiringWidget";
 import TodaysBriefBlock from "@/components/TodaysBriefBlock";
+import LakeBeatLine from "@/components/LakeBeatLine";
 import HistoryTodayBlock from "@/components/HistoryTodayBlock";
 import BusinessStoryBlock from "@/components/BusinessStoryBlock";
 import { InlineSubscribeCTA } from "@/components/InlineSubscribeCTA";
@@ -726,6 +727,39 @@ const LakeGenevaV2 = () => {
 
   const filteredStories = getFilteredStories();
 
+  // Read today's brief's mentioned_story_ids so the pyramid doesn't re-show
+  // the same headlines the prose brief already named. Falls back to no-dedupe
+  // if the brief hasn't been generated yet today.
+  const todayCT = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Chicago",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+  const { data: briefMentionedIds = [] } = useQuery({
+    queryKey: ["daily-brief-mentioned-ids", todayCT],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("daily_briefs")
+        .select("mentioned_story_ids")
+        .eq("brief_date", todayCT)
+        .eq("status", "published")
+        .maybeSingle();
+      return (data?.mentioned_story_ids as string[] | null) ?? [];
+    },
+    staleTime: 5 * 60_000,
+  });
+
+  // Stories filtered for the lead-pyramid (skip ones already named in the
+  // brief). If dedupe would leave us with fewer than 3, fall back to the
+  // original list so the section never renders as empty chrome on quiet days.
+  const pyramidStories = (() => {
+    if (!briefMentionedIds || briefMentionedIds.length === 0) return filteredStories;
+    const mentioned = new Set(briefMentionedIds);
+    const deduped = filteredStories.filter((s: any) => !mentioned.has(s.id));
+    return deduped.length >= 3 ? deduped : filteredStories;
+  })();
+
   // Group stories by category for topic mode
   const getStoriesByCategory = () => {
     const grouped: Record<string, Story[]> = {};
@@ -1009,6 +1043,8 @@ const LakeGenevaV2 = () => {
               <div className="mb-6 space-y-5">
                 {/* Sprint 4: Today's Brief — editorial 3-bullet morning summary */}
                 <TodaysBriefBlock stories={filteredStories.slice(0, 3) as any} />
+                {/* One-line "on the lake today" beat */}
+                <LakeBeatLine />
                 {/* Anchored daily content: Today in Lake Geneva History */}
                 <HistoryTodayBlock />
                 {/* Rotating business spotlight (Phase 3 — Business Story Engine) */}
@@ -1021,9 +1057,10 @@ const LakeGenevaV2 = () => {
                     return `${greeting}, Lake Geneva. Here's what locals should know today.`;
                   })()}
                 </p>
-                {/* First story - FULL WIDTH, dominant header photo */}
-                {filteredStories[0] && (() => {
-                  const story = filteredStories[0];
+                {/* First story - FULL WIDTH, dominant header photo.
+                    Uses pyramidStories so we don't re-show stories the brief already named. */}
+                {pyramidStories[0] && (() => {
+                  const story = pyramidStories[0];
                   const time = getRelativeTime(story.publish_date || story.created_at);
                   let source: string | null = (story as any).source?.name || null;
                   if (!source && story.original_url) {
@@ -1053,9 +1090,9 @@ const LakeGenevaV2 = () => {
                 })()}
 
                 {/* Second + Third stories - side by side */}
-                {filteredStories.length > 1 && (
+                {pyramidStories.length > 1 && (
                   <div className="grid gap-5 sm:grid-cols-2">
-                    {[filteredStories[1], filteredStories[2]].filter(Boolean).map((story) => {
+                    {[pyramidStories[1], pyramidStories[2]].filter(Boolean).map((story) => {
                       const time = getRelativeTime(story.publish_date || story.created_at);
                       let source: string | null = (story as any).source?.name || null;
                       if (!source && story.original_url) {

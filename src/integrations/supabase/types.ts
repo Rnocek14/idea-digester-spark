@@ -985,6 +985,45 @@ export type Database = {
           },
         ]
       }
+      daily_briefs: {
+        Row: {
+          body: string
+          brief_date: string
+          created_at: string
+          generation_error: string | null
+          is_quiet_day: boolean
+          mentioned_story_ids: string[]
+          model: string | null
+          prompt_version: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          brief_date: string
+          created_at?: string
+          generation_error?: string | null
+          is_quiet_day?: boolean
+          mentioned_story_ids?: string[]
+          model?: string | null
+          prompt_version?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          brief_date?: string
+          created_at?: string
+          generation_error?: string | null
+          is_quiet_day?: boolean
+          mentioned_story_ids?: string[]
+          model?: string | null
+          prompt_version?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       data_snapshots: {
         Row: {
           created_at: string | null
@@ -1762,6 +1801,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      lake_beats: {
+        Row: {
+          beat_date: string
+          body: string
+          conditions: string | null
+          created_at: string
+          generation_error: string | null
+          model: string | null
+          temp_f: number | null
+        }
+        Insert: {
+          beat_date: string
+          body: string
+          conditions?: string | null
+          created_at?: string
+          generation_error?: string | null
+          model?: string | null
+          temp_f?: number | null
+        }
+        Update: {
+          beat_date?: string
+          body?: string
+          conditions?: string | null
+          created_at?: string
+          generation_error?: string | null
+          model?: string | null
+          temp_f?: number | null
+        }
+        Relationships: []
       }
       newsletter_clicks: {
         Row: {
