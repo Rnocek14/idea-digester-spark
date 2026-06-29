@@ -7,8 +7,8 @@ const corsHeaders = {
 };
 
 const EDITORIAL_SECRET = Deno.env.get("EDITORIAL_GENERATION_SECRET");
-const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-const MODEL = "google/gemini-3-flash-preview";
+const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+const MODEL = "gpt-4o-mini";
 
 // Compute "today" in America/Chicago regardless of where Deno runs.
 function todayCT(): string {
@@ -51,8 +51,8 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: "Missing LOVABLE_API_KEY" }), {
+    if (!OPENAI_API_KEY) {
+      return new Response(JSON.stringify({ error: "Missing OPENAI_API_KEY" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -174,11 +174,11 @@ serve(async (req) => {
         : evList.map((e) => `- ${e.title}${e.geo_label ? " (" + e.geo_label + ")" : ""}`).join("\n"),
     ].join("\n");
 
-    const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const aiResp = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
         model: MODEL,
@@ -186,12 +186,13 @@ serve(async (req) => {
           { role: "system", content: system },
           { role: "user", content: sourceBlock },
         ],
+        temperature: 0.7,
       }),
     });
 
     if (!aiResp.ok) {
       const errText = await aiResp.text();
-      console.error("[generate-daily-brief] AI gateway failed", aiResp.status, errText);
+      console.error("[generate-daily-brief] OpenAI failed", aiResp.status, errText);
       // Persist the failure so it's visible
       await supabase.from("daily_briefs").upsert({
         brief_date,
@@ -200,10 +201,10 @@ serve(async (req) => {
         mentioned_story_ids,
         model: MODEL,
         status: "draft",
-        generation_error: `gateway ${aiResp.status}: ${errText.slice(0, 500)}`,
+        generation_error: `openai ${aiResp.status}: ${errText.slice(0, 500)}`,
       });
       return new Response(
-        JSON.stringify({ error: "ai_gateway_failed", status: aiResp.status, detail: errText.slice(0, 300) }),
+        JSON.stringify({ error: "openai_failed", status: aiResp.status, detail: errText.slice(0, 300) }),
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }

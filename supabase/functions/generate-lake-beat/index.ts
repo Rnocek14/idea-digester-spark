@@ -7,8 +7,8 @@ const corsHeaders = {
 };
 
 const EDITORIAL_SECRET = Deno.env.get("EDITORIAL_GENERATION_SECRET");
-const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-const MODEL = "google/gemini-3-flash-preview";
+const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+const MODEL = "gpt-4o-mini";
 
 function todayCT(): string {
   return new Intl.DateTimeFormat("en-CA", {
@@ -44,8 +44,8 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: "Missing LOVABLE_API_KEY" }), {
+    if (!OPENAI_API_KEY) {
+      return new Response(JSON.stringify({ error: "Missing OPENAI_API_KEY" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -92,11 +92,11 @@ serve(async (req) => {
     ].join("\n");
     const user = `Temp: ${temp_f}F, wind: ${wind} mph, conditions: ${conditions}.`;
 
-    const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const aiResp = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
         model: MODEL,
@@ -104,22 +104,23 @@ serve(async (req) => {
           { role: "system", content: system },
           { role: "user", content: user },
         ],
+        temperature: 0.8,
       }),
     });
 
     if (!aiResp.ok) {
       const errText = await aiResp.text();
-      console.error("[generate-lake-beat] gateway", aiResp.status, errText);
+      console.error("[generate-lake-beat] openai", aiResp.status, errText);
       await supabase.from("lake_beats").upsert({
         beat_date,
         body: `${temp_f}° and ${conditions} on the lake.`,
         temp_f,
         conditions,
         model: MODEL,
-        generation_error: `gateway ${aiResp.status}`,
+        generation_error: `openai ${aiResp.status}`,
       });
       return new Response(
-        JSON.stringify({ error: "ai_gateway_failed", fallback_written: true }),
+        JSON.stringify({ error: "openai_failed", fallback_written: true }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
