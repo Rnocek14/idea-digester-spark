@@ -134,7 +134,7 @@ export default function GinaNeighborCard() {
       <Link
         to="/selling-lake-geneva"
         onClick={fireClick}
-        className="mt-3 flex items-center justify-center gap-1.5 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-medium uppercase tracking-wider py-2 transition-colors"
+        className="mt-3 flex items-center justify-center gap-1.5 rounded-md bg-slate-900 hover:bg-slate-800 text-stone-50 text-[11px] font-medium uppercase tracking-wider py-2 transition-colors"
       >
         What's my home worth?
         <span aria-hidden>→</span>
