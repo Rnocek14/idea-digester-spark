@@ -19,6 +19,7 @@ import RightRailTemporal from "@/components/RightRailTemporal";
 import CommunityDeskBlock from "@/components/CommunityDeskBlock";
 import NowHiringWidget from "@/components/NowHiringWidget";
 import TodaysBriefBlock from "@/components/TodaysBriefBlock";
+import LakeBeatLine from "@/components/LakeBeatLine";
 import HistoryTodayBlock from "@/components/HistoryTodayBlock";
 import BusinessStoryBlock from "@/components/BusinessStoryBlock";
 import { InlineSubscribeCTA } from "@/components/InlineSubscribeCTA";
