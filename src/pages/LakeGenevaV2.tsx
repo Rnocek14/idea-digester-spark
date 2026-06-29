@@ -838,6 +838,9 @@ const LakeGenevaV2 = () => {
                   <p className="mt-1 text-xs text-slate-600 leading-relaxed">26 miles around Geneva Lake — 16 narrated stops, maps, and a guided walk mode.</p>
                   <span className="mt-2 inline-block text-xs font-medium text-blue-600">Open the guide →</span>
                 </Link>
+
+                {/* Market snapshot — keeps Gina's real-estate angle in the left rail */}
+                <LakeGenevaByNumbers />
               </ScrollableContainer>
             </div>
           </aside>
