@@ -813,6 +813,9 @@ const LakeGenevaV2 = () => {
                 {/* LIVE Header with dynamic indicator */}
                 <LiveColumnHeader />
 
+                {/* Sponsor spotlight — pinned to top of left rail for visibility */}
+                <GinaNeighborCard />
+
                 {/* Weather + daylight (merged Lake at a Glance) */}
                 <div className="bg-stone-50 rounded-md border border-slate-200 px-3 py-2.5">
                   <WeatherWidget />
@@ -835,6 +838,9 @@ const LakeGenevaV2 = () => {
                   <p className="mt-1 text-xs text-slate-600 leading-relaxed">26 miles around Geneva Lake — 16 narrated stops, maps, and a guided walk mode.</p>
                   <span className="mt-2 inline-block text-xs font-medium text-blue-600">Open the guide →</span>
                 </Link>
+
+                {/* Market snapshot — keeps Gina's real-estate angle in the left rail */}
+                <LakeGenevaByNumbers />
               </ScrollableContainer>
             </div>
           </aside>
@@ -1488,8 +1494,6 @@ const LakeGenevaV2 = () => {
                 {/* Sprint 2: strict temporal flow — Tonight → Weekend → Next Week → Worth a Look */}
                 <RightRailTemporal />
                 <EditorialLaterRail />
-                <GinaNeighborCard />
-                <LakeGenevaByNumbers />
               </ScrollableContainer>
             </div>
           </aside>
