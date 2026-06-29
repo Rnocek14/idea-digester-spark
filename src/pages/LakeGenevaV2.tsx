@@ -9,7 +9,6 @@ import { toast } from "sonner";
 import PageShell from "@/components/PageShell";
 import { StoryCard } from "@/components/StoryCard";
 import WeatherWidget from "@/components/WeatherWidget";
-import WeatherForecast from "@/components/WeatherForecast";
 import LiveIncidentsSidebar from "@/components/LiveIncidentsSidebar";
 import NightlifeWidget from "@/components/NightlifeWidget";
 import HappeningTodayWidget from "@/components/HappeningTodayWidget";
@@ -816,13 +815,9 @@ const LakeGenevaV2 = () => {
                 {/* Sponsor spotlight — pinned to top of left rail for visibility */}
                 <GinaNeighborCard />
 
-                {/* Weather + daylight (merged Lake at a Glance) */}
+                {/* Weather: current + 3-day forecast */}
                 <div className="bg-stone-50 rounded-md border border-slate-200 px-3 py-2.5">
                   <WeatherWidget />
-                </div>
-                {/* Sprint 2: 3-day forecast moves below the masthead temp line */}
-                <div className="bg-white rounded-md border border-slate-200 p-3">
-                  <WeatherForecast />
                 </div>
                 
                 {/* Live Incidents */}
