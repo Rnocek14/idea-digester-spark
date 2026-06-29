@@ -12,9 +12,9 @@ export default function LakeGenevaByNumbers() {
     queryFn: async () => {
       const { data } = await supabase
         .from("real_estate_metrics")
-        .select("median_price, yoy_change, active_listings, days_on_market, zip_code, snapshot_date")
+        .select("median_price, yoy_change, active_listings, new_listings, zip_code, updated_at")
         .eq("zip_code", "53147")
-        .order("snapshot_date", { ascending: false })
+        .order("updated_at", { ascending: false })
         .limit(1)
         .maybeSingle();
       return data;
@@ -43,8 +43,8 @@ export default function LakeGenevaByNumbers() {
     });
   if (data.active_listings != null)
     rows.push({ label: "Active listings", value: String(data.active_listings) });
-  if (data.days_on_market != null)
-    rows.push({ label: "Days on market", value: String(data.days_on_market) });
+  if (data.new_listings != null)
+    rows.push({ label: "New this week", value: String(data.new_listings) });
 
   if (rows.length === 0) return null;
 
