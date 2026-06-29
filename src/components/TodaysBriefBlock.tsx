@@ -1,4 +1,6 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 type BriefStory = {
   id: string;
@@ -19,20 +21,91 @@ const categoryLead = (category: string | null): string => {
   return "Worth knowing";
 };
 
+function todayCT(): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Chicago",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
 /**
- * "Today's Brief" — three-bullet morning summary signed by the desk.
- * Derived from the day's top stories (front of the feed) so it always
- * reflects the actual lead lineup without requiring a manual write-up.
+ * "Today's Brief" — an AI-written morning brief in prose, signed by Maggie
+ * (the Brief's editor). Generated once each morning by `generate-daily-brief`
+ * and stored in `daily_briefs`. Falls back to a title-assembly summary on
+ * mornings where the brief hasn't been generated yet.
  */
 export default function TodaysBriefBlock({ stories }: { stories: BriefStory[] }) {
-  const items = stories.slice(0, 3);
-  if (items.length < 2) return null;
+  const [briefBody, setBriefBody] = useState<string | null>(null);
+  const [briefLoaded, setBriefLoaded] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("daily_briefs")
+        .select("body")
+        .eq("brief_date", todayCT())
+        .eq("status", "published")
+        .maybeSingle();
+      if (cancelled) return;
+      const body = (data?.body || "").trim();
+      setBriefBody(body || null);
+      setBriefLoaded(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const today = new Date().toLocaleDateString("en-US", {
     weekday: "long",
     month: "long",
     day: "numeric",
   });
+
+  // Render the AI brief if we have it
+  if (briefLoaded && briefBody) {
+    return (
+      <aside
+        aria-label="Today's Brief"
+        className="mb-8 rounded-md border border-slate-200 bg-gradient-to-br from-stone-50 via-white to-sky-50/40 px-5 py-5 sm:px-6 sm:py-6"
+      >
+        <div className="flex items-baseline justify-between mb-3 pb-2 border-b border-slate-200/80">
+          <h2
+            className="text-base sm:text-lg text-slate-900"
+            style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 700 }}
+          >
+            Today's Brief
+          </h2>
+          <span className="text-[10px] font-mono uppercase tracking-[0.18em] text-slate-500">
+            {today}
+          </span>
+        </div>
+
+        <p
+          className="text-[15px] sm:text-[15.5px] text-slate-800 leading-[1.65] whitespace-pre-line"
+          style={{ fontFamily: "Georgia, 'Playfair Display', serif" }}
+        >
+          {briefBody}
+        </p>
+
+        <div className="mt-4 pt-3 border-t border-slate-200/80 flex items-center gap-2">
+          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-amber-200/70 text-[11px] font-bold text-amber-900">
+            M
+          </span>
+          <span className="text-[11px] font-mono uppercase tracking-wider text-slate-500">
+            — Maggie, Editor · Lake Geneva Brief
+          </span>
+        </div>
+      </aside>
+    );
+  }
+
+  // Fallback: title-assembly brief (used until 5am or on generation failure)
+  const items = stories.slice(0, 3);
+  if (items.length < 2) return null;
 
   return (
     <aside
@@ -99,7 +172,7 @@ export default function TodaysBriefBlock({ stories }: { stories: BriefStory[] })
       </ol>
 
       <p className="mt-4 pt-3 border-t border-slate-200/80 text-[11px] font-mono uppercase tracking-wider text-slate-500">
-        — Lake Geneva Brief desk
+        — The Brief desk
       </p>
     </aside>
   );
