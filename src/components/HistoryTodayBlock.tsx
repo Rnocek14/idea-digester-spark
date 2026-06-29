@@ -48,26 +48,18 @@ export default function HistoryTodayBlock() {
         return;
       }
 
-      const fallback = await supabase
+      // No exact match — rotate deterministically through the full library
+      // so the block changes daily instead of sticking on the nearest entry.
+      const all = await supabase
         .from("history_entries")
         .select("id,title,body,event_year,source_citation,history_type")
         .eq("status", "approved")
-        .gte("day_of_year", doy)
-        .order("day_of_year", { ascending: true })
-        .limit(1)
-        .maybeSingle();
+        .order("day_of_year", { ascending: true });
 
-      let chosen = fallback.data as Entry | null;
-      if (!chosen) {
-        const wrap = await supabase
-          .from("history_entries")
-          .select("id,title,body,event_year,source_citation,history_type")
-          .eq("status", "approved")
-          .order("day_of_year", { ascending: true })
-          .limit(1)
-          .maybeSingle();
-        chosen = (wrap.data as Entry | null) ?? null;
-      }
+      const list = (all.data as Entry[] | null) ?? [];
+      const chosen: Entry | null = list.length
+        ? list[doy % list.length]
+        : null;
 
       if (!cancelled) {
         setEntry(chosen);
