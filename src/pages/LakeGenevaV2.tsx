@@ -9,7 +9,6 @@ import { toast } from "sonner";
 import PageShell from "@/components/PageShell";
 import { StoryCard } from "@/components/StoryCard";
 import WeatherWidget from "@/components/WeatherWidget";
-import WeatherForecast from "@/components/WeatherForecast";
 import LiveIncidentsSidebar from "@/components/LiveIncidentsSidebar";
 import NightlifeWidget from "@/components/NightlifeWidget";
 import HappeningTodayWidget from "@/components/HappeningTodayWidget";
