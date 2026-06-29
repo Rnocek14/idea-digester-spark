@@ -1,6 +1,58 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { Star } from "lucide-react";
+
+const GINA_ID = "db06b0ce-2fe3-4a01-a870-7f2aef1913a6";
+
+type GinaInfo = {
+  name: string;
+  logo_url: string | null;
+  zillow_rating: number | null;
+  zillow_review_count: number | null;
+};
+
+function GinaSponsorLine({ gina }: { gina: GinaInfo | null }) {
+  return (
+    <Link
+      to="/selling-lake-geneva"
+      className="mt-3 flex items-center gap-3 group rounded-md hover:bg-slate-50 -mx-2 px-2 py-2 transition-colors"
+    >
+      <div className="w-9 h-9 rounded-full overflow-hidden bg-slate-100 border-2 border-white shadow-sm flex-shrink-0">
+        {gina?.logo_url ? (
+          <img
+            src={gina.logo_url}
+            alt={gina.name}
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
+        ) : null}
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-[10px] font-mono uppercase tracking-wider text-slate-500">
+          Brought to you by
+        </p>
+        <p className="text-[12.5px] text-slate-800 leading-tight">
+          <span className="font-semibold group-hover:text-blue-700 transition-colors">
+            {gina?.name || "Gina Nocek"}
+          </span>
+          <span className="text-slate-500"> — Lake Geneva Realtor</span>
+        </p>
+        {gina?.zillow_rating && gina?.zillow_review_count ? (
+          <div className="flex items-center gap-1 mt-0.5">
+            <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+            <span className="text-[10px] text-slate-500">
+              {gina.zillow_rating.toFixed(1)} · {gina.zillow_review_count} reviews
+            </span>
+          </div>
+        ) : null}
+      </div>
+      <span className="text-[11px] text-slate-400 group-hover:text-blue-700 transition-colors">
+        →
+      </span>
+    </Link>
+  );
+}
 
 type BriefStory = {
   id: string;
@@ -39,6 +91,7 @@ function todayCT(): string {
 export default function TodaysBriefBlock({ stories }: { stories: BriefStory[] }) {
   const [briefBody, setBriefBody] = useState<string | null>(null);
   const [briefLoaded, setBriefLoaded] = useState(false);
+  const [gina, setGina] = useState<GinaInfo | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -53,6 +106,14 @@ export default function TodaysBriefBlock({ stories }: { stories: BriefStory[] })
       const body = (data?.body || "").trim();
       setBriefBody(body || null);
       setBriefLoaded(true);
+    })();
+    (async () => {
+      const { data } = await supabase
+        .from("business_profiles")
+        .select("name, logo_url, zillow_rating, zillow_review_count")
+        .eq("id", GINA_ID)
+        .maybeSingle();
+      if (!cancelled && data) setGina(data as GinaInfo);
     })();
     return () => {
       cancelled = true;
@@ -100,16 +161,7 @@ export default function TodaysBriefBlock({ stories }: { stories: BriefStory[] })
           </span>
         </div>
 
-        <Link
-          to="/selling-lake-geneva"
-          className="mt-3 flex items-center gap-2 text-[11px] text-slate-500 hover:text-slate-800 transition-colors group"
-        >
-          <span className="font-mono uppercase tracking-wider">Brought to you by</span>
-          <span className="font-semibold text-slate-700 group-hover:text-blue-700">
-            Gina Nocek
-          </span>
-          <span className="text-slate-400">— Lake Geneva Realtor</span>
-        </Link>
+        <GinaSponsorLine gina={gina} />
       </aside>
     );
   }
@@ -185,16 +237,7 @@ export default function TodaysBriefBlock({ stories }: { stories: BriefStory[] })
       <p className="mt-4 pt-3 border-t border-slate-200/80 text-[11px] font-mono uppercase tracking-wider text-slate-500">
         — The Brief desk
       </p>
-      <Link
-        to="/selling-lake-geneva"
-        className="mt-2 flex items-center gap-2 text-[11px] text-slate-500 hover:text-slate-800 transition-colors group"
-      >
-        <span className="font-mono uppercase tracking-wider">Brought to you by</span>
-        <span className="font-semibold text-slate-700 group-hover:text-blue-700">
-          Gina Nocek
-        </span>
-        <span className="text-slate-400">— Lake Geneva Realtor</span>
-      </Link>
+      <GinaSponsorLine gina={gina} />
     </aside>
   );
 }
