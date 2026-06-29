@@ -20,11 +20,27 @@ type Voice = {
 };
 type Stats = { submissions: number; published: number; businesses: number };
 
+/** Day-of-year in America/Chicago, used as a stable daily rotation index. */
+function dayOfYearCT(): number {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Chicago",
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+  }).formatToParts(new Date());
+  const y = Number(parts.find((p) => p.type === "year")?.value);
+  const m = Number(parts.find((p) => p.type === "month")?.value);
+  const d = Number(parts.find((p) => p.type === "day")?.value);
+  const start = Date.UTC(y, 0, 0);
+  const now = Date.UTC(y, m - 1, d);
+  return Math.floor((now - start) / 86_400_000);
+}
+
 export default function CommunityDeskBlock() {
   const { data } = useQuery({
     queryKey: ["community-desk-block"],
     queryFn: async () => {
-      const [love, voice, totalSubs, publishedSubs, publishedPosts, businesses] =
+      const [loves, voices, totalSubs, publishedSubs, publishedPosts, businesses] =
         await Promise.all([
           supabase
             .from("community_submissions")
@@ -32,16 +48,14 @@ export default function CommunityDeskBlock() {
             .eq("kind", "local_love")
             .in("status", ["approved", "published"])
             .order("created_at", { ascending: false })
-            .limit(1)
-            .maybeSingle(),
+            .limit(50),
           supabase
             .from("community_posts")
             .select("id, slug, title, excerpt, category, community_authors!author_id(display_name)")
             .eq("status", "published")
             .neq("category", "throwback")
             .order("published_at", { ascending: false })
-            .limit(1)
-            .maybeSingle(),
+            .limit(30),
           supabase
             .from("community_submissions")
             .select("id", { count: "exact", head: true }),
@@ -65,9 +79,15 @@ export default function CommunityDeskBlock() {
         published: (publishedSubs.count || 0) + (publishedPosts.count || 0),
         businesses: businesses.count || 0,
       };
+      const loveList = (loves.data as Love[] | null) || [];
+      const voiceList = (voices.data as unknown as Voice[] | null) || [];
+      const doy = dayOfYearCT();
+      const love = loveList.length ? loveList[doy % loveList.length] : null;
+      // Offset voice rotation so love + voice don't always cycle in lockstep
+      const voice = voiceList.length ? voiceList[(doy + 1) % voiceList.length] : null;
       return {
-        love: (love.data as Love | null) || null,
-        voice: (voice.data as unknown as Voice | null) || null,
+        love,
+        voice,
         stats,
       };
     },
