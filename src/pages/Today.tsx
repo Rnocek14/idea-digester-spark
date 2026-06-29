@@ -8,6 +8,7 @@ import { PublicFooter } from "@/components/PublicFooter";
 import { PageMeta } from "@/components/PageMeta";
 import WeatherWidget from "@/components/WeatherWidget";
 import HappeningTodayWidget from "@/components/HappeningTodayWidget";
+import LakeBeatLine from "@/components/LakeBeatLine";
 import { storyPath } from "@/lib/slug";
 
 /**
@@ -87,6 +88,9 @@ export default function Today() {
           <p className="text-[13px] text-slate-600 mt-2 italic">
             One scannable look at Lake Geneva today — weather, stories, events.
           </p>
+          <div className="mt-3">
+            <LakeBeatLine />
+          </div>
         </header>
 
         {/* Conditions strip */}
