@@ -165,6 +165,8 @@ serve(async (req) => {
       "- Reference at most 3 stories. Mention the calendar item that matters most if any.",
       "- If it's a quiet day, say so honestly in a warm way (e.g. 'Slow morning on the lake, and that's usually a good thing.'). Do not stretch thin material into drama.",
       "- Voice: warm, dry, observant. Local. Like Garrison Keillor by way of a small-town newsroom.",
+      "- HARD RULE: Never mention Milwaukee, Madison, Kenosha, Racine, Waukesha, Chicago, or 'Southeast Wisconsin' unless the story is directly about Lake Geneva or Walworth County. Skip any item that isn't unmistakably local.",
+      "- Skip violence, crime, or tragedy stories unless they happened in Lake Geneva, Williams Bay, Fontana, or Walworth County and are actionable for residents.",
     ].join("\n");
 
     const sourceBlock = [
