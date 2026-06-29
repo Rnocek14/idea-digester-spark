@@ -79,10 +79,10 @@ serve(async (req) => {
       LOCAL_KW.test(
         `${s?.title ?? ""} ${s?.summary ?? ""} ${String(s?.content ?? "").slice(0, 800)}`,
       );
-    const isRegional = (s: any) => {
-      const blob = `${s?.title ?? ""} ${s?.summary ?? ""}`;
-      return REGIONAL_KW.test(blob) && !LOCAL_KW.test(blob);
-    };
+    // A story is "regional" if its TITLE names a non-local city — the summary
+    // often tacks on "those with ties to Lake Geneva may want to know" which
+    // would otherwise sneak it past a combined check.
+    const isRegional = (s: any) => REGIONAL_KW.test(String(s?.title ?? ""));
 
     // Idempotent unless forced
     const { data: existing } = await supabase
