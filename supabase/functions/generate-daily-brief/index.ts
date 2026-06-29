@@ -68,6 +68,22 @@ serve(async (req) => {
     const brief_date = todayCT();
     const y_date = yesterdayCT();
 
+    // Local-keyword regex — story must mention a real Lake Geneva-area place/name
+    // to qualify for the Brief, even if it's tagged T1/T2 (the ingestion AI
+    // mis-tags Milwaukee / regional content as T1 too often).
+    const LOCAL_KW =
+      /(lake geneva|geneva lake|williams bay|fontana|big foot beach|wrigley drive|flat iron park|library park|horticultural hall|riviera|grand geneva|abbey resort|pier 290|baker house|gordy|harpoon willie|fat cat|geneva tap house|topsy turvy|house of music|crafted americana|chuck'?s lakeshore|town of linn| linn,|walworth|delavan|elkhorn|bloomfield|darien|east troy|lake como|badger high|genoa city|sharon|twin lakes|burlington|pell lake|lyons|whitewater)/i;
+    const REGIONAL_KW =
+      /(milwaukee|madison|kenosha|racine|waukesha|southeast wisconsin|chicago|illinois)/i;
+    const hasLocal = (s: any) =>
+      LOCAL_KW.test(
+        `${s?.title ?? ""} ${s?.summary ?? ""} ${String(s?.content ?? "").slice(0, 800)}`,
+      );
+    const isRegional = (s: any) => {
+      const blob = `${s?.title ?? ""} ${s?.summary ?? ""}`;
+      return REGIONAL_KW.test(blob) && !LOCAL_KW.test(blob);
+    };
+
     // Idempotent unless forced
     const { data: existing } = await supabase
       .from("daily_briefs")
@@ -119,8 +135,12 @@ serve(async (req) => {
       .order("priority_score", { ascending: false, nullsFirst: false })
       .limit(4);
 
-    const todayList = (todayStories ?? []) as any[];
-    const yList = (yStories ?? []) as any[];
+    const todayList = ((todayStories ?? []) as any[])
+      .filter((s) => !isRegional(s))
+      .filter((s) => hasLocal(s));
+    const yList = ((yStories ?? []) as any[])
+      .filter((s) => !isRegional(s))
+      .filter((s) => hasLocal(s));
     const evList = (events ?? []) as any[];
 
     const is_quiet_day = todayList.length < 2;
