@@ -1043,6 +1043,8 @@ const LakeGenevaV2 = () => {
               <div className="mb-6 space-y-5">
                 {/* Sprint 4: Today's Brief — editorial 3-bullet morning summary */}
                 <TodaysBriefBlock stories={filteredStories.slice(0, 3) as any} />
+                {/* One-line "on the lake today" beat */}
+                <LakeBeatLine />
                 {/* Anchored daily content: Today in Lake Geneva History */}
                 <HistoryTodayBlock />
                 {/* Rotating business spotlight (Phase 3 — Business Story Engine) */}
@@ -1055,9 +1057,10 @@ const LakeGenevaV2 = () => {
                     return `${greeting}, Lake Geneva. Here's what locals should know today.`;
                   })()}
                 </p>
-                {/* First story - FULL WIDTH, dominant header photo */}
-                {filteredStories[0] && (() => {
-                  const story = filteredStories[0];
+                {/* First story - FULL WIDTH, dominant header photo.
+                    Uses pyramidStories so we don't re-show stories the brief already named. */}
+                {pyramidStories[0] && (() => {
+                  const story = pyramidStories[0];
                   const time = getRelativeTime(story.publish_date || story.created_at);
                   let source: string | null = (story as any).source?.name || null;
                   if (!source && story.original_url) {
@@ -1087,9 +1090,9 @@ const LakeGenevaV2 = () => {
                 })()}
 
                 {/* Second + Third stories - side by side */}
-                {filteredStories.length > 1 && (
+                {pyramidStories.length > 1 && (
                   <div className="grid gap-5 sm:grid-cols-2">
-                    {[filteredStories[1], filteredStories[2]].filter(Boolean).map((story) => {
+                    {[pyramidStories[1], pyramidStories[2]].filter(Boolean).map((story) => {
                       const time = getRelativeTime(story.publish_date || story.created_at);
                       let source: string | null = (story as any).source?.name || null;
                       if (!source && story.original_url) {
