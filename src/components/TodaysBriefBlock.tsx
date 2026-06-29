@@ -99,6 +99,17 @@ export default function TodaysBriefBlock({ stories }: { stories: BriefStory[] })
             — Maggie, Editor · Lake Geneva Brief
           </span>
         </div>
+
+        <Link
+          to="/selling-lake-geneva"
+          className="mt-3 flex items-center gap-2 text-[11px] text-slate-500 hover:text-slate-800 transition-colors group"
+        >
+          <span className="font-mono uppercase tracking-wider">Brought to you by</span>
+          <span className="font-semibold text-slate-700 group-hover:text-blue-700">
+            Gina Nocek
+          </span>
+          <span className="text-slate-400">— Lake Geneva Realtor</span>
+        </Link>
       </aside>
     );
   }
@@ -174,6 +185,16 @@ export default function TodaysBriefBlock({ stories }: { stories: BriefStory[] })
       <p className="mt-4 pt-3 border-t border-slate-200/80 text-[11px] font-mono uppercase tracking-wider text-slate-500">
         — The Brief desk
       </p>
+      <Link
+        to="/selling-lake-geneva"
+        className="mt-2 flex items-center gap-2 text-[11px] text-slate-500 hover:text-slate-800 transition-colors group"
+      >
+        <span className="font-mono uppercase tracking-wider">Brought to you by</span>
+        <span className="font-semibold text-slate-700 group-hover:text-blue-700">
+          Gina Nocek
+        </span>
+        <span className="text-slate-400">— Lake Geneva Realtor</span>
+      </Link>
     </aside>
   );
 }
