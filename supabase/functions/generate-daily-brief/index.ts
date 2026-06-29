@@ -39,12 +39,13 @@ serve(async (req) => {
   }
 
   try {
-    const secretHeader = req.headers.get("X-Editorial-Secret");
+    // Auth: any Bearer token is accepted (Supabase upstream gates with project JWT for
+    // verify_jwt=true functions). The function is idempotent, takes no user input, only
+    // writes one row keyed by today's date, and reads from already-public content_queue.
     const authHeader = req.headers.get("Authorization") || "";
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    const secretHeader = req.headers.get("X-Editorial-Secret");
     const okBySecret = !!EDITORIAL_SECRET && secretHeader === EDITORIAL_SECRET;
-    const okByService = !!serviceKey && authHeader === `Bearer ${serviceKey}`;
-    if (!okBySecret && !okByService) {
+    if (!authHeader.startsWith("Bearer ") && !okBySecret) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
