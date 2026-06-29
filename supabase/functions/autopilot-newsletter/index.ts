@@ -1418,6 +1418,7 @@ interface NewsletterV2Params {
     submitter_name: string | null;
     category: string | null;
   } | null;
+  dailyBriefBody?: string | null;
 }
 
 function buildNewsletterV2(params: NewsletterV2Params) {
@@ -1438,6 +1439,7 @@ function buildNewsletterV2(params: NewsletterV2Params) {
     weekendEvents,
     isWeekendSendDay,
     localLove,
+    dailyBriefBody,
   } = params;
 
   const optimizedMap = new Map(optimizedStories.map(o => [o.id, o.newsletter_voice]));
