@@ -16,6 +16,8 @@ import HappeningTodayWidget from "@/components/HappeningTodayWidget";
 import ComingUpRail from "@/components/ComingUpRail";
 import EditorialLaterRail from "@/components/EditorialLaterRail";
 import RightRailTemporal from "@/components/RightRailTemporal";
+import GinaNeighborCard from "@/components/GinaNeighborCard";
+import LakeGenevaByNumbers from "@/components/LakeGenevaByNumbers";
 import CommunityDeskBlock from "@/components/CommunityDeskBlock";
 import NowHiringWidget from "@/components/NowHiringWidget";
 import TodaysBriefBlock from "@/components/TodaysBriefBlock";
