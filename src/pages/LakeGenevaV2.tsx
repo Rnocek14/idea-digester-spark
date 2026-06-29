@@ -727,6 +727,39 @@ const LakeGenevaV2 = () => {
 
   const filteredStories = getFilteredStories();
 
+  // Read today's brief's mentioned_story_ids so the pyramid doesn't re-show
+  // the same headlines the prose brief already named. Falls back to no-dedupe
+  // if the brief hasn't been generated yet today.
+  const todayCT = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Chicago",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+  const { data: briefMentionedIds = [] } = useQuery({
+    queryKey: ["daily-brief-mentioned-ids", todayCT],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("daily_briefs")
+        .select("mentioned_story_ids")
+        .eq("brief_date", todayCT)
+        .eq("status", "published")
+        .maybeSingle();
+      return (data?.mentioned_story_ids as string[] | null) ?? [];
+    },
+    staleTime: 5 * 60_000,
+  });
+
+  // Stories filtered for the lead-pyramid (skip ones already named in the
+  // brief). If dedupe would leave us with fewer than 3, fall back to the
+  // original list so the section never renders as empty chrome on quiet days.
+  const pyramidStories = (() => {
+    if (!briefMentionedIds || briefMentionedIds.length === 0) return filteredStories;
+    const mentioned = new Set(briefMentionedIds);
+    const deduped = filteredStories.filter((s: any) => !mentioned.has(s.id));
+    return deduped.length >= 3 ? deduped : filteredStories;
+  })();
+
   // Group stories by category for topic mode
   const getStoriesByCategory = () => {
     const grouped: Record<string, Story[]> = {};
