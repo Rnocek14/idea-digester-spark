@@ -68,6 +68,22 @@ serve(async (req) => {
     const brief_date = todayCT();
     const y_date = yesterdayCT();
 
+    // Local-keyword regex — story must mention a real Lake Geneva-area place/name
+    // to qualify for the Brief, even if it's tagged T1/T2 (the ingestion AI
+    // mis-tags Milwaukee / regional content as T1 too often).
+    const LOCAL_KW =
+      /(lake geneva|geneva lake|williams bay|fontana|big foot beach|wrigley drive|flat iron park|library park|horticultural hall|riviera|grand geneva|abbey resort|pier 290|baker house|gordy|harpoon willie|fat cat|geneva tap house|topsy turvy|house of music|crafted americana|chuck'?s lakeshore|town of linn| linn,|walworth|delavan|elkhorn|bloomfield|darien|east troy|lake como|badger high|genoa city|sharon|twin lakes|burlington|pell lake|lyons|whitewater)/i;
+    const REGIONAL_KW =
+      /(milwaukee|madison|kenosha|racine|waukesha|southeast wisconsin|chicago|illinois)/i;
+    const hasLocal = (s: any) =>
+      LOCAL_KW.test(
+        `${s?.title ?? ""} ${s?.summary ?? ""} ${String(s?.content ?? "").slice(0, 800)}`,
+      );
+    // A story is "regional" if its TITLE names a non-local city — the summary
+    // often tacks on "those with ties to Lake Geneva may want to know" which
+    // would otherwise sneak it past a combined check.
+    const isRegional = (s: any) => REGIONAL_KW.test(String(s?.title ?? ""));
+
     // Idempotent unless forced
     const { data: existing } = await supabase
       .from("daily_briefs")
@@ -119,8 +135,12 @@ serve(async (req) => {
       .order("priority_score", { ascending: false, nullsFirst: false })
       .limit(4);
 
-    const todayList = (todayStories ?? []) as any[];
-    const yList = (yStories ?? []) as any[];
+    const todayList = ((todayStories ?? []) as any[])
+      .filter((s) => !isRegional(s))
+      .filter((s) => hasLocal(s));
+    const yList = ((yStories ?? []) as any[])
+      .filter((s) => !isRegional(s))
+      .filter((s) => hasLocal(s));
     const evList = (events ?? []) as any[];
 
     const is_quiet_day = todayList.length < 2;
@@ -145,6 +165,8 @@ serve(async (req) => {
       "- Reference at most 3 stories. Mention the calendar item that matters most if any.",
       "- If it's a quiet day, say so honestly in a warm way (e.g. 'Slow morning on the lake, and that's usually a good thing.'). Do not stretch thin material into drama.",
       "- Voice: warm, dry, observant. Local. Like Garrison Keillor by way of a small-town newsroom.",
+      "- HARD RULE: Never mention Milwaukee, Madison, Kenosha, Racine, Waukesha, Chicago, or 'Southeast Wisconsin' unless the story is directly about Lake Geneva or Walworth County. Skip any item that isn't unmistakably local.",
+      "- Skip violence, crime, or tragedy stories unless they happened in Lake Geneva, Williams Bay, Fontana, or Walworth County and are actionable for residents.",
     ].join("\n");
 
     const sourceBlock = [
