@@ -813,6 +813,9 @@ const LakeGenevaV2 = () => {
                 {/* LIVE Header with dynamic indicator */}
                 <LiveColumnHeader />
 
+                {/* Sponsor spotlight — pinned to top of left rail for visibility */}
+                <GinaNeighborCard />
+
                 {/* Weather + daylight (merged Lake at a Glance) */}
                 <div className="bg-stone-50 rounded-md border border-slate-200 px-3 py-2.5">
                   <WeatherWidget />
