@@ -16,6 +16,8 @@ import HappeningTodayWidget from "@/components/HappeningTodayWidget";
 import ComingUpRail from "@/components/ComingUpRail";
 import EditorialLaterRail from "@/components/EditorialLaterRail";
 import RightRailTemporal from "@/components/RightRailTemporal";
+import GinaNeighborCard from "@/components/GinaNeighborCard";
+import LakeGenevaByNumbers from "@/components/LakeGenevaByNumbers";
 import CommunityDeskBlock from "@/components/CommunityDeskBlock";
 import NowHiringWidget from "@/components/NowHiringWidget";
 import TodaysBriefBlock from "@/components/TodaysBriefBlock";
@@ -1486,6 +1488,8 @@ const LakeGenevaV2 = () => {
                 {/* Sprint 2: strict temporal flow — Tonight → Weekend → Next Week → Worth a Look */}
                 <RightRailTemporal />
                 <EditorialLaterRail />
+                <GinaNeighborCard />
+                <LakeGenevaByNumbers />
               </ScrollableContainer>
             </div>
           </aside>
@@ -1502,6 +1506,10 @@ const LakeGenevaV2 = () => {
           </div>
           <RightRailTemporal />
           <EditorialLaterRail />
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            <GinaNeighborCard />
+            <LakeGenevaByNumbers />
+          </div>
         </div>
 
         {/* Reader mailbox — suggestion box */}
