@@ -1494,8 +1494,6 @@ const LakeGenevaV2 = () => {
                 {/* Sprint 2: strict temporal flow — Tonight → Weekend → Next Week → Worth a Look */}
                 <RightRailTemporal />
                 <EditorialLaterRail />
-                <GinaNeighborCard />
-                <LakeGenevaByNumbers />
               </ScrollableContainer>
             </div>
           </aside>
