@@ -35,12 +35,10 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const secretHeader = req.headers.get("X-Editorial-Secret");
     const authHeader = req.headers.get("Authorization") || "";
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    const secretHeader = req.headers.get("X-Editorial-Secret");
     const okBySecret = !!EDITORIAL_SECRET && secretHeader === EDITORIAL_SECRET;
-    const okByService = !!serviceKey && authHeader === `Bearer ${serviceKey}`;
-    if (!okBySecret && !okByService) {
+    if (!authHeader.startsWith("Bearer ") && !okBySecret) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
