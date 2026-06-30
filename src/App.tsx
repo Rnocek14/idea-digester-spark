@@ -74,6 +74,7 @@ import LakeGenevaWeather from "./pages/guides/LakeGenevaWeather";
 import GuidesIndex from "./pages/guides/GuidesIndex";
 import YerkesObservatory from "./pages/guides/YerkesObservatory";
 import BigFootBeach from "./pages/guides/BigFootBeach";
+import WhereToStayLakeGeneva from "./pages/guides/WhereToStayLakeGeneva";
 import Today from "./pages/Today";
 import StoryDetail from "./pages/StoryDetail";
 
