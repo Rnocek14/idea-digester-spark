@@ -40,6 +40,7 @@ const staticEntries: SitemapEntry[] = [
   { path: "/guides", changefreq: "weekly", priority: "0.9" },
   { path: "/guides/yerkes-observatory", changefreq: "monthly", priority: "0.95" },
   { path: "/guides/big-foot-beach-state-park", changefreq: "monthly", priority: "0.95" },
+  { path: "/guides/where-to-stay-lake-geneva", changefreq: "weekly", priority: "0.95" },
   { path: "/guides/things-to-do-lake-geneva", changefreq: "weekly", priority: "0.9" },
   { path: "/guides/moving-to-lake-geneva", changefreq: "weekly", priority: "0.9" },
   { path: "/guides/lake-geneva-neighborhoods", changefreq: "weekly", priority: "0.9" },
