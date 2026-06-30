@@ -133,6 +133,7 @@ const App = () => (
             <Route path="/guides" element={<GuidesIndex />} />
             <Route path="/guides/yerkes-observatory" element={<YerkesObservatory />} />
             <Route path="/guides/big-foot-beach-state-park" element={<BigFootBeach />} />
+            <Route path="/guides/where-to-stay-lake-geneva" element={<WhereToStayLakeGeneva />} />
             <Route path="/guides/things-to-do-lake-geneva" element={<ThingsToDoLakeGeneva />} />
             <Route path="/guides/moving-to-lake-geneva" element={<MovingToLakeGeneva />} />
             <Route path="/guides/lake-geneva-neighborhoods" element={<LakeGenevaNeighborhoods />} />
