@@ -82,6 +82,7 @@ import WhereToStayLakeGeneva from "./pages/guides/WhereToStayLakeGeneva";
 import Today from "./pages/Today";
 import StoryDetail from "./pages/StoryDetail";
 import FindYourCity from "./pages/FindYourCity";
+import { About, Privacy, Terms } from "./pages/TrustPages";
 const AdminCities = lazy(() => import("./pages/AdminCities"));
 
 const queryClient = new QueryClient({
@@ -116,6 +117,9 @@ const App = () => (
             <Route path="/v2" element={<Navigate to="/" replace />} />
             <Route path="/today" element={<Today />} />
             <Route path="/cities" element={<FindYourCity />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
             <Route path="/stories/:idOrSlug" element={<StoryDetail />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/lake-geneva" element={<Navigate to="/" replace />} />

@@ -210,6 +210,18 @@ const PageShell: React.FC<PageShellProps> = ({
               <Link to="/cities" className="hover:text-slate-900 hover:underline">
                 Your City
               </Link>
+              <span className="text-slate-400">·</span>
+              <Link to="/about" className="hover:text-slate-900 hover:underline">
+                About
+              </Link>
+              <span className="text-slate-400">·</span>
+              <Link to="/privacy" className="hover:text-slate-900 hover:underline">
+                Privacy
+              </Link>
+              <span className="text-slate-400">·</span>
+              <Link to="/terms" className="hover:text-slate-900 hover:underline">
+                Terms
+              </Link>
             </div>
             <div className="text-[11px] text-slate-500">
               Lake Geneva Real Estate — Powered by Gina @properties
