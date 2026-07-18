@@ -241,3 +241,9 @@ verify_jwt = false
 
 [functions.serve-sitemap]
 verify_jwt = false
+
+[functions.bootstrap-city]
+verify_jwt = false
+
+[functions.validate-trial-sources]
+verify_jwt = false
