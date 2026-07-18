@@ -79,6 +79,20 @@ export function __resetCityConfigCacheForTests(): void {
   cachedAtMs = 0;
 }
 
+function rowToConfig(data: Record<string, any>): CityConfig {
+  return {
+    ...LAKE_GENEVA_DEFAULTS,
+    ...data,
+    bbox: (data.bbox as CityBbox) ?? LAKE_GENEVA_DEFAULTS.bbox,
+    local_keywords: data.local_keywords?.length
+      ? data.local_keywords
+      : LAKE_GENEVA_DEFAULTS.local_keywords,
+    non_local_keywords: data.non_local_keywords?.length
+      ? data.non_local_keywords
+      : LAKE_GENEVA_DEFAULTS.non_local_keywords,
+  };
+}
+
 export async function getCityConfig(supabase: any): Promise<CityConfig> {
   const now = Date.now();
   if (cached && now - cachedAtMs < CACHE_TTL_MS) return cached;
@@ -91,17 +105,7 @@ export async function getCityConfig(supabase: any): Promise<CityConfig> {
       .maybeSingle();
 
     if (!error && data) {
-      cached = {
-        ...LAKE_GENEVA_DEFAULTS,
-        ...data,
-        bbox: (data.bbox as CityBbox) ?? LAKE_GENEVA_DEFAULTS.bbox,
-        local_keywords: data.local_keywords?.length
-          ? data.local_keywords
-          : LAKE_GENEVA_DEFAULTS.local_keywords,
-        non_local_keywords: data.non_local_keywords?.length
-          ? data.non_local_keywords
-          : LAKE_GENEVA_DEFAULTS.non_local_keywords,
-      };
+      cached = rowToConfig(data);
       cachedAtMs = now;
       return cached;
     }
@@ -112,6 +116,31 @@ export async function getCityConfig(supabase: any): Promise<CityConfig> {
   cached = LAKE_GENEVA_DEFAULTS;
   cachedAtMs = now;
   return cached;
+}
+
+/**
+ * All cities that should be served by fleet crons (status='active').
+ * Falls back to [Lake Geneva defaults] so single-city deployments and fresh
+ * environments behave exactly as before. Not cached: fleet crons run on
+ * schedules measured in minutes-to-hours, and a stale city list is worse than
+ * one extra query per run.
+ */
+export async function getActiveCityConfigs(supabase: any): Promise<CityConfig[]> {
+  try {
+    const { data, error } = await supabase
+      .from("city_config")
+      .select("*")
+      .eq("status", "active")
+      .order("id", { ascending: true });
+
+    if (!error && data?.length) {
+      return data.map((row: Record<string, any>) => rowToConfig(row));
+    }
+    console.warn("[cityConfig] no active city rows — using built-in defaults");
+  } catch (e) {
+    console.warn("[cityConfig] fleet load failed — using built-in defaults:", e);
+  }
+  return [LAKE_GENEVA_DEFAULTS];
 }
 
 export function withinBbox(bbox: CityBbox, lat?: number | null, lon?: number | null): boolean {

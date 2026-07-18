@@ -2,6 +2,7 @@ import { test, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import {
   getCityConfig,
+  getActiveCityConfigs,
   withinBbox,
   hasLocalKeyword,
   hasNonLocalKeyword,
@@ -53,6 +54,37 @@ test("getCityConfig caches between calls", async () => {
   await getCityConfig(client);
   await getCityConfig(client);
   assert.equal(queries, 1);
+});
+
+test("getActiveCityConfigs returns every active city, defaults-merged", async () => {
+  const { client } = createMockSupabase((q) => {
+    assert.equal(q.table, "city_config");
+    assert.ok(q.filters.some((f) => f.m === "eq" && f.args[0] === "status" && f.args[1] === "active"));
+    return {
+      data: [
+        { id: "default", city_name: "Lake Geneva" },
+        { id: "delavan-wi", city_name: "Delavan", local_keywords: ["delavan"] },
+      ],
+    };
+  });
+  const configs = await getActiveCityConfigs(client);
+  assert.equal(configs.length, 2);
+  assert.equal(configs[1].city_name, "Delavan");
+  assert.deepEqual(configs[1].local_keywords, ["delavan"]);
+  // Missing fields fall back to defaults
+  assert.equal(configs[1].timezone, LAKE_GENEVA_DEFAULTS.timezone);
+});
+
+test("getActiveCityConfigs falls back to [defaults] when the table is empty or errors", async () => {
+  const { client: emptyClient } = createMockSupabase(() => ({ data: [] }));
+  const empty = await getActiveCityConfigs(emptyClient);
+  assert.equal(empty.length, 1);
+  assert.equal(empty[0].id, "default");
+
+  const { client: errClient } = createMockSupabase(() => ({ data: null, error: { message: "boom" } }));
+  const errd = await getActiveCityConfigs(errClient);
+  assert.equal(errd.length, 1);
+  assert.equal(errd[0].city_name, "Lake Geneva");
 });
 
 test("withinBbox boundary behavior", () => {

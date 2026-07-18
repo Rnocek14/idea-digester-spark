@@ -2,6 +2,7 @@ import * as React from "react";
 import { Link, NavLink } from "react-router-dom";
 import { format } from "date-fns";
 import { LakeLine } from "@/components/LakeLine";
+import { useCityConfig } from "@/hooks/useCityConfig";
 
 const navItems = [
   { label: "Today", to: "/today" },
@@ -25,6 +26,7 @@ const PageShell: React.FC<PageShellProps> = ({
   children,
   fullWidth = false,
 }) => {
+  const city = useCityConfig();
   const today = format(new Date(), "EEEE, MMMM d, yyyy");
   const shortDate = format(new Date(), "EEE, MMM d");
   const now = new Date();
@@ -56,7 +58,7 @@ const PageShell: React.FC<PageShellProps> = ({
             className="hidden sm:inline text-[11px] uppercase tracking-[0.18em] text-slate-500"
             style={{ fontFamily: "'Playfair Display', serif", letterSpacing: "0.14em" }}
           >
-            Geneva Lake · Walworth County, Wisconsin
+            {city.theme.region_line}
           </span>
         </div>
 
@@ -68,10 +70,10 @@ const PageShell: React.FC<PageShellProps> = ({
               className="text-2xl tracking-tight text-slate-900 group-hover:text-[hsl(var(--lake-deep))] transition-colors leading-none"
               style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700 }}
             >
-              Lake Geneva Brief
+              {city.site_name}
             </span>
             <span className="hidden text-[11px] font-medium uppercase tracking-[0.18em] text-slate-500 sm:inline">
-              Local Edition
+              {city.theme.tagline}
             </span>
           </Link>
 
@@ -125,7 +127,7 @@ const PageShell: React.FC<PageShellProps> = ({
             ))}
           </nav>
         </div>
-        <LakeLine />
+        {city.theme.motif === "lake" && <LakeLine />}
       </header>
 
       {/* Main content */}
@@ -145,12 +147,12 @@ const PageShell: React.FC<PageShellProps> = ({
               className="text-xl text-slate-800"
               style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700 }}
             >
-              Lake Geneva Brief
+              {city.site_name}
             </span>
             <div className="flex items-center gap-3">
               <span className="h-px w-8 bg-[hsl(var(--shore-terracotta))]/40" />
               <span className="text-[11px] uppercase tracking-[0.22em] text-[hsl(var(--shore-terracotta))]/80">
-                From the Shore Path
+                {city.theme.footer_kicker}
               </span>
               <span className="h-px w-8 bg-[hsl(var(--shore-terracotta))]/40" />
             </div>
@@ -158,8 +160,7 @@ const PageShell: React.FC<PageShellProps> = ({
               className="max-w-md text-sm italic text-slate-600 leading-relaxed"
               style={{ fontFamily: "'Playfair Display', serif" }}
             >
-              Curated from the shore path by Gina Nocek — a daily note for the
-              people who call Geneva Lake home.
+              {city.theme.editor_note}
             </p>
           </div>
 

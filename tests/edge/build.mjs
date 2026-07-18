@@ -20,6 +20,7 @@ const TARGETS = [
   "auto-maintain-sources",
   "alert-source-health",
   "ingest-incident",
+  "sync-511-traffic",
 ];
 
 const stub = (name) => resolve(here, "stubs", name);

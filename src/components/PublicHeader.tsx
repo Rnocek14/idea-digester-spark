@@ -3,6 +3,7 @@ import { format } from "date-fns";
 import { NavLink } from "@/components/NavLink";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useCityConfig } from "@/hooks/useCityConfig";
 
 const navItems = [
   { label: "Today", to: "/today" },
@@ -16,6 +17,7 @@ const navItems = [
 ];
 
 export const PublicHeader = () => {
+  const city = useCityConfig();
   const scrollToSubscribe = () => {
     const subscribeEl = document.getElementById('subscribe');
     if (subscribeEl) {
@@ -39,10 +41,10 @@ export const PublicHeader = () => {
         <div className="flex items-center justify-between py-3 gap-4">
           <NavLink to="/" className="flex items-baseline gap-2 group">
             <span className="font-display text-xl tracking-tight text-brand group-hover:text-brand-accent transition-colors">
-              Lake Geneva Brief
+              {city.site_name}
             </span>
             <span className="hidden text-[10px] uppercase tracking-[0.15em] text-gray-500 sm:inline">
-              LOCAL EDITION
+              {city.theme.tagline.toUpperCase()}
             </span>
           </NavLink>
 

@@ -131,11 +131,15 @@ unthinkable at 1,000.
   normalized. Ingest points stamp it: sync-rss from the source row,
   the incident family from city config.
 
-**Phase 2b — remaining before any second city serves traffic:**
-- Sync functions loop `for each active city in city_config` instead of running
-  once (today they read the single 'default' config).
-- Editorial generators (daily brief, newsletter, lake beat) filter and stamp
-  by city.
+**Phase 2b — in progress:**
+- Fleet-loop pattern SHIPPED in `sync-511-traffic` (the reference
+  implementation): `getActiveCityConfigs()` → loop cities → per-city API base,
+  bbox, gazetteer, city-scoped dedupe, per-city `city_id` stamping, and one
+  city's upstream failure never blocks the rest. Tested in
+  `tests/edge/sync-511-traffic.test.ts`. Convert the remaining sync functions
+  (NWS, SpotCrime, sheriff, power) to this exact shape as cities onboard.
+- Editorial generators (daily brief, newsletter, lake beat) still single-city:
+  filter and stamp by city before city #2 launches.
 - RLS note: public-content policies gain no city filter (content is public);
   city scoping is a query-correctness concern, not a security boundary.
   Subscriber/lead PII policies stay admin-only as today.
@@ -156,7 +160,35 @@ unthinkable at 1,000.
 **Cost note:** marginal infra cost per city ≈ AI classification + Firecrawl
 probes + email volume. The fixed costs (project, crons, code) do not multiply.
 
-## 6. The test suite (run it on every change)
+## 6. City identity: theme slots vs. hand-crafted signatures
+
+Config makes a city site *function*; identity makes it feel like *its place*.
+Lake Geneva works because of the lake palette, the wave line, the Shore Path,
+Streblow boats. The template gives every city the same **slots**, filled with
+that city's own identity — `city_config.theme` (migration `20260718160000`,
+rendered via `src/hooks/useCityConfig.ts` + `src/lib/cityTheme.ts`):
+
+| Slot | Lake Geneva value | What another city puts there |
+|---|---|---|
+| `palette` (6 accent tokens) | lake blues + shore terracotta | river greens, prairie golds, harbor navy… |
+| `motif` | `lake` (renders the wave line) | `river` / `coast` / `downtown` / `none` |
+| `tagline`, `region_line` | "Local Edition", "Geneva Lake · Walworth County" | theirs |
+| `footer_kicker`, `editor_note` | "From the Shore Path", signed Gina note | their motto + signed voice |
+| `signature.feature_name` | Shore Path | the riverwalk, the square, the harbor |
+| `signature.landmarks` | Yerkes, Big Foot Beach, Riviera Pier, Streblow | their icons |
+
+Defaults are Lake Geneva, applied synchronously — no flash, no behavior change
+for the live site, and a city with an empty theme still renders correctly.
+
+**The honest boundary:** palette/copy slots are config. The *content* behind a
+signature — the Shore Path stop-by-stop guide, the Streblow boats story, the
+audio walking tour — is hand-crafted local knowledge. Budget one signature
+feature per city at launch (pick it during the human pass: what's the ONE
+thing this town identifies with?), and let the guide-generation pipeline fill
+the rest. A city clone without a signature feature will function but won't be
+loved; this is deliberate per-city craft, not a template gap.
+
+## 7. The test suite (run it on every change)
 
 `npm run test:edge` bundles the real edge-function code (remote imports
 stubbed) and runs it against a mocked database + network — 36 tests covering
@@ -166,7 +198,7 @@ limits, and the sitemap/RLS contract. Tests live in `tests/edge/`. Any new
 edge function that touches the multi-city path gets tests here first — this
 suite is what "tested in depth" means when no human QAs a fleet.
 
-## 7. What accuracy means at fleet scale — the dashboard numbers that matter
+## 8. What accuracy means at fleet scale — the dashboard numbers that matter
 
 Watch exactly four numbers per city (all derivable from existing tables):
 1. **Active sources** (< 5 = the city is starving; bootstrap more patterns)
