@@ -13,22 +13,12 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-// --- Geo gate: Walworth County bbox + local keyword list ---
-const WALWORTH_BBOX = {
-  minLat: 42.4953,
-  maxLat: 42.8421,
-  minLon: -88.7773,
-  maxLon: -88.2891,
-};
-
-const LOCAL_KEYWORDS = [
-  "lake geneva", "geneva lake", "walworth", "williams bay", "fontana",
-  "elkhorn", "delavan", "genoa city", "bloomfield", "town of linn",
-  "lake como", "powers lake", "darien", "east troy", "sharon", "burlington",
-  "whitewater", "pell lake", "twin lakes", "lyons", "abbey resort",
-  "grand geneva", "big foot beach", "wrigley drive", "hwy 50", "hwy 12",
-  "highway 50", "highway 12",
-];
+// Geo gate values (bbox + gazetteer) come from city_config — see _shared/cityConfig.ts.
+import {
+  getCityConfig,
+  withinBbox as bboxContains,
+  hasLocalKeyword as configHasLocalKeyword,
+} from "../_shared/cityConfig.ts";
 
 // Tier 4 (auto-reject) and Tier 3 (hold) keyword lists live in the shared
 // incident gate so cron scrapers apply the same filters as this tier engine.
@@ -67,18 +57,6 @@ const CONFIDENCE_BASELINE: Record<string, number> = {
   manual: 80,
 };
 
-function withinBbox(lat?: number | null, lon?: number | null): boolean {
-  if (typeof lat !== "number" || typeof lon !== "number") return false;
-  return (
-    lat >= WALWORTH_BBOX.minLat && lat <= WALWORTH_BBOX.maxLat &&
-    lon >= WALWORTH_BBOX.minLon && lon <= WALWORTH_BBOX.maxLon
-  );
-}
-
-function hasLocalKeyword(text: string): boolean {
-  const h = text.toLowerCase();
-  return LOCAL_KEYWORDS.some((kw) => h.includes(kw));
-}
 
 function matchAny(haystack: string, needles: string[]): string | null {
   const h = haystack.toLowerCase();
@@ -261,6 +239,7 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
+  const cityConfig = await getCityConfig(supabase);
   const results: Array<Record<string, unknown>> = [];
 
   for (const item of items) {
@@ -274,7 +253,7 @@ Deno.serve(async (req) => {
 
     // Geo gate (skip for trusted official sources — they're pre-filtered by area).
     const trustedGeoSkip = p.source_type === "official" || p.source_type === "nixle";
-    if (!trustedGeoSkip && !withinBbox(p.lat, p.lon) && !hasLocalKeyword(haystack)) {
+    if (!trustedGeoSkip && !bboxContains(cityConfig.bbox, p.lat, p.lon) && !configHasLocalKeyword(cityConfig, haystack)) {
       results.push({ ok: false, error: "out_of_geo", source: p.source, external_id: p.external_id });
       continue;
     }

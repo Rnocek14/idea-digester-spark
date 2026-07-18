@@ -235,3 +235,9 @@ verify_jwt = false
 
 [functions.alert-source-health]
 verify_jwt = false
+
+[functions.auto-maintain-sources]
+verify_jwt = false
+
+[functions.serve-sitemap]
+verify_jwt = false

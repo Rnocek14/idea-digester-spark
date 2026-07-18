@@ -6,26 +6,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Wisconsin 511 API endpoints - Walworth County area focus
-// Official API docs: https://511wi.gov/developers/doc
-const WI_511_API_BASE = 'https://511wi.gov/api';
-
-// Walworth County approximate bounding box
-const WALWORTH_BOUNDS = {
-  minLat: 42.4,
-  maxLat: 42.7,
-  minLon: -88.8,
-  maxLon: -88.3,
-};
-
-// Keywords for local filtering
-const LOCAL_KEYWORDS = [
-  'lake geneva', 'walworth', 'fontana', 'williams bay', 'elkhorn', 'delavan',
-  'highway 50', 'hwy 50', 'us-12', 'us 12', 'highway 12', 'hwy 12',
-  'i-43', 'interstate 43', 'highway 43', 'state road 67', 'sr 67', 'hwy 67',
-  'state road 120', 'sr 120', 'hwy 120', 'geneva lake', 'town of linn',
-  'como', 'east troy', 'whitewater', 'burlington'
-];
+// State 511 API base, bbox, and gazetteer come from city_config.
+// Official WI API docs: https://511wi.gov/developers/doc
+import { getCityConfig, withinBbox, hasLocalKeyword, type CityConfig } from '../_shared/cityConfig.ts';
 
 interface TrafficEvent {
   id: string;
@@ -40,21 +23,9 @@ interface TrafficEvent {
   severity?: string;
 }
 
-function isInWalworthArea(lat?: number, lon?: number, text?: string): boolean {
-  // Check coordinates if available
-  if (lat && lon) {
-    if (lat >= WALWORTH_BOUNDS.minLat && lat <= WALWORTH_BOUNDS.maxLat &&
-        lon >= WALWORTH_BOUNDS.minLon && lon <= WALWORTH_BOUNDS.maxLon) {
-      return true;
-    }
-  }
-  
-  // Check text for local keywords
-  if (text) {
-    const lowerText = text.toLowerCase();
-    return LOCAL_KEYWORDS.some(keyword => lowerText.includes(keyword));
-  }
-  
+function isInLocalArea(config: CityConfig, lat?: number, lon?: number, text?: string): boolean {
+  if (withinBbox(config.bbox, lat ?? null, lon ?? null)) return true;
+  if (text) return hasLocalKeyword(config, text);
   return false;
 }
 
@@ -108,7 +79,11 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    console.log('[sync-511-traffic] Fetching Wisconsin 511 traffic events...');
+    const config = await getCityConfig(supabase);
+    const WI_511_API_BASE = config.state_511_api_base || 'https://511wi.gov/api';
+    const BOUNDS = config.bbox;
+
+    console.log('[sync-511-traffic] Fetching 511 traffic events...');
 
     // Try multiple API endpoints - the 511 API has different endpoints for different data
     let eventsData = [];
@@ -147,8 +122,8 @@ serve(async (req) => {
     if (!eventsData || eventsData.length === 0) {
       try {
         const bboxUrl = `${WI_511_API_BASE}/geteventsbybbox?key=${apiKey}&format=json` +
-          `&xmin=${WALWORTH_BOUNDS.minLon}&ymin=${WALWORTH_BOUNDS.minLat}` +
-          `&xmax=${WALWORTH_BOUNDS.maxLon}&ymax=${WALWORTH_BOUNDS.maxLat}`;
+          `&xmin=${BOUNDS.minLon}&ymin=${BOUNDS.minLat}` +
+          `&xmax=${BOUNDS.maxLon}&ymax=${BOUNDS.maxLat}`;
         console.log(`[sync-511-traffic] Fetching bbox fallback: ${bboxUrl.replace(apiKey, 'API_KEY')}`);
         const bboxResp = await fetch(bboxUrl, { headers: { 'Accept': 'application/json' } });
         console.log(`[sync-511-traffic] geteventsbybbox status: ${bboxResp.status}`);
@@ -200,7 +175,7 @@ serve(async (req) => {
 
     console.log(`[sync-511-traffic] Total events/incidents received: ${eventsData?.length || 0}`);
 
-    // Filter to Walworth County area
+    // Filter to the configured local area
     const localEvents: TrafficEvent[] = [];
     
     if (Array.isArray(eventsData)) {
@@ -209,13 +184,13 @@ serve(async (req) => {
         const lat = event.Latitude || event.StartLatitude;
         const lon = event.Longitude || event.StartLongitude;
         
-        if (isInWalworthArea(lat, lon, eventText)) {
+        if (isInLocalArea(config, lat, lon, eventText)) {
           localEvents.push({
             id: String(event.ID || event.EventId || event.id),
             type: event.EventType || event.Type || 'incident',
             title: event.Headline || event.Description?.substring(0, 100) || 'Traffic Alert',
             description: event.Description || '',
-            location: [event.RoadwayName, event.County, event.Direction].filter(Boolean).join(', ') || 'Walworth County',
+            location: [event.RoadwayName, event.County, event.Direction].filter(Boolean).join(', ') || config.county_name,
             lat,
             lon,
             startTime: event.StartTime || event.StartDate,

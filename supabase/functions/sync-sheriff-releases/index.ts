@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { tier4Match } from "../_shared/incidentGate.ts";
+import { getCityConfig } from "../_shared/cityConfig.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -128,11 +129,13 @@ serve(async (req) => {
       firecrawl_used: false,
     };
 
-    console.log("[sync-sheriff] Fetching Walworth County Sheriff news releases...");
+    const config = await getCityConfig(supabase);
+
+    console.log(`[sync-sheriff] Fetching ${config.county_name} Sheriff news releases...`);
 
     // Step 1: Static fetch for the index page first
     let html = "";
-    const indexUrl = "https://www.co.walworth.wi.us/747/News-Releases";
+    const indexUrl = config.sheriff_press_url || "https://www.co.walworth.wi.us/747/News-Releases";
     
     try {
       console.log("[sync-sheriff] Attempting static fetch of index page...");
@@ -290,7 +293,6 @@ serve(async (req) => {
       
       // Build title from extracted data or filename
       const incidentTypeText = extracted.incident_type || result.release.filename.replace(/-/g, ' ');
-      const title = `${incidentTypeText} - Walworth County (${incidentNumber})`.substring(0, 140);
       const typeInfo = inferIncidentType(incidentTypeText + ' ' + (extracted.description || ''));
 
       // Get date from extraction or use now
@@ -303,15 +305,22 @@ serve(async (req) => {
       }
 
       const description = extracted.description || `Sheriff's news release for incident ${incidentNumber}`;
-      const slug = slugify(title) + '-' + Date.now().toString(36);
 
-      // Editorial safety gate: official source, but Tier-4 material (deaths,
-      // arrests with names, juveniles, overdoses...) is held for human review
-      // instead of publishing verbatim. pending_review is hidden from the public.
-      const tier4 = tier4Match(`${title} ${description} ${extracted.suspect_status || ''}`);
+      // Editorial safety gate — zero-touch by design (one operator, many cities):
+      // Tier-4 material (deaths, arrests, juveniles, overdoses...) is NOT queued
+      // for review (queues rot unattended). It is deterministically redacted and
+      // auto-published: generic type-based title (filenames/descriptions can carry
+      // names), structured non-identifying facts only, pointer to the official
+      // release. Nothing we publish for Tier-4 items can contain a name.
+      const tier4 = tier4Match(`${incidentTypeText} ${description} ${extracted.suspect_status || ''}`);
       if (tier4) {
-        console.log(`[sync-sheriff] Tier-4 hold (${tier4}): ${title.substring(0, 60)}`);
+        console.log(`[sync-sheriff] Tier-4 redaction (${tier4}): ${result.release.filename}`);
       }
+
+      const title = tier4
+        ? `Sheriff report: ${typeInfo.type.replace(/_/g, ' ')} incident — ${config.county_name} (${incidentNumber})`.substring(0, 140)
+        : `${incidentTypeText} - ${config.county_name} (${incidentNumber})`.substring(0, 140);
+      const slug = slugify(title) + '-' + Date.now().toString(36);
 
       // Insert incident
       const { data: newIncident, error: insertError } = await supabase
@@ -320,11 +329,13 @@ serve(async (req) => {
           slug,
           title,
           incident_type: typeInfo.type,
-          sub_type: (extracted.sub_type || incidentTypeText).toLowerCase().replace(/\s+/g, '_').substring(0, 50),
-          status: tier4 ? 'pending_review' : 'resolved', // Sheriff releases are usually after-the-fact
+          sub_type: tier4
+            ? typeInfo.type
+            : (extracted.sub_type || incidentTypeText).toLowerCase().replace(/\s+/g, '_').substring(0, 50),
+          status: 'resolved', // Sheriff releases are usually after-the-fact
           priority_score: typeInfo.priority,
           started_at: startedAt,
-          location: extracted.location || 'Walworth County',
+          location: extracted.location || config.county_name,
           source: 'sheriff',
           external_id: externalId,
         })
@@ -337,21 +348,30 @@ serve(async (req) => {
         continue;
       }
 
-      // Add incident update with structured details
+      // Add incident update with structured details. For Tier-4 items only
+      // non-identifying structured fields are included — free-text description,
+      // injuries, and suspect status can carry names and are withheld.
       const updateParts: string[] = [];
       if (extracted.location) updateParts.push(`📍 Location: ${extracted.location}`);
       if (extracted.incident_time) updateParts.push(`⏰ Time: ${extracted.incident_time}`);
       if (extracted.responding_agencies?.length > 0) updateParts.push(`🚨 Responding: ${extracted.responding_agencies.join(", ")}`);
-      if (extracted.injuries) updateParts.push(`🏥 Injuries: ${extracted.injuries}`);
-      if (extracted.fatalities !== null && extracted.fatalities !== undefined) updateParts.push(`⚠️ Fatalities: ${extracted.fatalities}`);
+      if (!tier4) {
+        if (extracted.injuries) updateParts.push(`🏥 Injuries: ${extracted.injuries}`);
+        if (extracted.fatalities !== null && extracted.fatalities !== undefined) updateParts.push(`⚠️ Fatalities: ${extracted.fatalities}`);
+      }
       if (extracted.road_status) updateParts.push(`🚗 Road: ${extracted.road_status}`);
-      if (extracted.suspect_status) updateParts.push(`👮 Suspect: ${extracted.suspect_status}`);
+      if (!tier4 && extracted.suspect_status) updateParts.push(`👮 Suspect: ${extracted.suspect_status}`);
+      if (tier4) {
+        updateParts.push(`Details withheld per editorial policy — see the official Sheriff's release (incident ${incidentNumber}).`);
+      }
 
       await supabase.from("incident_updates").insert({
         incident_id: newIncident.id,
         source: 'sheriff',
-        source_label: 'Walworth County Sheriff',
-        text: updateParts.length > 0 ? updateParts.join("\n") : description.substring(0, 500),
+        source_label: `${config.county_name} Sheriff`,
+        text: updateParts.length > 0
+          ? updateParts.join("\n")
+          : (tier4 ? `Sheriff's news release for incident ${incidentNumber}.` : description.substring(0, 500)),
         is_verified: true,
       });
 

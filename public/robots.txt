@@ -14,4 +14,6 @@ User-agent: *
 Allow: /
 
 Sitemap: https://lakegenevabrief.com/sitemap.xml
+# Live sitemap generated from the database (always current, no rebuild needed):
+Sitemap: https://mzumvkrpnxhkvhdyzgqa.supabase.co/functions/v1/serve-sitemap
 # Canonical host is lakegenevabrief.com (custom domain).

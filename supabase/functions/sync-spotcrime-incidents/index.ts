@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { tier3Match, tier4Match } from "../_shared/incidentGate.ts";
+import { getCityConfig, hasLocalKeyword, type CityConfig } from "../_shared/cityConfig.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -8,12 +9,6 @@ const corsHeaders = {
 };
 
 type IncidentType = 'crime' | 'police' | 'accident' | 'other';
-
-// Lake Geneva area keywords for filtering
-const LAKE_GENEVA_KEYWORDS = [
-  'lake geneva', 'williams bay', 'fontana', 'walworth', 'elkhorn',
-  'delavan', 'genoa city', 'sharon', 'darien', 'east troy',
-];
 
 // Crime type mapping
 const CRIME_TYPE_MAP: Record<string, { type: IncidentType; priority: number }> = {
@@ -46,17 +41,17 @@ function inferCrimeInfo(text: string): { type: IncidentType; subType: string; pr
   return { type: 'crime', subType: 'other', priority: 3 };
 }
 
-function isLakeGenevaArea(text: string): { isLocal: boolean; geoTier: number; geoLabel: string } {
+function isLocalArea(config: CityConfig, text: string): { isLocal: boolean; geoTier: number; geoLabel: string } {
   const lower = text.toLowerCase();
-  
-  if (lower.includes('lake geneva')) {
-    return { isLocal: true, geoTier: 1, geoLabel: 'Lake Geneva' };
+
+  if (lower.includes(config.city_name.toLowerCase())) {
+    return { isLocal: true, geoTier: 1, geoLabel: config.city_name };
   }
-  
-  if (LAKE_GENEVA_KEYWORDS.some(kw => lower.includes(kw))) {
-    return { isLocal: true, geoTier: 2, geoLabel: 'Walworth County' };
+
+  if (hasLocalKeyword(config, lower)) {
+    return { isLocal: true, geoTier: 2, geoLabel: config.county_name };
   }
-  
+
   return { isLocal: false, geoTier: 0, geoLabel: '' };
 }
 
@@ -117,9 +112,11 @@ serve(async (req) => {
       firecrawl_used: false,
     };
 
-    console.log("[sync-spotcrime] Scraping Walworth County crime data...");
+    const config = await getCityConfig(supabase);
 
-    const spotcrimeUrl = "https://spotcrime.com/WI/Walworth%20County";
+    console.log(`[sync-spotcrime] Scraping ${config.county_name} crime data...`);
+
+    const spotcrimeUrl = `https://spotcrime.com/${config.spotcrime_path || 'WI/Walworth%20County'}`;
 
     // Step 1: Use scrape-content for the main page (SpotCrime is JS-heavy)
     // SpotCrime almost always needs JS rendering, so we go straight to scrape-content
@@ -224,8 +221,8 @@ serve(async (req) => {
     for (const inc of incidentsToProcess) {
       results.processed++;
       
-      // Check if in Lake Geneva area
-      const geoInfo = isLakeGenevaArea(inc.address + ' ' + inc.description);
+      // Check if in the configured local area
+      const geoInfo = isLocalArea(config, inc.address + ' ' + inc.description);
       if (!geoInfo.isLocal) {
         results.filtered_out++;
         continue;
@@ -233,16 +230,16 @@ serve(async (req) => {
 
       // Editorial safety gate (same keywords as the ingest-incident tier engine):
       // SpotCrime is an unverified aggregator, so Tier-4 material (arrests, deaths,
-      // juveniles, overdoses...) is never published from it, and Tier-3 material is
-      // held for human review instead of going live.
+      // juveniles, overdoses...) is never published from it. Tier-3 material is
+      // ALSO skipped rather than queued — this pipeline is zero-touch by design
+      // (one operator, many cities): a hold queue nobody reviews is just rot.
       const gateText = `${inc.type} ${inc.description} ${inc.address}`;
-      const tier4 = tier4Match(gateText);
-      if (tier4) {
-        console.log(`[sync-spotcrime] Tier-4 reject (${tier4}): ${inc.description.substring(0, 60)}`);
+      const gateHit = tier4Match(gateText) || tier3Match(gateText);
+      if (gateHit) {
+        console.log(`[sync-spotcrime] Editorial gate skip (${gateHit}): ${inc.description.substring(0, 60)}`);
         results.filtered_out++;
         continue;
       }
-      const heldForReview = tier3Match(gateText) !== null;
 
       const crimeInfo = inferCrimeInfo(inc.type + ' ' + inc.description);
       const title = `${crimeInfo.subType.replace(/_/g, ' ')} in ${geoInfo.geoLabel}`.substring(0, 140);
@@ -268,13 +265,13 @@ serve(async (req) => {
 
       const slug = slugify(title) + '-' + Date.now().toString(36);
 
-      // Insert the incident (held for review when Tier-3 material)
+      // Insert the incident (only routine, gate-clean material reaches this point)
       const { data: inserted, error: insertError } = await supabase.from("incidents").insert({
         slug,
         title,
         incident_type: crimeInfo.type,
         sub_type: crimeInfo.subType,
-        status: heldForReview ? 'pending_review' : 'active',
+        status: 'active',
         priority_score: crimeInfo.priority,
         started_at: inc.date || new Date().toISOString(),
         location: geoInfo.geoLabel,
@@ -295,7 +292,7 @@ serve(async (req) => {
           text: inc.description.substring(0, 500),
           is_verified: false,
         });
-        console.log(`[sync-spotcrime] ✅ Created (${heldForReview ? 'pending_review' : 'active'}): ${title.substring(0, 60)}`);
+        console.log(`[sync-spotcrime] ✅ Created: ${title.substring(0, 60)}`);
         results.inserted++;
       }
 
