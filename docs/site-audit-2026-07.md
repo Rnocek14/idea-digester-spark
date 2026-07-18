@@ -1,5 +1,18 @@
 # Lake Geneva Brief — Full Site Audit (July 2026)
 
+> **Implementation status (2026-07-18):** The "Now" list and most of the "Next"
+> presentation/IA items were implemented on this branch — edge-function auth,
+> incidents RLS hardening + `report-incident` function, `developing` RLS fix,
+> dev-credential removal, dead-source retirement, SpotCrime/sheriff editorial
+> gating + SpotCrime cron, version-controlled daily crons, `alert-source-health`
+> digest, sidebar 7-day recap, resolved-incident visibility, nav/footer IA,
+> At-A-Glance dedupe, CTA density, stock-photo curbing, Today-page recency,
+> Deals domain fix, sitemap RLS alignment, and dashboard code-splitting.
+> Still open: prerender/SSG, editorial transparency page, city-config
+> extraction, TS strict, tests, marine/Nixle/county-alert sources, and the
+> operator actions listed at the end of the PR summary (ALERT_EMAIL secret,
+> devadmin account check, n8n/Apify infra).
+
 Scope: reader-facing UX, news ingestion pipeline, live incidents system, SEO,
 performance, security, and multi-city templating readiness. Grounded in the
 codebase, migrations, and the Lovable planning docs. (Live production data could
