@@ -92,20 +92,35 @@ the entire per-city seed.
 ## 4. Per-city launch runbook
 
 **Automatic (minutes):**
-1. `POST /functions/v1/bootstrap-city` (admin token) with the city seed.
-2. Read the returned report (also stored in `source_discovery_runs`).
-3. Wait 2–3 days while `validate-trial-sources` grades the trial sources.
+1. Dashboard → **Cities** → fill the Add-a-City form (city, state, county,
+   optional domain) → **Bootstrap**. That's the whole per-city input. (The
+   form wraps `POST /functions/v1/bootstrap-city`; the discovery report shows
+   inline and is stored in `source_discovery_runs`.)
+2. Wait 2–3 days while `validate-trial-sources` grades the trial sources —
+   the Cities page shows each city's active/ready/trial/candidate counts.
 
 **The one irreducible human pass (~30–45 min, once per city):**
-4. Gazetteer sanity check: read `city_config.local_keywords` — delete anything
+3. Gazetteer sanity check: read `city_config.local_keywords` — delete anything
    that isn't a real nearby place (AI expansion is fail-open, not infallible;
    a wrong keyword mis-geo-tags content forever).
-5. Spot-check promoted sources: open each `ready`/`active` source URL once —
+4. Spot-check promoted sources: open each `ready`/`active` source URL once —
    is it actually the local paper, or an SEO farm that happens to have a feed?
    Kill fakes (`status='inactive'`, `metadata.retired_reason='human: not legit'`).
-6. Domain + branding: connect the domain, confirm `city_config` branding row,
-   verify Resend from-address domain.
-7. Flip `city_config.status` to `active`.
+5. Domain + branding + theme: connect the domain, confirm the `city_config`
+   branding row, fill the theme slots (§6) and pick the signature feature,
+   verify the Resend from-address domain.
+6. Click **Activate city** on the Cities page — flips `city_config.status` to
+   `active` AND promotes the city's parked `ready` sources to `active` in one
+   step; fleet crons include it from the next tick.
+
+**How readers find their city (`/cities`, the network front door):**
+- The hub domain (citybrief.info) lands on the Find-Your-City page: one-tap
+  geolocation, zip-code fallback (zip → coordinates via Zippopotam, no key),
+  nearest live city within ~35 miles wins and links to its domain.
+- **A miss is a market signal**: visitors outside every live city leave an
+  email + zip in `city_waitlist` (nearest city + distance stamped on the row).
+  The expansion roadmap is "sort the waitlist by zip cluster, launch where
+  demand already is." The waitlist count shows on the Cities dashboard page.
 
 Steps 4–5 are the accuracy backstop AI can't fully replace: legitimacy judgment.
 Budget them; never skip them. Everything after launch is zero-touch.

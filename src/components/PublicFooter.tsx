@@ -39,6 +39,10 @@ export const PublicFooter = () => {
               Advertise
             </NavLink>
             <span className="text-muted-foreground">•</span>
+            <NavLink to="/cities" className="hover:text-primary transition-colors">
+              Your City
+            </NavLink>
+            <span className="text-muted-foreground">•</span>
             <SuggestionBoxModal
               trigger={
                 <button type="button" className="hover:text-primary transition-colors">

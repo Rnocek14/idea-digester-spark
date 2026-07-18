@@ -81,6 +81,8 @@ import BigFootBeach from "./pages/guides/BigFootBeach";
 import WhereToStayLakeGeneva from "./pages/guides/WhereToStayLakeGeneva";
 import Today from "./pages/Today";
 import StoryDetail from "./pages/StoryDetail";
+import FindYourCity from "./pages/FindYourCity";
+const AdminCities = lazy(() => import("./pages/AdminCities"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -113,6 +115,7 @@ const App = () => (
             <Route path="/v1" element={<LakeGeneva />} />
             <Route path="/v2" element={<Navigate to="/" replace />} />
             <Route path="/today" element={<Today />} />
+            <Route path="/cities" element={<FindYourCity />} />
             <Route path="/stories/:idOrSlug" element={<StoryDetail />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/lake-geneva" element={<Navigate to="/" replace />} />
@@ -176,6 +179,7 @@ const App = () => (
               <Route path="jobs" element={<AdminJobs />} />
               <Route path="deals" element={<AdminDeals />} />
               <Route path="source-health" element={<SourceHealth />} />
+              <Route path="cities" element={<AdminCities />} />
               <Route path="business-stories" element={<BusinessStories />} />
               <Route path="history" element={<HistoryEntries />} />
               <Route path="content-analytics" element={<ContentAnalytics />} />
