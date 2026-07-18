@@ -4,12 +4,14 @@ import { format } from "date-fns";
 import { LakeLine } from "@/components/LakeLine";
 
 const navItems = [
-  { label: "Today", to: "/lake-geneva" },
+  { label: "Today", to: "/today" },
   { label: "Events", to: "/events" },
-  { label: "Local Love", to: "/community/local-love" },
+  { label: "Incidents", to: "/incidents" },
   { label: "Eats", to: "/eats" },
+  { label: "Guides", to: "/guides" },
+  { label: "Jobs", to: "/jobs" },
+  { label: "Local Love", to: "/community/local-love" },
   { label: "Directory", to: "/directory" },
-  { label: "Submit", to: "/submit" },
 ];
 
 type PageShellProps = {
@@ -164,6 +166,30 @@ const PageShell: React.FC<PageShellProps> = ({
           {/* Utility row */}
           <div className="mt-8 pt-5 border-t border-slate-100 flex flex-col items-center justify-between gap-3 text-xs text-slate-500 sm:flex-row">
             <div className="flex flex-wrap items-center justify-center gap-2">
+              <Link to="/events" className="hover:text-slate-900 hover:underline">
+                Events
+              </Link>
+              <span className="text-slate-400">·</span>
+              <Link to="/incidents" className="hover:text-slate-900 hover:underline">
+                Incidents
+              </Link>
+              <span className="text-slate-400">·</span>
+              <Link to="/guides" className="hover:text-slate-900 hover:underline">
+                Guides
+              </Link>
+              <span className="text-slate-400">·</span>
+              <Link to="/nightlife" className="hover:text-slate-900 hover:underline">
+                Nightlife
+              </Link>
+              <span className="text-slate-400">·</span>
+              <Link to="/jobs" className="hover:text-slate-900 hover:underline">
+                Jobs
+              </Link>
+              <span className="text-slate-400">·</span>
+              <Link to="/deals" className="hover:text-slate-900 hover:underline">
+                Deals
+              </Link>
+              <span className="text-slate-400">·</span>
               <Link to="/selling-lake-geneva" className="hover:text-slate-900 hover:underline">
                 Selling Your Home?
               </Link>

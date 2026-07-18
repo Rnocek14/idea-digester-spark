@@ -163,7 +163,7 @@ export default function Deals() {
                 <div className="bg-background rounded-lg p-4 mb-4">
                   <p className="text-sm text-muted-foreground mb-2">Share your referral link:</p>
                   <code className="text-xs bg-muted px-2 py-1 rounded break-all">
-                    https://lakegeneva.news?ref={subscriberData?.referral_code}
+                    https://lakegenevabrief.com?ref={subscriberData?.referral_code}
                   </code>
                 </div>
 

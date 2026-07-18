@@ -391,7 +391,7 @@ const LakeGenevaV2 = () => {
               .replace(/&#8220;/g, '"')
               .replace(/&#8221;/g, '"')
               .replace(/[""]/g, '"');
-            return { ...story, title: normalizedTitle, image_url: imageUrl, _isFresh: isFresh };
+            return { ...story, title: normalizedTitle, image_url: imageUrl, _isFresh: isFresh, _hasRealImage: !!candidate };
           });
       };
 
@@ -907,11 +907,20 @@ const LakeGenevaV2 = () => {
             {/* AT-A-GLANCE: Quick-scan bullet list (V1 feature) */}
             {!storiesLoading && stories.length > 0 && (() => {
               // Prefer news/civic/community/schools/events/weather over routine bar specials
-              const newsFirst = [...stories].sort((a, b) => {
+              const sorted = [...stories].sort((a, b) => {
                 const aLow = LOW_PRIORITY_LEAD_CATEGORIES.has((a.category || '').toLowerCase()) ? 1 : 0;
                 const bLow = LOW_PRIORITY_LEAD_CATEGORIES.has((b.category || '').toLowerCase()) ? 1 : 0;
                 return aLow - bLow;
               });
+              // Dedupe against the brief bullets and the lead pyramid rendered just
+              // below — on a small news day the same 3 stories otherwise appear here,
+              // in the brief, AND as the hero, which reads as less news, not more.
+              const shownElsewhere = new Set([
+                ...briefMentionedIds,
+                ...pyramidStories.slice(0, 3).map((s: Story) => s.id),
+              ]);
+              const deduped = sorted.filter((s) => !shownElsewhere.has(s.id));
+              const newsFirst = deduped.length >= 3 ? deduped : sorted;
               return (
               <div className="mb-6 p-4 bg-slate-50 border border-slate-200 rounded-sm">
                 <p className="text-[10px] font-mono uppercase tracking-wider text-slate-500 mb-3">
@@ -1274,11 +1283,13 @@ const LakeGenevaV2 = () => {
                             headlineCounter >= 8 &&
                             headlineCounter < 16;
                           headlineCounter += items.length;
-                          // First 2 items per section get full image cards, the
-                          // rest fall back to compact headline rows so the
-                          // section stays dense but visual.
-                          const cardItems = items.slice(0, 2);
-                          const tailItems = items.slice(2);
+                          // Up to 2 items per section get full image cards — but only
+                          // stories with a real photo. Stock-fallback stories render as
+                          // compact headline rows instead: repeated category stock art
+                          // across unrelated stories reads as filler, not coverage.
+                          const cardItems = items.filter((s: Story & { _hasRealImage?: boolean }) => s._hasRealImage).slice(0, 2);
+                          const cardIds = new Set(cardItems.map((s: Story) => s.id));
+                          const tailItems = items.filter((s: Story) => !cardIds.has(s.id));
                           return (
                             <div key={key} className="mb-7">
                               {insertCta && (
@@ -1433,8 +1444,10 @@ const LakeGenevaV2 = () => {
                         geoLabel={story.geo_label}
                         meta={{ time, source }}
                       />
-                      {/* Inline subscribe CTA after every 6th story */}
-                      {(idx + 1) % 6 === 0 && idx < filteredStories.length - 1 && (
+                      {/* Single inline subscribe CTA mid-feed. One is enough: the
+                          header button, sticky banner, and bottom form already ask —
+                          repeating every 6 stories tipped the page from inviting to pushy. */}
+                      {idx === 5 && idx < filteredStories.length - 1 && (
                         <div className="mt-5 sm:col-span-2">
                           <InlineSubscribeCTA />
                         </div>

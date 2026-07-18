@@ -5,12 +5,14 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 const navItems = [
-  { label: "Today", to: "/lake-geneva" },
+  { label: "Today", to: "/today" },
   { label: "Events", to: "/events" },
-  { label: "Local Love", to: "/community/local-love" },
+  { label: "Incidents", to: "/incidents" },
   { label: "Eats", to: "/eats" },
+  { label: "Guides", to: "/guides" },
+  { label: "Jobs", to: "/jobs" },
+  { label: "Local Love", to: "/community/local-love" },
   { label: "Directory", to: "/directory" },
-  { label: "Submit", to: "/submit" },
 ];
 
 export const PublicHeader = () => {
@@ -35,7 +37,7 @@ export const PublicHeader = () => {
 
         {/* Main nav */}
         <div className="flex items-center justify-between py-3 gap-4">
-          <NavLink to="/lake-geneva" className="flex items-baseline gap-2 group">
+          <NavLink to="/" className="flex items-baseline gap-2 group">
             <span className="font-display text-xl tracking-tight text-brand group-hover:text-brand-accent transition-colors">
               Lake Geneva Brief
             </span>
@@ -65,8 +67,8 @@ export const PublicHeader = () => {
             </Button>
           </div>
 
-          {/* Mobile Nav */}
-          <div className="flex sm:hidden items-center gap-2">
+          {/* Mobile Nav – scrollable so all items remain reachable */}
+          <div className="flex sm:hidden items-center gap-2 overflow-x-auto">
             {navItems.map((item) => (
               <NavLink
                 key={item.to}

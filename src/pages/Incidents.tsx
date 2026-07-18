@@ -18,6 +18,7 @@ type Incident = {
   status: string;
   updated_at: string;
   started_at: string;
+  resolved_at: string | null;
   priority_score: number;
   location: string | null;
 };
@@ -33,6 +34,7 @@ const typeIcons: Record<string, React.ReactNode> = {
 
 const statusColors: Record<string, string> = {
   active: "bg-red-500",
+  developing: "bg-orange-500",
   monitoring: "bg-yellow-500",
   resolved: "bg-green-500",
   false_alarm: "bg-muted",
@@ -40,6 +42,7 @@ const statusColors: Record<string, string> = {
 
 const statusLabels: Record<string, string> = {
   active: "🔴 Active",
+  developing: "🟠 Developing",
   monitoring: "🟡 Monitoring",
   resolved: "🟢 Resolved",
   false_alarm: "False Alarm",
@@ -52,7 +55,7 @@ export default function Incidents() {
       const { data, error } = await supabase
         .from("incidents")
         .select("*")
-        .in("status", ["active", "monitoring", "resolved"])
+        .in("status", ["active", "developing", "monitoring", "resolved"])
         .order("status", { ascending: true })
         .order("priority_score", { ascending: false })
         .order("updated_at", { ascending: false })
@@ -64,9 +67,10 @@ export default function Incidents() {
     refetchInterval: 30000, // Refresh every 30 seconds for live updates
   });
 
-  const activeIncidents = incidents?.filter(i => i.status === "active") || [];
+  const activeIncidents = incidents?.filter(i => i.status === "active" || i.status === "developing") || [];
   const monitoringIncidents = incidents?.filter(i => i.status === "monitoring") || [];
-  const resolvedIncidents = incidents?.filter(i => i.status === "resolved") || [];
+  const resolvedIncidents = (incidents?.filter(i => i.status === "resolved") || [])
+    .sort((a, b) => new Date(b.resolved_at || b.updated_at).getTime() - new Date(a.resolved_at || a.updated_at).getTime());
 
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
@@ -169,14 +173,14 @@ export default function Incidents() {
               </section>
             )}
 
-            {/* Recently Resolved */}
+            {/* Recently Resolved — kept visible so quiet days still show the wire works */}
             {resolvedIncidents.length > 0 && (
               <section>
                 <h2 className="text-lg font-semibold text-muted-foreground mb-4">
                   Recently Resolved
                 </h2>
                 <div className="space-y-3">
-                  {resolvedIncidents.slice(0, 5).map((incident) => (
+                  {resolvedIncidents.slice(0, 12).map((incident) => (
                     <IncidentCard key={incident.id} incident={incident} formatTimeAgo={formatTimeAgo} />
                   ))}
                 </div>
@@ -214,7 +218,11 @@ function IncidentCard({
                 <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
                   <span>{statusLabels[incident.status]}</span>
                   <span>•</span>
-                  <span>Updated {formatTimeAgo(incident.updated_at)}</span>
+                  <span>
+                    {incident.status === "resolved" && incident.resolved_at
+                      ? `Resolved ${formatTimeAgo(incident.resolved_at)}`
+                      : `Updated ${formatTimeAgo(incident.updated_at)}`}
+                  </span>
                   {incident.location && (
                     <>
                       <span>•</span>

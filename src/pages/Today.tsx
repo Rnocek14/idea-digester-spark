@@ -25,14 +25,18 @@ export default function Today() {
   const { data: topStories = [] } = useQuery({
     queryKey: ["today-top-stories", todayISO],
     queryFn: async () => {
+      // Recency window keeps "Top stories today" honest — without it, weeks-old
+      // high-priority stories present as today's news with nothing signaling age.
+      const fortyEightHoursAgo = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
       const { data } = await supabase
         .from("content_queue")
-        .select("id, title, summary, category, image_url, publish_date, geo_label")
+        .select("id, title, summary, category, image_url, publish_date, created_at, geo_label")
         .in("status", ["published", "auto_published"])
         .in("safety_level", ["safe", "soft_sensitive"])
         .neq("category", "events")
         .gte("geo_tier", 1)
         .lte("geo_tier", 2)
+        .gte("created_at", fortyEightHoursAgo)
         .order("priority_score", { ascending: false, nullsFirst: false })
         .order("publish_date", { ascending: false, nullsFirst: false })
         .limit(5);
@@ -40,6 +44,16 @@ export default function Today() {
     },
     staleTime: 60_000,
   });
+
+  const relativeTime = (dateString: string | null) => {
+    if (!dateString) return null;
+    const diffMins = Math.floor((Date.now() - new Date(dateString).getTime()) / 60000);
+    if (diffMins < 1) return "just now";
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return `${Math.floor(diffHours / 24)}d ago`;
+  };
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -142,6 +156,7 @@ export default function Today() {
                       <p className="text-[10px] font-mono uppercase tracking-wider text-slate-500 mb-0.5">
                         {s.category.replace(/_/g, " ")}
                         {s.geo_label ? ` · ${s.geo_label}` : ""}
+                        {relativeTime(s.publish_date || s.created_at) ? ` · ${relativeTime(s.publish_date || s.created_at)}` : ""}
                       </p>
                     )}
                     <Link
