@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle, Flame, Car, CloudLightning, Shield, Zap, ChevronRight, Construction, TrafficCone, Cone } from "lucide-react";
 import QuickReportIncident from "./QuickReportIncident";
+import { getCityId } from "@/lib/cityId";
 
 type IncidentUpdate = {
   is_verified: boolean;
@@ -118,6 +119,7 @@ export default function LiveIncidentsSidebar({ onHide, showCloseButton = false }
             is_verified
           )
         `)
+        .eq("city_id", getCityId())
         .in("status", ["active", "developing", "monitoring"])
         .order("status", { ascending: true })
         .order("updated_at", { ascending: false })
@@ -156,6 +158,7 @@ export default function LiveIncidentsSidebar({ onHide, showCloseButton = false }
       const { data, error } = await supabase
         .from("incidents")
         .select("id, slug, title, location, resolved_at")
+        .eq("city_id", getCityId())
         .eq("status", "resolved")
         .gte("resolved_at", sevenDaysAgo)
         .order("resolved_at", { ascending: false })

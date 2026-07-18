@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { CalendarDays, ArrowRight, Sparkles, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { getCityId } from "@/lib/cityId";
 import {
   categoryEmoji,
   extractVenue,
@@ -47,6 +48,7 @@ export default function ComingUpRail() {
         .select(
           "id, title, summary, category, event_date, event_time, performer, original_url, image_url, geo_tier, geo_label, metadata",
         )
+        .eq("city_id", getCityId())
         .in("status", ["approved", "auto_published", "published"])
         .in("safety_level", ["safe", "soft_sensitive"])
         .gte("event_date", todayStr)

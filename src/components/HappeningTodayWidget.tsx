@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Json } from "@/integrations/supabase/types";
+import { getCityId } from "@/lib/cityId";
 
 interface HappeningEvent {
   id: string;
@@ -136,6 +137,7 @@ export default function HappeningTodayWidget({ enabled = true }: HappeningTodayW
       const { data, error } = await supabase
         .from("content_queue")
         .select("id, title, event_date, event_time, category, original_url, metadata")
+        .eq("city_id", getCityId())
         .in("status", ["published", "auto_published"])
         .in("safety_level", ["safe", "soft_sensitive"])
         .eq("event_date", todayStr)

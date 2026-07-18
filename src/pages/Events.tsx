@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import PageShell from "@/components/PageShell";
 import { PageMeta } from "@/components/PageMeta";
 import { Button } from "@/components/ui/button";
+import { getCityId } from "@/lib/cityId";
 import {
   EVENT_CATEGORIES,
   categoryEmoji,
@@ -39,6 +40,7 @@ export default function Events() {
         .select(
           "id, title, summary, category, event_date, event_time, performer, original_url, image_url, geo_tier, geo_label, metadata",
         )
+        .eq("city_id", getCityId())
         .in("status", ["approved", "auto_published", "published"])
         .in("safety_level", ["safe", "soft_sensitive"])
         .gte("event_date", todayStr)

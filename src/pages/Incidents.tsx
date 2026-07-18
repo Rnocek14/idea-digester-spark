@@ -9,6 +9,7 @@ import { PublicHeader } from "@/components/PublicHeader";
 import { PublicFooter } from "@/components/PublicFooter";
 import { PageMeta } from "@/components/PageMeta";
 import { LG_CORE_KEYWORDS, LG_GEO_KEYWORDS } from "@/lib/seoKeywords";
+import { getCityId } from "@/lib/cityId";
 
 type Incident = {
   id: string;
@@ -55,6 +56,7 @@ export default function Incidents() {
       const { data, error } = await supabase
         .from("incidents")
         .select("*")
+        .eq("city_id", getCityId())
         .in("status", ["active", "developing", "monitoring", "resolved"])
         .order("status", { ascending: true })
         .order("priority_score", { ascending: false })

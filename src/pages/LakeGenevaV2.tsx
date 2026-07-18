@@ -29,6 +29,7 @@ import { PresentedBySection } from "@/components/PresentedBySection";
 import { SuggestionBoxCard } from "@/components/SuggestionBox";
 import { getSubscribeSource, getReferralSource } from "@/lib/referralTracking";
 import { isAllowedStoryImage } from "@/lib/imagePolicy";
+import { useCityConfig } from "@/hooks/useCityConfig";
 import { NavLink } from "@/components/NavLink";
 import { Home, Star, Phone, ChevronDown } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -41,13 +42,15 @@ const categoryOrder = ['news', 'civic', 'events', 'dining', 'community', 'school
 // Dynamic LIVE column header - shows green when all clear, red when active incidents
 // Includes freshness timestamp for credibility
 const LiveColumnHeader = () => {
+  const { id: cityId } = useCityConfig();
   const { data: incidentStatus, dataUpdatedAt } = useQuery({
-    queryKey: ["has-active-incidents"],
+    queryKey: ["has-active-incidents", cityId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("incidents")
         .select("id")
         .eq("status", "active")
+        .eq("city_id", cityId)
         .limit(1);
       if (error) return { hasActive: false };
       return { hasActive: (data?.length || 0) > 0 };
@@ -287,6 +290,7 @@ const GEO_TIER_LABELS = {
 } as const;
 
 const LakeGenevaV2 = () => {
+  const { id: cityId } = useCityConfig();
   const [email, setEmail] = useState("");
   const [isSubscribing, setIsSubscribing] = useState(false);
   const isMobile = useIsMobile();
@@ -338,7 +342,7 @@ const LakeGenevaV2 = () => {
 
   // Fetch stories with priority ordering + tier-0 cap + thin-feed fallback
   const { data: stories = [], isLoading: storiesLoading } = useQuery({
-    queryKey: ["public-stories-v2"],
+    queryKey: ["public-stories-v2", cityId],
     queryFn: async () => {
       const nowMs = Date.now();
       const twoWeeksAgo = new Date(nowMs - 14 * 24 * 60 * 60 * 1000).toISOString();
@@ -399,6 +403,7 @@ const LakeGenevaV2 = () => {
       const { data, error } = await supabase
         .from("content_queue")
         .select("*, source:sources(name)")
+        .eq("city_id", cityId)
         .in("status", ["published", "auto_published"])
         .in("safety_level", ["safe", "soft_sensitive"])
         .gte("geo_tier", 0)  // Phase 1: Include regional
@@ -420,6 +425,7 @@ const LakeGenevaV2 = () => {
         const { data: extendedData, error: extError } = await supabase
           .from("content_queue")
           .select("*, source:sources(name)")
+          .eq("city_id", cityId)
           .in("status", ["published", "auto_published"])
           .in("safety_level", ["safe", "soft_sensitive"])
           .gte("geo_tier", 0)
@@ -738,13 +744,14 @@ const LakeGenevaV2 = () => {
     day: "2-digit",
   }).format(new Date());
   const { data: briefMentionedIds = [] } = useQuery({
-    queryKey: ["daily-brief-mentioned-ids", todayCT],
+    queryKey: ["daily-brief-mentioned-ids", todayCT, cityId],
     queryFn: async () => {
       const { data } = await supabase
         .from("daily_briefs")
         .select("mentioned_story_ids")
         .eq("brief_date", todayCT)
         .eq("status", "published")
+        .eq("city_id", cityId)
         .maybeSingle();
       return (data?.mentioned_story_ids as string[] | null) ?? [];
     },

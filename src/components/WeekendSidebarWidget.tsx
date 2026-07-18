@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { CalendarDays } from "lucide-react";
+import { getCityId } from "@/lib/cityId";
 
 type WeekendEvent = {
   id: string;
@@ -81,6 +82,7 @@ export default function WeekendSidebarWidget() {
       const { data, error } = await supabase
         .from("content_queue")
         .select("id, title, category, publish_date, event_date, event_time, performer, metadata")
+        .eq("city_id", getCityId())
         .in("status", ["approved", "auto_published", "published"])
         .eq("safety_level", "safe")
         .in("category", ["events", "community", "entertainment", "dining", "nightlife"])

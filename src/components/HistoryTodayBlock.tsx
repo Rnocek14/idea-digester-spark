@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { trackStoryEvent } from "@/lib/trackStoryEvent";
+import { getCityId } from "@/lib/cityId";
 
 type Entry = {
   id: string;
@@ -34,6 +35,7 @@ export default function HistoryTodayBlock() {
       const exact = await supabase
         .from("history_entries")
         .select("id,title,body,event_year,source_citation,history_type")
+        .eq("city_id", getCityId())
         .eq("status", "approved")
         .eq("day_of_year", doy)
         .order("event_year", { ascending: true })
@@ -53,6 +55,7 @@ export default function HistoryTodayBlock() {
       const all = await supabase
         .from("history_entries")
         .select("id,title,body,event_year,source_citation,history_type")
+        .eq("city_id", getCityId())
         .eq("status", "approved")
         .order("day_of_year", { ascending: true });
 

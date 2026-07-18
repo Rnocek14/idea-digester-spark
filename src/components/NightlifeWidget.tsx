@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getRecentPickVenues, recordPickedVenue } from "@/lib/recentVenuePersistence";
 import { Link } from "react-router-dom";
 import { PartyPopper } from "lucide-react";
+import { getCityId } from "@/lib/cityId";
 
 type NightlifeEvent = {
   id: string;
@@ -611,6 +612,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
       const { data: dateEvents, error: dateError } = await supabase
         .from("content_queue")
         .select("id, title, publish_date, original_url, metadata, event_date, event_time, performer, created_at")
+        .eq("city_id", getCityId())
         .in("status", ["approved", "auto_published", "published"])
         .in("safety_level", ["safe", "soft_sensitive"])
         .eq("category", "events")
@@ -628,6 +630,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
       const { data: recurringEvents, error: recurringError } = await supabase
         .from("content_queue")
         .select("id, title, publish_date, original_url, metadata, event_date, event_time, performer, created_at")
+        .eq("city_id", getCityId())
         .in("status", ["approved", "auto_published", "published"])
         .in("safety_level", ["safe", "soft_sensitive"])
         .eq("category", "events")
@@ -696,6 +699,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
         const { data, error: satError } = await supabase
           .from("content_queue")
           .select("id, title, publish_date, original_url, metadata, event_date, event_time, performer, created_at")
+          .eq("city_id", getCityId())
           .in("status", ["approved", "auto_published", "published"])
           .in("safety_level", ["safe", "soft_sensitive"])
           .eq("category", "events")
@@ -714,6 +718,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
       const { data: sunEvents, error: sunError } = await supabase
         .from("content_queue")
         .select("id, title, publish_date, original_url, metadata, event_date, event_time, performer, created_at")
+        .eq("city_id", getCityId())
         .in("status", ["approved", "auto_published", "published"])
         .in("safety_level", ["safe", "soft_sensitive"])
         .eq("category", "events")
@@ -730,6 +735,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
       const { data: recurringEvents } = await supabase
         .from("content_queue")
         .select("id, title, publish_date, original_url, metadata, event_date, event_time, performer, created_at")
+        .eq("city_id", getCityId())
         .in("status", ["approved", "auto_published", "published"])
         .in("safety_level", ["safe", "soft_sensitive"])
         .eq("category", "events")
@@ -795,6 +801,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
       const { data: recurringEvents, error: recurringError } = await supabase
         .from("content_queue")
         .select("id, title, publish_date, original_url, metadata, event_date, event_time, performer, created_at")
+        .eq("city_id", getCityId())
         .in("status", ["approved", "auto_published", "published"])
         .in("safety_level", ["safe", "soft_sensitive"])
         .eq("category", "events")
@@ -811,6 +818,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
       const { data: datedEvents, error: datedError } = await supabase
         .from("content_queue")
         .select("id, title, publish_date, original_url, metadata, event_date, event_time, performer, created_at")
+        .eq("city_id", getCityId())
         .in("status", ["approved", "auto_published", "published"])
         .in("safety_level", ["safe", "soft_sensitive"])
         .eq("category", "events")
@@ -883,6 +891,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
       const { data: candidates, error } = await supabase
         .from("content_queue")
         .select("id, title, event_date, event_time, performer, original_url, metadata, created_at")
+        .eq("city_id", getCityId())
         .in("status", ["approved", "auto_published", "published"])
         .in("safety_level", ["safe", "soft_sensitive"])
         .eq("category", "events")
