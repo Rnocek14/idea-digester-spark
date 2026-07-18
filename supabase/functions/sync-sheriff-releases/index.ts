@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { tier4Match } from "../_shared/incidentGate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -304,6 +305,14 @@ serve(async (req) => {
       const description = extracted.description || `Sheriff's news release for incident ${incidentNumber}`;
       const slug = slugify(title) + '-' + Date.now().toString(36);
 
+      // Editorial safety gate: official source, but Tier-4 material (deaths,
+      // arrests with names, juveniles, overdoses...) is held for human review
+      // instead of publishing verbatim. pending_review is hidden from the public.
+      const tier4 = tier4Match(`${title} ${description} ${extracted.suspect_status || ''}`);
+      if (tier4) {
+        console.log(`[sync-sheriff] Tier-4 hold (${tier4}): ${title.substring(0, 60)}`);
+      }
+
       // Insert incident
       const { data: newIncident, error: insertError } = await supabase
         .from("incidents")
@@ -312,7 +321,7 @@ serve(async (req) => {
           title,
           incident_type: typeInfo.type,
           sub_type: (extracted.sub_type || incidentTypeText).toLowerCase().replace(/\s+/g, '_').substring(0, 50),
-          status: 'resolved', // Sheriff releases are usually after-the-fact
+          status: tier4 ? 'pending_review' : 'resolved', // Sheriff releases are usually after-the-fact
           priority_score: typeInfo.priority,
           started_at: startedAt,
           location: extracted.location || 'Walworth County',

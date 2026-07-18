@@ -30,21 +30,9 @@ const LOCAL_KEYWORDS = [
   "highway 50", "highway 12",
 ];
 
-// --- Tier 4: never auto-publish; auto-reject. Public-safety-critical strings. ---
-const TIER_4_REJECT = [
-  "arrest", "arrested", "charged with", "domestic", "overdose", "od ",
-  " od.", "suicide", "fatality", "fatal ", "deceased", "wanted suspect",
-  "manhunt", "fugitive", "juvenile", "minor child", "underage",
-];
-
-// --- Tier 3: hold for human review. Includes missing-person and Silver/Amber alerts. ---
-const TIER_3_HOLD = [
-  "police presence", "active scene", "large response", "multiple units",
-  "missing person", "silver alert", "amber alert", "endangered",
-  "shots fired", "weapons", "armed", "barricade", "evacuat",
-  "fire with inj", "rollover", "extrication", "medical emergency",
-  "developing", "unconfirmed",
-];
+// Tier 4 (auto-reject) and Tier 3 (hold) keyword lists live in the shared
+// incident gate so cron scrapers apply the same filters as this tier engine.
+import { TIER_4_REJECT, TIER_3_HOLD } from "../_shared/incidentGate.ts";
 
 // --- Tier 2: AI rewrite then publish. Routine emergency response, non-critical. ---
 const TIER_2_REWRITE = [

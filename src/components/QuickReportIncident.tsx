@@ -48,72 +48,21 @@ export default function QuickReportIncident() {
         throw new Error("Please select at least one option for what you're seeing.");
       }
 
-      const primarySymptom = symptomOptions.find((s) =>
-        selectedSymptoms.includes(s.key)
-      )!;
-      const incidentType = primarySymptom.type;
-
-      const locationSummary =
-        locationChoice === "Not sure / Other"
-          ? (locationNote || locationChoice)
-          : locationNote
-          ? `${locationChoice} (${locationNote})`
-          : locationChoice;
-
-      const title = `Community report: ${primarySymptom.label.toLowerCase()}`;
-      const slug = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-
-      const { data: incident, error: incidentError } = await supabase
-        .from("incidents")
-        .insert({
-          slug,
-          title,
-          incident_type: incidentType,
-          status: "active",
-          location: locationSummary || null,
-          priority_score: 2,
-        })
-        .select("*")
-        .single();
-
-      if (incidentError || !incident) {
-        console.error("[QuickReport] Error creating incident", incidentError);
-        throw new Error("Could not create incident.");
-      }
-
-      const summaryLines: string[] = [];
-      summaryLines.push(
-        `Community quick report: ${selectedSymptoms
-          .map((k) => symptomOptions.find((s) => s.key === k)?.label)
-          .filter(Boolean)
-          .join(", ")}`
-      );
-
-      if (locationSummary) {
-        summaryLines.push(`📍 Location: ${locationSummary}`);
-      }
-
-      if (extraInfo.trim()) {
-        summaryLines.push("");
-        summaryLines.push(extraInfo.trim());
-      }
-
-      const text = summaryLines.join("\n");
-
-      const { error: updateError } = await supabase.from("incident_updates").insert({
-        incident_id: incident.id,
-        source: "community",
-        source_label: "Community quick report",
-        text,
-        is_verified: false,
+      const { data, error } = await supabase.functions.invoke("report-incident", {
+        body: {
+          symptoms: selectedSymptoms,
+          location_choice: locationChoice,
+          location_note: locationNote,
+          extra_info: extraInfo,
+        },
       });
 
-      if (updateError) {
-        console.error("[QuickReport] Error creating update", updateError);
-        throw new Error("Could not save incident update.");
+      if (error || !data?.incident) {
+        console.error("[QuickReport] Error submitting report", error, data);
+        throw new Error(data?.error || "Could not send quick report.");
       }
 
-      return incident;
+      return data.incident;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["incidents-public"] });

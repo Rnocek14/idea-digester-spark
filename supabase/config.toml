@@ -229,3 +229,9 @@ verify_jwt = false
 
 [functions.ingest-news]
 verify_jwt = false
+
+[functions.report-incident]
+verify_jwt = false
+
+[functions.alert-source-health]
+verify_jwt = false

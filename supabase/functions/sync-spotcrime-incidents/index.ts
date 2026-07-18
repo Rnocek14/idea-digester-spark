@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { tier3Match, tier4Match } from "../_shared/incidentGate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -230,9 +231,22 @@ serve(async (req) => {
         continue;
       }
 
+      // Editorial safety gate (same keywords as the ingest-incident tier engine):
+      // SpotCrime is an unverified aggregator, so Tier-4 material (arrests, deaths,
+      // juveniles, overdoses...) is never published from it, and Tier-3 material is
+      // held for human review instead of going live.
+      const gateText = `${inc.type} ${inc.description} ${inc.address}`;
+      const tier4 = tier4Match(gateText);
+      if (tier4) {
+        console.log(`[sync-spotcrime] Tier-4 reject (${tier4}): ${inc.description.substring(0, 60)}`);
+        results.filtered_out++;
+        continue;
+      }
+      const heldForReview = tier3Match(gateText) !== null;
+
       const crimeInfo = inferCrimeInfo(inc.type + ' ' + inc.description);
       const title = `${crimeInfo.subType.replace(/_/g, ' ')} in ${geoInfo.geoLabel}`.substring(0, 140);
-      
+
       // Create external_id for deduplication (1-hour buckets)
       const timeBucket = Math.floor(Date.now() / (60 * 60 * 1000));
       const addressNorm = inc.address.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 50);
@@ -254,25 +268,34 @@ serve(async (req) => {
 
       const slug = slugify(title) + '-' + Date.now().toString(36);
 
-      // Insert the incident
-      const { error: insertError } = await supabase.from("incidents").insert({
+      // Insert the incident (held for review when Tier-3 material)
+      const { data: inserted, error: insertError } = await supabase.from("incidents").insert({
         slug,
         title,
         incident_type: crimeInfo.type,
         sub_type: crimeInfo.subType,
-        status: 'active',
+        status: heldForReview ? 'pending_review' : 'active',
         priority_score: crimeInfo.priority,
         started_at: inc.date || new Date().toISOString(),
         location: geoInfo.geoLabel,
         source: 'spotcrime',
         external_id: externalId,
-      });
+      }).select('id').single();
 
-      if (insertError) {
+      if (insertError || !inserted) {
         console.error(`[sync-spotcrime] Insert error:`, insertError);
-        results.errors.push(insertError.message);
+        results.errors.push(insertError?.message || 'insert failed');
       } else {
-        console.log(`[sync-spotcrime] ✅ Created: ${title.substring(0, 60)}`);
+        // Unverified-source labeling: SpotCrime aggregates unconfirmed police data,
+        // so the public UI must show the "Unconfirmed" badge (driven by is_verified=false).
+        await supabase.from("incident_updates").insert({
+          incident_id: inserted.id,
+          source: 'spotcrime',
+          source_label: 'SpotCrime (unverified aggregator)',
+          text: inc.description.substring(0, 500),
+          is_verified: false,
+        });
+        console.log(`[sync-spotcrime] ✅ Created (${heldForReview ? 'pending_review' : 'active'}): ${title.substring(0, 60)}`);
         results.inserted++;
       }
 
