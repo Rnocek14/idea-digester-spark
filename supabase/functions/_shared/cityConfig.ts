@@ -73,6 +73,12 @@ let cached: CityConfig | null = null;
 let cachedAtMs = 0;
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
+/** Test hook — clears the module-level config cache between test scenarios. */
+export function __resetCityConfigCacheForTests(): void {
+  cached = null;
+  cachedAtMs = 0;
+}
+
 export async function getCityConfig(supabase: any): Promise<CityConfig> {
   const now = Date.now();
   if (cached && now - cachedAtMs < CACHE_TTL_MS) return cached;

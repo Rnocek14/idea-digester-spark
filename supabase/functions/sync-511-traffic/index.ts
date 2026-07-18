@@ -240,6 +240,7 @@ serve(async (req) => {
         .from('incidents')
         .insert({
           title: event.title,
+          city_id: config.id,
           incident_type: incidentType,
           location: event.location,
           status: 'active',

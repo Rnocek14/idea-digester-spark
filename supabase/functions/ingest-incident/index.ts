@@ -327,6 +327,7 @@ Deno.serve(async (req) => {
     // Fresh incident insert
     const insertRow = {
       slug: slugify(p.title),
+      city_id: cityConfig.id,
       title: p.title,
       body: aiText || p.body || null,
       original_body: p.body || null,

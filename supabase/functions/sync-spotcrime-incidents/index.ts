@@ -269,6 +269,7 @@ serve(async (req) => {
       const { data: inserted, error: insertError } = await supabase.from("incidents").insert({
         slug,
         title,
+        city_id: config.id,
         incident_type: crimeInfo.type,
         sub_type: crimeInfo.subType,
         status: 'active',

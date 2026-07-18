@@ -328,6 +328,7 @@ serve(async (req) => {
         .insert({
           slug,
           title,
+          city_id: config.id,
           incident_type: typeInfo.type,
           sub_type: tier4
             ? typeInfo.type

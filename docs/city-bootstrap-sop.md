@@ -122,16 +122,21 @@ unthinkable at 1,000.
   `'default'` (Lake Geneva) with zero behavior change.
 - `source_discovery_runs` log; trial-validation cron.
 
-**Phase 2 — before any second city serves traffic:**
-- Add `city_id` (default `'default'`) to content tables: `content_queue`,
-  `incidents`, `incident_updates`, `daily_briefs`, `newsletters`, `subscribers`
-  (already has nullable `city_id`), `lake_beats`, `business_profiles`,
-  `job_listings`, `restaurant_*`, `community_*`, `evergreen_content`,
-  `history_entries`, `ad_placements`, `sponsors`.
-- Ingest functions stamp `city_id` from the source row; sync functions loop
-  `for each active city in city_config` instead of running once.
-- Composite indexes `(city_id, status, publish_date)` on hot query paths.
-- RLS: public-content policies gain no city filter (content is public);
+**Phase 2 — done (migration `20260718150000`):**
+- `city_id` (default `'default'`) added to the 15 core content tables
+  (content_queue, incidents, daily_briefs, newsletters, lake_beats,
+  job_listings, business_profiles, evergreen_content, history_entries,
+  community_posts, community_submissions, restaurants, restaurant_news,
+  sponsors, ad_placements) with hot-path composite indexes; subscribers
+  normalized. Ingest points stamp it: sync-rss from the source row,
+  the incident family from city config.
+
+**Phase 2b — remaining before any second city serves traffic:**
+- Sync functions loop `for each active city in city_config` instead of running
+  once (today they read the single 'default' config).
+- Editorial generators (daily brief, newsletter, lake beat) filter and stamp
+  by city.
+- RLS note: public-content policies gain no city filter (content is public);
   city scoping is a query-correctness concern, not a security boundary.
   Subscriber/lead PII policies stay admin-only as today.
 
@@ -151,7 +156,17 @@ unthinkable at 1,000.
 **Cost note:** marginal infra cost per city ≈ AI classification + Firecrawl
 probes + email volume. The fixed costs (project, crons, code) do not multiply.
 
-## 6. What accuracy means at fleet scale — the dashboard numbers that matter
+## 6. The test suite (run it on every change)
+
+`npm run test:edge` bundles the real edge-function code (remote imports
+stubbed) and runs it against a mocked database + network — 36 tests covering
+the bootstrap pipeline, the trial grading matrix (promote/park/demote), the
+tier engine (including AI-unavailable fail-closed), geo gates, dedupe, rate
+limits, and the sitemap/RLS contract. Tests live in `tests/edge/`. Any new
+edge function that touches the multi-city path gets tests here first — this
+suite is what "tested in depth" means when no human QAs a fleet.
+
+## 7. What accuracy means at fleet scale — the dashboard numbers that matter
 
 Watch exactly four numbers per city (all derivable from existing tables):
 1. **Active sources** (< 5 = the city is starving; bootstrap more patterns)

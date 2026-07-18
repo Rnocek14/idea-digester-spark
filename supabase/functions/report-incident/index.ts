@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getCityConfig } from "../_shared/cityConfig.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -108,11 +109,13 @@ Deno.serve(async (req) => {
     const title = `Community report: ${primarySymptom.label.toLowerCase()}`;
     const slug = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
+    const cityConfig = await getCityConfig(supabase);
     const { data: incident, error: incidentError } = await supabase
       .from("incidents")
       .insert({
         slug,
         title,
+        city_id: cityConfig.id,
         incident_type: primarySymptom.type,
         status: "active",
         location: locationSummary || null,
