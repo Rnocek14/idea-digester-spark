@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { tier3Match, tier4Match } from "../_shared/incidentGate.ts";
-import { getCityConfig, hasLocalKeyword, type CityConfig } from "../_shared/cityConfig.ts";
+import { getActiveCityConfigs, hasLocalKeyword, type CityConfig } from "../_shared/cityConfig.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -91,17 +91,15 @@ async function rateLimitedFetch<T>(
   return results;
 }
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
-
-  try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
+// FLEET PATTERN: one invocation serves every active city with a spotcrime_path.
+async function syncCitySpotcrime(
+  supabase: ReturnType<typeof createClient>,
+  supabaseUrl: string,
+  supabaseKey: string,
+  config: CityConfig,
+) {
     const results = {
+      city_id: config.id,
       method: "scrape-content",
       processed: 0,
       inserted: 0,
@@ -112,9 +110,7 @@ serve(async (req) => {
       firecrawl_used: false,
     };
 
-    const config = await getCityConfig(supabase);
-
-    console.log(`[sync-spotcrime] Scraping ${config.county_name} crime data...`);
+    console.log(`[sync-spotcrime] (${config.id}) Scraping ${config.county_name} crime data...`);
 
     const spotcrimeUrl = `https://spotcrime.com/${config.spotcrime_path || 'WI/Walworth%20County'}`;
 
@@ -139,10 +135,7 @@ serve(async (req) => {
     if (!scrapeResponse.ok) {
       const errText = await scrapeResponse.text();
       console.error("[sync-spotcrime] scrape-content error:", errText);
-      return new Response(
-        JSON.stringify({ success: false, error: "Failed to scrape SpotCrime" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      throw new Error("Failed to scrape SpotCrime");
     }
 
     const scrapeData = await scrapeResponse.json();
@@ -301,13 +294,36 @@ serve(async (req) => {
       await new Promise(r => setTimeout(r, 100));
     }
 
-    console.log(`[sync-spotcrime] Complete:`, results);
+    console.log(`[sync-spotcrime] (${config.id}) Complete:`, results);
+    return results;
+}
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const cities = (await getActiveCityConfigs(supabase)).filter((c) => c.spotcrime_path);
+    const results = [];
+    for (const config of cities) {
+      try {
+        results.push(await syncCitySpotcrime(supabase, supabaseUrl, supabaseKey, config));
+      } catch (cityError) {
+        // One city's failure must never block the rest of the fleet.
+        console.error(`[sync-spotcrime] (${config.id}) city sync failed:`, cityError);
+        results.push({ city_id: config.id, error: cityError instanceof Error ? cityError.message : String(cityError) });
+      }
+    }
 
     return new Response(
-      JSON.stringify({ success: true, results }),
+      JSON.stringify({ success: true, cities: results }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("[sync-spotcrime] Error:", errorMessage);

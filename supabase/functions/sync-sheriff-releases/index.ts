@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { tier4Match } from "../_shared/incidentGate.ts";
-import { getCityConfig } from "../_shared/cityConfig.ts";
+import { getActiveCityConfigs, type CityConfig } from "../_shared/cityConfig.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -54,7 +54,7 @@ async function hashString(input: string): Promise<string> {
 }
 
 // Extract PDF/release links from HTML
-function extractReleaseLinks(html: string): Array<{ id: string; filename: string; url: string }> {
+function extractReleaseLinks(html: string, baseOrigin: string): Array<{ id: string; filename: string; url: string }> {
   const releases: Array<{ id: string; filename: string; url: string }> = [];
   
   // Look for DocumentCenter PDF links (news releases)
@@ -64,7 +64,7 @@ function extractReleaseLinks(html: string): Array<{ id: string; filename: string
     releases.push({
       id: match[1],
       filename: match[2],
-      url: `https://www.co.walworth.wi.us/DocumentCenter/View/${match[1]}/${match[2]}`,
+      url: `${baseOrigin}/DocumentCenter/View/${match[1]}/${match[2]}`,
     });
   }
   
@@ -78,7 +78,7 @@ function extractReleaseLinks(html: string): Array<{ id: string; filename: string
         releases.push({
           id: urlMatch[1],
           filename: urlMatch[2],
-          url: match[1].startsWith('http') ? match[1] : `https://www.co.walworth.wi.us${match[1]}`,
+          url: match[1].startsWith('http') ? match[1] : `${baseOrigin}${match[1]}`,
         });
       }
     }
@@ -108,17 +108,15 @@ async function rateLimitedFetch<T>(
   return results;
 }
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
-
-  try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
+// FLEET PATTERN: one invocation serves every active city with a sheriff_press_url.
+async function syncCitySheriff(
+  supabase: ReturnType<typeof createClient>,
+  supabaseUrl: string,
+  supabaseKey: string,
+  config: CityConfig,
+) {
     const results = {
+      city_id: config.id,
       method: "scrape-content",
       processed: 0,
       inserted: 0,
@@ -129,9 +127,7 @@ serve(async (req) => {
       firecrawl_used: false,
     };
 
-    const config = await getCityConfig(supabase);
-
-    console.log(`[sync-sheriff] Fetching ${config.county_name} Sheriff news releases...`);
+    console.log(`[sync-sheriff] (${config.id}) Fetching ${config.county_name} Sheriff news releases...`);
 
     // Step 1: Static fetch for the index page first
     let html = "";
@@ -176,10 +172,7 @@ serve(async (req) => {
       if (!scrapeResponse.ok) {
         const errorText = await scrapeResponse.text();
         console.error("[sync-sheriff] scrape-content error:", scrapeResponse.status, errorText);
-        return new Response(
-          JSON.stringify({ success: false, error: "Failed to scrape index page" }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        throw new Error("Failed to scrape index page");
       }
       
       const scrapeData = await scrapeResponse.json();
@@ -191,15 +184,12 @@ serve(async (req) => {
       
       if (html.length < 200) {
         console.error("[sync-sheriff] No HTML content from scrape-content");
-        return new Response(
-          JSON.stringify({ success: false, error: "No content from scrape" }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        throw new Error("No content from scrape");
       }
     }
 
     // Step 3: Extract release PDF links
-    const foundReleases = extractReleaseLinks(html);
+    const foundReleases = extractReleaseLinks(html, new URL(indexUrl).origin);
     const uniqueReleases = Array.from(new Map(foundReleases.map(r => [r.id, r])).values());
     
     console.log(`[sync-sheriff] Found ${uniqueReleases.length} unique news releases`);
@@ -380,13 +370,36 @@ serve(async (req) => {
       results.inserted++;
     }
 
-    console.log(`[sync-sheriff] Complete:`, results);
+    console.log(`[sync-sheriff] (${config.id}) Complete:`, results);
+    return results;
+}
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const cities = (await getActiveCityConfigs(supabase)).filter((c) => c.sheriff_press_url);
+    const results = [];
+    for (const config of cities) {
+      try {
+        results.push(await syncCitySheriff(supabase, supabaseUrl, supabaseKey, config));
+      } catch (cityError) {
+        // One city's failure must never block the rest of the fleet.
+        console.error(`[sync-sheriff] (${config.id}) city sync failed:`, cityError);
+        results.push({ city_id: config.id, error: cityError instanceof Error ? cityError.message : String(cityError) });
+      }
+    }
 
     return new Response(
-      JSON.stringify({ success: true, results }),
+      JSON.stringify({ success: true, cities: results }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("[sync-sheriff] Error:", errorMessage);

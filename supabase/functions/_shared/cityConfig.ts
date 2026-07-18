@@ -30,6 +30,7 @@ export type CityConfig = {
   utility_outage_url: string | null;
   site_domain: string;
   site_name: string;
+  theme?: Record<string, unknown>;
   from_email: string;
   breaking_from_email: string | null;
   metadata: Record<string, unknown>;
@@ -50,6 +51,9 @@ export const LAKE_GENEVA_DEFAULTS: CityConfig = {
     "powers lake", "darien", "east troy", "sharon", "burlington", "whitewater",
     "pell lake", "twin lakes", "lyons", "abbey resort", "grand geneva",
     "big foot beach", "wrigley drive", "hwy 50", "hwy 12", "highway 50", "highway 12",
+    "flat iron park", "library park", "horticultural hall", "riviera", "pier 290",
+    "baker house", "gordy", "harpoon willie", "fat cat", "geneva tap house",
+    "topsy turvy", "house of music", "crafted americana", "chuck's lakeshore", "badger high",
     "us-12", "highway 67", "hwy 67", "highway 120", "hwy 120", "i-43", "interstate 43",
   ],
   non_local_keywords: [

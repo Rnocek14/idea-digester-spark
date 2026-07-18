@@ -89,7 +89,19 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
-    const config = await getCityConfig(supabase);
+    // Per-city sitemaps: each city's robots.txt points here with its own
+    // ?city_id=<slug>; no param serves the default city.
+    const cityIdParam = new URL(req.url).searchParams.get("city_id");
+    let config = await getCityConfig(supabase);
+    if (cityIdParam && cityIdParam !== config.id) {
+      const { data: row } = await supabase
+        .from("city_config")
+        .select("*")
+        .eq("id", cityIdParam)
+        .maybeSingle();
+      if (row) config = { ...config, ...row };
+    }
+    const cityId = config.id;
     const base = `https://${config.site_domain}`;
 
     const entries: Entry[] = [...STATIC_ENTRIES];
@@ -99,6 +111,7 @@ Deno.serve(async (req) => {
     const { data: events } = await supabase
       .from("content_queue")
       .select("id, event_date, updated_at")
+      .eq("city_id", cityId)
       .eq("category", "events")
       .in("status", ["auto_published", "published"])
       .eq("safety_level", "safe")
@@ -114,6 +127,7 @@ Deno.serve(async (req) => {
     const { data: incidents } = await supabase
       .from("incidents")
       .select("slug, updated_at, status")
+      .eq("city_id", cityId)
       .in("status", ["active", "developing", "monitoring", "resolved"])
       .not("slug", "is", null)
       .gte("updated_at", incidentCutoff)
@@ -128,6 +142,7 @@ Deno.serve(async (req) => {
     const { data: stories } = await supabase
       .from("content_queue")
       .select("id, title, updated_at, publish_date")
+      .eq("city_id", cityId)
       .in("status", ["published", "auto_published"])
       .eq("safety_level", "safe")
       .gte("publish_date", storyCutoff)

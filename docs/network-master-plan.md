@@ -28,6 +28,30 @@ soul, readers never loved it. We win on the opposite bets:
    each Brief. One sponsor ≈ covers a city's marginal cost; everything above
    (jobs, deals, secondary sponsors) is margin.
 
+## 1b. How platform enhancements reach every city (the propagation model)
+
+**Cities are rows, not forks.** There is exactly ONE codebase, ONE database,
+ONE deploy — every city domain is served by the same build, every cron runs
+the same functions. When you improve the homepage, the tier engine, or the
+newsletter, every city gets it the moment the deploy lands. Nothing needs to
+be copied anywhere, ever.
+
+What keeps this true (the rules):
+1. **Never fork per city.** A city-specific behavior is a `city_config` /
+   `theme` field, not an if-statement on a city name and never a copied file.
+2. **Schema changes ship as migrations** in `supabase/migrations/` — applied
+   once, effective for all cities simultaneously.
+3. **New city facts extend `city_config`** with a sane default so existing
+   cities are unaffected until you set the value.
+4. **CI is the gate**: every push runs the 51-test suite + typecheck + build.
+   A platform enhancement that breaks the fleet never reaches the fleet.
+5. **Content is city-scoped, code is shared.** `city_id` isolates data;
+   everything else is intentionally global.
+
+The one caveat: hand-written Lake Geneva guide pages (`src/pages/guides/*`)
+are LG-only content, not platform — they don't propagate and shouldn't. The
+guide-generation pipeline (below) is how other cities get theirs.
+
 ## 2. Technical roadmap — remaining work, in order
 
 **Done as of this branch:** security hardening, zero-touch editorial, bootstrap
@@ -36,22 +60,26 @@ hostname routing, scoped reader surfaces), theme system, city finder +
 waitlist, trust pages, 51-test harness + CI.
 
 **Next (mechanical, pattern established):**
-- [ ] Fleet-loop `sync-spotcrime-incidents`, `sync-sheriff-releases`,
-      `sync-nws-alerts`, `sync-power-outages` (copy `sync-511-traffic`'s shape;
-      each has config values already; add a loop test each).
-- [ ] Per-city `generate-daily-brief` + `autopilot-newsletter`: loop active
-      cities, scope content queries by `city_id`, stamp inserts, and move the
-      persona name + LOCAL_KW regexes onto `city_config` (gazetteer already
-      there; add `theme.persona_name`).
+- [x] Fleet-loop `sync-spotcrime-incidents` + `sync-sheriff-releases` (done;
+      sheriff DocumentCenter URLs now derive from the configured press URL).
+- [ ] Fleet-loop `sync-nws-alerts` + `sync-power-outages` (same shape; NWS
+      zones + utility_outage_url are already in config).
+- [x] `generate-daily-brief`: gazetteer-built LOCAL/REGIONAL regexes, persona
+      from `theme.persona_name` (default "Maggie"), city-scoped queries,
+      stamped upserts. `autopilot-newsletter`: 13 selects city-scoped + both
+      inserts stamped. **Both still single-city per run** — the per-city LOOP
+      lands with city #2, which also requires composite unique constraints
+      `(brief_date|beat_date|edition_date, city_id)` replacing the current
+      single-column uniques (city-#2 checklist item).
 - [ ] `sync-rss` prompt context per city: the AI system prompt embeds a Lake
       Geneva landmark dump — build it from `city_config` (gazetteer +
       signature landmarks).
-- [ ] `business_stories` + remaining minor tables get `city_id` (missed in
-      phase 2's 15).
+- [x] `business_stories` + `restaurant_deals` city_id (migration
+      20260718180000).
 - [ ] Regenerate Supabase types (removes the hand-patched city_id entries +
       `as any` casts on city_config/city_waitlist).
-- [ ] Per-city serve-sitemap (loop hostnames) + per-city robots strategy once
-      city #2 has a domain.
+- [x] Per-city serve-sitemap via `?city_id=` (each city's robots.txt points at
+      its own param).
 
 **Discovery roadmap (each multiplies across all cities):** Nixle by zip · NCES
 school-district lookup → feed probes · Eventbrite API by location · chamber /

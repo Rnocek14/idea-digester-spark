@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.84.0";
+import { getCityConfig } from "../_shared/cityConfig.ts";
 import { Resend } from "https://esm.sh/resend@4.0.0";
 
 const corsHeaders = {
@@ -200,6 +201,10 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Multi-city: scope everything to the current city (loop lands with city #2).
+    const cityConfig = await getCityConfig(supabase);
+    const cityId = cityConfig.id;
+
     // KILL SWITCH CHECK
     const { data: settings } = await supabase
       .from("system_settings")
@@ -241,6 +246,7 @@ serve(async (req) => {
     const { data: existingNewsletter } = await supabase
       .from("newsletters")
       .select("id, status, subject, story_count, story_ids")
+      .eq("city_id", cityId)
       .eq("edition_date", editionDate)
       .maybeSingle();
 
@@ -255,6 +261,7 @@ serve(async (req) => {
         const { data: fullNewsletter, error: fetchFullError } = await supabase
           .from("newsletters")
           .select("*")
+          .eq("city_id", cityId)
           .eq("id", existingNewsletter.id)
           .single();
         
@@ -391,6 +398,7 @@ serve(async (req) => {
     const { data: freshStories, error: fetchError } = await supabase
       .from("content_queue")
       .select("id, title, content, summary, category, content_newsletter, voice_generated_at, status, created_at, original_url, publish_date, event_date, geo_tier")
+      .eq("city_id", cityId)
       .in("status", ["approved", "auto_published", "published"])
       .eq("safety_level", "safe")
       .in("geo_tier", [1, 2]) // HYPERLOCAL LOCKDOWN: Only Lake Geneva (1) and county (2)
@@ -431,6 +439,7 @@ serve(async (req) => {
       const { data: activeIncidents, error: incidentError } = await supabase
         .from("incidents")
         .select("id, title, severity, incident_type, updated_at")
+        .eq("city_id", cityId)
         .eq("status", "active")
         .gte("updated_at", sixHoursAgo.toISOString())
         .order("severity", { ascending: false })
@@ -471,6 +480,7 @@ serve(async (req) => {
     const { data: pickCandidates } = await supabase
       .from("content_queue")
       .select("id, title, event_date, event_time, performer, original_url, metadata")
+      .eq("city_id", cityId)
       .in("status", ["approved", "auto_published", "published"])
       .eq("safety_level", "safe")
       .eq("category", "events")
@@ -505,6 +515,7 @@ serve(async (req) => {
     const { data: tonightEvents } = await supabase
       .from("content_queue")
       .select("id, title, event_date, event_time, original_url, metadata")
+      .eq("city_id", cityId)
       .in("status", ["approved", "auto_published", "published"])
       .eq("safety_level", "safe")
       .eq("category", "events")
@@ -537,6 +548,7 @@ serve(async (req) => {
       const { data: weekendData } = await supabase
         .from("content_queue")
         .select("id, title, event_date, event_time, original_url, metadata")
+        .eq("city_id", cityId)
         .in("status", ["approved", "auto_published", "published"])
         .eq("safety_level", "safe")
         .eq("category", "events")
@@ -573,6 +585,7 @@ serve(async (req) => {
         .from("newsletters")
         .insert({
           edition_date: editionDate,
+          city_id: cityId,
           status: "skipped",
           subject: `Lake Geneva Local - ${editionDate} (Skipped)`,
           preheader: "Not enough fresh content today",
@@ -634,6 +647,7 @@ serve(async (req) => {
       const { data: evergreen } = await supabase
         .from("evergreen_content")
         .select("id, title, content, category")
+        .eq("city_id", cityId)
         .eq("is_active", true)
         .or(`season.eq.all,season.eq.${currentSeason}`)
         .order("last_used_at", { ascending: true, nullsFirst: true })
@@ -700,6 +714,7 @@ serve(async (req) => {
     const { data: activePlacements } = await supabase
       .from("ad_placements")
       .select("*, business_profiles(*), ad_slots(*)")
+      .eq("city_id", cityId)
       .eq("status", "active")
       .lte("start_date", editionDate)
       .gte("end_date", editionDate);
@@ -711,6 +726,7 @@ serve(async (req) => {
     const { data: jobListings } = await supabase
       .from("job_listings")
       .select("id, title, business_name, category, job_type, pay_display, location_text, apply_url, contact_email, is_featured")
+      .eq("city_id", cityId)
       .eq("status", "approved")
       .gt("expires_at", today.toISOString())
       .order("is_featured", { ascending: false })
@@ -724,6 +740,7 @@ serve(async (req) => {
     const { data: advocates } = await supabase
       .from("subscribers")
       .select("email, referral_count")
+      .eq("city_id", cityId)
       .eq("status", "active")
       .gte("referral_count", 3)
       .order("referral_count", { ascending: false })
@@ -736,6 +753,7 @@ serve(async (req) => {
     const { data: localLoveRow } = await supabase
       .from("community_submissions")
       .select("body, subject_name, submitter_name, category")
+      .eq("city_id", cityId)
       .eq("kind", "local_love")
       .in("status", ["approved", "published"])
       .order("created_at", { ascending: false })
@@ -760,6 +778,7 @@ serve(async (req) => {
       const { data: briefRow } = await supabase
         .from("daily_briefs")
         .select("body")
+        .eq("city_id", cityId)
         .eq("brief_date", editionDate)
         .eq("status", "published")
         .maybeSingle();
@@ -806,6 +825,7 @@ serve(async (req) => {
       .from("newsletters")
       .insert({
         edition_date: editionDate,
+        city_id: cityId,
         status: "ready",
         subject: newsletter.subject,
         preheader: newsletter.preheader,
