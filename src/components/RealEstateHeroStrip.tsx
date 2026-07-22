@@ -61,7 +61,7 @@ export const RealEstateHeroStrip = ({ sponsorId, sponsorEmail }: RealEstateHeroS
               to="/selling-lake-geneva" 
               className="text-xs text-blue-600 hover:underline font-medium"
             >
-              Learn more about selling in Lake Geneva →
+              See Gina's guide to selling your Lake Geneva home →
             </Link>
           </div>
         </div>
