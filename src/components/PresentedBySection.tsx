@@ -212,7 +212,7 @@ export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionPr
                   </div>
                 )}
                 <span className="text-[10px] text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                  Learn more →
+                  See {sponsor.name}'s Lake Geneva real estate services →
                 </span>
               </div>
             </Link>
