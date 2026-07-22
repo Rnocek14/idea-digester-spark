@@ -151,7 +151,7 @@ export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionPr
                 {sponsor.logo_url ? (
                   <img
                     src={sponsor.logo_url}
-                    alt={sponsor.name}
+                    alt={`${sponsor.name}, Lake Geneva real estate sponsor`}
                     className="w-full h-full object-cover"
                   />
                 ) : (
