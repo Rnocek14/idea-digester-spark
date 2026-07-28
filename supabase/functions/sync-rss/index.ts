@@ -2099,6 +2099,7 @@ When in doubt between safe and soft_sensitive, choose safe. When in doubt betwee
             .from("content_queue")
             .insert({
               source_id: source.id,
+              city_id: source.city_id || "default",
               title: stripHtml(title),
               content: stripHtml(rawContent),
               summary: stripHtml(aiResult.summary || ""),
@@ -2158,6 +2159,7 @@ When in doubt between safe and soft_sensitive, choose safe. When in doubt betwee
               
               await supabase.from("restaurant_news").insert({
                 restaurant_id: restaurantId,
+                city_id: source.city_id || "default",
                 news_type: diningSubCategory,
                 headline: title,
                 summary: aiResult.summary,

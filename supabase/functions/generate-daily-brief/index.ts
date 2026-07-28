@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getCityConfig } from "../_shared/cityConfig.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -65,16 +66,16 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
+    const config = await getCityConfig(supabase);
     const brief_date = todayCT();
     const y_date = yesterdayCT();
 
-    // Local-keyword regex — story must mention a real Lake Geneva-area place/name
-    // to qualify for the Brief, even if it's tagged T1/T2 (the ingestion AI
-    // mis-tags Milwaukee / regional content as T1 too often).
-    const LOCAL_KW =
-      /(lake geneva|geneva lake|williams bay|fontana|big foot beach|wrigley drive|flat iron park|library park|horticultural hall|riviera|grand geneva|abbey resort|pier 290|baker house|gordy|harpoon willie|fat cat|geneva tap house|topsy turvy|house of music|crafted americana|chuck'?s lakeshore|town of linn| linn,|walworth|delavan|elkhorn|bloomfield|darien|east troy|lake como|badger high|genoa city|sharon|twin lakes|burlington|pell lake|lyons|whitewater)/i;
-    const REGIONAL_KW =
-      /(milwaukee|madison|kenosha|racine|waukesha|southeast wisconsin|chicago|illinois)/i;
+    // Local/regional regexes come from the city gazetteer — story must mention
+    // a real local place/name to qualify for the Brief, even if it's tagged
+    // T1/T2 (the ingestion AI mis-tags regional content as T1 too often).
+    const escapeRe = (k: string) => k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const LOCAL_KW = new RegExp(`(${config.local_keywords.map(escapeRe).join("|")})`, "i");
+    const REGIONAL_KW = new RegExp(`(${config.non_local_keywords.map(escapeRe).join("|")})`, "i");
     const hasLocal = (s: any) =>
       LOCAL_KW.test(
         `${s?.title ?? ""} ${s?.summary ?? ""} ${String(s?.content ?? "").slice(0, 800)}`,
@@ -89,6 +90,7 @@ serve(async (req) => {
       .from("daily_briefs")
       .select("brief_date, created_at")
       .eq("brief_date", brief_date)
+      .eq("city_id", config.id)
       .maybeSingle();
     if (existing && !force) {
       return new Response(
@@ -101,6 +103,7 @@ serve(async (req) => {
     const { data: todayStories = [] } = await supabase
       .from("content_queue")
       .select("id, title, summary, content, category, geo_label, geo_tier, publish_date")
+      .eq("city_id", config.id)
       .in("status", ["published", "auto_published"])
       .in("safety_level", ["safe", "soft_sensitive"])
       .neq("category", "events")
@@ -115,6 +118,7 @@ serve(async (req) => {
     const { data: yStories = [] } = await supabase
       .from("content_queue")
       .select("id, title, summary, category")
+      .eq("city_id", config.id)
       .in("status", ["published", "auto_published"])
       .in("safety_level", ["safe", "soft_sensitive"])
       .neq("category", "events")
@@ -129,6 +133,7 @@ serve(async (req) => {
     const { data: events = [] } = await supabase
       .from("content_queue")
       .select("id, title, event_date, geo_label")
+      .eq("city_id", config.id)
       .in("status", ["published", "auto_published"])
       .eq("category", "events")
       .eq("event_date", brief_date)
@@ -154,8 +159,10 @@ serve(async (req) => {
       timeZone: "America/Chicago",
     });
 
+    const persona = String((config.theme as Record<string, unknown> | undefined)?.persona_name ?? "Maggie");
+    const nonLocalList = config.non_local_keywords.slice(0, 8).join(", ");
     const system = [
-      "You are Maggie, the editor of the Lake Geneva Brief — a local news digest for Lake Geneva, Wisconsin.",
+      `You are ${persona}, the editor of the ${config.site_name} — a local news digest for ${config.city_name}, ${config.state_code}.`,
       "You write a 4-6 sentence morning brief in warm, neighborly, conversational prose. Think 'a friend who reads everything for you.'",
       "STRICT RULES:",
       "- Only state facts that appear in the provided source material. Never invent details, quotes, decisions, names, or numbers.",
@@ -165,8 +172,8 @@ serve(async (req) => {
       "- Reference at most 3 stories. Mention the calendar item that matters most if any.",
       "- If it's a quiet day, say so honestly in a warm way (e.g. 'Slow morning on the lake, and that's usually a good thing.'). Do not stretch thin material into drama.",
       "- Voice: warm, dry, observant. Local. Like Garrison Keillor by way of a small-town newsroom.",
-      "- HARD RULE: Never mention Milwaukee, Madison, Kenosha, Racine, Waukesha, Chicago, or 'Southeast Wisconsin' unless the story is directly about Lake Geneva or Walworth County. Skip any item that isn't unmistakably local.",
-      "- Skip violence, crime, or tragedy stories unless they happened in Lake Geneva, Williams Bay, Fontana, or Walworth County and are actionable for residents.",
+      `- HARD RULE: Never mention ${nonLocalList} unless the story is directly about ${config.city_name} or ${config.county_name}. Skip any item that isn't unmistakably local.`,
+      `- Skip violence, crime, or tragedy stories unless they happened in or around ${config.city_name} / ${config.county_name} and are actionable for residents.`,
     ].join("\n");
 
     const sourceBlock = [
@@ -218,6 +225,7 @@ serve(async (req) => {
       // Persist the failure so it's visible
       await supabase.from("daily_briefs").upsert({
         brief_date,
+        city_id: config.id,
         body: "",
         is_quiet_day,
         mentioned_story_ids,
@@ -238,6 +246,7 @@ serve(async (req) => {
       console.error("[generate-daily-brief] empty body from model", aiJson);
       await supabase.from("daily_briefs").upsert({
         brief_date,
+        city_id: config.id,
         body: "",
         is_quiet_day,
         mentioned_story_ids,
@@ -253,6 +262,7 @@ serve(async (req) => {
 
     const { error: upsertErr } = await supabase.from("daily_briefs").upsert({
       brief_date,
+      city_id: config.id,
       body,
       is_quiet_day,
       mentioned_story_ids,

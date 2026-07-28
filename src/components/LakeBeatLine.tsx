@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Waves } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { getCityId } from "@/lib/cityId";
 
 function todayCT(): string {
   return new Intl.DateTimeFormat("en-CA", {
@@ -24,6 +25,7 @@ export default function LakeBeatLine() {
       const { data } = await supabase
         .from("lake_beats")
         .select("body")
+        .eq("city_id", getCityId())
         .eq("beat_date", todayCT())
         .maybeSingle();
       if (!cancelled) setBody(data?.body?.trim() || null);

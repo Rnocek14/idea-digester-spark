@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Sparkles } from "lucide-react";
 import { formatEventTime, localDateStr, type EventRow } from "@/lib/eventUtils";
+import { getCityId } from "@/lib/cityId";
 
 type Pick = EventRow & {
   featured_in_later?: boolean;
@@ -31,6 +32,7 @@ export default function EditorialLaterRail() {
         .select(
           "id, title, summary, category, event_date, event_time, image_url, geo_tier, geo_label, original_url, featured_rank, editorial_pick_reason, featured_in_later",
         )
+        .eq("city_id", getCityId())
         .eq("featured_in_later", true)
         .gte("featured_until", today)
         .in("status", ["approved", "auto_published", "published"])
@@ -58,6 +60,7 @@ export default function EditorialLaterRail() {
         .select(
           "id, title, summary, category, event_date, event_time, image_url, geo_tier, geo_label, original_url",
         )
+        .eq("city_id", getCityId())
         .in("status", ["approved", "auto_published", "published"])
         .in("safety_level", ["safe", "soft_sensitive"])
         .gte("event_date", fallbackStart)

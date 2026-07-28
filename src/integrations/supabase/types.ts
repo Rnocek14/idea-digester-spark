@@ -52,6 +52,7 @@ export type Database = {
       }
       ad_placements: {
         Row: {
+          city_id: string
           business_id: string | null
           created_at: string | null
           creative_url: string | null
@@ -66,6 +67,7 @@ export type Database = {
           status: string | null
         }
         Insert: {
+          city_id?: string
           business_id?: string | null
           created_at?: string | null
           creative_url?: string | null
@@ -80,6 +82,7 @@ export type Database = {
           status?: string | null
         }
         Update: {
+          city_id?: string
           business_id?: string | null
           created_at?: string | null
           creative_url?: string | null
@@ -293,6 +296,7 @@ export type Database = {
       }
       business_profiles: {
         Row: {
+          city_id: string
           address: string | null
           business_type: string | null
           categories: string[] | null
@@ -325,6 +329,7 @@ export type Database = {
           zillow_url: string | null
         }
         Insert: {
+          city_id?: string
           address?: string | null
           business_type?: string | null
           categories?: string[] | null
@@ -357,6 +362,7 @@ export type Database = {
           zillow_url?: string | null
         }
         Update: {
+          city_id?: string
           address?: string | null
           business_type?: string | null
           categories?: string[] | null
@@ -531,6 +537,7 @@ export type Database = {
       }
       community_posts: {
         Row: {
+          city_id: string
           author_id: string | null
           body_md: string
           category: string
@@ -549,6 +556,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          city_id?: string
           author_id?: string | null
           body_md: string
           category: string
@@ -567,6 +575,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          city_id?: string
           author_id?: string | null
           body_md?: string
           category?: string
@@ -596,6 +605,7 @@ export type Database = {
       }
       community_submissions: {
         Row: {
+          city_id: string
           body: string
           category: string | null
           created_at: string
@@ -619,6 +629,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          city_id?: string
           body: string
           category?: string | null
           created_at?: string
@@ -642,6 +653,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          city_id?: string
           body?: string
           category?: string | null
           created_at?: string
@@ -735,6 +747,7 @@ export type Database = {
       }
       content_queue: {
         Row: {
+          city_id: string
           author: string | null
           category: string | null
           content: string
@@ -789,6 +802,7 @@ export type Database = {
           voice_version: string | null
         }
         Insert: {
+          city_id?: string
           author?: string | null
           category?: string | null
           content: string
@@ -843,6 +857,7 @@ export type Database = {
           voice_version?: string | null
         }
         Update: {
+          city_id?: string
           author?: string | null
           category?: string | null
           content?: string
@@ -987,6 +1002,7 @@ export type Database = {
       }
       daily_briefs: {
         Row: {
+          city_id: string
           body: string
           brief_date: string
           created_at: string
@@ -999,6 +1015,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          city_id?: string
           body: string
           brief_date: string
           created_at?: string
@@ -1011,6 +1028,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          city_id?: string
           body?: string
           brief_date?: string
           created_at?: string
@@ -1194,6 +1212,7 @@ export type Database = {
       }
       evergreen_content: {
         Row: {
+          city_id: string
           category: string
           content: string
           created_at: string
@@ -1207,6 +1226,7 @@ export type Database = {
           use_count: number
         }
         Insert: {
+          city_id?: string
           category?: string
           content: string
           created_at?: string
@@ -1220,6 +1240,7 @@ export type Database = {
           use_count?: number
         }
         Update: {
+          city_id?: string
           category?: string
           content?: string
           created_at?: string
@@ -1397,6 +1418,7 @@ export type Database = {
       }
       history_entries: {
         Row: {
+          city_id: string
           body: string
           created_at: string
           created_by: string | null
@@ -1416,6 +1438,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          city_id?: string
           body: string
           created_at?: string
           created_by?: string | null
@@ -1435,6 +1458,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          city_id?: string
           body?: string
           created_at?: string
           created_by?: string | null
@@ -1574,6 +1598,7 @@ export type Database = {
       }
       incidents: {
         Row: {
+          city_id: string
           ai_rewrite: string | null
           body: string | null
           confidence_score: number | null
@@ -1600,6 +1625,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          city_id?: string
           ai_rewrite?: string | null
           body?: string | null
           confidence_score?: number | null
@@ -1626,6 +1652,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          city_id?: string
           ai_rewrite?: string | null
           body?: string | null
           confidence_score?: number | null
@@ -1715,6 +1742,7 @@ export type Database = {
       }
       job_listings: {
         Row: {
+          city_id: string
           amount_cents: number | null
           apply_url: string | null
           business_id: string | null
@@ -1741,6 +1769,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          city_id?: string
           amount_cents?: number | null
           apply_url?: string | null
           business_id?: string | null
@@ -1767,6 +1796,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          city_id?: string
           amount_cents?: number | null
           apply_url?: string | null
           business_id?: string | null
@@ -1804,6 +1834,7 @@ export type Database = {
       }
       lake_beats: {
         Row: {
+          city_id: string
           beat_date: string
           body: string
           conditions: string | null
@@ -1813,6 +1844,7 @@ export type Database = {
           temp_f: number | null
         }
         Insert: {
+          city_id?: string
           beat_date: string
           body: string
           conditions?: string | null
@@ -1822,6 +1854,7 @@ export type Database = {
           temp_f?: number | null
         }
         Update: {
+          city_id?: string
           beat_date?: string
           body?: string
           conditions?: string | null
@@ -1956,6 +1989,7 @@ export type Database = {
       }
       newsletters: {
         Row: {
+          city_id: string
           auto_send_enabled: boolean | null
           created_at: string
           edition_date: string
@@ -1974,6 +2008,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          city_id?: string
           auto_send_enabled?: boolean | null
           created_at?: string
           edition_date: string
@@ -1992,6 +2027,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          city_id?: string
           auto_send_enabled?: boolean | null
           created_at?: string
           edition_date?: string
@@ -2295,6 +2331,7 @@ export type Database = {
       }
       restaurant_news: {
         Row: {
+          city_id: string
           created_at: string | null
           expires_at: string | null
           headline: string
@@ -2310,6 +2347,7 @@ export type Database = {
           verified: boolean
         }
         Insert: {
+          city_id?: string
           created_at?: string | null
           expires_at?: string | null
           headline: string
@@ -2325,6 +2363,7 @@ export type Database = {
           verified?: boolean
         }
         Update: {
+          city_id?: string
           created_at?: string | null
           expires_at?: string | null
           headline?: string
@@ -2525,6 +2564,7 @@ export type Database = {
       }
       restaurants: {
         Row: {
+          city_id: string
           address: string | null
           amenities: string[] | null
           business_profile_id: string | null
@@ -2565,6 +2605,7 @@ export type Database = {
           weekly_specials: Json | null
         }
         Insert: {
+          city_id?: string
           address?: string | null
           amenities?: string[] | null
           business_profile_id?: string | null
@@ -2605,6 +2646,7 @@ export type Database = {
           weekly_specials?: Json | null
         }
         Update: {
+          city_id?: string
           address?: string | null
           amenities?: string[] | null
           business_profile_id?: string | null
@@ -2940,6 +2982,7 @@ export type Database = {
       }
       sponsors: {
         Row: {
+          city_id: string
           ad_slots_remaining: number | null
           business_name: string
           contact_name: string | null
@@ -2958,6 +3001,7 @@ export type Database = {
           website: string | null
         }
         Insert: {
+          city_id?: string
           ad_slots_remaining?: number | null
           business_name: string
           contact_name?: string | null
@@ -2976,6 +3020,7 @@ export type Database = {
           website?: string | null
         }
         Update: {
+          city_id?: string
           ad_slots_remaining?: number | null
           business_name?: string
           contact_name?: string | null

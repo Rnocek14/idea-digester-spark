@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { InlineSubscribeCTA } from "@/components/InlineSubscribeCTA";
+import { getCityId } from "@/lib/cityId";
 
 type NightlifeEvent = {
   id: string;
@@ -86,6 +87,7 @@ const LakeGenevaNightlife = () => {
       const { data, error } = await supabase
         .from("content_queue")
         .select("id, title, summary, content, event_date, event_time, performer, original_url, image_url, metadata")
+        .eq("city_id", getCityId())
         .in("status", ["published", "auto_published", "approved"])
         .contains("metadata", { verticals: ["nightlife"] })
         .gte("event_date", todayStr)
@@ -104,6 +106,7 @@ const LakeGenevaNightlife = () => {
       const { data, error } = await supabase
         .from("content_queue")
         .select("id, title, summary, content, event_date, event_time, performer, original_url, image_url, metadata")
+        .eq("city_id", getCityId())
         .in("status", ["published", "auto_published", "approved"])
         .contains("metadata", { verticals: ["nightlife"] })
         .is("event_date", null)

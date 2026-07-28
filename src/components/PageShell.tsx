@@ -2,14 +2,17 @@ import * as React from "react";
 import { Link, NavLink } from "react-router-dom";
 import { format } from "date-fns";
 import { LakeLine } from "@/components/LakeLine";
+import { useCityConfig } from "@/hooks/useCityConfig";
 
 const navItems = [
-  { label: "Today", to: "/lake-geneva" },
+  { label: "Today", to: "/today" },
   { label: "Events", to: "/events" },
-  { label: "Local Love", to: "/community/local-love" },
+  { label: "Incidents", to: "/incidents" },
   { label: "Eats", to: "/eats" },
+  { label: "Guides", to: "/guides" },
+  { label: "Jobs", to: "/jobs" },
+  { label: "Local Love", to: "/community/local-love" },
   { label: "Directory", to: "/directory" },
-  { label: "Submit", to: "/submit" },
 ];
 
 type PageShellProps = {
@@ -23,6 +26,7 @@ const PageShell: React.FC<PageShellProps> = ({
   children,
   fullWidth = false,
 }) => {
+  const city = useCityConfig();
   const today = format(new Date(), "EEEE, MMMM d, yyyy");
   const shortDate = format(new Date(), "EEE, MMM d");
   const now = new Date();
@@ -54,7 +58,7 @@ const PageShell: React.FC<PageShellProps> = ({
             className="hidden sm:inline text-[11px] uppercase tracking-[0.18em] text-slate-500"
             style={{ fontFamily: "'Playfair Display', serif", letterSpacing: "0.14em" }}
           >
-            Geneva Lake · Walworth County, Wisconsin
+            {city.theme.region_line}
           </span>
         </div>
 
@@ -66,10 +70,10 @@ const PageShell: React.FC<PageShellProps> = ({
               className="text-2xl tracking-tight text-slate-900 group-hover:text-[hsl(var(--lake-deep))] transition-colors leading-none"
               style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700 }}
             >
-              Lake Geneva Brief
+              {city.site_name}
             </span>
             <span className="hidden text-[11px] font-medium uppercase tracking-[0.18em] text-slate-500 sm:inline">
-              Local Edition
+              {city.theme.tagline}
             </span>
           </Link>
 
@@ -123,7 +127,7 @@ const PageShell: React.FC<PageShellProps> = ({
             ))}
           </nav>
         </div>
-        <LakeLine />
+        {city.theme.motif === "lake" && <LakeLine />}
       </header>
 
       {/* Main content */}
@@ -143,12 +147,12 @@ const PageShell: React.FC<PageShellProps> = ({
               className="text-xl text-slate-800"
               style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700 }}
             >
-              Lake Geneva Brief
+              {city.site_name}
             </span>
             <div className="flex items-center gap-3">
               <span className="h-px w-8 bg-[hsl(var(--shore-terracotta))]/40" />
               <span className="text-[11px] uppercase tracking-[0.22em] text-[hsl(var(--shore-terracotta))]/80">
-                From the Shore Path
+                {city.theme.footer_kicker}
               </span>
               <span className="h-px w-8 bg-[hsl(var(--shore-terracotta))]/40" />
             </div>
@@ -156,14 +160,37 @@ const PageShell: React.FC<PageShellProps> = ({
               className="max-w-md text-sm italic text-slate-600 leading-relaxed"
               style={{ fontFamily: "'Playfair Display', serif" }}
             >
-              Curated from the shore path by Gina Nocek — a daily note for the
-              people who call Geneva Lake home.
+              {city.theme.editor_note}
             </p>
           </div>
 
           {/* Utility row */}
           <div className="mt-8 pt-5 border-t border-slate-100 flex flex-col items-center justify-between gap-3 text-xs text-slate-500 sm:flex-row">
             <div className="flex flex-wrap items-center justify-center gap-2">
+              <Link to="/events" className="hover:text-slate-900 hover:underline">
+                Events
+              </Link>
+              <span className="text-slate-400">·</span>
+              <Link to="/incidents" className="hover:text-slate-900 hover:underline">
+                Incidents
+              </Link>
+              <span className="text-slate-400">·</span>
+              <Link to="/guides" className="hover:text-slate-900 hover:underline">
+                Guides
+              </Link>
+              <span className="text-slate-400">·</span>
+              <Link to="/nightlife" className="hover:text-slate-900 hover:underline">
+                Nightlife
+              </Link>
+              <span className="text-slate-400">·</span>
+              <Link to="/jobs" className="hover:text-slate-900 hover:underline">
+                Jobs
+              </Link>
+              <span className="text-slate-400">·</span>
+              <Link to="/deals" className="hover:text-slate-900 hover:underline">
+                Deals
+              </Link>
+              <span className="text-slate-400">·</span>
               <Link to="/selling-lake-geneva" className="hover:text-slate-900 hover:underline">
                 Selling Your Home?
               </Link>
@@ -178,6 +205,22 @@ const PageShell: React.FC<PageShellProps> = ({
               <span className="text-slate-400">·</span>
               <Link to="/submit" className="hover:text-slate-900 hover:underline">
                 Submit a Tip
+              </Link>
+              <span className="text-slate-400">·</span>
+              <Link to="/cities" className="hover:text-slate-900 hover:underline">
+                Your City
+              </Link>
+              <span className="text-slate-400">·</span>
+              <Link to="/about" className="hover:text-slate-900 hover:underline">
+                About
+              </Link>
+              <span className="text-slate-400">·</span>
+              <Link to="/privacy" className="hover:text-slate-900 hover:underline">
+                Privacy
+              </Link>
+              <span className="text-slate-400">·</span>
+              <Link to="/terms" className="hover:text-slate-900 hover:underline">
+                Terms
               </Link>
             </div>
             <div className="text-[11px] text-slate-500">

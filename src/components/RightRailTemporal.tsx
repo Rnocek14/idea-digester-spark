@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { getCityId } from "@/lib/cityId";
 import {
   categoryEmoji,
   extractVenue,
@@ -30,6 +31,7 @@ export default function RightRailTemporal() {
         .select(
           "id, title, summary, category, event_date, event_time, performer, original_url, image_url, geo_tier, geo_label, metadata",
         )
+        .eq("city_id", getCityId())
         .in("status", ["approved", "auto_published", "published"])
         .in("safety_level", ["safe", "soft_sensitive"])
         .gte("event_date", todayStr)

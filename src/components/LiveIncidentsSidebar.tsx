@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle, Flame, Car, CloudLightning, Shield, Zap, ChevronRight, Construction, TrafficCone, Cone } from "lucide-react";
 import QuickReportIncident from "./QuickReportIncident";
+import { getCityId } from "@/lib/cityId";
 
 type IncidentUpdate = {
   is_verified: boolean;
@@ -50,23 +51,27 @@ const NON_LOCAL_KEYWORDS = [
 function isLocalIncident(title: string, location: string | null): boolean {
   const titleLower = title.toLowerCase();
   const locationLower = (location || '').toLowerCase();
-  
+
   // Priority 1: Check for non-local keywords FIRST - exclude if found
   const hasNonLocalKeyword = NON_LOCAL_KEYWORDS.some(keyword => titleLower.includes(keyword));
   if (hasNonLocalKeyword) return false;
-  
-  // Priority 2: If location field explicitly mentions local areas, it's local
+
+  // Priority 2: Community quick reports come from the local report form; their
+  // locations ("Downtown / Main St") carry no gazetteer keyword, so pass them through.
+  if (titleLower.startsWith('community report')) return true;
+
+  // Priority 3: If location field explicitly mentions local areas, it's local
   const locationHasLocal = LOCAL_KEYWORDS.some(keyword => locationLower.includes(keyword));
   if (locationHasLocal) return true;
-  
-  // Priority 3: Check for local keywords in title
+
+  // Priority 4: Check for local keywords in title
   const titleHasLocal = LOCAL_KEYWORDS.some(keyword => titleLower.includes(keyword));
   if (titleHasLocal) return true;
-  
-  // Priority 4: Weather alerts from "NWS Milwaukee" are regional and cover our area
+
+  // Priority 5: Weather alerts from "NWS Milwaukee" are regional and cover our area
   const isNWSAlert = titleLower.includes('nws milwaukee') || titleLower.includes('nws sullivan');
   if (isNWSAlert) return true;
-  
+
   // STRICT MODE: If no positive local signal found, exclude it
   // This prevents ambiguous/unknown incidents from appearing
   return false;
@@ -114,6 +119,7 @@ export default function LiveIncidentsSidebar({ onHide, showCloseButton = false }
             is_verified
           )
         `)
+        .eq("city_id", getCityId())
         .in("status", ["active", "developing", "monitoring"])
         .order("status", { ascending: true })
         .order("updated_at", { ascending: false })
@@ -143,15 +149,31 @@ export default function LiveIncidentsSidebar({ onHide, showCloseButton = false }
     refetchInterval: 30000,
   });
 
+  // Quiet-day recap: recent resolved incidents prove the wire works even when
+  // nothing is live right now ("quiet" should read as competence, not absence).
+  const { data: recentResolved } = useQuery({
+    queryKey: ["incidents-sidebar-resolved"],
+    queryFn: async () => {
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const { data, error } = await supabase
+        .from("incidents")
+        .select("id, slug, title, location, resolved_at")
+        .eq("city_id", getCityId())
+        .eq("status", "resolved")
+        .gte("resolved_at", sevenDaysAgo)
+        .order("resolved_at", { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+      return (data || []).filter((i) => isLocalIncident(i.title, i.location));
+    },
+    refetchInterval: 5 * 60 * 1000,
+  });
+
   const hasIncidents = incidents && incidents.length > 0;
   const hasActive = incidents?.some(i => i.status === "active");
-
-  // Sprint 2: Collapse "Community Status: All Clear" panel.
-  // The [RIGHT NOW] header already shows the green All Clear pill,
-  // so this card only renders when there is something to report.
-  if (!hasIncidents && !showCloseButton) {
-    return null;
-  }
+  const resolvedCount = recentResolved?.length ?? 0;
+  const latestResolved = recentResolved?.[0];
 
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
@@ -165,11 +187,14 @@ export default function LiveIncidentsSidebar({ onHide, showCloseButton = false }
     return `${diffHours}h ago`;
   };
 
-  // Calculate incident-free streak
-  const getIncidentFreeMessage = () => {
-    // In a real implementation, we'd check the last resolved incident date
-    // For now, show encouraging "all clear" message with correct proximity language
-    return "✓ No active incidents near Lake Geneva";
+  const formatResolvedAt = (dateString: string | null) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    const diffHours = Math.floor((Date.now() - date.getTime()) / 3600000);
+    if (diffHours < 1) return "in the last hour";
+    if (diffHours < 24) return `${diffHours}h ago`;
+    const diffDays = Math.floor(diffHours / 24);
+    return diffDays === 1 ? "yesterday" : `${diffDays} days ago`;
   };
 
   return (
@@ -197,8 +222,36 @@ export default function LiveIncidentsSidebar({ onHide, showCloseButton = false }
       </CardHeader>
       <CardContent className="pt-0">
         {!hasIncidents ? (
-          <div className="text-sm text-green-700 dark:text-green-400 mb-3 font-medium">
-            {getIncidentFreeMessage()}
+          <div className="mb-3 space-y-1.5">
+            <div className="text-sm text-green-700 dark:text-green-400 font-medium">
+              ✓ No active incidents near Lake Geneva
+            </div>
+            {resolvedCount > 0 ? (
+              <>
+                <div className="text-[11px] text-muted-foreground">
+                  Last 7 days: {resolvedCount} incident{resolvedCount === 1 ? "" : "s"}, all resolved
+                </div>
+                {latestResolved && (
+                  <Link
+                    to={`/incidents/${latestResolved.slug}`}
+                    className="block text-[11px] text-muted-foreground hover:text-foreground hover:underline"
+                  >
+                    Most recent: {latestResolved.title} — resolved {formatResolvedAt(latestResolved.resolved_at)}
+                  </Link>
+                )}
+              </>
+            ) : (
+              <div className="text-[11px] text-muted-foreground">
+                Quiet week — nothing reported in the last 7 days
+              </div>
+            )}
+            <Link
+              to="/incidents"
+              className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline"
+            >
+              View incident history
+              <ChevronRight className="h-3 w-3" />
+            </Link>
           </div>
         ) : (
           <div className="space-y-2 mb-2">

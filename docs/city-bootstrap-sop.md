@@ -1,0 +1,225 @@
+# City Bootstrap SOP — Discovering a City's Heartbeat, Accurately
+
+How a new city goes from a name to a running local-news site, with one operator
+and near-zero ongoing touch. This is both the runbook you follow and the spec
+the automation implements (`bootstrap-city` → `validate-trial-sources`).
+
+---
+
+## 1. What "the heartbeat of a city" actually is
+
+A hyperlocal site feels alive when it covers these beats. Every beat maps to a
+source class, and every source class has a discovery strategy:
+
+| Beat | What readers want | Source class | Discovery |
+|---|---|---|---|
+| Safety / "what's that siren" | incidents, closures, outages | NWS, state 511, SpotCrime, utility maps, sheriff/PD releases | fully automatic (T1) |
+| Civic | council, permits, ordinances, meetings | city/county CMS (CivicPlus, CivicEngage, Granicus, Revize) | pattern probes (T2) |
+| Weather / conditions | today on the lake/river/roads | NWS zones, open-meteo | fully automatic (T1) |
+| News of record | the local paper(s) | WordPress-era RSS feeds | search + feed probes (T2) |
+| Events | what's happening tonight/this weekend | venue iCals, chamber calendars, library, patch | probes + per-city curation |
+| Schools | closures, sports, board meetings | district site RSS (NCES lookup → probe) | T2 (roadmap) |
+| Business / dining | openings, closings, specials | Google Places import + review scrapes | semi-automatic |
+| Community chatter | the Facebook layer | Apify/n8n scrapers | **excluded from template** (C-tier, doesn't scale) |
+
+The template ships beats 1–4 fully automated, 5–7 partially. Beat 8 is a
+per-city luxury, never a template dependency.
+
+## 2. The accuracy model (the core idea)
+
+**Discovery is never trusted. Only observed behavior is trusted.**
+
+A search result claiming "this is the Delavan paper's RSS feed" is a guess.
+Feeds lie, move, go stale, or serve a parked domain. So no discovered source
+can publish content directly:
+
+```
+candidate ──probe ok──▶ trial ──2 daily fetches each returning ≥1 real item──▶ active/ready
+                          │
+                          └──5 consecutive failed fetches──▶ inactive (auto-retired)
+```
+
+- `bootstrap-city` inserts everything it finds as `trial` (or `candidate` for
+  scrape-types needing adaptation).
+- `validate-trial-sources` (daily cron) fetches every trial source, counts real
+  `<item>`/`<entry>` elements, and promotes/demotes on evidence. Nobody reviews
+  a list of URLs; the fleet grades itself.
+- Promotion goes to `active` only for the live city; other cities park at
+  `ready` until they launch (their content must not leak into the live feed
+  before content tables are city-scoped).
+- After promotion, the existing runtime health machinery takes over
+  (zero-run counters → `alert-source-health` → `auto-maintain-sources`).
+
+**Content-level accuracy stacks on top** (already built):
+- Aggregators (Google News) are `discovery_layer` — they can never auto-publish
+  (see `.lovable/memory/strategy/discovery-layer-sources.md`).
+- Geo gates: bbox + per-city gazetteer from `city_config`.
+- Safety gates: the Tier-4/Tier-3 keyword engine (`_shared/incidentGate.ts`),
+  deterministic redaction for official releases, hallucination checks in
+  `sync-rss`, fail-closed safety classification.
+
+## 3. Discovery tiers (what `bootstrap-city` does)
+
+Input: `{city_name, state_code, county_name, site_domain?, lat/lon?}` — that's
+the entire per-city seed.
+
+**T1 — Deterministic (config computed, no discovery risk):**
+- Geocode via open-meteo (no key).
+- NWS forecast + county zones computed from `api.weather.gov/points/{lat},{lon}`.
+- Bbox from center + radius.
+- SpotCrime county path; state 511 API from the verified-state registry.
+- Google News RSS query feed (discovery-layer, trust-capped).
+- patch.com presence probe.
+
+**T2 — Pattern probes (guessing where things usually live, then verifying):**
+- City .gov base URL candidates → CivicPlus `/CivicAlerts.aspx?Format=RSS` probe.
+- Firecrawl search "{city} {state} local news" → candidate domains (national
+  domains blocklisted) → WordPress feed-path probes (`/feed/`, `/rss`, ...).
+- A probe only counts if the response parses as a feed with ≥1 item — and even
+  then it only earns `trial`.
+
+**T3 — AI-assisted (fail-open):**
+- Gazetteer expansion: GPT lists real places/lakes/highways in the county plus
+  nearby metros for the exclusion list; deterministic base (city, county) is
+  the floor if AI is unavailable or wrong.
+
+**Roadmap tiers (add as verified, each ×N cities of value):**
+- Nixle by zip; NCES → school district feeds; chamber/visitor-bureau calendars;
+  Eventbrite API by location; CivicClerk/BoardDocs agenda scrapes; Granicus
+  pattern probes; more state 511 registries (verify endpoint shape per state);
+  county sheriff press-page patterns; utility outage map registry.
+
+## 4. Per-city launch runbook
+
+**Automatic (minutes):**
+1. Dashboard → **Cities** → fill the Add-a-City form (city, state, county,
+   optional domain) → **Bootstrap**. That's the whole per-city input. (The
+   form wraps `POST /functions/v1/bootstrap-city`; the discovery report shows
+   inline and is stored in `source_discovery_runs`.)
+2. Wait 2–3 days while `validate-trial-sources` grades the trial sources —
+   the Cities page shows each city's active/ready/trial/candidate counts.
+
+**The one irreducible human pass (~30–45 min, once per city):**
+3. Gazetteer sanity check: read `city_config.local_keywords` — delete anything
+   that isn't a real nearby place (AI expansion is fail-open, not infallible;
+   a wrong keyword mis-geo-tags content forever).
+4. Spot-check promoted sources: open each `ready`/`active` source URL once —
+   is it actually the local paper, or an SEO farm that happens to have a feed?
+   Kill fakes (`status='inactive'`, `metadata.retired_reason='human: not legit'`).
+5. Domain + branding + theme: connect the domain, confirm the `city_config`
+   branding row, fill the theme slots (§6) and pick the signature feature,
+   verify the Resend from-address domain.
+6. Click **Activate city** on the Cities page — flips `city_config.status` to
+   `active` AND promotes the city's parked `ready` sources to `active` in one
+   step; fleet crons include it from the next tick.
+
+**How readers find their city (`/cities`, the network front door):**
+- The hub domain (citybrief.info) lands on the Find-Your-City page: one-tap
+  geolocation, zip-code fallback (zip → coordinates via Zippopotam, no key),
+  nearest live city within ~35 miles wins and links to its domain.
+- **A miss is a market signal**: visitors outside every live city leave an
+  email + zip in `city_waitlist` (nearest city + distance stamped on the row).
+  The expansion roadmap is "sort the waitlist by zip cluster, launch where
+  demand already is." The waitlist count shows on the Cities dashboard page.
+
+Steps 4–5 are the accuracy backstop AI can't fully replace: legitimacy judgment.
+Budget them; never skip them. Everything after launch is zero-touch.
+
+## 5. The Supabase solution (multi-tenant plan)
+
+**Decision: one Supabase project for the whole fleet.** Per-city projects mean
+per-city migrations, secrets, crons, and dashboards — dead at 10 cities,
+unthinkable at 1,000.
+
+**Phase 1 — done (migration `20260718140000`):**
+- `city_config` = city registry (id = slug, hostname, status, all city facts).
+- `sources.city_id` — the first tenant column; everything defaults to
+  `'default'` (Lake Geneva) with zero behavior change.
+- `source_discovery_runs` log; trial-validation cron.
+
+**Phase 2 — done (migration `20260718150000`):**
+- `city_id` (default `'default'`) added to the 15 core content tables
+  (content_queue, incidents, daily_briefs, newsletters, lake_beats,
+  job_listings, business_profiles, evergreen_content, history_entries,
+  community_posts, community_submissions, restaurants, restaurant_news,
+  sponsors, ad_placements) with hot-path composite indexes; subscribers
+  normalized. Ingest points stamp it: sync-rss from the source row,
+  the incident family from city config.
+
+**Phase 2b — in progress:**
+- Fleet-loop pattern SHIPPED in `sync-511-traffic` (the reference
+  implementation): `getActiveCityConfigs()` → loop cities → per-city API base,
+  bbox, gazetteer, city-scoped dedupe, per-city `city_id` stamping, and one
+  city's upstream failure never blocks the rest. Tested in
+  `tests/edge/sync-511-traffic.test.ts`. Convert the remaining sync functions
+  (NWS, SpotCrime, sheriff, power) to this exact shape as cities onboard.
+- Editorial generators (daily brief, newsletter, lake beat) still single-city:
+  filter and stamp by city before city #2 launches.
+- RLS note: public-content policies gain no city filter (content is public);
+  city scoping is a query-correctness concern, not a security boundary.
+  Subscriber/lead PII policies stay admin-only as today.
+
+**Phase 3 — serving:**
+- `HostnameRouter` resolves hostname → `city_config` row (it already stubs
+  this); all frontend queries add `.eq('city_id', city.id)`; `PageMeta`/JSON-LD/
+  sitemap read branding from config. One deploy serves every domain (Lovable
+  supports multiple custom domains → same app).
+- Per-city crons become fleet crons: one cron iterates active cities.
+
+**Phase 4 — scale valves (only when hit):**
+- DB partitioning by `city_id` on content tables at ~10M rows.
+- Read replicas / regional projects at ~100+ high-traffic cities.
+- Edge-function fan-out queue (one worker per city per sync tick) when a
+  single invocation can't cover the fleet within its time budget.
+
+**Cost note:** marginal infra cost per city ≈ AI classification + Firecrawl
+probes + email volume. The fixed costs (project, crons, code) do not multiply.
+
+## 6. City identity: theme slots vs. hand-crafted signatures
+
+Config makes a city site *function*; identity makes it feel like *its place*.
+Lake Geneva works because of the lake palette, the wave line, the Shore Path,
+Streblow boats. The template gives every city the same **slots**, filled with
+that city's own identity — `city_config.theme` (migration `20260718160000`,
+rendered via `src/hooks/useCityConfig.ts` + `src/lib/cityTheme.ts`):
+
+| Slot | Lake Geneva value | What another city puts there |
+|---|---|---|
+| `palette` (6 accent tokens) | lake blues + shore terracotta | river greens, prairie golds, harbor navy… |
+| `motif` | `lake` (renders the wave line) | `river` / `coast` / `downtown` / `none` |
+| `tagline`, `region_line` | "Local Edition", "Geneva Lake · Walworth County" | theirs |
+| `footer_kicker`, `editor_note` | "From the Shore Path", signed Gina note | their motto + signed voice |
+| `signature.feature_name` | Shore Path | the riverwalk, the square, the harbor |
+| `signature.landmarks` | Yerkes, Big Foot Beach, Riviera Pier, Streblow | their icons |
+
+Defaults are Lake Geneva, applied synchronously — no flash, no behavior change
+for the live site, and a city with an empty theme still renders correctly.
+
+**The honest boundary:** palette/copy slots are config. The *content* behind a
+signature — the Shore Path stop-by-stop guide, the Streblow boats story, the
+audio walking tour — is hand-crafted local knowledge. Budget one signature
+feature per city at launch (pick it during the human pass: what's the ONE
+thing this town identifies with?), and let the guide-generation pipeline fill
+the rest. A city clone without a signature feature will function but won't be
+loved; this is deliberate per-city craft, not a template gap.
+
+## 7. The test suite (run it on every change)
+
+`npm run test:edge` bundles the real edge-function code (remote imports
+stubbed) and runs it against a mocked database + network — 36 tests covering
+the bootstrap pipeline, the trial grading matrix (promote/park/demote), the
+tier engine (including AI-unavailable fail-closed), geo gates, dedupe, rate
+limits, and the sitemap/RLS contract. Tests live in `tests/edge/`. Any new
+edge function that touches the multi-city path gets tests here first — this
+suite is what "tested in depth" means when no human QAs a fleet.
+
+## 8. What accuracy means at fleet scale — the dashboard numbers that matter
+
+Watch exactly four numbers per city (all derivable from existing tables):
+1. **Active sources** (< 5 = the city is starving; bootstrap more patterns)
+2. **Stories published / day** (7-day avg; < 3 = thin, check source health)
+3. **% content geo-tier 1–2** (< 60% = gazetteer too loose, leaking regional)
+4. **Trial queue age** (> 14 days = discovery found junk; re-run bootstrap)
+
+A fleet health rollup = these four numbers × N cities on one screen, alerts
+only on threshold crossings. Never per-city daily emails.

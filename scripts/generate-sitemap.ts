@@ -89,8 +89,10 @@ async function fetchDynamic(): Promise<SitemapEntry[]> {
       .from("content_queue")
       .select("id, event_date, updated_at")
       .eq("category", "events")
-      .in("status", ["approved", "auto_published", "published"])
-      .in("safety_level", ["safe", "soft_sensitive"])
+      // Match the anon RLS policy exactly (published/auto_published + safe only) —
+      // requesting more just gets silently filtered and under-fills the sitemap.
+      .in("status", ["auto_published", "published"])
+      .eq("safety_level", "safe")
       .gte("event_date", new Date().toISOString().slice(0, 10))
       .order("event_date", { ascending: true })
       .limit(500);
@@ -139,7 +141,7 @@ async function fetchDynamic(): Promise<SitemapEntry[]> {
       .from("content_queue")
       .select("id, title, updated_at, publish_date")
       .in("status", ["published", "auto_published"])
-      .in("safety_level", ["safe", "soft_sensitive"])
+      .eq("safety_level", "safe")
       .gte("publish_date", cutoff)
       .order("publish_date", { ascending: false, nullsFirst: false })
       .limit(1000);
@@ -195,6 +197,15 @@ function slugify(s: string, max = 60): string {
 
 async function main() {
   const dynamic = await fetchDynamic();
+  if (dynamic.length === 0) {
+    // Static-only sitemaps kill discoverability of every story/event/incident
+    // page. Make this state impossible to miss in build logs.
+    console.warn(
+      "[sitemap] ⚠️  WARNING: ZERO dynamic entries — sitemap will contain only " +
+        `${staticEntries.length} static URLs. Check VITE_SUPABASE_URL/VITE_SUPABASE_PUBLISHABLE_KEY ` +
+        "availability at build time and the queries above."
+    );
+  }
   const all = [...staticEntries, ...dynamic];
   const xml = [
     `<?xml version="1.0" encoding="UTF-8"?>`,
@@ -203,7 +214,7 @@ async function main() {
     `</urlset>`,
   ].join("\n");
   writeFileSync(resolve("public/sitemap.xml"), xml);
-  console.log(`[sitemap] wrote public/sitemap.xml (${all.length} entries)`);
+  console.log(`[sitemap] wrote public/sitemap.xml (${all.length} entries: ${staticEntries.length} static + ${dynamic.length} dynamic)`);
 }
 
 main().catch((err) => {

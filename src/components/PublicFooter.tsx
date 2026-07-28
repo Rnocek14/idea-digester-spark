@@ -6,9 +6,29 @@ export const PublicFooter = () => {
     <footer className="border-t mt-16 py-8 bg-muted/20">
       <div className="container max-w-6xl mx-auto px-4">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-          <div className="flex items-center gap-4">
-            <NavLink to="/lake-geneva" className="hover:text-primary transition-colors">
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+            <NavLink to="/" className="hover:text-primary transition-colors">
               Lake Geneva Brief
+            </NavLink>
+            <span className="text-muted-foreground">•</span>
+            <NavLink to="/events" className="hover:text-primary transition-colors">
+              Events
+            </NavLink>
+            <span className="text-muted-foreground">•</span>
+            <NavLink to="/incidents" className="hover:text-primary transition-colors">
+              Incidents
+            </NavLink>
+            <span className="text-muted-foreground">•</span>
+            <NavLink to="/guides" className="hover:text-primary transition-colors">
+              Guides
+            </NavLink>
+            <span className="text-muted-foreground">•</span>
+            <NavLink to="/jobs" className="hover:text-primary transition-colors">
+              Jobs
+            </NavLink>
+            <span className="text-muted-foreground">•</span>
+            <NavLink to="/deals" className="hover:text-primary transition-colors">
+              Deals
             </NavLink>
             <span className="text-muted-foreground">•</span>
             <NavLink to="/directory" className="hover:text-primary transition-colors">
@@ -17,6 +37,18 @@ export const PublicFooter = () => {
             <span className="text-muted-foreground">•</span>
             <NavLink to="/advertise" className="hover:text-primary transition-colors">
               Advertise
+            </NavLink>
+            <span className="text-muted-foreground">•</span>
+            <NavLink to="/cities" className="hover:text-primary transition-colors">
+              Your City
+            </NavLink>
+            <span className="text-muted-foreground">•</span>
+            <NavLink to="/about" className="hover:text-primary transition-colors">
+              About
+            </NavLink>
+            <span className="text-muted-foreground">•</span>
+            <NavLink to="/privacy" className="hover:text-primary transition-colors">
+              Privacy
             </NavLink>
             <span className="text-muted-foreground">•</span>
             <SuggestionBoxModal

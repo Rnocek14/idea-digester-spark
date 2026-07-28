@@ -229,3 +229,27 @@ verify_jwt = false
 
 [functions.ingest-news]
 verify_jwt = false
+
+[functions.report-incident]
+verify_jwt = false
+
+[functions.alert-source-health]
+verify_jwt = false
+
+[functions.auto-maintain-sources]
+verify_jwt = false
+
+[functions.serve-sitemap]
+verify_jwt = false
+
+[functions.bootstrap-city]
+verify_jwt = false
+
+[functions.validate-trial-sources]
+verify_jwt = false
+
+[functions.ingest-email]
+verify_jwt = false
+
+[functions.scrape-lakegenevanews]
+verify_jwt = false

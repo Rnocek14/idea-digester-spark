@@ -7,22 +7,24 @@ interface HostnameRouterProps {
 
 /**
  * Routes users based on hostname:
- * - citybrief.info (root domain) → /auth page
- * - lakegeneva.citybrief.info | lakegenevabrief.com → normal routing (Lake Geneva site)
+ * - citybrief.info (the hub domain) → /cities (find-your-city: geolocate, zip,
+ *   waitlist) — the front door of the network, not a login page
+ * - city domains (lakegenevabrief.com, ...) → normal routing
+ * Phase 3 extends this: resolve hostname → city_config row and scope every
+ * query to that city.
  */
 const HostnameRouter = ({ children }: HostnameRouterProps) => {
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   useEffect(() => {
     const hostname = window.location.hostname;
-    
-    // If visiting citybrief.info (root domain) and not already on auth/dashboard
+
     if (
       (hostname === "citybrief.info" || hostname === "www.citybrief.info") &&
       location.pathname === "/"
     ) {
-      navigate("/auth", { replace: true });
+      navigate("/cities", { replace: true });
     }
   }, [navigate, location.pathname]);
 

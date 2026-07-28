@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Star } from "lucide-react";
+import { getCityId } from "@/lib/cityId";
 
 const GINA_ID = "db06b0ce-2fe3-4a01-a870-7f2aef1913a6";
 
@@ -99,6 +100,7 @@ export default function TodaysBriefBlock({ stories }: { stories: BriefStory[] })
       const { data } = await supabase
         .from("daily_briefs")
         .select("body")
+        .eq("city_id", getCityId())
         .eq("brief_date", todayCT())
         .eq("status", "published")
         .maybeSingle();

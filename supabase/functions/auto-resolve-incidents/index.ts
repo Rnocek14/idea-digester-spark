@@ -70,11 +70,29 @@ Deno.serve(async (req) => {
 
     const now = new Date();
 
-    // Fetch active/monitoring incidents
+    // Zero-touch queue hygiene: anything sitting in pending_review for 7+ days
+    // was never going to be reviewed (one operator, many cities) — auto-reject
+    // it so hold queues can never rot.
+    const reviewCutoff = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: staleHolds } = await supabase
+      .from("incidents")
+      .update({
+        status: "rejected",
+        resolution_reason: "auto_rejected_stale_review_queue",
+        updated_at: now.toISOString(),
+      })
+      .eq("status", "pending_review")
+      .lt("created_at", reviewCutoff)
+      .select("id");
+    if (staleHolds?.length) {
+      console.log(`Auto-rejected ${staleHolds.length} stale pending_review incidents`);
+    }
+
+    // Fetch live incidents ('developing' ages out on the same rules as 'active')
     const { data: incidents, error: fetchError } = await supabase
       .from("incidents")
       .select("id, incident_type, status, started_at, updated_at, title")
-      .in("status", ["active", "monitoring"]);
+      .in("status", ["active", "developing", "monitoring"]);
 
     if (fetchError) {
       console.error("Error fetching incidents:", fetchError);

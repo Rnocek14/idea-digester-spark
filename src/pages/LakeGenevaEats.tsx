@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { InlineSubscribeCTA } from "@/components/InlineSubscribeCTA";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useState } from "react";
+import { getCityId } from "@/lib/cityId";
 
 type EatsContent = {
   id: string;
@@ -154,6 +155,7 @@ const LakeGenevaEats = () => {
       const { data, error } = await supabase
         .from("content_queue")
         .select("id, title, summary, content, content_website, event_date, original_url, image_url, category, metadata")
+        .eq("city_id", getCityId())
         .in("status", ["published", "auto_published"])
         .or("category.eq.dining,category.eq.restaurant,category.eq.food,metadata->verticals.cs.[\"eats\"],metadata->verticals.cs.[\"dining\"],metadata->verticals.cs.[\"food\"]")
         .order("created_at", { ascending: false })

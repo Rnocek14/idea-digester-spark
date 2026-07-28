@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { tier3Match, tier4Match } from "../_shared/incidentGate.ts";
+import { getActiveCityConfigs, hasLocalKeyword, type CityConfig } from "../_shared/cityConfig.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,12 +9,6 @@ const corsHeaders = {
 };
 
 type IncidentType = 'crime' | 'police' | 'accident' | 'other';
-
-// Lake Geneva area keywords for filtering
-const LAKE_GENEVA_KEYWORDS = [
-  'lake geneva', 'williams bay', 'fontana', 'walworth', 'elkhorn',
-  'delavan', 'genoa city', 'sharon', 'darien', 'east troy',
-];
 
 // Crime type mapping
 const CRIME_TYPE_MAP: Record<string, { type: IncidentType; priority: number }> = {
@@ -45,17 +41,17 @@ function inferCrimeInfo(text: string): { type: IncidentType; subType: string; pr
   return { type: 'crime', subType: 'other', priority: 3 };
 }
 
-function isLakeGenevaArea(text: string): { isLocal: boolean; geoTier: number; geoLabel: string } {
+function isLocalArea(config: CityConfig, text: string): { isLocal: boolean; geoTier: number; geoLabel: string } {
   const lower = text.toLowerCase();
-  
-  if (lower.includes('lake geneva')) {
-    return { isLocal: true, geoTier: 1, geoLabel: 'Lake Geneva' };
+
+  if (lower.includes(config.city_name.toLowerCase())) {
+    return { isLocal: true, geoTier: 1, geoLabel: config.city_name };
   }
-  
-  if (LAKE_GENEVA_KEYWORDS.some(kw => lower.includes(kw))) {
-    return { isLocal: true, geoTier: 2, geoLabel: 'Walworth County' };
+
+  if (hasLocalKeyword(config, lower)) {
+    return { isLocal: true, geoTier: 2, geoLabel: config.county_name };
   }
-  
+
   return { isLocal: false, geoTier: 0, geoLabel: '' };
 }
 
@@ -95,17 +91,15 @@ async function rateLimitedFetch<T>(
   return results;
 }
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
-
-  try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
+// FLEET PATTERN: one invocation serves every active city with a spotcrime_path.
+async function syncCitySpotcrime(
+  supabase: ReturnType<typeof createClient>,
+  supabaseUrl: string,
+  supabaseKey: string,
+  config: CityConfig,
+) {
     const results = {
+      city_id: config.id,
       method: "scrape-content",
       processed: 0,
       inserted: 0,
@@ -116,9 +110,9 @@ serve(async (req) => {
       firecrawl_used: false,
     };
 
-    console.log("[sync-spotcrime] Scraping Walworth County crime data...");
+    console.log(`[sync-spotcrime] (${config.id}) Scraping ${config.county_name} crime data...`);
 
-    const spotcrimeUrl = "https://spotcrime.com/WI/Walworth%20County";
+    const spotcrimeUrl = `https://spotcrime.com/${config.spotcrime_path || 'WI/Walworth%20County'}`;
 
     // Step 1: Use scrape-content for the main page (SpotCrime is JS-heavy)
     // SpotCrime almost always needs JS rendering, so we go straight to scrape-content
@@ -141,10 +135,7 @@ serve(async (req) => {
     if (!scrapeResponse.ok) {
       const errText = await scrapeResponse.text();
       console.error("[sync-spotcrime] scrape-content error:", errText);
-      return new Response(
-        JSON.stringify({ success: false, error: "Failed to scrape SpotCrime" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      throw new Error("Failed to scrape SpotCrime");
     }
 
     const scrapeData = await scrapeResponse.json();
@@ -223,16 +214,29 @@ serve(async (req) => {
     for (const inc of incidentsToProcess) {
       results.processed++;
       
-      // Check if in Lake Geneva area
-      const geoInfo = isLakeGenevaArea(inc.address + ' ' + inc.description);
+      // Check if in the configured local area
+      const geoInfo = isLocalArea(config, inc.address + ' ' + inc.description);
       if (!geoInfo.isLocal) {
+        results.filtered_out++;
+        continue;
+      }
+
+      // Editorial safety gate (same keywords as the ingest-incident tier engine):
+      // SpotCrime is an unverified aggregator, so Tier-4 material (arrests, deaths,
+      // juveniles, overdoses...) is never published from it. Tier-3 material is
+      // ALSO skipped rather than queued — this pipeline is zero-touch by design
+      // (one operator, many cities): a hold queue nobody reviews is just rot.
+      const gateText = `${inc.type} ${inc.description} ${inc.address}`;
+      const gateHit = tier4Match(gateText) || tier3Match(gateText);
+      if (gateHit) {
+        console.log(`[sync-spotcrime] Editorial gate skip (${gateHit}): ${inc.description.substring(0, 60)}`);
         results.filtered_out++;
         continue;
       }
 
       const crimeInfo = inferCrimeInfo(inc.type + ' ' + inc.description);
       const title = `${crimeInfo.subType.replace(/_/g, ' ')} in ${geoInfo.geoLabel}`.substring(0, 140);
-      
+
       // Create external_id for deduplication (1-hour buckets)
       const timeBucket = Math.floor(Date.now() / (60 * 60 * 1000));
       const addressNorm = inc.address.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 50);
@@ -254,10 +258,11 @@ serve(async (req) => {
 
       const slug = slugify(title) + '-' + Date.now().toString(36);
 
-      // Insert the incident
-      const { error: insertError } = await supabase.from("incidents").insert({
+      // Insert the incident (only routine, gate-clean material reaches this point)
+      const { data: inserted, error: insertError } = await supabase.from("incidents").insert({
         slug,
         title,
+        city_id: config.id,
         incident_type: crimeInfo.type,
         sub_type: crimeInfo.subType,
         status: 'active',
@@ -266,12 +271,21 @@ serve(async (req) => {
         location: geoInfo.geoLabel,
         source: 'spotcrime',
         external_id: externalId,
-      });
+      }).select('id').single();
 
-      if (insertError) {
+      if (insertError || !inserted) {
         console.error(`[sync-spotcrime] Insert error:`, insertError);
-        results.errors.push(insertError.message);
+        results.errors.push(insertError?.message || 'insert failed');
       } else {
+        // Unverified-source labeling: SpotCrime aggregates unconfirmed police data,
+        // so the public UI must show the "Unconfirmed" badge (driven by is_verified=false).
+        await supabase.from("incident_updates").insert({
+          incident_id: inserted.id,
+          source: 'spotcrime',
+          source_label: 'SpotCrime (unverified aggregator)',
+          text: inc.description.substring(0, 500),
+          is_verified: false,
+        });
         console.log(`[sync-spotcrime] ✅ Created: ${title.substring(0, 60)}`);
         results.inserted++;
       }
@@ -280,13 +294,36 @@ serve(async (req) => {
       await new Promise(r => setTimeout(r, 100));
     }
 
-    console.log(`[sync-spotcrime] Complete:`, results);
+    console.log(`[sync-spotcrime] (${config.id}) Complete:`, results);
+    return results;
+}
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const cities = (await getActiveCityConfigs(supabase)).filter((c) => c.spotcrime_path);
+    const results = [];
+    for (const config of cities) {
+      try {
+        results.push(await syncCitySpotcrime(supabase, supabaseUrl, supabaseKey, config));
+      } catch (cityError) {
+        // One city's failure must never block the rest of the fleet.
+        console.error(`[sync-spotcrime] (${config.id}) city sync failed:`, cityError);
+        results.push({ city_id: config.id, error: cityError instanceof Error ? cityError.message : String(cityError) });
+      }
+    }
 
     return new Response(
-      JSON.stringify({ success: true, results }),
+      JSON.stringify({ success: true, cities: results }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("[sync-spotcrime] Error:", errorMessage);

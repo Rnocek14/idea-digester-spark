@@ -1,0 +1,32 @@
+name: Tests
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Edge-function test suite
+        run: npm run test:edge
+
+      - name: Typecheck
+        run: npx tsc -p tsconfig.app.json --noEmit
+
+      # Invoked directly (not via `npm run build`) to skip the prebuild
+      # sitemap script, which needs Supabase env vars not present in CI.
+      - name: Frontend build
+        run: npx vite build

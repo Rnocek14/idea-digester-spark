@@ -1,4 +1,4 @@
-import { FileText, Radio, Megaphone, LayoutDashboard, Mail, CalendarDays, Building2, BarChart3, Users, Image, Heart, Briefcase, Gift, Database, Activity, Store, BookOpen, TrendingUp, MessageSquare, Siren } from "lucide-react";
+import { FileText, Radio, Megaphone, LayoutDashboard, Mail, CalendarDays, Building2, BarChart3, Users, Image, Heart, Briefcase, Gift, Database, Activity, Store, BookOpen, TrendingUp, MessageSquare, Siren, Globe } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import {
@@ -22,6 +22,7 @@ const menuItems = [
   { title: "Social Queue", url: "/dashboard/social-queue", icon: CalendarDays },
   { title: "Sources", url: "/dashboard/sources", icon: Radio },
   { title: "Source Health", url: "/dashboard/source-health", icon: Database },
+  { title: "Cities", url: "/dashboard/cities", icon: Globe },
   { title: "Right Now Queue", url: "/dashboard/incidents-queue", icon: Siren },
   { title: "Sponsors", url: "/dashboard/sponsors", icon: Megaphone },
   { title: "Leads", url: "/dashboard/leads", icon: Users },

@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { getCityConfig } from "../_shared/cityConfig.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -57,11 +58,13 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
+    const config = await getCityConfig(supabase);
     const beat_date = todayCT();
     const { data: existing } = await supabase
       .from("lake_beats")
       .select("beat_date")
       .eq("beat_date", beat_date)
+      .eq("city_id", config.id)
       .maybeSingle();
     if (existing && !force) {
       return new Response(JSON.stringify({ skipped: true, beat_date }), {
@@ -71,7 +74,7 @@ serve(async (req) => {
 
     // Pull current conditions for Lake Geneva
     const wxResp = await fetch(
-      "https://api.open-meteo.com/v1/forecast?latitude=42.5917&longitude=-88.4334&current_weather=true&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America%2FChicago",
+      `https://api.open-meteo.com/v1/forecast?latitude=${config.latitude}&longitude=${config.longitude}&current_weather=true&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=${encodeURIComponent(config.timezone)}`,
     );
     const wxJson = await wxResp.json();
     const cw = wxJson?.current_weather ?? {};
@@ -113,6 +116,7 @@ serve(async (req) => {
       console.error("[generate-lake-beat] openai", aiResp.status, errText);
       await supabase.from("lake_beats").upsert({
         beat_date,
+        city_id: config.id,
         body: `${temp_f}° and ${conditions} on the lake.`,
         temp_f,
         conditions,
@@ -132,6 +136,7 @@ serve(async (req) => {
 
     const { error } = await supabase.from("lake_beats").upsert({
       beat_date,
+      city_id: config.id,
       body,
       temp_f,
       conditions,

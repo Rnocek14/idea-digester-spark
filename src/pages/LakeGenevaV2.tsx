@@ -29,6 +29,7 @@ import { PresentedBySection } from "@/components/PresentedBySection";
 import { SuggestionBoxCard } from "@/components/SuggestionBox";
 import { getSubscribeSource, getReferralSource } from "@/lib/referralTracking";
 import { isAllowedStoryImage } from "@/lib/imagePolicy";
+import { useCityConfig } from "@/hooks/useCityConfig";
 import { NavLink } from "@/components/NavLink";
 import { Home, Star, Phone, ChevronDown } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -41,13 +42,15 @@ const categoryOrder = ['news', 'civic', 'events', 'dining', 'community', 'school
 // Dynamic LIVE column header - shows green when all clear, red when active incidents
 // Includes freshness timestamp for credibility
 const LiveColumnHeader = () => {
+  const { id: cityId } = useCityConfig();
   const { data: incidentStatus, dataUpdatedAt } = useQuery({
-    queryKey: ["has-active-incidents"],
+    queryKey: ["has-active-incidents", cityId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("incidents")
         .select("id")
         .eq("status", "active")
+        .eq("city_id", cityId)
         .limit(1);
       if (error) return { hasActive: false };
       return { hasActive: (data?.length || 0) > 0 };
@@ -287,6 +290,7 @@ const GEO_TIER_LABELS = {
 } as const;
 
 const LakeGenevaV2 = () => {
+  const { id: cityId } = useCityConfig();
   const [email, setEmail] = useState("");
   const [isSubscribing, setIsSubscribing] = useState(false);
   const isMobile = useIsMobile();
@@ -338,7 +342,7 @@ const LakeGenevaV2 = () => {
 
   // Fetch stories with priority ordering + tier-0 cap + thin-feed fallback
   const { data: stories = [], isLoading: storiesLoading } = useQuery({
-    queryKey: ["public-stories-v2"],
+    queryKey: ["public-stories-v2", cityId],
     queryFn: async () => {
       const nowMs = Date.now();
       const twoWeeksAgo = new Date(nowMs - 14 * 24 * 60 * 60 * 1000).toISOString();
@@ -391,7 +395,7 @@ const LakeGenevaV2 = () => {
               .replace(/&#8220;/g, '"')
               .replace(/&#8221;/g, '"')
               .replace(/[""]/g, '"');
-            return { ...story, title: normalizedTitle, image_url: imageUrl, _isFresh: isFresh };
+            return { ...story, title: normalizedTitle, image_url: imageUrl, _isFresh: isFresh, _hasRealImage: !!candidate };
           });
       };
 
@@ -399,6 +403,7 @@ const LakeGenevaV2 = () => {
       const { data, error } = await supabase
         .from("content_queue")
         .select("*, source:sources(name)")
+        .eq("city_id", cityId)
         .in("status", ["published", "auto_published"])
         .in("safety_level", ["safe", "soft_sensitive"])
         .gte("geo_tier", 0)  // Phase 1: Include regional
@@ -420,6 +425,7 @@ const LakeGenevaV2 = () => {
         const { data: extendedData, error: extError } = await supabase
           .from("content_queue")
           .select("*, source:sources(name)")
+          .eq("city_id", cityId)
           .in("status", ["published", "auto_published"])
           .in("safety_level", ["safe", "soft_sensitive"])
           .gte("geo_tier", 0)
@@ -738,13 +744,14 @@ const LakeGenevaV2 = () => {
     day: "2-digit",
   }).format(new Date());
   const { data: briefMentionedIds = [] } = useQuery({
-    queryKey: ["daily-brief-mentioned-ids", todayCT],
+    queryKey: ["daily-brief-mentioned-ids", todayCT, cityId],
     queryFn: async () => {
       const { data } = await supabase
         .from("daily_briefs")
         .select("mentioned_story_ids")
         .eq("brief_date", todayCT)
         .eq("status", "published")
+        .eq("city_id", cityId)
         .maybeSingle();
       return (data?.mentioned_story_ids as string[] | null) ?? [];
     },
@@ -907,11 +914,20 @@ const LakeGenevaV2 = () => {
             {/* AT-A-GLANCE: Quick-scan bullet list (V1 feature) */}
             {!storiesLoading && stories.length > 0 && (() => {
               // Prefer news/civic/community/schools/events/weather over routine bar specials
-              const newsFirst = [...stories].sort((a, b) => {
+              const sorted = [...stories].sort((a, b) => {
                 const aLow = LOW_PRIORITY_LEAD_CATEGORIES.has((a.category || '').toLowerCase()) ? 1 : 0;
                 const bLow = LOW_PRIORITY_LEAD_CATEGORIES.has((b.category || '').toLowerCase()) ? 1 : 0;
                 return aLow - bLow;
               });
+              // Dedupe against the brief bullets and the lead pyramid rendered just
+              // below — on a small news day the same 3 stories otherwise appear here,
+              // in the brief, AND as the hero, which reads as less news, not more.
+              const shownElsewhere = new Set([
+                ...briefMentionedIds,
+                ...pyramidStories.slice(0, 3).map((s: Story) => s.id),
+              ]);
+              const deduped = sorted.filter((s) => !shownElsewhere.has(s.id));
+              const newsFirst = deduped.length >= 3 ? deduped : sorted;
               return (
               <div className="mb-6 p-4 bg-slate-50 border border-slate-200 rounded-sm">
                 <p className="text-[10px] font-mono uppercase tracking-wider text-slate-500 mb-3">
@@ -1274,11 +1290,13 @@ const LakeGenevaV2 = () => {
                             headlineCounter >= 8 &&
                             headlineCounter < 16;
                           headlineCounter += items.length;
-                          // First 2 items per section get full image cards, the
-                          // rest fall back to compact headline rows so the
-                          // section stays dense but visual.
-                          const cardItems = items.slice(0, 2);
-                          const tailItems = items.slice(2);
+                          // Up to 2 items per section get full image cards — but only
+                          // stories with a real photo. Stock-fallback stories render as
+                          // compact headline rows instead: repeated category stock art
+                          // across unrelated stories reads as filler, not coverage.
+                          const cardItems = items.filter((s: Story & { _hasRealImage?: boolean }) => s._hasRealImage).slice(0, 2);
+                          const cardIds = new Set(cardItems.map((s: Story) => s.id));
+                          const tailItems = items.filter((s: Story) => !cardIds.has(s.id));
                           return (
                             <div key={key} className="mb-7">
                               {insertCta && (
@@ -1433,8 +1451,10 @@ const LakeGenevaV2 = () => {
                         geoLabel={story.geo_label}
                         meta={{ time, source }}
                       />
-                      {/* Inline subscribe CTA after every 6th story */}
-                      {(idx + 1) % 6 === 0 && idx < filteredStories.length - 1 && (
+                      {/* Single inline subscribe CTA mid-feed. One is enough: the
+                          header button, sticky banner, and bottom form already ask —
+                          repeating every 6 stories tipped the page from inviting to pushy. */}
+                      {idx === 5 && idx < filteredStories.length - 1 && (
                         <div className="mt-5 sm:col-span-2">
                           <InlineSubscribeCTA />
                         </div>
