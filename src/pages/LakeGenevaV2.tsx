@@ -1254,7 +1254,7 @@ const LakeGenevaV2 = () => {
                               </span>
                             )}
                             {source && <span>{source}</span>}
-                            {source && time && <span className="text-slate-300">·</span>}
+                            {source && time && <span className="text-slate-500">·</span>}
                             {time && <span>{time}</span>}
                           </p>
                         </div>
