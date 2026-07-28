@@ -51,7 +51,7 @@ const GEO_TIER_CONFIG = {
   },
   0: { 
     label: 'Wisconsin', 
-    className: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 border-slate-200 dark:border-slate-700'
+    className: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700'
   },
 } as const;
 
@@ -262,7 +262,7 @@ export const StoryCard = ({
               </span>
             )}
             {meta?.source && <span>{meta.source}</span>}
-            {meta?.source && meta?.time && <span className="text-slate-300">·</span>}
+            {meta?.source && meta?.time && <span className="text-slate-500">·</span>}
             {meta?.time && <span>{meta.time}</span>}
           </p>
         )}
