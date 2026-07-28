@@ -53,7 +53,7 @@ frontend should migrate onto it incrementally (it has public read RLS).
 | Held news stories (`sensitive` / `no_matching_rule`) | Dashboard review | AI editor pass: classify-with-verification, auto-publish or auto-reject after 24h; same fail-closed pattern as the incident gate |
 | New-city source bootstrap | Manual curation | City bootstrap job: given city/county/state, auto-generate source rows from repeatable patterns (NWS zones, state 511, SpotCrime county path, CivicPlus/CivicEngage URL probes, Google News discovery-layer, patch.com path) |
 | Scraper selector breakage | Health digest → manual fix | Prefer API/RSS-pattern sources over per-site CSS scrapers; auto-retire covers the tail |
-| n8n / Apify externals (Facebook, lakegenevanews) | VPS + dashboards outside the repo | These do not scale to many cities. Treat as Lake-Geneva-only enrichment; do NOT include in the city template |
+| n8n / Apify externals (Facebook, lakegenevanews) | **ELIMINATED** (see `no-vps-ingestion.md`) | lakegenevanews + CivicEngage now fetched natively via Firecrawl on cron; Facebook's coverage replaced by `ingest-email` (Nixle/listservs/press releases) — higher trust, no bot-blocking, one inbox serves the whole fleet |
 | Sponsor/job approvals | Dashboard | Acceptable human task (revenue-touching, low volume); automate with payment-verified auto-approve later |
 
 ## Multi-city scaling — honest guidance
@@ -70,6 +70,9 @@ frontend should migrate onto it incrementally (it has public read RLS).
   that a bootstrap job can probe for; (C) artisanal scrapers and bot-protected
   sites needing n8n/Apify/Puppeteer. Build the template on A+B only. Every
   C-tier source added to the template is a future maintenance debt × N cities.
+  **Prefer email over scraping** whenever a source offers it: Nixle, listservs,
+  and press-release lists are structured, official, free, and immune to
+  bot-blocking — `ingest-email` turns them into a T-A-tier source class.
 - **Guides don't clone.** The ~25 Lake Geneva guides are hand-written local
   knowledge. For the template, guides need a generation pipeline (data-driven
   prose from Places/county data + AI, reviewed once at city launch) or the
