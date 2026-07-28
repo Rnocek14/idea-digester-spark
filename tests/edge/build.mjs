@@ -20,6 +20,7 @@ const TARGETS = [
   "auto-maintain-sources",
   "alert-source-health",
   "ingest-incident",
+  "ingest-email",
   "sync-511-traffic",
 ];
 

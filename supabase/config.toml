@@ -247,3 +247,9 @@ verify_jwt = false
 
 [functions.validate-trial-sources]
 verify_jwt = false
+
+[functions.ingest-email]
+verify_jwt = false
+
+[functions.scrape-lakegenevanews]
+verify_jwt = false
