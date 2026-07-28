@@ -20,6 +20,7 @@ import LakeGenevaByNumbers from "@/components/LakeGenevaByNumbers";
 import CommunityDeskBlock from "@/components/CommunityDeskBlock";
 import NowHiringWidget from "@/components/NowHiringWidget";
 import TodaysBriefBlock from "@/components/TodaysBriefBlock";
+import WeeklyRecapBlock from "@/components/WeeklyRecapBlock";
 import LakeBeatLine from "@/components/LakeBeatLine";
 import HistoryTodayBlock from "@/components/HistoryTodayBlock";
 import BusinessStoryBlock from "@/components/BusinessStoryBlock";
@@ -1060,6 +1061,8 @@ const LakeGenevaV2 = () => {
             {/* Show pyramid only in 'all' mode, hide in 'recent' mode for pure chronological */}
             {!storiesLoading && filteredStories.length > 0 && viewMode !== 'recent' && viewMode !== 'topic' && (
               <div className="mb-6 space-y-5">
+                {/* Sunday "week in review" — self-hides outside its 4-day window */}
+                <WeeklyRecapBlock />
                 {/* Sprint 4: Today's Brief — editorial 3-bullet morning summary */}
                 <TodaysBriefBlock stories={filteredStories.slice(0, 3) as any} />
                 {/* One-line "on the lake today" beat */}

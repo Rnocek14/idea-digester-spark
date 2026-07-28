@@ -22,6 +22,7 @@ const TARGETS = [
   "ingest-incident",
   "ingest-email",
   "sync-511-traffic",
+  "generate-weekly-recap",
 ];
 
 const stub = (name) => resolve(here, "stubs", name);

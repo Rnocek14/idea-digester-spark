@@ -52,6 +52,33 @@ The one caveat: hand-written Lake Geneva guide pages (`src/pages/guides/*`)
 are LG-only content, not platform — they don't propagate and shouldn't. The
 guide-generation pipeline (below) is how other cities get theirs.
 
+
+## 1c. Editorial voice policy (decided, do not regress)
+
+**The byline is always the desk — never a fabricated person.** `community_authors`
+exists for REAL humans (it has an email column); populating it with invented
+residents would contradict the /about transparency page, is the exact failure
+that destroyed Sports Illustrated's credibility in 2023, and in a small town it
+gets discovered. An institutional voice ("— The {city} Brief desk") carries
+personality without ever lying about who it is.
+
+What we publish instead, in value order:
+1. **Weekly recap** (shipped) — purely derivative of already-published stories,
+   so no new factual claims. It is the strongest retention mechanic we have and
+   it fixes "thin" by repackaging rather than requiring more supply.
+2. **Business coverage from public records** — `generate-business-story` is
+   correctly built (expands supplied facts, refuses invented quotes). Make it
+   zero-touch by seeding it from liquor licenses, building permits, business
+   registrations, and Google Places closure/opening signals. Real, verifiable,
+   uncovered by anyone else in town.
+3. **Real community voices** — curate actual reader submissions weekly (letters,
+   an owner answering one question, a submitted photo). Zero hallucination risk
+   and the thing Patch structurally could never fake.
+
+Never: an AI persona with a name, face, or bio presented as a resident. If we
+also sell that business a sponsorship, an AI-written glowing profile is an FTC
+disclosure problem on top of the trust problem.
+
 ## 2. Technical roadmap — remaining work, in order
 
 **Done as of this branch:** security hardening, zero-touch editorial, bootstrap
