@@ -831,7 +831,7 @@ const LakeGeneva = () => {
                               rel="noreferrer"
                               className="absolute inset-0"
                             >
-                              <span className="sr-only">Read more</span>
+                              <span className="sr-only">Read full story: {featured.title}</span>
                             </a>
                           )}
                         </div>
