@@ -42,12 +42,22 @@ const statusColors: Record<string, string> = {
 };
 
 const statusLabels: Record<string, string> = {
-  active: "🔴 Active",
-  developing: "🟠 Developing",
-  monitoring: "🟡 Monitoring",
-  resolved: "🟢 Resolved",
-  false_alarm: "False Alarm",
+  active: "Active",
+  developing: "Developing",
+  monitoring: "Monitoring",
+  resolved: "Resolved",
+  false_alarm: "False alarm",
 };
+
+/** Status is carried by a small colored dot, not an emoji — see design memory. */
+function StatusDot({ status }: { status: string }) {
+  return (
+    <span
+      aria-hidden
+      className={`inline-block h-1.5 w-1.5 rounded-full ${statusColors[status] ?? "bg-muted"}`}
+    />
+  );
+}
 
 export default function Incidents() {
   const { data: incidents, isLoading, error } = useQuery({
@@ -218,7 +228,10 @@ function IncidentCard({
                   {incident.title}
                 </h3>
                 <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
-                  <span>{statusLabels[incident.status]}</span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <StatusDot status={incident.status} />
+                    {statusLabels[incident.status]}
+                  </span>
                   <span>•</span>
                   <span>
                     {incident.status === "resolved" && incident.resolved_at

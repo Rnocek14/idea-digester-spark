@@ -66,7 +66,7 @@ export default function TipSubmissionForm({ incidentId }: TipSubmissionFormProps
       <Card className="border-dashed">
         <CardContent className="py-6 text-center">
           <p className="text-sm text-muted-foreground mb-3">
-            🚨 <strong>See something?</strong> Help us keep this page accurate.
+            <strong>See something?</strong> Help us keep this page accurate.
           </p>
           <Button variant="outline" size="sm" onClick={() => setIsExpanded(true)}>
             Send a Tip

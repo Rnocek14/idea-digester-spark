@@ -13,19 +13,6 @@ type JobListing = {
   is_featured: boolean | null;
 };
 
-const categoryEmoji = (category: string | null): string => {
-  const map: Record<string, string> = {
-    hospitality: "🍽️",
-    retail: "🛍️",
-    trades: "🔧",
-    services: "💼",
-    seasonal: "☀️",
-    healthcare: "🏥",
-    other: "📋",
-  };
-  return map[category?.toLowerCase() ?? ""] || "💼";
-};
-
 const NowHiringWidget = () => {
   const { data: jobs, isLoading } = useQuery({
     queryKey: ["now-hiring-widget"],
@@ -54,7 +41,7 @@ const NowHiringWidget = () => {
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-sm">
       <div className="flex items-center gap-2 mb-3">
         <Briefcase className="h-4 w-4 text-green-600" />
         <h3 className="text-sm font-semibold text-slate-900">Now Hiring</h3>
@@ -68,7 +55,6 @@ const NowHiringWidget = () => {
               className="block group"
             >
               <div className="flex items-start gap-2">
-                <span className="text-sm flex-shrink-0">{categoryEmoji(job.category)}</span>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-slate-800 group-hover:text-blue-600 transition-colors line-clamp-1">
                     {job.title}

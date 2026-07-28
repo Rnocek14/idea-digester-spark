@@ -25,20 +25,6 @@ type StoryCardProps = {
   };
 };
 
-const getCategoryEmoji = (category: string | null) => {
-  switch (category?.toLowerCase()) {
-    case "news": return "📰";
-    case "events": return "🎉";
-    case "dining": return "🍽️";
-    case "real_estate": return "🏡";
-    case "community": return "🤝";
-    case "schools": return "🏫";
-    case "weather": return "🌧️";
-    case "civic": return "🏛️";
-    default: return "📍";
-  }
-};
-
 // Geo-tier label configuration - styled pills for visual clarity
 const GEO_TIER_CONFIG = {
   1: { 
@@ -211,7 +197,7 @@ export const StoryCard = ({
           )}
           {/* Don't show Verified next to Sponsored to avoid implied endorsement */}
           {isVerified && !sponsored && (
-            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700">
+            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-green-700">
               <CheckCircle2 className="h-3 w-3" />
               Verified
             </span>

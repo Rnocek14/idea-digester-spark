@@ -158,7 +158,7 @@ const Advertise = () => {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm text-xs text-slate-600">
+          <div className="rounded-sm border border-slate-100 bg-white p-4 shadow-sm text-xs text-slate-600">
             <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
               Snapshot (pilot targets)
             </p>
@@ -199,7 +199,7 @@ const Advertise = () => {
         </h2>
         <div className="grid gap-4 md:grid-cols-2">
           {/* Primary package */}
-          <article className="relative flex flex-col rounded-2xl border border-amber-200 bg-white p-5 shadow-sm ring-1 ring-amber-100">
+          <article className="relative flex flex-col rounded-sm border border-amber-200 bg-white p-5 shadow-sm ring-1 ring-amber-100">
             <div className="absolute right-4 top-4 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-800">
               Most popular
             </div>
@@ -224,7 +224,7 @@ const Advertise = () => {
           </article>
 
           {/* Secondary package */}
-          <article className="flex flex-col rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+          <article className="flex flex-col rounded-sm border border-slate-100 bg-white p-5 shadow-sm">
             <h3 className="text-base font-semibold text-slate-900">
               Directory Sponsor
             </h3>
@@ -247,7 +247,7 @@ const Advertise = () => {
       </section>
 
       {/* Lead form */}
-      <section className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+      <section className="rounded-sm border border-slate-100 bg-white p-6 shadow-sm">
         <div className="mb-4">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
             Get a custom proposal
@@ -268,7 +268,7 @@ const Advertise = () => {
                 id="businessName"
                 value={formData.businessName}
                 onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
-                className={`w-full rounded-xl border bg-slate-50 px-3 py-2 text-sm
+                className={`w-full rounded-sm border bg-slate-50 px-3 py-2 text-sm
                            focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 ${
                   errors.businessName ? "border-red-500" : "border-slate-200"
                 }`}
@@ -286,7 +286,7 @@ const Advertise = () => {
                 id="contactName"
                 value={formData.contactName}
                 onChange={(e) => setFormData({ ...formData, contactName: e.target.value })}
-                className={`w-full rounded-xl border bg-slate-50 px-3 py-2 text-sm
+                className={`w-full rounded-sm border bg-slate-50 px-3 py-2 text-sm
                            focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 ${
                   errors.contactName ? "border-red-500" : "border-slate-200"
                 }`}
@@ -307,7 +307,7 @@ const Advertise = () => {
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className={`w-full rounded-xl border bg-slate-50 px-3 py-2 text-sm
+                className={`w-full rounded-sm border bg-slate-50 px-3 py-2 text-sm
                            focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 ${
                   errors.email ? "border-red-500" : "border-slate-200"
                 }`}
@@ -326,7 +326,7 @@ const Advertise = () => {
                 type="tel"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm
+                className="w-full rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-sm
                            focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100"
               />
             </div>
@@ -341,7 +341,7 @@ const Advertise = () => {
               type="url"
               value={formData.website}
               onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm
+              className="w-full rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-sm
                          focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100"
             />
           </div>
@@ -356,7 +356,7 @@ const Advertise = () => {
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               rows={4}
               placeholder="Tell us about your advertising goals..."
-              className={`w-full rounded-xl border bg-slate-50 px-3 py-2 text-sm
+              className={`w-full rounded-sm border bg-slate-50 px-3 py-2 text-sm
                          focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 ${
                 errors.notes ? "border-red-500" : "border-slate-200"
               }`}

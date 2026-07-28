@@ -95,8 +95,8 @@ const LiveColumnHeader = () => {
             <span className="w-1.5 h-1.5 bg-red-500 animate-pulse" />
           ) : (
             <>
-              <span className="w-1.5 h-1.5 bg-emerald-400" />
-              <span className="text-[10px] font-mono text-emerald-400 uppercase">All Clear</span>
+              <span className="w-1.5 h-1.5 bg-green-400" />
+              <span className="text-[10px] font-mono text-green-400 uppercase">All Clear</span>
             </>
           )}
         </div>
@@ -118,7 +118,7 @@ const PresentedBySectionCompact = ({ sponsor, marketData }: { sponsor: any; mark
     : null;
 
   return (
-    <div className="rounded-xl bg-gradient-to-r from-muted/30 via-background to-primary/5 border border-border px-4 py-3">
+    <div className="rounded-sm bg-gradient-to-r from-muted/30 via-background to-primary/5 border border-border px-4 py-3">
       <div className="flex items-center justify-between gap-4">
         {/* Left: Photo + Name */}
         <Link 
@@ -168,7 +168,7 @@ const PresentedBySectionCompact = ({ sponsor, marketData }: { sponsor: any; mark
         <p className="text-[10px] text-muted-foreground mt-2 pt-2 border-t border-border">
           Lake Geneva homes
           {medianPriceText && <> · <span className="text-foreground font-medium">{medianPriceText}</span> median</>}
-          {yoyChangeText && <> · <span className={marketData?.yoy_change > 0 ? 'text-emerald-600' : ''}>{yoyChangeText}</span> YoY</>}
+          {yoyChangeText && <> · <span className={marketData?.yoy_change > 0 ? 'text-green-600' : ''}>{yoyChangeText}</span> YoY</>}
         </p>
       )}
     </div>
@@ -905,7 +905,7 @@ const LakeGenevaV2 = () => {
                 const threshold = isQuietWindow ? 24 : 12;
                 const isStale = hoursAgo >= threshold;
                 return (
-                  <p className={`text-[10px] font-mono mt-1 ${isStale ? 'text-amber-700 font-semibold' : 'text-emerald-700'}`}>
+                  <p className={`text-[10px] font-mono mt-1 ${isStale ? 'text-amber-700 font-semibold' : 'text-green-700'}`}>
                     {isStale ? '⚠ ' : '● '}Last new story: {getRelativeTime(new Date(newest).toISOString())}
                   </p>
                 );

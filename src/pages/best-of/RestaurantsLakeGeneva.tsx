@@ -21,7 +21,7 @@ function SourcePill({ source }: { source: VenueSignals["recent"][number]["source
     );
   if (source === "voices")
     return (
-      <span className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">
+      <span className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider text-slate-700 bg-slate-50 px-2 py-0.5 rounded">
         <Mic className="h-3 w-3" /> Voices
       </span>
     );
@@ -103,7 +103,7 @@ export default function RestaurantsLakeGeneva() {
           <p className="text-slate-700 mt-4 text-lg leading-relaxed">
             These aren't the highest-rated restaurants on a travel site. They're the places that
             keep showing up in <Link to="/community/local-love" className="text-rose-700 hover:underline">Local Love</Link>{" "}
-            notes, <Link to="/community/voices" className="text-indigo-700 hover:underline">Community Voices</Link>{" "}
+            notes, <Link to="/community/voices" className="text-slate-700 hover:underline">Community Voices</Link>{" "}
             essays, and the day-to-day Brief — the rooms people in Geneva Lake actually mention
             when someone asks where to eat.
           </p>
@@ -151,7 +151,7 @@ export default function RestaurantsLakeGeneva() {
           <p className="text-sm text-slate-600 mb-5 leading-relaxed">
             Evidence, not conclusions. Each line below is a real count from{" "}
             <Link to="/community/local-love" className="text-rose-700 hover:underline">Local Love</Link>,{" "}
-            <Link to="/community/voices" className="text-indigo-700 hover:underline">Community Voices</Link>, and Brief
+            <Link to="/community/voices" className="text-slate-700 hover:underline">Community Voices</Link>, and Brief
             stories from the last year. We only show places with at least one recorded mention.
           </p>
 

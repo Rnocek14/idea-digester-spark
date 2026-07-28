@@ -14,7 +14,7 @@ export const RealEstateHeroStrip = ({ sponsorId, sponsorEmail }: RealEstateHeroS
 
   return (
     <section className="py-6">
-      <div className="rounded-2xl bg-gradient-to-r from-blue-50 via-white to-slate-50 border border-slate-200 p-6 lg:p-8">
+      <div className="rounded-sm bg-gradient-to-r from-blue-50 via-white to-slate-50 border border-slate-200 p-6 lg:p-8">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
           {/* Left: Headline + Benefits */}
           <div className="flex-1">
@@ -29,15 +29,15 @@ export const RealEstateHeroStrip = ({ sponsorId, sponsorEmail }: RealEstateHeroS
             </h2>
             <ul className="space-y-1.5">
               <li className="flex items-center gap-2 text-sm text-slate-600">
-                <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
                 <span>Multiple offers in days, not weeks</span>
               </li>
               <li className="flex items-center gap-2 text-sm text-slate-600">
-                <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
                 <span>Chicago buyer network for higher sale prices</span>
               </li>
               <li className="flex items-center gap-2 text-sm text-slate-600">
-                <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
                 <span>Full-service: staging, photos, marketing</span>
               </li>
             </ul>
@@ -54,8 +54,8 @@ export const RealEstateHeroStrip = ({ sponsorId, sponsorEmail }: RealEstateHeroS
               Get Your Free Home Valuation
             </Button>
             <div className="flex items-center gap-1.5 text-xs text-slate-500">
-              <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
-              <span>Lake Geneva home values up <strong className="text-emerald-600">+3.2%</strong> this year</span>
+              <TrendingUp className="w-3.5 h-3.5 text-green-500" />
+              <span>Lake Geneva home values up <strong className="text-green-600">+3.2%</strong> this year</span>
             </div>
             <Link 
               to="/selling-lake-geneva" 

@@ -90,10 +90,12 @@ const typeIcons: Record<string, React.ReactNode> = {
   other: <AlertTriangle className="h-3.5 w-3.5" />,
 };
 
-const statusDots: Record<string, string> = {
-  active: "🔴",
-  monitoring: "🟡",
-  resolved: "🟢",
+/** Status colors for the inline dot. Emoji are never used as UI chrome here. */
+const statusDotColors: Record<string, string> = {
+  active: "bg-red-500",
+  developing: "bg-orange-500",
+  monitoring: "bg-amber-500",
+  resolved: "bg-green-600",
 };
 
 type LiveIncidentsSidebarProps = {
@@ -267,7 +269,13 @@ export default function LiveIncidentsSidebar({ onHide, showCloseButton = false }
                   </span>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium leading-tight line-clamp-2">
-                      {statusDots[incident.status]} {incident.title}
+                      <span
+                        aria-hidden
+                        className={`mr-1.5 inline-block h-1.5 w-1.5 rounded-full align-middle ${
+                          statusDotColors[incident.status] ?? "bg-muted-foreground"
+                        }`}
+                      />
+                      {incident.title}
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-[11px] text-muted-foreground">
