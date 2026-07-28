@@ -262,7 +262,7 @@ export default function StoryDetail() {
           {story.category && <span>{story.category.replace(/_/g, " ")}</span>}
           {story.geo_label && (
             <>
-              <span className="text-slate-300">·</span>
+              <span className="text-slate-500">·</span>
               <span className="inline-flex items-center gap-1">
                 <MapPin className="h-3 w-3" /> {story.geo_label}
               </span>
@@ -348,7 +348,7 @@ export default function StoryDetail() {
                   <Link to={g.path} className="text-blue-700 hover:underline">
                     {g.title}
                   </Link>
-                  {i < guides.length - 1 ? <span className="text-slate-300 ml-3">·</span> : null}
+                  {i < guides.length - 1 ? <span className="text-slate-500 ml-3">·</span> : null}
                 </span>
               ))}
             </div>
