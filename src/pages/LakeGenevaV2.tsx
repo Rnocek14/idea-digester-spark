@@ -20,6 +20,7 @@ import LakeGenevaByNumbers from "@/components/LakeGenevaByNumbers";
 import CommunityDeskBlock from "@/components/CommunityDeskBlock";
 import NowHiringWidget from "@/components/NowHiringWidget";
 import TodaysBriefBlock from "@/components/TodaysBriefBlock";
+import WeeklyRecapBlock from "@/components/WeeklyRecapBlock";
 import LakeBeatLine from "@/components/LakeBeatLine";
 import HistoryTodayBlock from "@/components/HistoryTodayBlock";
 import BusinessStoryBlock from "@/components/BusinessStoryBlock";
@@ -30,6 +31,7 @@ import { SuggestionBoxCard } from "@/components/SuggestionBox";
 import { getSubscribeSource, getReferralSource } from "@/lib/referralTracking";
 import { isAllowedStoryImage } from "@/lib/imagePolicy";
 import { useCityConfig } from "@/hooks/useCityConfig";
+import { runCityScoped } from "@/lib/cityId";
 import { NavLink } from "@/components/NavLink";
 import { Home, Star, Phone, ChevronDown } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -94,8 +96,8 @@ const LiveColumnHeader = () => {
             <span className="w-1.5 h-1.5 bg-red-500 animate-pulse" />
           ) : (
             <>
-              <span className="w-1.5 h-1.5 bg-emerald-400" />
-              <span className="text-[10px] font-mono text-emerald-400 uppercase">All Clear</span>
+              <span className="w-1.5 h-1.5 bg-green-400" />
+              <span className="text-[10px] font-mono text-green-400 uppercase">All Clear</span>
             </>
           )}
         </div>
@@ -117,7 +119,7 @@ const PresentedBySectionCompact = ({ sponsor, marketData }: { sponsor: any; mark
     : null;
 
   return (
-    <div className="rounded-xl bg-gradient-to-r from-muted/30 via-background to-primary/5 border border-border px-4 py-3">
+    <div className="rounded-sm bg-gradient-to-r from-muted/30 via-background to-primary/5 border border-border px-4 py-3">
       <div className="flex items-center justify-between gap-4">
         {/* Left: Photo + Name */}
         <Link 
@@ -167,7 +169,7 @@ const PresentedBySectionCompact = ({ sponsor, marketData }: { sponsor: any; mark
         <p className="text-[10px] text-muted-foreground mt-2 pt-2 border-t border-border">
           Lake Geneva homes
           {medianPriceText && <> · <span className="text-foreground font-medium">{medianPriceText}</span> median</>}
-          {yoyChangeText && <> · <span className={marketData?.yoy_change > 0 ? 'text-emerald-600' : ''}>{yoyChangeText}</span> YoY</>}
+          {yoyChangeText && <> · <span className={marketData?.yoy_change > 0 ? 'text-green-600' : ''}>{yoyChangeText}</span> YoY</>}
         </p>
       )}
     </div>
@@ -341,7 +343,7 @@ const LakeGenevaV2 = () => {
   };
 
   // Fetch stories with priority ordering + tier-0 cap + thin-feed fallback
-  const { data: stories = [], isLoading: storiesLoading } = useQuery({
+  const { data: stories = [], isLoading: storiesLoading, error: storiesError } = useQuery({
     queryKey: ["public-stories-v2", cityId],
     queryFn: async () => {
       const nowMs = Date.now();
@@ -399,21 +401,28 @@ const LakeGenevaV2 = () => {
           });
       };
 
-      // Fetch: include geo_tier 0-2 (was 1-2)
-      const { data, error } = await supabase
-        .from("content_queue")
-        .select("*, source:sources(name)")
-        .eq("city_id", cityId)
-        .in("status", ["published", "auto_published"])
-        .in("safety_level", ["safe", "soft_sensitive"])
-        .gte("geo_tier", 0)  // Phase 1: Include regional
-        .lte("geo_tier", 2)
-        .gte("created_at", twoWeeksAgo)
-        .gte("publish_date", twoWeeksAgo)
-        .lte("publish_date", now)
-        .order("geo_tier", { ascending: false })  // Tier 2 → 1 → 0 so hyperlocal fits inside LIMIT
-        .order("created_at", { ascending: false })
-        .limit(80);  // Fetch more to allow filtering
+      // Fetch: include geo_tier 0-2 (was 1-2). Built as a function so
+      // runCityScoped can retry it unscoped if the city_id migration hasn't
+      // landed yet — a missing column must never present as an empty town.
+      const fetchWindow = (scoped: boolean, since: string, cap: number) => {
+        let q = supabase.from("content_queue").select("*, source:sources(name)");
+        if (scoped) q = q.eq("city_id", cityId);
+        return q
+          .in("status", ["published", "auto_published"])
+          .in("safety_level", ["safe", "soft_sensitive"])
+          .gte("geo_tier", 0)  // Phase 1: Include regional
+          .lte("geo_tier", 2)
+          .gte("created_at", since)
+          .gte("publish_date", since)
+          .lte("publish_date", now)
+          .order("geo_tier", { ascending: false })  // Tier 2 → 1 → 0 so hyperlocal fits inside LIMIT
+          .order("created_at", { ascending: false })
+          .limit(cap);
+      };
+
+      const { data, error } = await runCityScoped((scoped) =>
+        fetchWindow(scoped, twoWeeksAgo, 80),  // Fetch more to allow filtering
+      );
 
       if (error) throw error;
 
@@ -422,20 +431,9 @@ const LakeGenevaV2 = () => {
       // Thin-feed fallback: if under threshold, expand window
       if (processed.length < MIN_FEED_ITEMS) {
         console.log(`[PHASE1] Thin feed (${processed.length} items), expanding to ${EXTENDED_WINDOW_DAYS}-day window`);
-        const { data: extendedData, error: extError } = await supabase
-          .from("content_queue")
-          .select("*, source:sources(name)")
-          .eq("city_id", cityId)
-          .in("status", ["published", "auto_published"])
-          .in("safety_level", ["safe", "soft_sensitive"])
-          .gte("geo_tier", 0)
-          .lte("geo_tier", 2)
-          .gte("created_at", threeWeeksAgo)
-          .gte("publish_date", threeWeeksAgo)
-          .lte("publish_date", now)
-          .order("geo_tier", { ascending: false })
-          .order("created_at", { ascending: false })
-          .limit(100);
+        const { data: extendedData, error: extError } = await runCityScoped((scoped) =>
+          fetchWindow(scoped, threeWeeksAgo, 100),
+        );
 
         if (!extError && extendedData) {
           processed = processStories(extendedData);
@@ -904,7 +902,7 @@ const LakeGenevaV2 = () => {
                 const threshold = isQuietWindow ? 24 : 12;
                 const isStale = hoursAgo >= threshold;
                 return (
-                  <p className={`text-[10px] font-mono mt-1 ${isStale ? 'text-amber-700 font-semibold' : 'text-emerald-700'}`}>
+                  <p className={`text-[10px] font-mono mt-1 ${isStale ? 'text-amber-700 font-semibold' : 'text-green-700'}`}>
                     {isStale ? '⚠ ' : '● '}Last new story: {getRelativeTime(new Date(newest).toISOString())}
                   </p>
                 );
@@ -1060,6 +1058,8 @@ const LakeGenevaV2 = () => {
             {/* Show pyramid only in 'all' mode, hide in 'recent' mode for pure chronological */}
             {!storiesLoading && filteredStories.length > 0 && viewMode !== 'recent' && viewMode !== 'topic' && (
               <div className="mb-6 space-y-5">
+                {/* Sunday "week in review" — self-hides outside its 4-day window */}
+                <WeeklyRecapBlock />
                 {/* Sprint 4: Today's Brief — editorial 3-bullet morning summary */}
                 <TodaysBriefBlock stories={filteredStories.slice(0, 3) as any} />
                 {/* One-line "on the lake today" beat */}
@@ -1178,6 +1178,15 @@ const LakeGenevaV2 = () => {
             {/* Story Grid - respects viewMode */}
             {storiesLoading ? (
               <div className="text-center py-16 text-slate-500">Loading today's stories...</div>
+            ) : storiesError ? (
+              /* A failed query must never masquerade as a quiet news day —
+                 that turns an outage into "this town has no news". */
+              <div className="text-center py-16">
+                <p className="text-slate-900 font-medium mb-2">We're having trouble loading stories</p>
+                <p className="text-slate-500 text-sm">
+                  This is on us, not a quiet news day. Please refresh in a moment.
+                </p>
+              </div>
             ) : filteredStories.length === 0 ? (
               <div className="text-center py-16">
                 <p className="text-slate-900 font-medium mb-2">No stories yet</p>

@@ -253,3 +253,6 @@ verify_jwt = false
 
 [functions.scrape-lakegenevanews]
 verify_jwt = false
+
+[functions.generate-weekly-recap]
+verify_jwt = false

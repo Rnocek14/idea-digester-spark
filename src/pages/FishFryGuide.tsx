@@ -268,14 +268,14 @@ const FishFryGuide = () => {
         ]}
       />
       {/* Hero Section */}
-      <div className="relative -mx-4 sm:-mx-6 lg:-mx-8 mb-8 overflow-hidden rounded-b-3xl bg-gradient-to-br from-blue-900 via-blue-800 to-cyan-900 px-6 py-12 text-white">
+      <div className="relative -mx-4 sm:-mx-6 lg:-mx-8 mb-8 overflow-hidden rounded-b-sm bg-gradient-to-br from-blue-900 via-blue-800 to-sky-900 px-6 py-12 text-white">
         <div className="absolute inset-0 opacity-20">
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTAgNTBjMjAtMTAgMzAtMjAgNTAtMjBzMzAgMTAgNTAgMjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2Utb3BhY2l0eT0iMC4zIi8+PC9zdmc+')] bg-repeat"></div>
         </div>
         <div className="relative max-w-2xl">
           <div className="flex items-center gap-2 mb-3">
-            <Fish className="h-5 w-5 text-cyan-300" />
-            <span className="text-sm font-medium text-cyan-300 uppercase tracking-wider">Lake Geneva Guide</span>
+            <Fish className="h-5 w-5 text-sky-300" />
+            <span className="text-sm font-medium text-sky-300 uppercase tracking-wider">Lake Geneva Guide</span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold mb-3 flex items-center gap-3">
             Friday Fish Fry 

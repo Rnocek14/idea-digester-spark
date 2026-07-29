@@ -179,12 +179,12 @@ const LakeGenevaNightlife = () => {
         ]}
       />
       {/* Hero Section */}
-      <div className="relative -mx-4 sm:-mx-6 lg:-mx-8 mb-8 overflow-hidden rounded-b-3xl bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 px-6 py-12 text-white">
+      <div className="relative -mx-4 sm:-mx-6 lg:-mx-8 mb-8 overflow-hidden rounded-b-sm bg-[hsl(var(--lake-navy))] px-6 py-12 text-white">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-50"></div>
         <div className="relative max-w-2xl">
           <div className="flex items-center gap-2 mb-3">
-            <Moon className="h-5 w-5 text-purple-300" />
-            <span className="text-sm font-medium text-purple-300 uppercase tracking-wider">Lake Geneva After Dark</span>
+            <Moon className="h-5 w-5 text-slate-300" />
+            <span className="text-sm font-medium text-slate-300 uppercase tracking-wider">Lake Geneva After Dark</span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold mb-3">Nightlife & Live Music</h1>
           <p className="text-lg text-slate-100 mb-4">
@@ -281,7 +281,7 @@ const LakeGenevaNightlife = () => {
               </div>
               <div className="space-y-4">
                 {weeklySchedule.map(({ day, dayLabel, events: dayEvents, isToday }) => (
-                  <div key={day} className={`p-4 rounded-lg ${isToday ? 'bg-purple-50 border border-purple-200' : 'bg-slate-50'}`}>
+                  <div key={day} className={`p-4 rounded-lg ${isToday ? 'bg-slate-50 border border-slate-200' : 'bg-slate-50'}`}>
                     <h3 className="font-semibold text-slate-900 mb-2 flex items-center gap-2">
                       {dayLabel}
                       {isToday && <Badge variant="secondary" className="text-xs">Today</Badge>}
@@ -289,13 +289,13 @@ const LakeGenevaNightlife = () => {
                     <div className="space-y-2">
                       {dayEvents.map(event => (
                         <div key={event.id} className="flex items-start gap-2">
-                          <Music className="h-4 w-4 text-purple-600 mt-0.5 flex-shrink-0" />
+                          <Music className="h-4 w-4 text-slate-600 mt-0.5 flex-shrink-0" />
                           <div>
                             <a 
                               href={event.original_url || '#'} 
                               target="_blank" 
                               rel="noopener noreferrer"
-                              className="text-sm font-medium text-slate-900 hover:text-purple-700"
+                              className="text-sm font-medium text-slate-900 hover:text-slate-700"
                             >
                               {event.title}
                             </a>
@@ -324,7 +324,7 @@ const LakeGenevaNightlife = () => {
           <Card>
             <CardContent className="pt-6">
               <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-purple-600" />
+                <MapPin className="h-4 w-4 text-slate-600" />
                 Popular Venues
               </h3>
               <div className="space-y-2">
@@ -346,7 +346,7 @@ const LakeGenevaNightlife = () => {
             <Card>
               <CardContent className="pt-6">
                 <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-purple-600" />
+                  <Calendar className="h-4 w-4 text-slate-600" />
                   Weekly Events
                 </h3>
                 <div className="space-y-3">
@@ -435,7 +435,7 @@ const EventCard = ({
                 href={event.original_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 mt-2"
+                className="inline-flex items-center gap-1 text-xs text-slate-600 hover:text-slate-700 mt-2"
               >
                 More info <ArrowRight className="h-3 w-3" />
               </a>

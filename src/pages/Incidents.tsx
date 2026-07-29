@@ -9,7 +9,7 @@ import { PublicHeader } from "@/components/PublicHeader";
 import { PublicFooter } from "@/components/PublicFooter";
 import { PageMeta } from "@/components/PageMeta";
 import { LG_CORE_KEYWORDS, LG_GEO_KEYWORDS } from "@/lib/seoKeywords";
-import { getCityId } from "@/lib/cityId";
+import { getCityId, runCityScoped } from "@/lib/cityId";
 
 type Incident = {
   id: string;
@@ -42,26 +42,37 @@ const statusColors: Record<string, string> = {
 };
 
 const statusLabels: Record<string, string> = {
-  active: "🔴 Active",
-  developing: "🟠 Developing",
-  monitoring: "🟡 Monitoring",
-  resolved: "🟢 Resolved",
-  false_alarm: "False Alarm",
+  active: "Active",
+  developing: "Developing",
+  monitoring: "Monitoring",
+  resolved: "Resolved",
+  false_alarm: "False alarm",
 };
+
+/** Status is carried by a small colored dot, not an emoji — see design memory. */
+function StatusDot({ status }: { status: string }) {
+  return (
+    <span
+      aria-hidden
+      className={`inline-block h-1.5 w-1.5 rounded-full ${statusColors[status] ?? "bg-muted"}`}
+    />
+  );
+}
 
 export default function Incidents() {
   const { data: incidents, isLoading, error } = useQuery({
     queryKey: ["incidents-public"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("incidents")
-        .select("*")
-        .eq("city_id", getCityId())
+      const { data, error } = await runCityScoped((scoped) => {
+          let q = supabase.from("incidents").select("*");
+          if (scoped) q = q.eq("city_id", getCityId());
+          return q
         .in("status", ["active", "developing", "monitoring", "resolved"])
         .order("status", { ascending: true })
         .order("priority_score", { ascending: false })
         .order("updated_at", { ascending: false })
         .limit(50);
+        });
 
       if (error) throw error;
       return data as Incident[];
@@ -218,7 +229,10 @@ function IncidentCard({
                   {incident.title}
                 </h3>
                 <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
-                  <span>{statusLabels[incident.status]}</span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <StatusDot status={incident.status} />
+                    {statusLabels[incident.status]}
+                  </span>
                   <span>•</span>
                   <span>
                     {incident.status === "resolved" && incident.resolved_at

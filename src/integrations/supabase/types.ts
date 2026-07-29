@@ -1000,6 +1000,60 @@ export type Database = {
           },
         ]
       }
+      weekly_recaps: {
+        Row: {
+          body: string
+          city_id: string
+          created_at: string
+          generation_error: string | null
+          headline: string | null
+          id: string
+          is_quiet_week: boolean
+          mentioned_story_ids: string[]
+          model: string | null
+          prompt_version: string
+          status: string
+          story_count: number
+          updated_at: string
+          week_end: string
+          week_start: string
+        }
+        Insert: {
+          body?: string
+          city_id?: string
+          created_at?: string
+          generation_error?: string | null
+          headline?: string | null
+          id?: string
+          is_quiet_week?: boolean
+          mentioned_story_ids?: string[]
+          model?: string | null
+          prompt_version?: string
+          status?: string
+          story_count?: number
+          updated_at?: string
+          week_end: string
+          week_start: string
+        }
+        Update: {
+          body?: string
+          city_id?: string
+          created_at?: string
+          generation_error?: string | null
+          headline?: string | null
+          id?: string
+          is_quiet_week?: boolean
+          mentioned_story_ids?: string[]
+          model?: string | null
+          prompt_version?: string
+          status?: string
+          story_count?: number
+          updated_at?: string
+          week_end?: string
+          week_start?: string
+        }
+        Relationships: []
+      }
       daily_briefs: {
         Row: {
           city_id: string

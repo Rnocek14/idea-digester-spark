@@ -138,7 +138,7 @@ const PublicDirectory = () => {
         </header>
 
         {/* Filters */}
-        <section className="mb-6 rounded-2xl border border-slate-100 bg-white/80 px-4 py-3 shadow-sm backdrop-blur-sm">
+        <section className="mb-6 rounded-sm border border-slate-100 bg-white/80 px-4 py-3 shadow-sm backdrop-blur-sm">
           <div className="flex flex-wrap items-center justify-between gap-3">
             {/* Category pills */}
             <div className="flex flex-wrap gap-2">
@@ -168,13 +168,13 @@ const PublicDirectory = () => {
 
         {/* Loading / Empty */}
         {isLoading && (
-          <div className="rounded-2xl border border-slate-100 bg-white p-6 text-sm text-slate-500 shadow-sm">
+          <div className="rounded-sm border border-slate-100 bg-white p-6 text-sm text-slate-500 shadow-sm">
             Loading directory...
           </div>
         )}
 
         {!isLoading && sortedBusinesses.length === 0 && (
-          <div className="rounded-2xl border border-dashed border-slate-200 bg-white/60 p-6 text-sm text-slate-500 shadow-sm">
+          <div className="rounded-sm border border-dashed border-slate-200 bg-white/60 p-6 text-sm text-slate-500 shadow-sm">
             No businesses found in this category yet. Check back soon or{' '}
             <button
               type="button"
@@ -195,7 +195,7 @@ const PublicDirectory = () => {
               return (
                 <article
                   key={business.id}
-                  className={`group relative flex flex-col rounded-2xl border bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+                  className={`group relative flex flex-col rounded-sm border bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
                     isSponsor
                       ? 'border-amber-200 ring-1 ring-amber-100/60'
                       : 'border-slate-100'
@@ -211,7 +211,7 @@ const PublicDirectory = () => {
                   <div className="flex gap-4">
                     {/* Logo */}
                     {business.logo_url && (
-                      <div className="mt-1 h-12 w-12 flex-shrink-0 overflow-hidden rounded-xl bg-slate-100">
+                      <div className="mt-1 h-12 w-12 flex-shrink-0 overflow-hidden rounded-sm bg-slate-100">
                         <img
                           src={business.logo_url}
                           alt={`${business.name} logo`}
@@ -292,7 +292,7 @@ const PublicDirectory = () => {
         )}
 
         {/* CTA */}
-        <section className="mt-10 rounded-2xl border border-slate-100 bg-white/80 px-5 py-4 text-sm text-slate-700 shadow-sm">
+        <section className="mt-10 rounded-sm border border-slate-100 bg-white/80 px-5 py-4 text-sm text-slate-700 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="font-medium text-slate-900">

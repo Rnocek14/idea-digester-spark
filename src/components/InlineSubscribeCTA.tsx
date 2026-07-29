@@ -51,7 +51,7 @@ export const InlineSubscribeCTA = () => {
   };
 
   return (
-    <div className="col-span-full my-4 p-5 rounded-xl bg-gradient-to-r from-blue-50 to-slate-50 border border-blue-100">
+    <div className="col-span-full my-4 p-5 rounded-sm bg-gradient-to-r from-blue-50 to-slate-50 border border-blue-100">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">

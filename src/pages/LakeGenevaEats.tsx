@@ -244,7 +244,7 @@ const LakeGenevaEats = () => {
         ]}
       />
       {/* Hero Section */}
-      <div className="relative -mx-4 sm:-mx-6 lg:-mx-8 mb-8 overflow-hidden rounded-b-3xl bg-gradient-to-br from-amber-900 via-orange-800 to-red-900 px-6 py-12 text-white">
+      <div className="relative -mx-4 sm:-mx-6 lg:-mx-8 mb-8 overflow-hidden rounded-b-sm bg-gradient-to-br from-amber-900 via-orange-800 to-red-900 px-6 py-12 text-white">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-50"></div>
         <div className="relative max-w-2xl">
           <div className="flex items-center gap-2 mb-3">
@@ -281,7 +281,7 @@ const LakeGenevaEats = () => {
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-8">
           {/* Friday Fish Fry - Lake Geneva staple! */}
-          <section className={isFriday ? "bg-blue-50 -mx-4 px-4 py-6 rounded-xl border-2 border-blue-200" : ""}>
+          <section className={isFriday ? "bg-blue-50 -mx-4 px-4 py-6 rounded-sm border-2 border-blue-200" : ""}>
             <div className="flex items-center gap-2 mb-4">
               <span className="text-2xl">🐟</span>
               <h2 className="text-xl font-bold text-slate-900">

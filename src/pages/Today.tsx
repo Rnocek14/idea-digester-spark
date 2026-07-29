@@ -10,7 +10,7 @@ import WeatherWidget from "@/components/WeatherWidget";
 import HappeningTodayWidget from "@/components/HappeningTodayWidget";
 import LakeBeatLine from "@/components/LakeBeatLine";
 import { storyPath } from "@/lib/slug";
-import { getCityId } from "@/lib/cityId";
+import { getCityId, runCityScoped } from "@/lib/cityId";
 
 /**
  * The Lake Report — the daily ritual page. One scannable card per visit:
@@ -29,10 +29,10 @@ export default function Today() {
       // Recency window keeps "Top stories today" honest — without it, weeks-old
       // high-priority stories present as today's news with nothing signaling age.
       const fortyEightHoursAgo = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
-      const { data } = await supabase
-        .from("content_queue")
-        .select("id, title, summary, category, image_url, publish_date, created_at, geo_label")
-        .eq("city_id", getCityId())
+      const { data } = await runCityScoped((scoped) => {
+          let q = supabase.from("content_queue").select("id, title, summary, category, image_url, publish_date, created_at, geo_label");
+          if (scoped) q = q.eq("city_id", getCityId());
+          return q
         .in("status", ["published", "auto_published"])
         .in("safety_level", ["safe", "soft_sensitive"])
         .neq("category", "events")
@@ -42,6 +42,7 @@ export default function Today() {
         .order("priority_score", { ascending: false, nullsFirst: false })
         .order("publish_date", { ascending: false, nullsFirst: false })
         .limit(5);
+        });
       return data || [];
     },
     staleTime: 60_000,

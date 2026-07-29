@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import PageShell from "@/components/PageShell";
 import { PageMeta } from "@/components/PageMeta";
 import { Button } from "@/components/ui/button";
-import { getCityId } from "@/lib/cityId";
+import { getCityId, runCityScoped } from "@/lib/cityId";
 import {
   EVENT_CATEGORIES,
   categoryEmoji,
@@ -35,12 +35,12 @@ export default function Events() {
       horizon.setDate(today.getDate() + 60);
       const horizonStr = localDateStr(horizon);
 
-      const { data, error } = await supabase
-        .from("content_queue")
-        .select(
+      const { data, error } = await runCityScoped((scoped) => {
+          let q = supabase.from("content_queue").select(
           "id, title, summary, category, event_date, event_time, performer, original_url, image_url, geo_tier, geo_label, metadata",
-        )
-        .eq("city_id", getCityId())
+        );
+          if (scoped) q = q.eq("city_id", getCityId());
+          return q
         .in("status", ["approved", "auto_published", "published"])
         .in("safety_level", ["safe", "soft_sensitive"])
         .gte("event_date", todayStr)
@@ -48,6 +48,7 @@ export default function Events() {
         .order("event_date", { ascending: true })
         .order("event_time", { ascending: true, nullsFirst: false })
         .limit(500);
+        });
 
       if (error) throw error;
       return (data || []) as EventRow[];

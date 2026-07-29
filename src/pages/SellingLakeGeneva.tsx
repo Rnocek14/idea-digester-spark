@@ -257,13 +257,13 @@ const SellingLakeGeneva = () => {
           </div>
 
           {/* Credibility Stats */}
-          <div className="flex flex-wrap justify-center gap-6 mb-8 py-4 px-4 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
+          <div className="flex flex-wrap justify-center gap-6 mb-8 py-4 px-4 bg-white/10 backdrop-blur-sm rounded-sm border border-white/20">
             <div className="flex items-center gap-2">
               <Award className="w-5 h-5 text-blue-300" />
               <span className="text-sm font-medium text-white">15+ Years Experience</span>
             </div>
             <div className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-emerald-400" />
+              <TrendingUp className="w-5 h-5 text-green-400" />
               <span className="text-sm font-medium text-white">Top Lake Geneva Agent</span>
             </div>
             <div className="flex items-center gap-2">
@@ -336,7 +336,7 @@ const SellingLakeGeneva = () => {
               {/* Agent Card */}
               <Card className="p-6 bg-gradient-to-br from-slate-50 to-white">
                 <div className="flex items-start gap-4">
-                  <div className="w-20 h-20 rounded-xl bg-slate-200 overflow-hidden flex-shrink-0">
+                  <div className="w-20 h-20 rounded-sm bg-slate-200 overflow-hidden flex-shrink-0">
                     {sponsor?.logo_url ? (
                       <img
                         src={sponsor.logo_url}
@@ -415,7 +415,7 @@ const SellingLakeGeneva = () => {
                 </h3>
                 <ul className="space-y-3">
                   <li className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
+                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
                     <div>
                       <p className="text-sm font-medium text-slate-900">Multiple offers in days, not weeks</p>
                       <p className="text-xs text-slate-500">Homes sell 2× faster than market average</p>
@@ -462,7 +462,7 @@ const SellingLakeGeneva = () => {
                 <div className="text-xs text-slate-500 uppercase tracking-wide mt-1">Median Home Value</div>
               </Card>
               <Card className="p-4 text-center">
-                <div className="text-2xl font-bold text-emerald-600 flex items-center justify-center gap-1">
+                <div className="text-2xl font-bold text-green-600 flex items-center justify-center gap-1">
                   <TrendingUp className="w-5 h-5" />
                   +{metrics.yoy_change}%
                 </div>
