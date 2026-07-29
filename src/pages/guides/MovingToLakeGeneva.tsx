@@ -3,7 +3,51 @@ import { GuideNewsletterCTA } from "@/components/guides/GuideNewsletterCTA";
 import { SoftRealEstateCTA } from "@/components/guides/SoftRealEstateCTA";
 import { Link } from "react-router-dom";
 
-const TODAY = "2026-06-05";
+const PUBLISHED = "2026-06-05";
+const UPDATED = "2026-07-29";
+
+/**
+ * Commute comparison. Every cell restates something argued in the prose of
+ * the "commute" section — the table summarizes, it never introduces a
+ * distance, a drive time, or a service claim that isn't already on the page.
+ */
+const COMMUTE: {
+  axis: string;
+  chicago: string;
+  milwaukee: string;
+  remote: string;
+}[] = [
+  {
+    axis: "Distance",
+    chicago: "Roughly 80 miles to downtown",
+    milwaukee: "Roughly 50 miles to downtown",
+    remote: "Not a factor",
+  },
+  {
+    axis: "Door-to-door",
+    chicago: "Plan 90 minutes on a good day",
+    milwaukee: "50–70 minutes to most downtown destinations",
+    remote: "Kitchen to desk",
+  },
+  {
+    axis: "Rail option",
+    chicago: "None — no commuter rail. You drive.",
+    milwaukee: "None — you drive.",
+    remote: "N/A",
+  },
+  {
+    axis: "Where it gets worse",
+    chicago: "Winter weather and the summer Friday rush",
+    milwaukee: "Less exposed, same winter mornings",
+    remote: "Internet, not traffic",
+  },
+  {
+    axis: "Verify first",
+    chicago: "Drive it at your real departure time",
+    milwaukee: "Drive it at your real departure time",
+    remote: "Carrier coverage at the exact address",
+  },
+];
 
 export default function MovingToLakeGeneva() {
   return (
@@ -12,8 +56,8 @@ export default function MovingToLakeGeneva() {
       metaTitle="Moving to Lake Geneva, WI — An Honest Local Guide (2026)"
       metaDescription="What it's really like to move to Lake Geneva, Wisconsin: cost of living, schools, the seasons, commuting to Chicago and Milwaukee, and the trade-offs people don't talk about."
       path="/guides/moving-to-lake-geneva"
-      datePublished={TODAY}
-      dateModified={TODAY}
+      datePublished={PUBLISHED}
+      dateModified={UPDATED}
       intro={
         <>
           <p>
@@ -90,6 +134,11 @@ export default function MovingToLakeGeneva() {
                 comes back, the shoreline thaws, and the town breathes for
                 about six weeks before the summer surge.
               </p>
+              <p>
+                This is a town with two moods, and a house you loved in July is
+                a different house in February. Everything below comes back to
+                that.
+              </p>
             </>
           ),
         },
@@ -122,30 +171,152 @@ export default function MovingToLakeGeneva() {
                   check carrier coverage before signing.
                 </li>
               </ul>
+              <div className="not-prose overflow-x-auto rounded-sm border border-slate-200 bg-white mt-5">
+                <table className="w-full min-w-[680px] text-sm border-collapse">
+                  <caption className="sr-only">
+                    Chicago commute, Milwaukee commute and full remote work
+                    compared across distance, drive time, rail options, and
+                    what to verify first.
+                  </caption>
+                  <thead>
+                    <tr className="bg-stone-100 border-b border-slate-200">
+                      <th
+                        scope="col"
+                        className="w-[19%] px-3 py-2.5 text-left font-mono text-[10px] uppercase tracking-widest text-slate-500"
+                      >
+                        Axis
+                      </th>
+                      <th
+                        scope="col"
+                        className="w-[27%] px-3 py-2.5 text-left font-mono text-[10px] uppercase tracking-widest text-slate-500"
+                      >
+                        Chicago
+                      </th>
+                      <th
+                        scope="col"
+                        className="w-[27%] px-3 py-2.5 text-left font-mono text-[10px] uppercase tracking-widest text-slate-500"
+                      >
+                        Milwaukee
+                      </th>
+                      <th
+                        scope="col"
+                        className="w-[27%] px-3 py-2.5 text-left font-mono text-[10px] uppercase tracking-widest text-slate-500"
+                      >
+                        Full remote
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {COMMUTE.map((row) => (
+                      <tr
+                        key={row.axis}
+                        className="border-b border-slate-100 last:border-b-0 odd:bg-white even:bg-stone-50"
+                      >
+                        <th
+                          scope="row"
+                          className="px-3 py-3 text-left align-top font-semibold text-slate-900"
+                        >
+                          {row.axis}
+                        </th>
+                        <td className="px-3 py-3 align-top text-slate-700 leading-snug">
+                          {row.chicago}
+                        </td>
+                        <td className="px-3 py-3 align-top text-slate-700 leading-snug">
+                          {row.milwaukee}
+                        </td>
+                        <td className="px-3 py-3 align-top text-slate-700 leading-snug">
+                          {row.remote}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="text-xs text-slate-500 italic mt-3">
+                A summary of the paragraphs above — nothing here that isn't
+                stated in the prose.
+              </p>
+              <p>
+                One warning for all three columns: the drive you take on a
+                Sunday scouting trip is not the drive you'll take on a Tuesday
+                in January.
+              </p>
             </>
           ),
         },
         {
-          id: "schools",
-          heading: "Schools, briefly",
+          id: "test-drive",
+          heading: "How to test-drive the town before you move",
           body: (
             <>
               <p>
-                The area is served by a small set of public districts — Lake
-                Geneva–Genoa City Union High School District for the high
-                school, with several K–8 feeder districts including Lake
-                Geneva–Genoa City, Linn, Woods, Reek (Williams Bay area
-                feeder), and Fontana J8. Williams Bay has its own K–12 district
-                and is a draw for families who want one of the smallest public
-                schools in the region.
+                The best predictor of a happy move here is how much time
+                someone spent in town <em>outside</em> a summer Saturday. The
+                buyers who settle in easily are the ones who spent a real
+                weekend in each option they were considering — including one
+                in winter.
+              </p>
+              <ul>
+                <li>
+                  <strong>Go once in October.</strong> Fall is when the town is
+                  most itself, and the{" "}
+                  <Link to="/guides/lake-geneva-shore-path" className="text-blue-700 hover:underline font-medium">
+                    shore path
+                  </Link>{" "}
+                  is still walkable. If October doesn't win you over, the rest
+                  of the year won't.
+                </li>
+                <li>
+                  <strong>Go once in the dead of winter.</strong> Uncomfortable
+                  advice, correct advice — the{" "}
+                  <Link to="/guides/things-to-do-lake-geneva-in-winter" className="text-blue-700 hover:underline font-medium">
+                    winter guide
+                  </Link>{" "}
+                  is the honest picture of what there is to do once the lake
+                  freezes.
+                </li>
+                <li>
+                  <strong>Stay in the town you're considering,</strong> not the
+                  most convenient one. The{" "}
+                  <Link to="/guides/where-to-stay-lake-geneva" className="text-blue-700 hover:underline font-medium">
+                    where-to-stay guide
+                  </Link>{" "}
+                  breaks the options out by area.
+                </li>
+                <li>
+                  <strong>Spend the weekend living, not touring.</strong>{" "}
+                  Grocery run, coffee, a walk, dinner on a weeknight. Work from
+                  the{" "}
+                  <Link to="/guides/things-to-do-lake-geneva" className="text-blue-700 hover:underline font-medium">
+                    start-here list
+                  </Link>
+                  , but judge the ordinary hours, not the highlight reel.
+                </li>
+              </ul>
+            </>
+          ),
+        },
+        {
+          id: "renting",
+          heading: "Renting before you buy",
+          body: (
+            <>
+              <p>
+                Because so many buyers arrive from the visitor side of that
+                arc, they know the lake extremely well and the town barely at
+                all. A year as a renter is the cheapest way to fix that
+                asymmetry — you learn which end of the lake you gravitate
+                toward, what the commute really costs you, and how you handle
+                a February here, before the decision is irreversible.
               </p>
               <p>
-                We'll publish a dedicated{" "}
-                <Link to="/guides/lake-geneva-schools" className="text-blue-700 hover:underline font-medium">
-                  schools guide
-                </Link>{" "}
-                shortly — district boundaries are where the real homework
-                happens for buyers with kids.
+                Two things to settle before signing a lease. Ask explicitly
+                whether it is a genuine year-round term or one that turns over
+                for the summer season — in a resort town that is a real
+                question, not a formality. And rent in the area you're
+                seriously considering buying in, not the one with the easiest
+                availability. A year in the wrong village teaches you very
+                little about the right one.
               </p>
             </>
           ),
@@ -165,11 +336,63 @@ export default function MovingToLakeGeneva() {
                 walkability).
               </p>
               <p>
-                Each has a very different feel. The full breakdown lives in our{" "}
+                The choice is usually less about the house than about which
+                inconvenience you'd rather own. Downtown buys walkability and
+                hands you the summer crowds. Williams Bay and Fontana buy quiet
+                and hand you a drive for anything that only exists in Lake
+                Geneva. A township address buys land and hands you a longer
+                errand radius, a plow problem, and a harder conversation about
+                internet.
+              </p>
+              <p>
+                If you've narrowed it to two towns, read{" "}
+                <Link to="/guides/fontana-vs-lake-geneva" className="text-blue-700 hover:underline font-medium">
+                  Fontana vs. Lake Geneva
+                </Link>{" "}
+                or{" "}
+                <Link to="/guides/lake-geneva-vs-williams-bay" className="text-blue-700 hover:underline font-medium">
+                  Lake Geneva vs. Williams Bay
+                </Link>
+                . Every shoreline community is covered in the{" "}
                 <Link to="/guides/lake-geneva-neighborhoods" className="text-blue-700 hover:underline font-medium">
                   neighborhoods guide
                 </Link>
                 .
+              </p>
+            </>
+          ),
+        },
+        {
+          id: "schools",
+          heading: "Schools",
+          body: (
+            <>
+              <p>
+                The area is served by a small set of public districts — Lake
+                Geneva–Genoa City Union High School District for the high
+                school, with several K–8 feeder districts including Lake
+                Geneva–Genoa City, Linn, Woods, Reek (Williams Bay area
+                feeder), and Fontana J8. Williams Bay has its own K–12 district
+                and is a draw for families who want one of the smallest public
+                schools in the region.
+              </p>
+              <p>
+                The part that surprises people: the high school map and the K–8
+                map are not the same map. Two houses a few minutes apart can
+                share a high school and send their elementary students to
+                entirely different districts. "The Lake Geneva schools" is not
+                a single answer, and district boundaries — not town lines, not
+                mailing addresses — are where the real homework happens for
+                buyers with kids.
+              </p>
+              <p>
+                Confirm the feeder pattern for the exact address, in writing,
+                with the district. The{" "}
+                <Link to="/guides/lake-geneva-schools" className="text-blue-700 hover:underline font-medium">
+                  guide to schools in the Lake Geneva area
+                </Link>{" "}
+                walks through each district, the private and parochial
+                options, and where the official report cards live.
               </p>
             </>
           ),
@@ -186,12 +409,41 @@ export default function MovingToLakeGeneva() {
                 to the lake; the further from the water, the faster prices
                 normalize.
               </p>
+              <p>The four line items that actually move the number:</p>
+              <ul>
+                <li>
+                  <strong>Housing.</strong> The dominant variable, driven far
+                  more by distance from the water than by square footage.
+                </li>
+                <li>
+                  <strong>Property taxes.</strong> Higher than Illinois
+                  averages, lower than many comparable Illinois lake-suburbs.
+                  Ask for the current bill on the specific parcel rather than
+                  reasoning from a state average.
+                </li>
+                <li>
+                  <strong>Income tax.</strong> Meaningfully lower than Illinois
+                  on the brackets most buyers fall into — often what closes the
+                  gap on total tax burden for a relocating family.
+                </li>
+                <li>
+                  <strong>What nobody budgets for.</strong> Snow removal on a
+                  long driveway, the driving that big-box errands require, and
+                  the upkeep that comes with being near water. Individually
+                  small, collectively real.
+                </li>
+              </ul>
               <p>
-                Property taxes in Wisconsin are higher than Illinois averages
-                but lower than many comparable Illinois lake-suburbs. Income
-                tax is meaningfully lower than Illinois on the brackets most
-                buyers fall into. We'll publish a current cost-of-living
-                breakdown soon.
+                For the full breakdown, read the{" "}
+                <Link to="/guides/cost-of-living-lake-geneva" className="text-blue-700 hover:underline font-medium">
+                  cost of living guide
+                </Link>
+                , then check the{" "}
+                <Link to="/market-report" className="text-blue-700 hover:underline font-medium">
+                  market report
+                </Link>{" "}
+                for where housing sits right now. The shape described here
+                changes slowly; the numbers don't.
               </p>
             </>
           ),
@@ -231,6 +483,108 @@ export default function MovingToLakeGeneva() {
             </>
           ),
         },
+        {
+          id: "checklist",
+          heading: "Before you buy: the checklist",
+          body: (
+            <>
+              <p>
+                Everything above condenses into seven things to confirm about a{" "}
+                <em>specific address</em> — not the town, not the county, the
+                parcel.
+              </p>
+              <ol>
+                <li>
+                  <strong>Confirm the exact K–8 feeder district</strong> with
+                  the district itself. The high school map is a different map.
+                </li>
+                <li>
+                  <strong>Verify internet at the address before signing.</strong>{" "}
+                  Fiber reaches most established neighborhoods; a rural parcel
+                  needs the carrier to confirm service at that address. This is
+                  the most common surprise remote-work buyers report.
+                </li>
+                <li>
+                  <strong>Ask who plows what.</strong> Who clears the road,
+                  whether the driveway needs a contract, and what the current
+                  owner pays for it.
+                </li>
+                <li>
+                  <strong>Ask how water and sewer are served.</strong> A
+                  township parcel may be on municipal service or a private well
+                  and septic system. Ask which, and ask for the service
+                  history.
+                </li>
+                <li>
+                  <strong>Drive the real commute at the real hour</strong> — a
+                  weekday, your actual departure time, ideally once in bad
+                  weather.
+                </li>
+                <li>
+                  <strong>Map your errand radius.</strong> Groceries, pharmacy,
+                  hardware, and the drive to big-box in Janesville. Weekly
+                  errands are the part of the trade you feel most.
+                </li>
+                <li>
+                  <strong>Stand on the property in a month that isn't
+                  July</strong> — ideally twice, in two different seasons.
+                </li>
+              </ol>
+              <p>
+                After you close, the first winter is the real orientation.
+                Settle the plow arrangement before the first storm rather than
+                during it, and find one cold-weather thing you genuinely like
+                doing.
+              </p>
+            </>
+          ),
+        },
+        {
+          id: "year-round-coverage",
+          heading: "What The Brief covers year-round",
+          body: (
+            <>
+              <p>
+                Most Lake Geneva coverage is written for visitors. These are
+                the pages you'll actually use once the boxes are unpacked:
+              </p>
+              <ul>
+                <li>
+                  <Link to="/today" className="text-blue-700 hover:underline font-medium">
+                    Today
+                  </Link>{" "}
+                  — the daily local rundown.
+                </li>
+                <li>
+                  <Link to="/incidents" className="text-blue-700 hover:underline font-medium">
+                    Incidents
+                  </Link>{" "}
+                  — road closures, weather and public-safety notices as they
+                  come in. Most useful in exactly the weather you'd expect.
+                </li>
+                <li>
+                  <Link to="/events" className="text-blue-700 hover:underline font-medium">
+                    Events
+                  </Link>{" "}
+                  — including the off-season calendar visitor sites skip.
+                </li>
+                <li>
+                  <Link to="/jobs" className="text-blue-700 hover:underline font-medium">
+                    Jobs
+                  </Link>{" "}
+                  — for the half of a relocation that isn't the house.
+                </li>
+              </ul>
+              <p>
+                Still deciding? The{" "}
+                <Link to="/guides/lake-geneva-faq" className="text-blue-700 hover:underline font-medium">
+                  Lake Geneva FAQ
+                </Link>{" "}
+                answers the shorter questions this guide doesn't stop for.
+              </p>
+            </>
+          ),
+        },
       ]}
       bottomExtra={
         <>
@@ -246,10 +600,34 @@ export default function MovingToLakeGeneva() {
             "A side-by-side look at Lake Geneva, Fontana, Williams Bay and Genoa City — feel, pace, schools, and lake access.",
         },
         {
+          title: "Cost of Living in Lake Geneva",
+          path: "/guides/cost-of-living-lake-geneva",
+          blurb:
+            "Housing, property taxes and the lakefront premium — the full version of the summary on this page.",
+        },
+        {
+          title: "Schools in the Lake Geneva Area",
+          path: "/guides/lake-geneva-schools",
+          blurb:
+            "Every district sharing the shoreline, the K–8 feeder patterns, and the private options.",
+        },
+        {
+          title: "Fontana vs. Lake Geneva",
+          path: "/guides/fontana-vs-lake-geneva",
+          blurb:
+            "West end or east end — a head-to-head on downtown, visitor traffic, schools and fit.",
+        },
+        {
+          title: "Lake Geneva vs. Williams Bay",
+          path: "/guides/lake-geneva-vs-williams-bay",
+          blurb:
+            "The bigger downtown or the smaller K–12 campus and quieter streets.",
+        },
+        {
           title: "Things to Do in Lake Geneva",
           path: "/guides/things-to-do-lake-geneva",
           blurb:
-            "Before you commit, spend a real weekend here — this is the local's start-here list.",
+            "Before you commit, spend a real weekend here — the local's start-here list.",
         },
       ]}
       faqs={[
@@ -264,14 +642,44 @@ export default function MovingToLakeGeneva() {
             "Roughly 80 miles to downtown Chicago and 50 miles to downtown Milwaukee. There's no commuter rail, so most Chicago hybrid workers drive — plan on 90 minutes door-to-door on a good day. Milwaukee is generally 50–70 minutes.",
         },
         {
+          question: "Is there a train from Lake Geneva to Chicago?",
+          answer:
+            "No. There is no commuter rail service to Lake Geneva, so a Chicago commute means driving — about 90 minutes door-to-door on a good day, longer in winter weather or the summer Friday rush.",
+        },
+        {
+          question: "Which airport serves Lake Geneva?",
+          answer:
+            "O'Hare and Mitchell are the two practical options, roughly an hour in either direction depending on your address and the traffic. Residents tend to pick whichever the fare and the day favor rather than defaulting to one.",
+        },
+        {
           question: "What are property taxes like in Lake Geneva?",
           answer:
-            "Higher than Illinois averages but lower than many Illinois lake-adjacent suburbs. Wisconsin's income tax brackets are also meaningfully lower than Illinois for many incomes, which often closes the gap on total tax burden for relocating families.",
+            "Higher than Illinois averages but lower than many Illinois lake-adjacent suburbs. Wisconsin's income tax brackets are also meaningfully lower than Illinois for many incomes, which often closes the gap on total tax burden for relocating families. Ask for the current bill on the specific parcel.",
         },
         {
           question: "Is there fiber internet in Lake Geneva?",
           answer:
             "In most established neighborhoods, yes. Rural township addresses still need to verify carrier coverage before signing — this is the single most common surprise we hear from remote-work buyers.",
+        },
+        {
+          question: "Where do Lake Geneva residents go for medical care?",
+          answer:
+            "Mercyhealth has a strong presence locally. Specialists generally mean Mercy in Janesville, Aurora in Burlington, or a drive to Milwaukee or Madison. Worth mapping before you move if anyone in the household sees a specialist regularly.",
+        },
+        {
+          question: "Do I need a snowblower if I move to Lake Geneva?",
+          answer:
+            "For a short town driveway, usually not. For the long rural driveways common at township addresses, you need either a plow contract or a serious machine — and it is better arranged before the first storm than during it.",
+        },
+        {
+          question: "What's the best month to visit if I'm thinking about moving?",
+          answer:
+            "October. Fall is when the town is most itself — school in session, restaurants oriented to residents, the shore path still walkable. Then come back once mid-winter, because that's the season that decides whether the move works.",
+        },
+        {
+          question: "Should I rent in Lake Geneva before buying?",
+          answer:
+            "It's the cheapest way to test the decision, especially for buyers who know the lake well but the town barely at all. Rent in the area you're seriously considering, and confirm the lease is genuinely year-round rather than a term that turns over for the summer season.",
         },
       ]}
     />

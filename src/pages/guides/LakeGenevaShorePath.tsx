@@ -81,6 +81,31 @@ const FAQS: { question: string; answer: string }[] = [
     answer:
       "No. The path is for walking only. Sections cross private property under a foot-traffic easement; bikes, scooters, and strollers are not permitted on most of it. For cycling, the public roads paralleling the lake are the alternative.",
   },
+  {
+    question: "Are there public restrooms on the Shore Path?",
+    answer:
+      "Yes, at seven public locations: Edgewater Park and the Lakefront Recreation Building in Williams Bay; Elm Park, the Riviera, and the Lake Geneva Visitor Center in Lake Geneva; Big Foot Beach State Park on the south shore; and Reid Park in Fontana. Hours vary by season, so don't count on one being open outside the summer months. Plan your turnaround points around them.",
+  },
+  {
+    question: "How far is Williams Bay to Fontana on the Shore Path?",
+    answer:
+      "3.5 miles one way, according to the official leg distances on the Williams Bay Recreation Department map. Most walkers take two to three hours at an unhurried pace with stops. It's the single segment we get asked about most.",
+  },
+  {
+    question: "What are the individual leg distances on the Shore Path?",
+    answer:
+      "Seven legs add up to the full 21 miles: Williams Bay to Fontana 3.5, Fontana to Shadow Lane 2.3, Shadow Lane to Linn Road 2.9, Linn Road to Big Foot Beach 3.3, Big Foot Beach to Lake Geneva 2.0, Lake Geneva to Chapin Road 3.5, and Chapin Road back to Williams Bay 3.5. Pick two endpoints and add the legs between them to plan a section.",
+  },
+  {
+    question: "Is there a shorter walk than the full 21 miles?",
+    answer:
+      "Most people never walk the whole loop. Four common section walks: Library Park out and back toward Big Foot Beach (about four miles round-trip), Williams Bay Lakefront Park to Edgewater Park and back (about a mile and a half), Fontana Beach to Reid Park and back for sunset (about two miles), and Williams Bay to Fontana one-way (3.5 miles, half a day with lunch).",
+  },
+  {
+    question: "Do I need a map to walk the Shore Path?",
+    answer:
+      "The path itself is easy to follow — it hugs the water and is worn in by daily use. What a map gives you is the access points, the restrooms, and the distances between them, which is what you actually need to plan a turnaround. The Williams Bay Recreation Department publishes the official Geneva Lake Shore Path map (williamsbay.org/recreation-department); the leg distances and restroom locations on this page come from it.",
+  },
 ];
 
 // Public restrooms along the path — sourced from the official Williams Bay
@@ -104,6 +129,82 @@ const LEG_DISTANCES: { from: string; to: string; miles: number }[] = [
   { from: "Big Foot Beach", to: "Lake Geneva", miles: 2.0 },
   { from: "Lake Geneva", to: "Chapin Road", miles: 3.5 },
   { from: "Chapin Road", to: "Williams Bay", miles: 3.5 },
+];
+
+// On-page contents. Each id must match a <section id> below.
+const SECTIONS: { id: string; label: string }[] = [
+  { id: "before-you-go", label: "Before you go" },
+  { id: "what-it-is", label: "What the Shore Path is" },
+  { id: "stops", label: "The walk, stop by stop" },
+  { id: "distances", label: "Leg distances and restrooms" },
+  { id: "which-section", label: "Which section should you walk?" },
+  { id: "parking", label: "Parking and access points" },
+  { id: "seasons", label: "Walking it through the year" },
+  { id: "plan", label: "Plan your walk" },
+  { id: "faqs", label: "Common questions" },
+];
+
+// Static index of the stops, in walking order. The detailed write-ups below
+// are loaded from the database; this list is rendered unconditionally so the
+// page — and its ItemList schema — never depends on that fetch succeeding.
+const STOP_INDEX: {
+  slug: string;
+  name: string;
+  community: string;
+  mile: number;
+}[] = [
+  { slug: "library-park", name: "Library Park", community: "Lake Geneva", mile: 0.0 },
+  { slug: "flat-iron-park", name: "Flat Iron Park", community: "Lake Geneva", mile: 0.4 },
+  { slug: "riviera-beach", name: "Riviera Beach & Pier", community: "Lake Geneva", mile: 0.6 },
+  { slug: "lake-geneva-public-beach", name: "Lake Geneva Public Beach", community: "Lake Geneva", mile: 0.9 },
+  { slug: "maple-lawn-area", name: "Maple Lawn Walking Section", community: "Lake Geneva", mile: 1.6 },
+  { slug: "black-point-estate", name: "Black Point Estate", community: "Lake Geneva", mile: 5.5 },
+  { slug: "south-shore-club-area", name: "South Shore Path Stretch", community: "Linn", mile: 8.5 },
+  { slug: "linn-pier", name: "Linn Pier Public Access", community: "Linn", mile: 10.5 },
+  { slug: "fontana-beach", name: "Fontana Beach", community: "Fontana", mile: 13.0 },
+  { slug: "reid-park", name: "Reid Park", community: "Fontana", mile: 13.4 },
+  { slug: "abbey-harbor-view", name: "Abbey Harbor View", community: "Fontana", mile: 13.9 },
+  { slug: "kishwauketoe-edge", name: "Kishwauketoe Nature Conservancy Edge", community: "Williams Bay", mile: 15.5 },
+  { slug: "edgewater-park", name: "Edgewater Park", community: "Williams Bay", mile: 16.3 },
+  { slug: "williams-bay-lakefront", name: "Williams Bay Lakefront Park", community: "Williams Bay", mile: 16.6 },
+  { slug: "yerkes-area", name: "Yerkes Observatory Area", community: "Williams Bay", mile: 17.5 },
+  { slug: "cedar-point-park", name: "Cedar Point Park", community: "Williams Bay", mile: 18.5 },
+];
+
+// Public access points with parking. Fees and hours are deliberately not
+// stated here — they change season to season; the access guide is the
+// place we keep that detail.
+const ACCESS_POINTS: { name: string; where: string; note: string }[] = [
+  {
+    name: "Library Park & downtown Lake Geneva",
+    where: "East end of the lake",
+    note: "The default start. City lots and metered street parking near the water, and the first place to fill on a summer weekend.",
+  },
+  {
+    name: "Riviera & Lake Geneva Public Beach",
+    where: "Downtown lakefront",
+    note: "Restrooms, the tour-boat pier, and the flattest walking on the whole path. Day-use fee at the beach in season for non-residents.",
+  },
+  {
+    name: "Big Foot Beach State Park",
+    where: "South of downtown Lake Geneva",
+    note: "A Wisconsin state park entry sticker is required. Parking here is the easiest way to reach the south-shore stretch without circling downtown.",
+  },
+  {
+    name: "Williams Bay Lakefront Park & Edgewater Park",
+    where: "North shore",
+    note: "Parking at the lakefront, restrooms at both parks, and a playground at the trailhead — the family end of the path.",
+  },
+  {
+    name: "Fontana Beach & Reid Park",
+    where: "West end of the lake",
+    note: "Public lot and street parking, restrooms at Reid Park, and the village's restaurants a short walk back from the beach.",
+  },
+  {
+    name: "Linn Pier",
+    where: "South shore",
+    note: "A small public access with a small parking area. Useful as a turnaround on the south shore, where public access points sit farther apart than they do on the north side.",
+  },
 ];
 
 // Suggested section walks — built from the official leg distances so we
@@ -200,22 +301,27 @@ export default function LakeGenevaShorePath() {
         { name: "Lake Geneva Shore Path", path: PATH },
       ]),
       faqJsonLd(FAQS),
-      ...(stops.length
-        ? [
-            stopsItemListJsonLd({
-              parentPath: PATH,
-              parentName: "Lake Geneva Shore Path Stops",
-              stops: stops.map((s) => ({
-                slug: s.slug,
-                name: s.name,
-                description: s.short_label ?? s.description ?? null,
-                latitude: s.latitude,
-                longitude: s.longitude,
-                image: s.hero_image_url,
-              })),
-            }),
-          ]
-        : []),
+      // Always emit the ItemList. If the stop fetch hasn't resolved (or a
+      // crawler never runs it), fall back to the static stop index so the
+      // page's richest schema doesn't disappear with the data.
+      stopsItemListJsonLd({
+        parentPath: PATH,
+        parentName: "Lake Geneva Shore Path Stops",
+        stops: stops.length
+          ? stops.map((s) => ({
+              slug: s.slug,
+              name: s.name,
+              description: s.short_label ?? s.description ?? null,
+              latitude: s.latitude,
+              longitude: s.longitude,
+              image: s.hero_image_url,
+            }))
+          : STOP_INDEX.map((s) => ({
+              slug: s.slug,
+              name: s.name,
+              description: `${s.community} · about mile ${s.mile.toFixed(1)} of the 21-mile Lake Geneva Shore Path.`,
+            })),
+      }),
     ],
     [stops],
   );
@@ -299,6 +405,15 @@ export default function LakeGenevaShorePath() {
             of the oldest publicly-walkable lakefronts in America. A guide
             and a stop-by-stop walking companion.
           </p>
+          <p className="text-xs font-mono uppercase tracking-wider text-slate-500 mt-3">
+            Updated{" "}
+            {new Date(`${TODAY}T12:00:00`).toLocaleDateString("en-US", {
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            })}{" "}
+            · The Brief Editors
+          </p>
         </header>
 
         {/* Stylized map */}
@@ -352,8 +467,89 @@ export default function LakeGenevaShorePath() {
           </p>
         </div>
 
+        {/* Contents — mobile. Desktop gets the sticky sidebar below. */}
+        <nav
+          aria-label="On this page"
+          className="lg:hidden rounded-md border border-slate-200 bg-white p-4 mb-8"
+        >
+          <p className="text-[10px] font-mono uppercase tracking-widest text-slate-500 mb-2">
+            On this page
+          </p>
+          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 text-sm">
+            {SECTIONS.map((s) => (
+              <li key={s.id}>
+                <a href={`#${s.id}`} className="text-blue-700 hover:underline leading-snug">
+                  {s.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-10">
+          <article className="min-w-0">
+
+        {/* Before you go — the whole page in one screen, and the part that
+            stands on its own if the interactive pieces never load. */}
+        <section id="before-you-go" className="scroll-mt-24 mb-10">
+          <h2 className="font-display text-2xl text-slate-900 tracking-tight mb-3 pb-2 border-b border-slate-200">
+            Before you go
+          </h2>
+          <p className="text-slate-700 leading-relaxed mb-4">
+            Most of what a first-time walker needs, in one screen. Everything
+            here is expanded on further down the page.
+          </p>
+          <ul className="rounded-md border border-slate-200 bg-white p-5 space-y-3 text-slate-700 leading-relaxed">
+            <li>
+              <strong className="text-slate-900">21 miles, seven legs.</strong>{" "}
+              The path circles Geneva Lake in seven measured segments, the
+              longest 3.5 miles. Walking the whole thing takes 8–10 hours, and
+              almost nobody does it in one push.
+            </li>
+            <li>
+              <strong className="text-slate-900">Public, but it runs through front yards.</strong>{" "}
+              A continuous easement keeps the path open across private
+              lakefront property. Treat it as a sidewalk that happens to pass
+              a few feet from someone's porch, because that is what it is.
+            </li>
+            <li>
+              <strong className="text-slate-900">Walking only.</strong> No
+              bikes or scooters, and most of the path will not take a stroller
+              — expect stone steps, tree roots, and narrow stretches between
+              the paved bits downtown.
+            </li>
+            <li>
+              <strong className="text-slate-900">Stay on the path.</strong> Not
+              the lawns, not the piers, not the private beaches. Keep voices
+              down and don't photograph people on their own property.
+            </li>
+            <li>
+              <strong className="text-slate-900">Dogs on leash.</strong> Always
+              leashed, always picked up after, and turn around if a stretch
+              posts a no-pets notice.
+            </li>
+            <li>
+              <strong className="text-slate-900">Swim only at public beaches.</strong>{" "}
+              Lake Geneva, Williams Bay, Fontana, and Big Foot Beach State
+              Park. The shoreline in front of private homes is private
+              waterfront.
+            </li>
+            <li>
+              <strong className="text-slate-900">Seven public restrooms, not much water.</strong>{" "}
+              The restrooms are listed below and their hours change with the
+              season. Carry your own water; drinking fountains are scarce and
+              phone service drops off in the coves.
+            </li>
+            <li>
+              <strong className="text-slate-900">Plan a section, not a loop.</strong>{" "}
+              Pick two access points with parking, add the legs between them,
+              and decide your turnaround before you start walking.
+            </li>
+          </ul>
+        </section>
+
         {/* Editorial intro */}
-        <section className="prose prose-slate max-w-none text-slate-700 leading-relaxed mb-10">
+        <section id="what-it-is" className="scroll-mt-24 prose prose-slate max-w-none text-slate-700 leading-relaxed mb-10">
           <h2 className="font-display text-2xl text-slate-900 tracking-tight mb-3 pb-2 border-b border-slate-200">
             What the Shore Path actually is
           </h2>
@@ -373,23 +569,89 @@ export default function LakeGenevaShorePath() {
             has a continuous legal right to walk.
           </p>
           <p>
+            <strong>A note on that history.</strong> The 1870s date and the
+            "more than 150 years" framing are the account as it is handed down
+            around the lake and repeated by the shoreline communities; this
+            desk has not reproduced a deed, plat, or court record here. Read it
+            as the traditional account rather than a citation. The numbers
+            further down this page — the seven leg distances and the public
+            restroom locations — do come from a published source, and we say
+            which one.
+          </p>
+          <p>
+            <strong>What it feels like underfoot.</strong> Because the path
+            crosses dozens of separate properties, the surface changes
+            constantly: pavement in the downtown stretches, then grass,
+            gravel, tree roots, and short flights of stone steps. Nothing about
+            it is strenuous, but it is uneven enough that shoes matter and a
+            stroller doesn't work, and in places it narrows to single file
+            between the water and someone's yard.
+          </p>
+          <p>
             <strong>How to walk it well.</strong> Stay on the path. Keep
             voices down — people live here, and many of these are
             single-family homes, not historic estates. Don't step onto
             lawns, piers, or beach areas. Leash your dog. Don't
             photograph people on their own property. If a section is
             blocked for maintenance, turn around and try another segment.
+            The path stays open because generations of walkers have treated
+            it carefully; that is the whole arrangement.
           </p>
         </section>
 
         {/* Stops */}
-        <section className="mb-12">
+        <section id="stops" className="scroll-mt-24 mb-12">
           <h2 className="font-display text-2xl text-slate-900 tracking-tight mb-4 pb-2 border-b border-slate-200">
             The walk, stop by stop
           </h2>
 
+          <p className="text-slate-700 leading-relaxed mb-4">
+            Sixteen stops, in walking order, beginning downtown at Library
+            Park and heading west along the south shore, around the west end
+            at Fontana, and back east through Williams Bay. Every one is a
+            public landmark — a park, a public beach, a public pier, or a
+            historic site open to visitors. The mile figures are approximate
+            positions along the 21-mile path, useful for judging how far apart
+            two stops are rather than for navigation.
+          </p>
+
+          <ol className="rounded-md border border-slate-200 bg-white p-5 mb-8 grid sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
+            {STOP_INDEX.map((s, i) => (
+              <li key={s.slug} className="flex items-baseline gap-2">
+                <span className="font-mono text-xs text-slate-500 w-5 flex-shrink-0">
+                  {i + 1}.
+                </span>
+                <span className="min-w-0">
+                  <Link
+                    to={`/guides/lake-geneva-shore-path/${s.slug}`}
+                    className="text-blue-700 hover:underline font-medium"
+                  >
+                    {s.name}
+                  </Link>
+                  <span className="text-slate-500">
+                    {" "}
+                    · {s.community} · mile {s.mile.toFixed(1)}
+                  </span>
+                </span>
+              </li>
+            ))}
+          </ol>
+
+          <h3 className="font-display text-xl text-slate-900 tracking-tight mb-3">
+            The full write-ups
+          </h3>
+
           {isLoading && (
             <p className="text-sm text-slate-500">Loading stops…</p>
+          )}
+
+          {!isLoading && stops.length === 0 && (
+            <p className="text-sm text-slate-600 leading-relaxed">
+              The detailed write-ups aren't loading right now. The list above
+              is the walking order — each stop has its own page with the
+              history, what to look for, and where the nearest parking and
+              restrooms are.
+            </p>
           )}
 
           <div className="space-y-6">
@@ -506,7 +768,18 @@ export default function LakeGenevaShorePath() {
 
         {/* Restrooms + leg distances — practical planning info, sourced from
             the official Williams Bay Recreation Department map. */}
-        <section className="mb-12 grid md:grid-cols-2 gap-4">
+        <section id="distances" className="scroll-mt-24 mb-12">
+          <h2 className="font-display text-2xl text-slate-900 tracking-tight mb-3 pb-2 border-b border-slate-200">
+            Leg distances and restrooms
+          </h2>
+          <p className="text-slate-700 leading-relaxed mb-4">
+            These are the two numbers that decide a walk: how far apart the
+            access points are, and where you can stop. Both come from the
+            official Geneva Lake Shore Path map published by the Williams Bay
+            Recreation Department. To plan a section, pick two endpoints and
+            add the legs between them — the seven legs total 21 miles.
+          </p>
+          <div className="grid md:grid-cols-2 gap-4">
           <div className="rounded-md border border-slate-200 bg-white p-5">
             <div className="flex items-center gap-2 mb-3">
               <Bath className="h-4 w-4 text-blue-700" />
@@ -561,18 +834,31 @@ export default function LakeGenevaShorePath() {
               Approximate — useful for planning a section walk.
             </p>
           </div>
+          </div>
         </section>
 
         {/* Suggested section walks — captures long-tail intent like
             "shore path short walk", "shore path with kids", "shore path sunset". */}
-        <section className="mb-12">
-          <h2 className="font-display text-2xl text-slate-900 tracking-tight mb-2 pb-2 border-b border-slate-200">
-            Suggested section walks
+        <section id="which-section" className="scroll-mt-24 mb-12">
+          <h2 className="font-display text-2xl text-slate-900 tracking-tight mb-3 pb-2 border-b border-slate-200">
+            Which section should you walk?
           </h2>
-          <p className="text-sm text-slate-600 mb-5 leading-relaxed">
-            Most people don't walk all 21 miles. Here are four section walks
-            we get asked about most — each starts and ends at a public
-            access point with parking.
+          <p className="text-slate-700 leading-relaxed mb-3">
+            Almost nobody walks all 21 miles, and the question we actually get
+            is narrower: which piece of it is worth an afternoon? The answer
+            depends less on scenery — it is beautiful nearly everywhere — than
+            on who you're walking with and how much daylight you have.
+          </p>
+          <p className="text-slate-700 leading-relaxed mb-3">
+            <strong>First visit to the lake?</strong> Start downtown, where the
+            path is flat and the landmarks come quickly.{" "}
+            <strong>Walking with kids?</strong> Stay in Williams Bay, where the
+            distance between a beach and a bathroom is short.{" "}
+            <strong>Out for sunset?</strong> Go west, where the shoreline faces
+            the light.{" "}
+            <strong>Have half a day and a second driver?</strong> Walk a full
+            leg one-way and eat at the other end. Each of the four below starts
+            and finishes at a public access point with parking.
           </p>
           <div className="grid sm:grid-cols-2 gap-4">
             {SECTION_WALKS.map((w) => (
@@ -604,9 +890,131 @@ export default function LakeGenevaShorePath() {
           </div>
         </section>
 
+        {/* Parking and access — pulled out of the FAQ because "shore path
+            parking" is one of the highest-intent searches this page gets. */}
+        <section id="parking" className="scroll-mt-24 mb-12">
+          <h2 className="font-display text-2xl text-slate-900 tracking-tight mb-3 pb-2 border-b border-slate-200">
+            Parking and access points
+          </h2>
+          <p className="text-slate-700 leading-relaxed mb-3">
+            The Shore Path has no single trailhead. You join it wherever a
+            public park, beach, or pier touches the water, which is why
+            planning a walk really means planning where to leave the car. The
+            six below are the practical ones — each has parking, each puts you
+            on the path within a minute or two of the lot, and most have a
+            restroom.
+          </p>
+          <ul className="space-y-3 mb-4">
+            {ACCESS_POINTS.map((a) => (
+              <li
+                key={a.name}
+                className="rounded-md border border-slate-200 bg-white p-4"
+              >
+                <p className="text-[10px] font-mono uppercase tracking-widest text-slate-500 mb-1">
+                  {a.where}
+                </p>
+                <p className="font-display text-lg text-slate-900 leading-snug">
+                  {a.name}
+                </p>
+                <p className="text-sm text-slate-700 leading-relaxed mt-1">
+                  {a.note}
+                </p>
+              </li>
+            ))}
+          </ul>
+          <p className="text-slate-700 leading-relaxed mb-3">
+            Two rules that keep the arrangement working. Don't block private
+            driveways or park on the narrow lakefront lanes that serve the
+            homes the path crosses — those are residential streets, not
+            overflow lots. And check fees and hours before you go: beach
+            day-use charges, state park stickers, and municipal lot rates all
+            change seasonally, and non-resident rates differ from village to
+            village.
+          </p>
+          <p className="text-slate-700 leading-relaxed">
+            For the full detail on each beach and boat launch — addresses,
+            what's charged, when the lifeguards are on — see our{" "}
+            <Link to="/guides/lake-geneva-public-access-guide" className="text-blue-700 hover:underline font-medium">
+              public access guide
+            </Link>
+            . For the south-shore trailhead specifically, the{" "}
+            <Link to="/guides/big-foot-beach-state-park" className="text-blue-700 hover:underline font-medium">
+              Big Foot Beach State Park guide
+            </Link>{" "}
+            covers the sticker, the trails behind the beach, and the
+            campground.
+          </p>
+        </section>
+
+        {/* Seasonal guidance, consolidated. This material used to be
+            scattered across FAQ answers and a PlanCard bullet. */}
+        <section id="seasons" className="scroll-mt-24 mb-12">
+          <h2 className="font-display text-2xl text-slate-900 tracking-tight mb-3 pb-2 border-b border-slate-200">
+            Walking the path through the year
+          </h2>
+          <p className="text-slate-700 leading-relaxed mb-4">
+            The walking season runs from late spring through October. The path
+            is open year-round in the sense that the easement doesn't close,
+            but conditions decide the experience more than the calendar does.
+          </p>
+          <h3 className="font-display text-xl text-slate-900 tracking-tight mb-1.5">
+            Late spring
+          </h3>
+          <p className="text-slate-700 leading-relaxed mb-4">
+            The quiet stretch before the season starts. Foot traffic is light
+            and the lake is still visible through trees that haven't fully
+            leafed out. Low spots hold water after rain, and the lake is cold
+            enough that the wind coming off it will surprise you — layers
+            matter more in May than in July.
+          </p>
+          <h3 className="font-display text-xl text-slate-900 tracking-tight mb-1.5">
+            Summer
+          </h3>
+          <p className="text-slate-700 leading-relaxed mb-4">
+            The busiest months, and the ones where timing pays. Weekday
+            mornings are markedly quieter than weekend afternoons, downtown
+            parking fills first, and the open shoreline offers very little
+            shade in the middle of the day. Start early, carry water, and if
+            you only have a weekend, walk before the boat traffic builds.
+          </p>
+          <h3 className="font-display text-xl text-slate-900 tracking-tight mb-1.5">
+            October
+          </h3>
+          <p className="text-slate-700 leading-relaxed mb-4">
+            The local pick, and not a close call — clear light, cool air, the
+            crowds gone, and the far shore visible across the water in a way it
+            rarely is in August haze. Daylight is the constraint; plan the
+            turnaround so you're not finishing a wooded stretch in the dark.
+          </p>
+          <h3 className="font-display text-xl text-slate-900 tracking-tight mb-1.5">
+            Winter
+          </h3>
+          <p className="text-slate-700 leading-relaxed mb-4">
+            Walkable in places, but the path is not maintained for snow. What
+            gets cleared, when anything does, is the paved downtown stretch
+            near Library Park and the Riviera; the grass, gravel, and
+            stone-step sections do not, and ice forms first along the edge
+            closest to the water. Treat a winter walk as an out-and-back on a
+            section you can see, and turn around rather than pushing through an
+            unbroken stretch.
+          </p>
+          <p className="text-slate-700 leading-relaxed">
+            Before any walk, two pages on this site are worth a glance: the{" "}
+            <Link to="/lake-geneva-weather" className="text-blue-700 hover:underline font-medium">
+              Lake Geneva weather page
+            </Link>{" "}
+            for the forecast and water temperature, and the{" "}
+            <Link to="/lake-geneva-webcams" className="text-blue-700 hover:underline font-medium">
+              lake webcams
+            </Link>{" "}
+            for what the shoreline actually looks like right now — the fastest
+            way to know whether the wind is up before you drive over.
+          </p>
+        </section>
+
         {/* Plan your walk — practical block. Captures "what to bring",
             "what to wear", "best time", and reinforces etiquette. */}
-        <section className="mb-12">
+        <section id="plan" className="scroll-mt-24 mb-12">
           <h2 className="font-display text-2xl text-slate-900 tracking-tight mb-4 pb-2 border-b border-slate-200">
             Plan your walk
           </h2>
@@ -659,7 +1067,7 @@ export default function LakeGenevaShorePath() {
         </section>
 
         {/* FAQs */}
-        <section className="mb-12">
+        <section id="faqs" className="scroll-mt-24 mb-12">
           <h2 className="font-display text-2xl text-slate-900 tracking-tight mb-4 pb-2 border-b border-slate-200">
             Common questions
           </h2>
@@ -673,12 +1081,51 @@ export default function LakeGenevaShorePath() {
           </dl>
         </section>
 
+        {/* Resident-intent block sits above the related grid on purpose:
+            people who love the lake enough to walk all of it are the readers
+            most likely to want the living-here cluster. */}
+        <SoftRealEstateCTA variant="neighborhoods" />
+        <p className="text-sm text-slate-600 leading-relaxed mt-3">
+          If you've gotten as far as walking the whole shoreline, the two next
+          reads are the{" "}
+          <Link to="/guides/lake-geneva-neighborhoods" className="text-blue-700 hover:underline font-medium">
+            neighborhood guide
+          </Link>{" "}
+          — which town each stretch of the path belongs to and what living
+          there is like — and the{" "}
+          <Link to="/guides/moving-to-lake-geneva" className="text-blue-700 hover:underline font-medium">
+            guide to moving here
+          </Link>
+          , for the practical side: schools, winters, commutes, and what
+          year-round life on the lake actually asks of you.
+        </p>
+
         {/* Related guides */}
-        <section className="mb-12 pt-8 border-t border-slate-200">
+        <section className="mt-12 mb-12 pt-8 border-t border-slate-200">
           <p className="text-[10px] font-mono uppercase tracking-widest text-slate-500 mb-4">
             Keep reading
           </p>
           <div className="grid sm:grid-cols-2 gap-4">
+            <RelatedCard
+              to="/guides/lake-geneva-public-access-guide"
+              title="Public beaches & boat launches"
+              blurb="Every public access point on the lake — parking, fees, and what to expect."
+            />
+            <RelatedCard
+              to="/guides/big-foot-beach-state-park"
+              title="Big Foot Beach State Park"
+              blurb="The south-shore trailhead: trails, beach, campground, and the state park sticker."
+            />
+            <RelatedCard
+              to="/lake-geneva-weather"
+              title="Lake Geneva weather"
+              blurb="Forecast and water temperature — worth a look before you commit to a leg."
+            />
+            <RelatedCard
+              to="/lake-geneva-webcams"
+              title="Lake Geneva webcams"
+              blurb="What the shoreline looks like right now, before you drive over."
+            />
             <RelatedCard
               to="/guides/things-to-do-lake-geneva"
               title="Things to do in Lake Geneva"
@@ -702,7 +1149,31 @@ export default function LakeGenevaShorePath() {
           </div>
         </section>
 
-        <SoftRealEstateCTA variant="neighborhoods" />
+          </article>
+
+          {/* Contents — desktop sticky sidebar */}
+          <aside className="hidden lg:block">
+            <div className="sticky top-24">
+              <p className="text-[10px] font-mono uppercase tracking-widest text-slate-500 mb-3">
+                On this page
+              </p>
+              <nav aria-label="On this page">
+                <ul className="space-y-2 text-sm">
+                  {SECTIONS.map((s) => (
+                    <li key={s.id}>
+                      <a
+                        href={`#${s.id}`}
+                        className="text-slate-600 hover:text-blue-700 leading-snug block"
+                      >
+                        {s.label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            </div>
+          </aside>
+        </div>
       </main>
 
       <ShorePathWalkingMode

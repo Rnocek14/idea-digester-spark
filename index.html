@@ -37,10 +37,15 @@
   
   
   
-  <meta property="og:title" content="Lake Geneva Brief – Local News, Simplified">
-  <meta name="twitter:title" content="Lake Geneva Brief – Local News, Simplified">
-  <meta property="og:description" content="Lake Geneva Brief is the five-minute local newsletter covering city hall, schools, business, dining, and events in Lake Geneva.">
-  <meta name="twitter:description" content="Lake Geneva Brief is the five-minute local newsletter covering city hall, schools, business, dining, and events in Lake Geneva.">
+  <!--
+    og:title / og:description / twitter:title / twitter:description are set
+    per-page by src/components/PageMeta.tsx (react-helmet-async). They are
+    deliberately NOT hardcoded here: helmet appends rather than replaces, and
+    social crawlers read the FIRST matching tag — so a static copy here would
+    win and every shared link would preview as the generic site card.
+    og:image / og:site_name / og:type / og:url stay as defaults because
+    PageMeta only overrides them when a page supplies its own.
+  -->
   <script type="application/ld+json">
   {"@context":"https://schema.org","@type":"NewsMediaOrganization","name":"Lake Geneva Brief","url":"https://lakegenevabrief.com/","logo":"https://storage.googleapis.com/gpt-engineer-file-uploads/SvWZJGynpjYPoF316Lv9RVB7o2F2/uploads/1764815751185-ChatGPT%20Image%20Dec%203%2C%202025%2C%2007_15_47%20PM.png","sameAs":["https://twitter.com/LakeGenevaBrief"],"areaServed":{"@type":"Place","name":"Lake Geneva, Wisconsin"}}
   </script>
