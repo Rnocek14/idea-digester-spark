@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getRecentPickVenues, recordPickedVenue } from "@/lib/recentVenuePersistence";
 import { Link } from "react-router-dom";
 import { PartyPopper } from "lucide-react";
-import { getCityId } from "@/lib/cityId";
+import { getCityId, maybeCity, runCityScoped } from "@/lib/cityId";
 
 type NightlifeEvent = {
   id: string;
@@ -609,17 +609,18 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
     queryKey: ["live-music-tonight", todayStr],
     queryFn: async () => {
       // First try events with event_date = today
-      const { data: dateEvents, error: dateError } = await supabase
+      const { data: dateEvents, error: dateError } = await runCityScoped((scoped) =>
+        maybeCity(supabase
         .from("content_queue")
-        .select("id, title, publish_date, original_url, metadata, event_date, event_time, performer, created_at")
-        .eq("city_id", getCityId())
+        .select("id, title, publish_date, original_url, metadata, event_date, event_time, performer, created_at"), scoped)
         .in("status", ["approved", "auto_published", "published"])
         .in("safety_level", ["safe", "soft_sensitive"])
         .eq("category", "events")
         .contains("metadata", { verticals: ["nightlife"] })
         .eq("event_date", todayStr)
         .order("created_at", { ascending: false })
-        .limit(10);
+        .limit(10)
+      );
 
       if (dateError) {
         console.error("[NightlifeWidget] Error loading tonight events by date", dateError);
@@ -627,17 +628,18 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
 
       // Also fetch recurring events (no event_date) that might match today's day of week
       // Use higher limit to capture older recurring venue events that may have been created earlier
-      const { data: recurringEvents, error: recurringError } = await supabase
+      const { data: recurringEvents, error: recurringError } = await runCityScoped((scoped) =>
+        maybeCity(supabase
         .from("content_queue")
-        .select("id, title, publish_date, original_url, metadata, event_date, event_time, performer, created_at")
-        .eq("city_id", getCityId())
+        .select("id, title, publish_date, original_url, metadata, event_date, event_time, performer, created_at"), scoped)
         .in("status", ["approved", "auto_published", "published"])
         .in("safety_level", ["safe", "soft_sensitive"])
         .eq("category", "events")
         .contains("metadata", { verticals: ["nightlife"] })
         .is("event_date", null)
         .order("created_at", { ascending: false })
-        .limit(100);
+        .limit(100)
+      );
 
       if (recurringError) {
         console.error("[LiveMusicWidget] Error loading recurring events", recurringError);
@@ -696,17 +698,18 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
       // Saturday events by event_date (skip if on Sunday)
       let satEvents: NightlifeEvent[] = [];
       if (satDateToFetch) {
-        const { data, error: satError } = await supabase
+        const { data, error: satError } = await runCityScoped((scoped) =>
+        maybeCity(supabase
           .from("content_queue")
-          .select("id, title, publish_date, original_url, metadata, event_date, event_time, performer, created_at")
-          .eq("city_id", getCityId())
+          .select("id, title, publish_date, original_url, metadata, event_date, event_time, performer, created_at"), scoped)
           .in("status", ["approved", "auto_published", "published"])
           .in("safety_level", ["safe", "soft_sensitive"])
           .eq("category", "events")
           .contains("metadata", { verticals: ["nightlife"] })
           .eq("event_date", satDateToFetch)
           .order("created_at", { ascending: false })
-          .limit(5);
+          .limit(5)
+      );
 
         if (satError) {
           console.error("[LiveMusicWidget] Error loading Saturday events", satError);
@@ -715,34 +718,36 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
       }
 
       // Sunday events by event_date
-      const { data: sunEvents, error: sunError } = await supabase
+      const { data: sunEvents, error: sunError } = await runCityScoped((scoped) =>
+        maybeCity(supabase
         .from("content_queue")
-        .select("id, title, publish_date, original_url, metadata, event_date, event_time, performer, created_at")
-        .eq("city_id", getCityId())
+        .select("id, title, publish_date, original_url, metadata, event_date, event_time, performer, created_at"), scoped)
         .in("status", ["approved", "auto_published", "published"])
         .in("safety_level", ["safe", "soft_sensitive"])
         .eq("category", "events")
         .contains("metadata", { verticals: ["nightlife"] })
         .eq("event_date", sunDateToFetch)
         .order("created_at", { ascending: false })
-        .limit(5);
+        .limit(5)
+      );
 
       if (sunError) {
         console.error("[LiveMusicWidget] Error loading Sunday events", sunError);
       }
 
       // Also fetch recurring events (no event_date) to fill gaps
-      const { data: recurringEvents } = await supabase
+      const { data: recurringEvents } = await runCityScoped((scoped) =>
+        maybeCity(supabase
         .from("content_queue")
-        .select("id, title, publish_date, original_url, metadata, event_date, event_time, performer, created_at")
-        .eq("city_id", getCityId())
+        .select("id, title, publish_date, original_url, metadata, event_date, event_time, performer, created_at"), scoped)
         .in("status", ["approved", "auto_published", "published"])
         .in("safety_level", ["safe", "soft_sensitive"])
         .eq("category", "events")
         .contains("metadata", { verticals: ["nightlife"] })
         .is("event_date", null)
         .order("created_at", { ascending: false })
-        .limit(30);
+        .limit(30)
+      );
 
       // Filter recurring events by day of week using metadata.recurring_days or title fallback
       // NOTE: We do NOT use isGenericRecurring() here for weekend events
@@ -798,34 +803,36 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
       }
 
       // Fetch recurring events to find those matching upcoming weekdays
-      const { data: recurringEvents, error: recurringError } = await supabase
+      const { data: recurringEvents, error: recurringError } = await runCityScoped((scoped) =>
+        maybeCity(supabase
         .from("content_queue")
-        .select("id, title, publish_date, original_url, metadata, event_date, event_time, performer, created_at")
-        .eq("city_id", getCityId())
+        .select("id, title, publish_date, original_url, metadata, event_date, event_time, performer, created_at"), scoped)
         .in("status", ["approved", "auto_published", "published"])
         .in("safety_level", ["safe", "soft_sensitive"])
         .eq("category", "events")
         .contains("metadata", { verticals: ["nightlife"] })
         .is("event_date", null)
         .order("created_at", { ascending: false })
-        .limit(100);
+        .limit(100)
+      );
 
       if (recurringError) {
         console.error("[LiveMusicWidget] Error loading recurring weekday events", recurringError);
       }
 
       // Also fetch one-off events with specific dates matching upcoming weekdays
-      const { data: datedEvents, error: datedError } = await supabase
+      const { data: datedEvents, error: datedError } = await runCityScoped((scoped) =>
+        maybeCity(supabase
         .from("content_queue")
-        .select("id, title, publish_date, original_url, metadata, event_date, event_time, performer, created_at")
-        .eq("city_id", getCityId())
+        .select("id, title, publish_date, original_url, metadata, event_date, event_time, performer, created_at"), scoped)
         .in("status", ["approved", "auto_published", "published"])
         .in("safety_level", ["safe", "soft_sensitive"])
         .eq("category", "events")
         .contains("metadata", { verticals: ["nightlife"] })
         .in("event_date", weekdayDateStrings)
         .order("created_at", { ascending: false })
-        .limit(30);
+        .limit(30)
+      );
 
       if (datedError) {
         console.error("[LiveMusicWidget] Error loading dated weekday events", datedError);
@@ -888,10 +895,10 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
       const recentVenues = getRecentPickVenues();
       
       // Fetch multiple candidates and score them
-      const { data: candidates, error } = await supabase
+      const { data: candidates, error } = await runCityScoped((scoped) =>
+        maybeCity(supabase
         .from("content_queue")
-        .select("id, title, event_date, event_time, performer, original_url, metadata, created_at")
-        .eq("city_id", getCityId())
+        .select("id, title, event_date, event_time, performer, original_url, metadata, created_at"), scoped)
         .in("status", ["approved", "auto_published", "published"])
         .in("safety_level", ["safe", "soft_sensitive"])
         .eq("category", "events")
@@ -899,7 +906,8 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
         .gte("event_date", nowStr)
         .lte("event_date", in72HoursStr)
         .order("event_date", { ascending: true })
-        .limit(15); // Increased to have more diversity candidates
+        .limit(15)
+      ); // Increased to have more diversity candidates
       
       if (error || !candidates?.length) {
         console.error("[NightlifeWidget] Error loading 72h pick", error);

@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { CalendarDays, ArrowRight, Sparkles, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { getCityId } from "@/lib/cityId";
+import { getCityId, maybeCity, runCityScoped } from "@/lib/cityId";
 import {
   categoryEmoji,
   extractVenue,
@@ -43,19 +43,20 @@ export default function ComingUpRail() {
       horizon.setDate(today.getDate() + 14);
       const horizonStr = localDateStr(horizon);
 
-      const { data, error } = await supabase
+      const { data, error } = await runCityScoped((scoped) =>
+        maybeCity(supabase
         .from("content_queue")
         .select(
           "id, title, summary, category, event_date, event_time, performer, original_url, image_url, geo_tier, geo_label, metadata",
-        )
-        .eq("city_id", getCityId())
+        ), scoped)
         .in("status", ["approved", "auto_published", "published"])
         .in("safety_level", ["safe", "soft_sensitive"])
         .gte("event_date", todayStr)
         .lte("event_date", horizonStr)
         .order("event_date", { ascending: true })
         .order("event_time", { ascending: true, nullsFirst: false })
-        .limit(60);
+        .limit(60)
+      );
 
       if (error) throw error;
       return (data || []) as EventRow[];

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Waves } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { getCityId } from "@/lib/cityId";
+import { getCityId, maybeCity, runCityScoped } from "@/lib/cityId";
 
 function todayCT(): string {
   return new Intl.DateTimeFormat("en-CA", {
@@ -22,12 +22,13 @@ export default function LakeBeatLine() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data } = await supabase
+      const { data } = await runCityScoped((scoped) =>
+        maybeCity(supabase
         .from("lake_beats")
-        .select("body")
-        .eq("city_id", getCityId())
+        .select("body"), scoped)
         .eq("beat_date", todayCT())
-        .maybeSingle();
+        .maybeSingle()
+      );
       if (!cancelled) setBody(data?.body?.trim() || null);
     })();
     return () => {

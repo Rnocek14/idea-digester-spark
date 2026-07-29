@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Json } from "@/integrations/supabase/types";
-import { getCityId } from "@/lib/cityId";
+import { getCityId, maybeCity, runCityScoped } from "@/lib/cityId";
 
 interface HappeningEvent {
   id: string;
@@ -134,17 +134,18 @@ export default function HappeningTodayWidget({ enabled = true }: HappeningTodayW
   const { data: events = [], isLoading } = useQuery({
     queryKey: ["happening-today", todayStr],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await runCityScoped((scoped) =>
+        maybeCity(supabase
         .from("content_queue")
-        .select("id, title, event_date, event_time, category, original_url, metadata")
-        .eq("city_id", getCityId())
+        .select("id, title, event_date, event_time, category, original_url, metadata"), scoped)
         .in("status", ["published", "auto_published"])
         .in("safety_level", ["safe", "soft_sensitive"])
         .eq("event_date", todayStr)
         .gte("geo_tier", 1)
         .lte("geo_tier", 2)
         .order("event_time", { ascending: true, nullsFirst: false })
-        .limit(12);
+        .limit(12)
+      );
       
       if (error) throw error;
       

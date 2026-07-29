@@ -12,7 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { InlineSubscribeCTA } from "@/components/InlineSubscribeCTA";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useState } from "react";
-import { getCityId } from "@/lib/cityId";
+import { getCityId, maybeCity, runCityScoped } from "@/lib/cityId";
 
 type EatsContent = {
   id: string;
@@ -152,14 +152,15 @@ const LakeGenevaEats = () => {
   const { data: eatsContent, isLoading } = useQuery({
     queryKey: ["eats-content"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await runCityScoped((scoped) =>
+        maybeCity(supabase
         .from("content_queue")
-        .select("id, title, summary, content, content_website, event_date, original_url, image_url, category, metadata")
-        .eq("city_id", getCityId())
+        .select("id, title, summary, content, content_website, event_date, original_url, image_url, category, metadata"), scoped)
         .in("status", ["published", "auto_published"])
         .or("category.eq.dining,category.eq.restaurant,category.eq.food,metadata->verticals.cs.[\"eats\"],metadata->verticals.cs.[\"dining\"],metadata->verticals.cs.[\"food\"]")
         .order("created_at", { ascending: false })
-        .limit(50);
+        .limit(50)
+      );
 
       if (error) throw error;
       

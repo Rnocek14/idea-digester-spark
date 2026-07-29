@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { getCityId } from "@/lib/cityId";
+import { getCityId, maybeCity, runCityScoped } from "@/lib/cityId";
 import { useCityConfig } from "@/hooks/useCityConfig";
 import { storyPath } from "@/lib/slug";
 
@@ -24,16 +24,21 @@ export default function WeeklyRecapBlock({ sponsorSlot }: { sponsorSlot?: React.
       // Visible for 4 days after the week closes, so a Sunday recap carries
       // through Wednesday and then yields to the daily brief.
       const cutoff = new Date(Date.now() - 4 * 86400000).toISOString().slice(0, 10);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data } = await (supabase as any)
-        .from("weekly_recaps")
-        .select("week_start, week_end, body, headline, mentioned_story_ids, story_count, is_quiet_week")
-        .eq("city_id", getCityId())
-        .eq("status", "published")
-        .gte("week_end", cutoff)
-        .order("week_start", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      const { data } = await runCityScoped((scoped) =>
+        maybeCity(
+          supabase
+            .from("weekly_recaps")
+            .select(
+              "week_start, week_end, body, headline, mentioned_story_ids, story_count, is_quiet_week",
+            ),
+          scoped,
+        )
+          .eq("status", "published")
+          .gte("week_end", cutoff)
+          .order("week_start", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+      );
       return data as {
         week_start: string;
         week_end: string;
