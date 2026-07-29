@@ -66,7 +66,7 @@ export default function WeatherForecast() {
             {getWeatherIcon(day.code)}
           </div>
           <div className="flex items-center gap-2 font-mono">
-            <span className="text-orange-600 font-semibold">{Math.round(day.high)}°</span>
+            <span className="text-orange-700 font-semibold">{Math.round(day.high)}°</span>
             <span className="text-blue-600">{Math.round(day.low)}°</span>
             {day.snowfall >= 0.5 && (
               <span className="text-sky-400 font-medium">❄️ {day.snowfall.toFixed(1)}"</span>
