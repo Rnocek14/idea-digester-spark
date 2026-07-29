@@ -190,7 +190,7 @@ export default function ThisWeekendLakeGeneva() {
         {
           question: "Can you do Lake Geneva as a day trip from Chicago or Milwaukee?",
           answer:
-            "Yes — Lake Geneva is roughly 90 minutes from both. A focused day with a boat tour, a downtown lunch, and a stretch of the shore path is very doable.",
+            "Yes — about 90 minutes from downtown Chicago and 50 to 70 minutes from Milwaukee. A focused day with a boat tour, a downtown lunch, and a stretch of the shore path is very doable.",
         },
         {
           question: "Do I need to book a boat tour in advance?",
