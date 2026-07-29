@@ -1,4 +1,8 @@
+import { Link } from "react-router-dom";
+
 import { GuideShell } from "@/components/guides/GuideShell";
+
+const LINK = "text-blue-700 hover:underline font-medium";
 
 /**
  * Cornerstone SEO target: "big foot beach state park" (~4.4K/mo, KDI 38).
@@ -29,22 +33,102 @@ export default function BigFootBeach() {
             really like, the camping situation, and where the parking
             actually fills up in July.
           </p>
+          <p>
+            Fees, campground dates and sticker prices are set by the
+            Wisconsin DNR and change, so this page points at the DNR rather
+            than reprinting numbers that go stale. What it does cover is the
+            part that holds: which of the four quite different visits this
+            park supports you're actually planning, and what each one needs.
+          </p>
         </>
       }
       sections={[
         {
+          id: "which-visit",
+          heading: "Four different parks, one entrance",
+          body: (
+            <>
+              <p>
+                Most of the confusion about Big Foot comes from people
+                planning one visit and arriving for another. The park
+                supports four, and they want different things from you.
+              </p>
+              <ul>
+                <li>
+                  <strong>The beach day.</strong> The reason most people
+                  come, and the one most sensitive to timing — the beach and
+                  its parking are what fill on a hot weekend. Early arrival
+                  is the whole strategy.
+                </li>
+                <li>
+                  <strong>The camping trip.</strong> Effectively a separate
+                  park with a separate booking calendar, months out. The
+                  campground is in the woods rather than on the water.
+                </li>
+                <li>
+                  <strong>The trail walk.</strong> Roughly five flat miles
+                  inside the park, and the least crowded thing here. On a
+                  July weekend when the beach lot is full, the trails
+                  usually aren't.
+                </li>
+                <li>
+                  <strong>Shore Path access.</strong> Using the park as a
+                  trailhead rather than a destination — you're paying for a
+                  vehicle sticker to park, then walking out along the lake.
+                </li>
+              </ul>
+              <p>
+                The one that trips people up is the last. A state park
+                vehicle admission sticker is required to leave a car here
+                whichever of the four you're doing, including when the park
+                is only your parking spot for a Shore Path walk. That's
+                worth knowing before you plan a long walk from this end —
+                the{" "}
+                <Link to="/guides/lake-geneva-public-access-guide" className={LINK}>
+                  public access guide
+                </Link>{" "}
+                covers the alternatives if you'd rather start somewhere
+                without a sticker requirement.
+              </p>
+            </>
+          ),
+        },
+        {
           id: "beach",
           heading: "The beach and day use",
           body: (
-            <p>
-              The swim beach is a long, shallow strip on the lake — sand
-              underfoot, no lifeguards, gentle drop-off that works for
-              kids. It faces north toward downtown, so it gets sun most
-              of the day. Picnic tables, charcoal grills, and a shelter
-              sit just up the slope. Restrooms are open seasonally. The
-              beach can get busy on summer weekends; arrive before 10am
-              if you want a shaded picnic table.
-            </p>
+            <>
+              <p>
+                The swim beach is a long, shallow strip on the lake — sand
+                underfoot, no lifeguards, gentle drop-off that works for
+                kids. It faces north toward downtown, so it gets sun most
+                of the day. Picnic tables, charcoal grills, and a shelter
+                sit just up the slope. Restrooms are open seasonally. The
+                beach can get busy on summer weekends; arrive before 10am
+                if you want a shaded picnic table.
+              </p>
+              <p>
+                Two things follow from "no lifeguards," and they're the
+                reason this beach suits some families and not others. Swimming
+                is at your own risk at every hour the park is open, which
+                means supervision is entirely yours — there is no one whose
+                job it is to watch the water. Against that, the shallow,
+                gradual entry is genuinely gentle, and the bay is calmer than
+                the open lake because it isn't exposed to the long fetch that
+                builds chop on a windy afternoon. For confident parents of
+                small children that combination is close to ideal. For a group
+                that wanted a guarded beach, it isn't one, and that's worth
+                settling before you drive out.
+              </p>
+              <p>
+                The north-facing aspect is the underrated detail. Sun stays on
+                the sand through most of the day, which is pleasant in June and
+                relentless in late July — hence the advice about shaded tables.
+                It also means the view across the water is of downtown and the
+                north shore, so this is one of the better places on the lake to
+                sit through an evening without paying for the privilege.
+              </p>
+            </>
           ),
         },
         {
@@ -122,8 +206,9 @@ export default function BigFootBeach() {
                 beach.
               </li>
               <li>
-                <strong>Address:</strong> 1452 IL-120, Lake Geneva, WI
-                53147.
+                <strong>Address:</strong> 1452 WI-120, Lake Geneva, WI
+                53147. Some map listings render the route as "IL-120" —
+                it's Wisconsin Highway 120, the same road.
               </li>
             </ul>
           ),
@@ -132,15 +217,28 @@ export default function BigFootBeach() {
           id: "history-name",
           heading: "Where the name comes from",
           body: (
-            <p>
-              The park is named for Chief Big Foot (Maunk-suck), the
-              19th-century Potawatomi leader whose people lived along
-              the southeast shore of Geneva Lake before being forcibly
-              removed in 1836. The lake itself was called
-              "Kishwauketoe" — "clear water" — by the Potawatomi. It's
-              worth knowing the name on the sign before you settle in
-              on the beach.
-            </p>
+            <>
+              <p>
+                The park is named for Chief Big Foot (Maunk-suck), the
+                19th-century Potawatomi leader whose people lived along
+                the southeast shore of Geneva Lake before being forcibly
+                removed in 1836. The Potawatomi name for the lake is
+                usually given locally as "Kishwauketoe," commonly
+                translated as "clear water" — the name the nature
+                conservancy in Williams Bay still carries. Treat the
+                translation as the account handed down around the lake
+                rather than a linguistic citation; this desk hasn't
+                reproduced a primary source for it.
+              </p>
+              <p>
+                It's worth knowing the name on the sign before you settle in
+                on the beach. The removal in 1836 is the event that made the
+                shoreline available to the Chicago families who built the
+                estates the Shore Path now runs past — the park, the path,
+                and the summer-resort history that followed all trace back
+                to it. The sign is not decoration.
+              </p>
+            </>
           ),
         },
       ]}
@@ -169,6 +267,36 @@ export default function BigFootBeach() {
           question: "How far is Big Foot Beach from downtown Lake Geneva?",
           answer:
             "About a mile south of downtown on Highway 120 — roughly five minutes by car or a 20–25 minute walk along the Shore Path.",
+        },
+        {
+          question: "Do I need a sticker just to park and walk the Shore Path?",
+          answer:
+            "Yes. A Wisconsin State Park vehicle admission sticker is required to leave a vehicle in the park regardless of what you're there to do, including using it purely as a Shore Path trailhead. If you'd rather start a walk without that, the public access guide covers entry points that don't sit inside the state park.",
+        },
+        {
+          question: "Is Big Foot Beach State Park open in winter?",
+          answer:
+            "The park itself is open year-round; the campground is seasonal, typically late spring through mid-fall, and restrooms are seasonal too. Winter is when the trails and the lakefront are at their quietest, and the vehicle sticker requirement still applies.",
+        },
+        {
+          question: "Are there lifeguards at Big Foot Beach?",
+          answer:
+            "No. Swimming is at your own risk at all times. The entry is shallow and gradual and the bay is calmer than the open lake, which makes it forgiving water — but supervision is entirely the responsibility of whoever brought the kids.",
+        },
+        {
+          question: "Where should I park when the beach lot is full?",
+          answer:
+            "Overflow parking is up the hill near the picnic area. On hot summer weekends the main beach lot fills by mid-morning, so arriving before 10am is the reliable answer and the overflow lot is the fallback.",
+        },
+        {
+          question: "Is Big Foot Beach good for young kids?",
+          answer:
+            "The shallow, gentle entry and the calmer bay make it one of the more forgiving swim spots on the lake for small children. The caveats are that there are no lifeguards and that shade at the picnic tables goes early on summer weekends.",
+        },
+        {
+          question: "Can you have a fire or grill at Big Foot Beach?",
+          answer:
+            "There are charcoal grills and picnic tables in the day-use area up the slope from the beach, plus a shelter. Campground sites are the place for fires; check current DNR rules and any seasonal fire restrictions before you go.",
         },
       ]}
       related={[

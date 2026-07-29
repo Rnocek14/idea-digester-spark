@@ -26,9 +26,52 @@ export default function LakeGenevaWithKids() {
             This is the family version of the local's playbook — what
             actually works with kids in tow, by age.
           </p>
+          <p>
+            Admission prices, boat-tour schedules and seasonal hours change,
+            so this page doesn't reprint them — check each operator before
+            you go. What it covers instead is the part that holds season to
+            season: what suits which age, what the day actually costs you in
+            time, and what to do when the weather turns.
+          </p>
         </>
       }
       sections={[
+        {
+          id: "shape-of-the-day",
+          heading: "The shape of a day that works",
+          body: (
+            <>
+              <p>
+                The single most useful thing to know about Lake Geneva with
+                kids is that the drives are short. Nearly everything in this
+                guide sits within about fifteen minutes of downtown, which
+                means you can bail on a plan without losing the day. That's
+                rarer than it sounds, and it's the reason a weekend here
+                tends to go better than a weekend somewhere with more famous
+                attractions spread further apart.
+              </p>
+              <p>
+                The rhythm most families land on is water in the morning,
+                something indoors or shaded in the early afternoon, and an
+                early dinner. It's built around two constraints rather than
+                any particular attraction: the beach parking that fills by
+                mid-morning on hot weekends, and the fact that small children
+                are done by about two o'clock whatever the itinerary says.
+                Plan the day you'd want to abandon halfway through, and the
+                afternoon takes care of itself.
+              </p>
+              <p>
+                Two practical notes. Downtown is genuinely walkable, so
+                parking once and staying on foot beats moving the car between
+                stops — the walk from the lakefront to ice cream and back is
+                part of what makes the day feel easy. And the busiest
+                stretch of the year is roughly July through mid-August plus
+                event weekends; the same trip in June or September is the
+                same lake with a fraction of the queue.
+              </p>
+            </>
+          ),
+        },
         {
           id: "lake-day",
           heading: "A full lake day, every age",
@@ -212,6 +255,41 @@ export default function LakeGenevaWithKids() {
           question: "Is there skiing for kids near Lake Geneva?",
           answer:
             "Yes — Mountain Top at the Grand Geneva runs lessons all winter. The hill is genuinely beginner-friendly and a good first-time ski destination for families.",
+        },
+        {
+          question: "How many days do you need in Lake Geneva with kids?",
+          answer:
+            "Two days covers the lake properly — a beach-and-boat day plus a second day for whatever the first one didn't fit. A single day works if you keep it to the downtown lakefront and a boat tour. Because nearly everything sits within about fifteen minutes of downtown, a third day is about doing things at a slower pace rather than reaching further.",
+        },
+        {
+          question: "What is there to do in Lake Geneva with kids when it rains?",
+          answer:
+            "The rainy-day rotation is the magic theatre, the museum, a Yerkes Observatory tour in Williams Bay, and resort indoor pools. The advantage here is that the drives are short, so switching to a rain plan mid-morning costs you fifteen minutes rather than the day.",
+        },
+        {
+          question: "What's the best age for a Lake Geneva family trip?",
+          answer:
+            "It carries a wider range than most lake towns. Toddlers through early elementary do best with the shallow beach entries, short boat tours and picnic-and-trails days. Tweens and older get more out of the longer Mailboat tour, the Shore Path, and winter skiing at Mountain Top. The one age that needs the most planning is a mixed group — which is what the short drives are good for.",
+        },
+        {
+          question: "Is the Mailboat tour good for young children?",
+          answer:
+            "The mail jumpers are the showstopper and kids reliably love watching them. The consideration is length rather than content: it's the longest of the lake tours, so for restless younger children a standard tour from the Riviera Docks is the safer choice and covers the same water.",
+        },
+        {
+          question: "When is the best time to visit Lake Geneva with kids?",
+          answer:
+            "June and September give you the same lake with a fraction of the crowds — July through mid-August plus event weekends are the busiest stretch. Winter is a genuinely different trip built around skiing and indoor pools rather than the water.",
+        },
+        {
+          question: "Is Lake Geneva walkable with a stroller?",
+          answer:
+            "Downtown is, and parking once and staying on foot is the easier plan. The Shore Path largely is not — expect stone steps, tree roots and narrow stretches outside the paved downtown section, so a carrier beats a stroller if you want to walk any distance along the water.",
+        },
+        {
+          question: "Where should families park in downtown Lake Geneva?",
+          answer:
+            "Park once near the lakefront and walk. Beach lots fill by mid-morning on hot summer weekends, which is the main argument for an early start; moving the car between downtown stops costs more time than walking them.",
         },
       ]}
     />
