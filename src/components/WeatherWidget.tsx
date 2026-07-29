@@ -128,9 +128,9 @@ export default function WeatherWidget() {
         <span className="text-foreground">{getWeatherLabel(weather.code)}</span>
         <span className="text-muted-foreground">·</span>
         <span className="font-mono text-xs text-muted-foreground tabular-nums">
-          <span className="text-orange-600 font-semibold">H {Math.round(weather.high)}°</span>
+          <span className="text-orange-700 font-semibold">H {Math.round(weather.high)}°</span>
           <span className="mx-1 opacity-50">/</span>
-          <span className="text-blue-600 font-semibold">L {Math.round(weather.low)}°</span>
+          <span className="text-blue-700 font-semibold">L {Math.round(weather.low)}°</span>
         </span>
       </div>
 
@@ -165,8 +165,8 @@ export default function WeatherWidget() {
                   {getWeatherIcon(day.code, "xs")}
                 </div>
                 <div className="flex items-center gap-2 font-mono">
-                  <span className="text-orange-600 font-semibold">{Math.round(day.high)}°</span>
-                  <span className="text-blue-600">{Math.round(day.low)}°</span>
+                  <span className="text-orange-700 font-semibold">{Math.round(day.high)}°</span>
+                  <span className="text-blue-700">{Math.round(day.low)}°</span>
                   {day.snowfall >= 0.5 && (
                     <span className="text-sky-400 font-medium">❄️ {day.snowfall.toFixed(1)}"</span>
                   )}
