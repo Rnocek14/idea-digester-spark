@@ -171,7 +171,7 @@ export default function WeatherWidget() {
                     <span className="text-sky-400 font-medium">❄️ {day.snowfall.toFixed(1)}"</span>
                   )}
                   {day.snowfall < 0.5 && day.precipitation >= 0.1 && (
-                    <span className="text-blue-400 font-medium">💧 {day.precipitation.toFixed(1)}"</span>
+                    <span className="text-blue-700 font-medium">💧 {day.precipitation.toFixed(1)}"</span>
                   )}
                 </div>
               </div>
