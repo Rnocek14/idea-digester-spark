@@ -60,6 +60,7 @@ const staticEntries: SitemapEntry[] = [
   { path: "/guides/why-people-love-lake-geneva", changefreq: "monthly", priority: "0.7" },
   { path: "/guides/lake-geneva-shore-path", changefreq: "weekly", priority: "0.95" },
   { path: "/best-of/restaurants-lake-geneva", changefreq: "weekly", priority: "0.9" },
+  { path: "/best-of/lake-geneva", changefreq: "weekly", priority: "0.9" },
   { path: "/guides/lake-geneva-public-access-guide", changefreq: "monthly", priority: "0.85" },
   { path: "/guides/lake-geneva-faq", changefreq: "monthly", priority: "0.9" },
   { path: "/lake-geneva-webcams", changefreq: "weekly", priority: "0.85" },
