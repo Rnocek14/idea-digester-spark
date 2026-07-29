@@ -65,7 +65,7 @@ const TRIPS: {
   },
   {
     trip: "Off-season or winter",
-    leadWith: "Indoors, on the ice, or at the ski hill, with the town much quieter",
+    leadWith: "Indoors, at the ski hill, or walking a quiet town — far fewer people about",
     binds: "Openness rather than crowds — confirm what's running before you drive over",
     next: {
       label: "In winter",
@@ -263,9 +263,9 @@ export default function ThingsToDoLakeGeneva() {
                 </li>
               </ul>
               <p>
-                One exception: on foot, the Geneva Lake Shore Path is the only
-                continuous route along the shoreline, and it ignores the road
-                network entirely. The{" "}
+                One exception: on foot, the Geneva Lake Shore Path runs
+                continuously along the shoreline and ignores the road network
+                entirely. The{" "}
                 <Link to="/guides/lake-geneva-shore-path" className={LINK}>
                   Shore Path guide
                 </Link>{" "}
@@ -288,10 +288,10 @@ export default function ThingsToDoLakeGeneva() {
               <p>
                 <strong>The Geneva Lake Shore Path</strong> is the signature
                 walk: 21 miles around the entire lake, threading through
-                backyards of historic estates because of a public-access
-                tradition that long predates the current homes. Most people do a
-                2–4 mile section. The stretch from Library Park toward Black
-                Point is the classic intro.
+                backyards of historic estates because of a long-standing
+                public-access easement. Most people do a 2–4 mile section. The
+                stretch from Library Park toward Black Point is the classic
+                intro.
               </p>
               <p>
                 <strong>A note on that tradition.</strong> The origin story
@@ -299,12 +299,13 @@ export default function ThingsToDoLakeGeneva() {
                 back to Potawatomi use of the lake — is the account as it's
                 handed down here, not something this desk has traced to a deed
                 or a court record. Read it as the traditional account rather
-                than a citation; the{" "}
+                than a citation. The{" "}
                 <Link to="/guides/lake-geneva-shore-path" className={LINK}>
                   Shore Path guide
                 </Link>{" "}
-                is careful about which parts of that story come from a published
-                source.
+                sets out the easement's history separately, and marks which
+                parts of it this desk treats as the traditional account rather
+                than a citation.
               </p>
               <p>
                 <strong>Boat tours and the U.S. Mailboat</strong> run from the
@@ -374,9 +375,10 @@ export default function ThingsToDoLakeGeneva() {
                 place.
               </p>
               <p>
-                For a quieter version, drive ten minutes to{" "}
-                <strong>Williams Bay or Fontana</strong>. Smaller downtowns,
-                same lake, half the crowd. Williams Bay's Edgewater Park has
+                For a quieter version, drive around the rim to{" "}
+                <strong>Williams Bay</strong> (about ten minutes) or{" "}
+                <strong>Fontana</strong> at the west end (nearer twenty).
+                Smaller downtowns, same lake, half the crowd. Williams Bay's Edgewater Park has
                 some of the best public beach access on the lake; the{" "}
                 <Link to="/guides/lake-geneva-public-access-guide" className={LINK}>
                   public access guide
@@ -730,10 +732,9 @@ export default function ThingsToDoLakeGeneva() {
                 <li>
                   <strong>Big Foot Beach is a state park, and those work differently.</strong>{" "}
                   Wisconsin state parks are entered on a vehicle admission
-                  sticker rather than a per-person ticket, in daily and annual
-                  forms — and the annual one is good at other Wisconsin state
-                  parks, so visiting more than a couple in a year changes the
-                  arithmetic. The{" "}
+                  sticker rather than a per-person ticket, available in daily
+                  and annual forms — so the charge lands per car, not per head.
+                  The{" "}
                   <Link to="/guides/big-foot-beach-state-park" className={LINK}>
                     Big Foot Beach guide
                   </Link>{" "}
@@ -855,7 +856,7 @@ export default function ThingsToDoLakeGeneva() {
         {
           question: "Is Lake Geneva walkable?",
           answer:
-            "The downtown core is about a fifteen-minute walk end to end, so once you've parked you rarely need the car again within the City of Lake Geneva. Between towns it isn't walkable by road — but the Geneva Lake Shore Path is a continuous public route along the shoreline, and it's the one way to move between points on the water on foot.",
+            "The downtown core is about a fifteen-minute walk end to end, so once you've parked you rarely need the car again within the City of Lake Geneva. Between towns it isn't walkable by road — but the Geneva Lake Shore Path is a continuous public route along the shoreline, and it's how people move between points on the water on foot.",
         },
         {
           question: "Can you swim in Geneva Lake?",

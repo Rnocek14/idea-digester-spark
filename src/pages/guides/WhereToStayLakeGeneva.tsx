@@ -303,9 +303,9 @@ export default function WhereToStayLakeGeneva() {
                 deliberate day around it rather than assuming it happens.
               </p>
               <p>
-                Two of the four aren't in the City of Lake Geneva at all — The
-                Abbey is in Fontana at the west end, Lake Lawn is on Delavan
-                Lake, a separate body of water. That matters if you're
+                Not all of them are in Lake Geneva itself — The Abbey is in
+                Fontana at the west end, and Lake Lawn is on Delavan Lake, a
+                separate body of water. That matters if you're
                 planning an evening around a downtown dinner, because the
                 drive between two points on this lake goes around it, never
                 across. Everything else — seasons, packages, what a resort fee
@@ -468,11 +468,11 @@ export default function WhereToStayLakeGeneva() {
                 one in it.
               </p>
               <p>
-                One seasonal catch. Piers on this lake come out of the water
-                before winter and go back in the following spring, because ice
-                would destroy anything left standing — so a shoulder-season
-                rental can be advertising, accurately and with photographs, a
-                pier that isn't in the water during your stay. A good manager
+                One seasonal catch. Piers on this lake are generally pulled
+                out of the water for the winter and reinstalled in the spring —
+                it's a standing seasonal cost for lakefront owners here — so a
+                shoulder-season rental can be advertising, accurately and with
+                photographs, a pier that isn't in the water during your stay. A good manager
                 answers that straight. Settle the calendar in the same email:
                 changeover days, minimum stays, what the cleaning fee covers,
                 and a cancellation window usually far less forgiving than a
@@ -488,8 +488,9 @@ export default function WhereToStayLakeGeneva() {
             <>
               <p>
                 Camping is the option this guide can point at but deliberately
-                won't price. Big Foot Beach State Park sits on the south shore
-                just outside downtown Lake Geneva, and the practical details —
+                won't price. Big Foot Beach State Park sits on Geneva Lake's
+                southeast shore a short way south of downtown Lake Geneva, and
+                the practical details —
                 what a site costs, when the reservation window opens, what's
                 open in which part of the year — are set by the state rather
                 than by anyone local, and they change. Our{" "}
@@ -504,11 +505,11 @@ export default function WhereToStayLakeGeneva() {
                 Wisconsin the vehicle admission sticker and the campsite are
                 two separate things: the sticker admits a vehicle to the park,
                 the reservation holds a site, and buying one doesn't get you
-                the other. The sticker isn't tied to a single park either — an
-                annual one works across the state park system, which changes
-                the arithmetic if you expect more than one visit in a year.
-                Same rule if you're not camping and just driving over for the
-                beach.
+                the other. Stickers are sold as a daily or an annual pass, and
+                the sticker is required whether you're camping or just driving
+                over for the beach. What an annual pass covers, and what it
+                costs, is set by the state — check with the DNR rather than
+                assuming.
               </p>
               <p>
                 What camping trades away is the weather: a room is partly
@@ -787,7 +788,7 @@ export default function WhereToStayLakeGeneva() {
         {
           question: "Can I camp near Lake Geneva?",
           answer:
-            "Big Foot Beach State Park is on the south shore just outside downtown. Site fees, reservation windows and seasonal openings are set by the state and change, so get them from the state rather than from a guide. Note that the vehicle admission sticker and the campsite are separate charges, and the sticker applies to day visitors driving in as well. Private campgrounds in the surrounding county are worth calling directly.",
+            "Big Foot Beach State Park is on Geneva Lake's southeast shore, a short way south of downtown. Site fees, reservation windows and seasonal openings are set by the state and change, so get them from the state rather than from a guide. Note that the vehicle admission sticker and the campsite are separate charges, and the sticker applies to day visitors driving in as well. Private campgrounds in the surrounding county are worth calling directly.",
         },
         {
           question: "Where should I stay if I'm bringing a boat?",
