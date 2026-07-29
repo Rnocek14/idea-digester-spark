@@ -1,11 +1,17 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { PageMeta } from "@/components/PageMeta";
 
 const Index = () => {
   const navigate = useNavigate();
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-primary/5 to-background">
+      <PageMeta
+        title="Autonomous Local Media Network — AI Local News Platform"
+        description="AI-powered platform that automates local news gathering, editing, and publishing for hyperlocal communities. Access Lake Geneva Brief and the business directory."
+        path="/"
+      />
       <div className="text-center space-y-6 max-w-2xl px-4">
         <h1 className="text-5xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
           Autonomous Local Media Network
