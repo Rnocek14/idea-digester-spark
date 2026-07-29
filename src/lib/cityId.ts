@@ -37,6 +37,15 @@ export function isMissingCityColumn(error: unknown): boolean {
 }
 
 /**
+ * Apply the city filter only when scoping is active. Lets a call site keep its
+ * existing query chain intact: maybeCity(supabase.from(x).select(y), scoped).
+ */
+export function maybeCity<T>(query: T, scoped: boolean): T {
+  if (!scoped) return query;
+  return (query as { eq: (c: string, v: string) => T }).eq("city_id", resolvedCityId);
+}
+
+/**
  * Run a query that may be city-scoped. `build(scoped)` must construct the query
  * fresh each call so it can be retried without the city filter.
  */

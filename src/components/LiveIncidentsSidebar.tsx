@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle, Flame, Car, CloudLightning, Shield, Zap, ChevronRight, Construction, TrafficCone, Cone } from "lucide-react";
 import QuickReportIncident from "./QuickReportIncident";
-import { getCityId } from "@/lib/cityId";
+import { getCityId, maybeCity, runCityScoped } from "@/lib/cityId";
 
 type IncidentUpdate = {
   is_verified: boolean;
@@ -107,7 +107,8 @@ export default function LiveIncidentsSidebar({ onHide, showCloseButton = false }
   const { data: incidents } = useQuery({
     queryKey: ["incidents-sidebar"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await runCityScoped((scoped) =>
+        maybeCity(supabase
         .from("incidents")
         .select(`
           id,
@@ -120,12 +121,12 @@ export default function LiveIncidentsSidebar({ onHide, showCloseButton = false }
           incident_updates (
             is_verified
           )
-        `)
-        .eq("city_id", getCityId())
+        `), scoped)
         .in("status", ["active", "developing", "monitoring"])
         .order("status", { ascending: true })
         .order("updated_at", { ascending: false })
-        .limit(10); // Fetch more to filter
+        .limit(10)
+      ); // Fetch more to filter
 
       if (error) throw error;
       
@@ -157,14 +158,15 @@ export default function LiveIncidentsSidebar({ onHide, showCloseButton = false }
     queryKey: ["incidents-sidebar-resolved"],
     queryFn: async () => {
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-      const { data, error } = await supabase
+      const { data, error } = await runCityScoped((scoped) =>
+        maybeCity(supabase
         .from("incidents")
-        .select("id, slug, title, location, resolved_at")
-        .eq("city_id", getCityId())
+        .select("id, slug, title, location, resolved_at"), scoped)
         .eq("status", "resolved")
         .gte("resolved_at", sevenDaysAgo)
         .order("resolved_at", { ascending: false })
-        .limit(20);
+        .limit(20)
+      );
 
       if (error) throw error;
       return (data || []).filter((i) => isLocalIncident(i.title, i.location));

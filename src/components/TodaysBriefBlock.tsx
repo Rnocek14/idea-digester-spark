@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Star } from "lucide-react";
-import { getCityId } from "@/lib/cityId";
+import { getCityId, maybeCity, runCityScoped } from "@/lib/cityId";
 
 const GINA_ID = "db06b0ce-2fe3-4a01-a870-7f2aef1913a6";
 
@@ -97,13 +97,14 @@ export default function TodaysBriefBlock({ stories }: { stories: BriefStory[] })
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data } = await supabase
+      const { data } = await runCityScoped((scoped) =>
+        maybeCity(supabase
         .from("daily_briefs")
-        .select("body")
-        .eq("city_id", getCityId())
+        .select("body"), scoped)
         .eq("brief_date", todayCT())
         .eq("status", "published")
-        .maybeSingle();
+        .maybeSingle()
+      );
       if (cancelled) return;
       const body = (data?.body || "").trim();
       setBriefBody(body || null);

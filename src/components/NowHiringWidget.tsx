@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { Briefcase, ArrowRight } from "lucide-react";
-import { getCityId } from "@/lib/cityId";
+import { getCityId, maybeCity, runCityScoped } from "@/lib/cityId";
 
 type JobListing = {
   id: string;
@@ -18,15 +18,16 @@ const NowHiringWidget = () => {
     queryKey: ["now-hiring-widget"],
     queryFn: async () => {
       const now = new Date().toISOString();
-      const { data, error } = await supabase
+      const { data, error } = await runCityScoped((scoped) =>
+        maybeCity(supabase
         .from("job_listings")
-        .select("id, title, business_name, category, pay_display, is_featured")
-        .eq("city_id", getCityId())
+        .select("id, title, business_name, category, pay_display, is_featured"), scoped)
         .eq("status", "approved")
         .gt("expires_at", now)
         .order("is_featured", { ascending: false })
         .order("created_at", { ascending: false })
-        .limit(3);
+        .limit(3)
+      );
 
       if (error) throw error;
       return data as JobListing[];

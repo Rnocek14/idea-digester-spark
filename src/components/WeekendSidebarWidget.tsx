@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { CalendarDays } from "lucide-react";
-import { getCityId } from "@/lib/cityId";
+import { getCityId, maybeCity, runCityScoped } from "@/lib/cityId";
 
 type WeekendEvent = {
   id: string;
@@ -79,10 +79,10 @@ export default function WeekendSidebarWidget() {
       const sundayStr = sunday.toISOString().split('T')[0];
 
       // Query by event_date (when event happens), not publish_date
-      const { data, error } = await supabase
+      const { data, error } = await runCityScoped((scoped) =>
+        maybeCity(supabase
         .from("content_queue")
-        .select("id, title, category, publish_date, event_date, event_time, performer, metadata")
-        .eq("city_id", getCityId())
+        .select("id, title, category, publish_date, event_date, event_time, performer, metadata"), scoped)
         .in("status", ["approved", "auto_published", "published"])
         .eq("safety_level", "safe")
         .in("category", ["events", "community", "entertainment", "dining", "nightlife"])
@@ -90,7 +90,8 @@ export default function WeekendSidebarWidget() {
         .lte("event_date", sundayStr)
         .order("event_date", { ascending: true })
         .order("event_time", { ascending: true, nullsFirst: false })
-        .limit(8);
+        .limit(8)
+      );
 
       if (error) {
         console.error("[WeekendSidebar] Error loading events", error);

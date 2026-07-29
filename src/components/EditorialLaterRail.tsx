@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Sparkles } from "lucide-react";
 import { formatEventTime, localDateStr, type EventRow } from "@/lib/eventUtils";
-import { getCityId } from "@/lib/cityId";
+import { getCityId, maybeCity, runCityScoped } from "@/lib/cityId";
 
 type Pick = EventRow & {
   featured_in_later?: boolean;
@@ -27,18 +27,19 @@ export default function EditorialLaterRail() {
   const { data: featured = [], isLoading } = useQuery({
     queryKey: ["later-featured"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await runCityScoped((scoped) =>
+        maybeCity(supabase
         .from("content_queue")
         .select(
           "id, title, summary, category, event_date, event_time, image_url, geo_tier, geo_label, original_url, featured_rank, editorial_pick_reason, featured_in_later",
-        )
-        .eq("city_id", getCityId())
+        ), scoped)
         .eq("featured_in_later", true)
         .gte("featured_until", today)
         .in("status", ["approved", "auto_published", "published"])
         .order("featured_rank", { ascending: true, nullsFirst: false })
         .order("event_date", { ascending: true })
-        .limit(3);
+        .limit(3)
+      );
       if (error) throw error;
       return (data || []) as Pick[];
     },
@@ -55,19 +56,20 @@ export default function EditorialLaterRail() {
     queryKey: ["later-fallback"],
     enabled: !isLoading && featured.length < 2,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await runCityScoped((scoped) =>
+        maybeCity(supabase
         .from("content_queue")
         .select(
           "id, title, summary, category, event_date, event_time, image_url, geo_tier, geo_label, original_url",
-        )
-        .eq("city_id", getCityId())
+        ), scoped)
         .in("status", ["approved", "auto_published", "published"])
         .in("safety_level", ["safe", "soft_sensitive"])
         .gte("event_date", fallbackStart)
         .lte("event_date", horizon)
         .order("geo_tier", { ascending: true })
         .order("event_date", { ascending: true })
-        .limit(3);
+        .limit(3)
+      );
       if (error) throw error;
       return (data || []) as Pick[];
     },

@@ -141,6 +141,31 @@ export default function DebugFeed() {
         .limit(8);
       setSamples(recent ?? []);
 
+      // LATER column funnel (RightRailTemporal / ComingUp / EditorialLater).
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const horizon = new Date(nowMs + 14 * 864e5).toISOString().slice(0, 10);
+      const evAll = await countWith((q: Any) => q.eq("category", "events"));
+      out.push({ label: "— LATER column — rows with category = events", count: evAll.count, error: evAll.error });
+      const evUpcoming = await countWith((q: Any) =>
+        q.eq("category", "events").gte("event_date", todayStr).lte("event_date", horizon),
+      );
+      out.push({
+        label: "+ event_date between today and +14 days",
+        count: evUpcoming.count,
+        error: evUpcoming.error,
+        note: "if this is 0, the LATER column is empty because there are no upcoming events",
+      });
+      const evPublished = await countWith((q: Any) =>
+        q
+          .eq("category", "events")
+          .gte("event_date", todayStr)
+          .lte("event_date", horizon)
+          .in("status", ["approved", "auto_published", "published"])
+          .in("safety_level", ["safe", "soft_sensitive"]),
+      );
+      out.push({ label: "+ published and safe  ← the LATER query", count: evPublished.count, error: evPublished.error });
+      setSteps([...out]);
+
       // Incidents funnel
       const iAll = await countWith((q: Any) => q, "incidents");
       const iStatus = await countWith(

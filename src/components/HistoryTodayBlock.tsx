@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { trackStoryEvent } from "@/lib/trackStoryEvent";
-import { getCityId } from "@/lib/cityId";
+import { getCityId, maybeCity, runCityScoped } from "@/lib/cityId";
 
 type Entry = {
   id: string;
@@ -32,15 +32,16 @@ export default function HistoryTodayBlock() {
 
       // Prefer exact day match; if none, fall back to nearest within ±30 days
       // (forward) so the block never goes dark while the library is small.
-      const exact = await supabase
+      const exact = await runCityScoped((scoped) =>
+        maybeCity(supabase
         .from("history_entries")
-        .select("id,title,body,event_year,source_citation,history_type")
-        .eq("city_id", getCityId())
+        .select("id,title,body,event_year,source_citation,history_type"), scoped)
         .eq("status", "approved")
         .eq("day_of_year", doy)
         .order("event_year", { ascending: true })
         .limit(1)
-        .maybeSingle();
+        .maybeSingle()
+      );
 
       if (exact.data) {
         if (!cancelled) {
@@ -52,12 +53,13 @@ export default function HistoryTodayBlock() {
 
       // No exact match — rotate deterministically through the full library
       // so the block changes daily instead of sticking on the nearest entry.
-      const all = await supabase
+      const all = await runCityScoped((scoped) =>
+        maybeCity(supabase
         .from("history_entries")
-        .select("id,title,body,event_year,source_citation,history_type")
-        .eq("city_id", getCityId())
+        .select("id,title,body,event_year,source_citation,history_type"), scoped)
         .eq("status", "approved")
-        .order("day_of_year", { ascending: true });
+        .order("day_of_year", { ascending: true })
+      );
 
       const list = (all.data as Entry[] | null) ?? [];
       const chosen: Entry | null = list.length
