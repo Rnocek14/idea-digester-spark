@@ -1,5 +1,7 @@
 import { Helmet } from "react-helmet-async";
 
+import { getSiteOrigin } from "@/lib/cityId";
+
 interface PageMetaProps {
   title: string;
   description: string;
@@ -10,10 +12,8 @@ interface PageMetaProps {
   keywords?: string[];
 }
 
-const SITE = "https://lakegenevabrief.com";
-
 export function PageMeta({ title, description, path, jsonLd, ogType = "website", ogImage, keywords }: PageMetaProps) {
-  const url = `${SITE}${path}`;
+  const url = `${getSiteOrigin()}${path}`;
   const ldArray = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
   return (
     <Helmet>

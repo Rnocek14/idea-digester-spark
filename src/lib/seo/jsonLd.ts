@@ -1,7 +1,11 @@
 // JSON-LD helpers for guide pages.
 // Keep schema minimal but valid — Google rejects partially-malformed schemas.
 
-const SITE = "https://lakegenevabrief.com";
+import { getSiteOrigin } from "@/lib/cityId";
+
+// Resolved per request rather than hardcoded — see getSiteOrigin. A fixed host here
+// would make every city in the fleet claim to be Lake Geneva.
+const site = () => getSiteOrigin();
 
 export function articleJsonLd(opts: {
   title: string;
@@ -16,8 +20,8 @@ export function articleJsonLd(opts: {
     "@type": "Article",
     headline: opts.title,
     description: opts.description,
-    url: `${SITE}${opts.path}`,
-    mainEntityOfPage: `${SITE}${opts.path}`,
+    url: `${site()}${opts.path}`,
+    mainEntityOfPage: `${site()}${opts.path}`,
     datePublished: opts.datePublished,
     dateModified: opts.dateModified ?? opts.datePublished,
     image: opts.image,
@@ -29,12 +33,12 @@ export function articleJsonLd(opts: {
     author: {
       "@type": "Organization",
       name: "Lake Geneva Brief",
-      url: SITE,
+      url: site(),
     },
     publisher: {
       "@type": "Organization",
       name: "Lake Geneva Brief",
-      url: SITE,
+      url: site(),
     },
   };
 }
@@ -47,7 +51,7 @@ export function breadcrumbJsonLd(crumbs: Array<{ name: string; path: string }>) 
       "@type": "ListItem",
       position: i + 1,
       name: c.name,
-      item: `${SITE}${c.path}`,
+      item: `${site()}${c.path}`,
     })),
   };
 }
@@ -86,14 +90,14 @@ export function stopsItemListJsonLd(opts: {
     "@context": "https://schema.org",
     "@type": "ItemList",
     name: opts.parentName,
-    url: `${SITE}${opts.parentPath}`,
+    url: `${site()}${opts.parentPath}`,
     numberOfItems: opts.stops.length,
     itemListOrder: "https://schema.org/ItemListOrderAscending",
     itemListElement: opts.stops.map((s, i) => {
       const attraction: Record<string, unknown> = {
         "@type": "TouristAttraction",
         name: s.name,
-        url: `${SITE}${opts.parentPath}#stop-${s.slug}`,
+        url: `${site()}${opts.parentPath}#stop-${s.slug}`,
       };
       if (s.description) attraction.description = s.description;
       if (s.image) attraction.image = s.image;

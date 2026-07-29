@@ -212,6 +212,16 @@ async function main() {
     const page = await browser.newPage({ userAgent: 'LakeGenevaBriefPrerender/1.0' })
     page.setDefaultTimeout(NAV_TIMEOUT_MS)
 
+    // Canonicals resolve from the live hostname (so each city in the fleet claims its
+    // own domain), but this browser is on 127.0.0.1 — without an override every
+    // prerendered file would ship rel=canonical pointing at localhost. Set before any
+    // app code runs. Per-city builds override with SITE_ORIGIN.
+    const siteOrigin = (process.env.SITE_ORIGIN || 'https://lakegenevabrief.com').replace(/\/+$/, '')
+    await page.addInitScript((origin) => {
+      window.__SITE_ORIGIN__ = origin
+    }, siteOrigin)
+    console.log(`[prerender] canonical origin: ${siteOrigin}`)
+
     let ok = 0
     const failed = []
 

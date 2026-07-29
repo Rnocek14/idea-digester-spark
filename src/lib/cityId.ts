@@ -14,6 +14,49 @@ export function setResolvedCityId(id: string): void {
   resolvedCityId = id || "default";
 }
 
+// --- Canonical site origin --------------------------------------------------
+// PageMeta and the JSON-LD builders both used to hardcode
+// "https://lakegenevabrief.com". On a one-city site that's invisible; on the
+// fleet it is fatal. Every page of city #2 would emit rel=canonical and og:url
+// pointing at city #1's domain, which tells Google city #2 is a duplicate of
+// Lake Geneva and should not be indexed at all. A thousand cities would launch
+// into a canonical black hole.
+//
+// Resolve from the actual host instead, with two guards:
+//   - Local and preview hosts must never leak into a canonical. Prerendering
+//     runs a real browser against 127.0.0.1, so naively trusting the hostname
+//     would bake localhost into all 39 prerendered files.
+//   - scripts/prerender.mjs sets window.__SITE_ORIGIN__ before the app boots so
+//     prerendered HTML carries the production host.
+
+const DEFAULT_SITE_ORIGIN = "https://lakegenevabrief.com";
+
+/** Hosts that must never appear in a canonical URL. */
+function isNonCanonicalHost(hostname: string): boolean {
+  if (!hostname) return true;
+  if (hostname === "localhost" || hostname.endsWith(".local")) return true;
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(hostname)) return true;
+  // Platform preview domains: real, reachable, and must not self-canonicalize.
+  return /\.(lovable\.app|lovableproject\.com|vercel\.app|netlify\.app|pages\.dev)$/.test(
+    hostname,
+  );
+}
+
+/**
+ * The origin this page should present as canonical — scheme + host, no trailing
+ * slash. Safe to call during prerender and in non-browser contexts.
+ */
+export function getSiteOrigin(): string {
+  if (typeof window === "undefined") return DEFAULT_SITE_ORIGIN;
+
+  const override = (window as unknown as { __SITE_ORIGIN__?: string }).__SITE_ORIGIN__;
+  if (override) return override.replace(/\/+$/, "");
+
+  const { hostname, protocol, host } = window.location;
+  if (isNonCanonicalHost(hostname)) return DEFAULT_SITE_ORIGIN;
+  return `${protocol}//${host}`;
+}
+
 // --- Fail-open city scoping -------------------------------------------------
 // The frontend can deploy before the city_id migrations land. Filtering on a
 // column that doesn't exist yet makes PostgREST return an error, which the UI

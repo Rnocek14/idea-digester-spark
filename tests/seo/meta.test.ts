@@ -82,3 +82,33 @@ test("guide typography rules exist and restore paragraph and list styling", () =
     "GuideShell must not rely on bare `prose` — the typography plugin is not registered",
   );
 });
+
+// The canonical host must not be hardcoded. PageMeta and the JSON-LD builders both used
+// a literal "https://lakegenevabrief.com", which is invisible on one city and fatal on a
+// fleet: every page of city #2 would emit rel=canonical pointing at city #1, telling
+// Google city #2 is a duplicate and should not be indexed at all.
+test("canonical origin is resolved, not hardcoded, in meta and schema builders", () => {
+  for (const f of ["src/components/PageMeta.tsx", "src/lib/seo/jsonLd.ts"]) {
+    const src = readFileSync(f, "utf8");
+    assert.ok(
+      !/const SITE\s*=\s*["']https:\/\//.test(src),
+      `${f} must not hardcode a canonical host`,
+    );
+    assert.ok(src.includes("getSiteOrigin"), `${f} must resolve the origin via getSiteOrigin`);
+  }
+});
+
+// Prerendering runs a real browser against 127.0.0.1. Without the injected override,
+// every prerendered file would ship a canonical pointing at localhost.
+test("prerender injects a production canonical origin before app boot", () => {
+  const src = readFileSync("scripts/prerender.mjs", "utf8");
+  assert.ok(src.includes("__SITE_ORIGIN__"), "prerender must set the canonical origin");
+  assert.ok(src.includes("addInitScript"), "the override must be set before app code runs");
+});
+
+test("prerendered output never contains a localhost canonical", { skip: !existsSync("dist/guides/yerkes-observatory/index.html") }, () => {
+  const html = readFileSync("dist/guides/yerkes-observatory/index.html", "utf8");
+  const canonical = html.match(/<link rel="canonical" href="([^"]+)"/)?.[1] ?? "";
+  assert.ok(canonical.startsWith("https://"), `canonical should be absolute https, got: ${canonical}`);
+  assert.ok(!/127\.0\.0\.1|localhost/.test(canonical), `canonical leaked a local host: ${canonical}`);
+});

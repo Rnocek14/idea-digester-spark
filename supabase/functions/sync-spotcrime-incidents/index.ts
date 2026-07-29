@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { tier3Match, tier4Match } from "../_shared/incidentGate.ts";
+import { redactPersonalDetails, tier3Match, tier4Match } from "../_shared/incidentGate.ts";
 import { getActiveCityConfigs, hasLocalKeyword, type CityConfig } from "../_shared/cityConfig.ts";
 
 const corsHeaders = {
@@ -283,7 +283,11 @@ async function syncCitySpotcrime(
           incident_id: inserted.id,
           source: 'spotcrime',
           source_label: 'SpotCrime (unverified aggregator)',
-          text: inc.description.substring(0, 500),
+          // Redact before publish, not just gate. The keyword gate is a denylist and
+          // cannot be complete — a blotter line can name someone without tripping any
+          // keyword. This is scraped third-party text going onto a public page about a
+          // small town, so names, street numbers, ages and plates come out first.
+          text: redactPersonalDetails(inc.description).substring(0, 500),
           is_verified: false,
         });
         console.log(`[sync-spotcrime] ✅ Created: ${title.substring(0, 60)}`);
