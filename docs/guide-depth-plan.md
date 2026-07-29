@@ -1,6 +1,6 @@
 # Guide depth: where every evergreen page stands, and what's next
 
-Last measured: 2026-07-29, against `src/pages/guides/*.tsx`.
+Last measured: 2026-07-29, against `src/pages/guides/*.tsx`. All prose guides deepened.
 
 Evergreen guides are the only part of this site that compounds. News decays
 in days; a guide that ranks keeps pulling strangers in for years, and they
@@ -34,7 +34,7 @@ Measured from visible prose in the source, not the rendered page (rendered
 counts run ~1.5x higher once nav, related links and footer chrome are
 included).
 
-### Deepened (2026-07)
+### First tier (2026-07)
 
 | Guide | Before | After |
 | --- | ---: | ---: |
@@ -50,25 +50,76 @@ included).
 | Big Foot Beach State Park | 766 | 1,709 |
 | Things to do with kids | 723 | 1,542 |
 
-### Still thin — ranked by what to do next
+### Second tier — also complete
 
-Ranked by search value against current depth, highest first.
+| Guide | Before | After |
+| --- | ---: | ---: |
+| Public access guide | 764 | 3,816 |
+| Winter | 680 | 3,236 |
+| Summer | 618 | 3,084 |
+| Where to stay | 919 | 3,025 |
+| Why people love Lake Geneva | 412 | 2,863 |
+| Things to do in Lake Geneva | 1,020 | 2,810 |
+| This weekend | 700 | 2,612 |
+| Lake Geneva FAQ | 1,106 | 2,589 |
 
-| Rank | Guide | Words | Why it's worth the effort |
-| ---: | --- | ---: | --- |
-| 1 | Things to do in Lake Geneva | 1,020 | The head term. Highest volume of any guide here, and the page is mid-depth against national listicles that already outrank it. Hardest to win, biggest payoff. |
-| 2 | Where to stay | 919 | Highest commercial intent on the site. Needs care — the answer is lodging *types* and trade-offs (resort vs. downtown vs. rental), never prices or a ranked hotel list. |
-| 3 | Lake Geneva FAQ | 1,106 | Already broad but shallow per answer. Cheapest real win: it's pure long-tail surface and every answer can link to the guide that covers it properly. |
-| 4 | Public access guide | 764 | Genuinely distinctive and hard for a national site to copy — every public beach, launch, and shoreline access point. Low competition, real local value. |
-| 5 | Summer | 618 | Seasonal head term. Needs to become a planning page rather than a list. |
-| 6 | Winter | 680 | Same, and less competitive than summer. |
-| 7 | This weekend | 700 | Inherently ephemeral — its depth should come from the events feed, not prose. Lower priority as an evergreen target. |
-| 8 | Why people love Lake Geneva | 412 | Thinnest page, but the weakest commercial intent. Deepen last, or fold into another guide. |
+Every prose guide now clears 1,500 words. Nothing on the list is thin.
 
-Not on this list and deliberately so: the guides index, webcams, weather and
+Not included and deliberately so: the guides index, webcams, weather and
 market report are data-backed surfaces, not prose targets. `LakeGenevaShorePathStop`
 is a template that renders database content per stop — its depth lives in the
 database.
+
+## What the adversarial review caught
+
+Each depth pass was paired with a reviewer told to *refute* it: grep every
+added price, date and figure against `HEAD`, and strip anything not already
+there. That is not ceremony — it caught real fabrications both rounds, and
+they were the plausible-sounding kind that survive a casual read:
+
+- A claim that a Wisconsin **annual state park sticker is honored at other
+  parks**. Nothing supports reciprocity, and it invited exactly the cost
+  arithmetic these pages refuse to print.
+- **"Two of the four resorts aren't in the City of Lake Geneva"** — the two
+  names were supported, the count was not, and was probably wrong.
+- A claim the **Shore Path easement predates the lakefront homes**, which
+  inverts our own Shore Path guide: the 1870s easement was granted *by* those
+  owners, so it is contemporaneous.
+- A cross-reference promising the Shore Path guide hedges the **Potawatomi
+  origin story**. It hedges the 1870s date and never mentions the Potawatomi.
+- Two **exclusivity superlatives** ("the only continuous route") with nothing
+  behind them.
+- **Winter ice presented as a recommended activity** with no condition caveat.
+
+Take the general lesson: a single generate-then-ship pass will publish
+confident, wrong, locally-specific claims. The refute pass is the control.
+
+### Cross-guide contradictions
+
+Independent passes over sibling pages produce pages that disagree, and readers
+and search engines both notice. Fixed so far:
+
+- Max lake depth: 144 ft (FAQ) vs 135 ft (weather guide). 135 is the DNR
+  figure and the one consistent with the ~62 ft average.
+- Drive times to Chicago/Milwaukee stated as "90 minutes to both" in three
+  guides, contradicting the moving-to guide's ~80 mi / ~50 mi.
+- Milwaukee given as a precise 55 minutes where three guides say 50–70.
+- Big Foot Beach placed on the south shore; its own guide says southeast, and
+  the same file assigns the south shore to Linn.
+- "Ten minutes to Williams Bay or Fontana" — Williams Bay is ten, Fontana
+  nearer twenty.
+- Peak water temperature ~75°F vs 75–80°F.
+
+**A cross-guide consistency sweep is now a required step**, not an optional
+one, any time more than one guide is edited in a batch.
+
+### Contested facts
+
+Where sources genuinely disagree, name the source of record rather than
+choosing silently. Lake acreage is the worked example: the FAQ asserted 5,400
+acres, the DNR lists about 5,260. Both figures now appear with the DNR named.
+A site whose pitch is being more trustworthy than the aggregators has to show
+which number it trusts and why.
 
 ## Fleet implications
 
