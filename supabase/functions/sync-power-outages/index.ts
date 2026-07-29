@@ -269,7 +269,11 @@ serve(async (req) => {
       results.skipped++;
     } else {
       // Create new outage incident
-      const slug = slugifyTitle(title) + '-' + Date.now().toString(36);
+      // Stable slug derived from the outage's own identity plus the day it started,
+      // not from wall-clock time at insert. Two outages in the same place on the same
+      // day are the same event; one next month is a different one and gets its own URL.
+      const dayKey = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+      const slug = `${slugifyTitle(title)}-${dayKey}`;
       
       const { data: newIncident, error: insertError } = await supabase
         .from("incidents")

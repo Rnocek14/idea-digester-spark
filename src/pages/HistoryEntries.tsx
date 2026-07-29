@@ -30,7 +30,11 @@ type Entry = {
 };
 
 const TYPES = ["mansion","lake","business","boat","event","civic","person","landmark","tradition"];
-const STATUSES = ["published","draft","archived"];
+// Must match the DB constraint exactly:
+// history_entries.status CHECK (status IN ('draft','approved','retired')).
+// This page previously used 'published', which the constraint rejects — every save
+// failed, and HistoryTodayBlock queries 'approved', so nothing could ever go live.
+const STATUSES = ["draft", "approved", "retired"] as const;
 
 function dayOfYear(d: Date) {
   const start = Date.UTC(d.getUTCFullYear(), 0, 0);
@@ -54,7 +58,7 @@ export default function HistoryEntries() {
   const [sourceUrl, setSourceUrl] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [tags, setTags] = useState("");
-  const [status, setStatus] = useState("published");
+  const [status, setStatus] = useState("draft");
 
   async function load() {
     setLoading(true);
@@ -82,7 +86,7 @@ export default function HistoryEntries() {
   function resetForm() {
     setEventDate(""); setEventYear(""); setTitle(""); setBody("");
     setHistoryType("event"); setSourceCitation(""); setSourceUrl("");
-    setImageUrl(""); setTags(""); setStatus("published");
+    setImageUrl(""); setTags(""); setStatus("draft");
   }
 
   async function submit() {
@@ -258,14 +262,14 @@ export default function HistoryEntries() {
                   <Badge variant="outline">{r.event_date}{r.event_year ? ` · ${r.event_year}` : ""}</Badge>
                 )}
                 {r.history_type && <Badge variant="outline">{r.history_type}</Badge>}
-                <Badge variant={r.status === "published" ? "default" : "outline"}>{r.status}</Badge>
+                <Badge variant={r.status === "approved" ? "default" : "outline"}>{r.status}</Badge>
                 {r.publish_count > 0 && <span className="text-xs text-slate-500">shown {r.publish_count}×</span>}
               </div>
               <div className="flex gap-2">
-                {r.status !== "published" && (
-                  <Button size="sm" variant="outline" onClick={() => updateField(r.id, { status: "published" })}>Publish</Button>
+                {r.status !== "approved" && (
+                  <Button size="sm" variant="outline" onClick={() => updateField(r.id, { status: "approved" })}>Publish</Button>
                 )}
-                {r.status === "published" && (
+                {r.status === "approved" && (
                   <Button size="sm" variant="outline" onClick={() => updateField(r.id, { status: "draft" })}>Unpublish</Button>
                 )}
                 <Button size="sm" variant="ghost" onClick={() => remove(r.id)}>Delete</Button>

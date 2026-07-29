@@ -256,7 +256,10 @@ async function syncCitySpotcrime(
         continue;
       }
 
-      const slug = slugify(title) + '-' + Date.now().toString(36);
+      // Stable slug: externalId is already the deterministic dedupe key for this
+      // incident (subType|address|hour bucket), so reuse it instead of wall-clock time.
+      // Date.now() here meant a recreated incident got a new URL and the old one 404'd.
+      const slug = slugify(title) + '-' + externalId.substring(0, 10);
 
       // Insert the incident (only routine, gate-clean material reaches this point)
       const { data: inserted, error: insertError } = await supabase.from("incidents").insert({

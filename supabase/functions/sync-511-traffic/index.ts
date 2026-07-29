@@ -235,7 +235,12 @@ async function syncCityTraffic(
 
     const incidentType = classifyIncidentType(event);
     const priorityScore = determineSeverity(event);
-    const slug = `${incidentType}-${event.id}-${Date.now()}`.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+    // Stable slug: event.id is the upstream identifier and is already unique. Date.now()
+    // used to be appended, which minted a brand-new URL every time an incident was
+    // recreated — so an archive accumulated churning URLs that no one can cite and that
+    // Google reads as instability. Nothing that goes in a permanent URL may be derived
+    // from wall-clock time.
+    const slug = `${incidentType}-${event.id}`.toLowerCase().replace(/[^a-z0-9-]/g, '-');
 
     // Create incident
     const { data: incident, error: incidentError } = await supabase

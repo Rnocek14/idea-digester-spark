@@ -215,8 +215,22 @@ export default function FindYourCity() {
           <ul className="space-y-2 mb-6">
             {liveCities.map((c) => (
               <li key={c.id}>
+                {/*
+                  rel="nofollow" is deliberate and load-bearing.
+
+                  This is one codebase served on every city's domain, so /cities renders
+                  a link to every live city FROM every live city. Followed, that is an
+                  N-by-N reciprocal link graph between sites owned by one person — which
+                  is a link scheme by Google's own definition, and the kind that is
+                  genuinely hard to recover from. It has cost nothing so far only because
+                  the page never rendered for crawlers.
+
+                  Readers still need this directory, and it stays useful to them. It just
+                  must not pass PageRank between our own domains.
+                */}
                 <a
                   href={`https://${c.site_domain}`}
+                  rel="nofollow"
                   className="flex items-center gap-2 rounded-md border border-border bg-card px-4 py-3 hover:bg-accent/50 transition-colors"
                 >
                   <MapPin className="h-4 w-4 text-muted-foreground" />

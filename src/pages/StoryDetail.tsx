@@ -204,35 +204,13 @@ export default function StoryDetail() {
     },
   ];
 
-  // Story-level FAQ schema — boosts AI-search citations and rich-result
-  // eligibility. We only emit it when we have a real source URL to point
-  // at, since one of the answers references "the original report."
-  if (story.original_url) {
-    jsonLd.push({
-      "@context": "https://schema.org",
-      "@type": "FAQPage",
-      mainEntity: [
-        {
-          "@type": "Question",
-          name: `Where can I read the full story about "${story.title}"?`,
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: `The full report is published at ${domain || "the original source"}. Lake Geneva Brief tracks and summarizes coverage from local outlets so you can scan what's happening in and around Lake Geneva, Wisconsin in one place.`,
-          },
-        },
-        {
-          "@type": "Question",
-          name: `When was this story published?`,
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: dateLong
-              ? `This story was published on ${dateLong}. Lake Geneva Brief refreshes its local news feed throughout the day.`
-              : `Lake Geneva Brief refreshes its local news feed throughout the day; the publish date for this story is shown above the headline.`,
-          },
-        },
-      ],
-    });
-  }
+  // NOTE: a story-level FAQPage used to be emitted here, asking "Where can I read the
+  // full story about {title}?" and "When was this story published?". It was removed
+  // deliberately. Neither question contains a fact about the world — they restate the
+  // page's own metadata — and Google restricted FAQ rich results to government and
+  // health domains in 2023, so it earned nothing. Emitted on every story across every
+  // city it is machine-generated schema padding, which is the one thing on this site
+  // that looked like a spam signal. Do not add it back.
 
   const dateLabel = publishedISO
     ? format(new Date(publishedISO), "EEEE, MMMM d, yyyy")
