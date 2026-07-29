@@ -16,7 +16,7 @@ export default function BigFootBeach() {
       metaTitle="Big Foot Beach State Park (2026): Camping, Beach, Trails, Hours"
       metaDescription="Visiting Big Foot Beach State Park in Lake Geneva, Wisconsin — beach, campground, hiking, day-use fees, parking, and what locals wish first-time visitors knew."
       path="/guides/big-foot-beach-state-park"
-      dateModified={new Date().toISOString().slice(0, 10)}
+      dateModified="2026-07-29"
       intro={
         <>
           <p>

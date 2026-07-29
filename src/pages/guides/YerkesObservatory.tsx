@@ -15,7 +15,7 @@ export default function YerkesObservatory() {
       metaTitle="Yerkes Observatory (2026): Tours, Hours, History, Visiting Guide"
       metaDescription="A neighbor's guide to visiting Yerkes Observatory in Williams Bay, Wisconsin — tour hours, what to see, the world's largest refracting telescope, history, parking, and tips."
       path="/guides/yerkes-observatory"
-      dateModified={new Date().toISOString().slice(0, 10)}
+      dateModified="2026-07-29"
       intro={
         <>
           <p>

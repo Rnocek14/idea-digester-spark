@@ -79,7 +79,7 @@ export default function WhereToStayLakeGeneva() {
       metaTitle="Lake Geneva Hotels, Resorts & Rentals: Where to Stay Guide"
       metaDescription="A local's guide to where to stay in Lake Geneva, Wisconsin — big resorts, downtown inns, lakefront rentals, camping, and neighboring-town bases, sorted by who each suits and what you give up."
       path="/guides/where-to-stay-lake-geneva"
-      dateModified={new Date().toISOString().slice(0, 10)}
+      dateModified="2026-07-29"
       intro={
         <>
           <p>
@@ -200,7 +200,12 @@ export default function WhereToStayLakeGeneva() {
                 a lot of trips the column that decides it is the parking one,
                 not the first.
               </p>
-              <div className="overflow-x-auto rounded-sm border border-slate-200 bg-white">
+              <div
+                className="overflow-x-auto rounded-sm border border-slate-200 bg-white"
+                role="region"
+                aria-label="Comparison table, scrollable"
+                tabIndex={0}
+              >
                 <table className="w-full min-w-[860px] border-collapse text-sm">
                   <caption className="sr-only">
                     Six Lake Geneva lodging types compared on who they suit,

@@ -33,6 +33,7 @@ const GuidedWalkController = lazy(() =>
 );
 
 const TODAY = "2026-06-05";
+const UPDATED = "2026-07-29";
 const PATH = "/guides/lake-geneva-shore-path";
 const META_TITLE = "Lake Geneva Shore Path: The Complete Guide & Walking Companion";
 const META_DESCRIPTION =
@@ -576,7 +577,7 @@ export default function LakeGenevaShorePath() {
           </section>
 
           {/* Editorial intro */}
-          <section id="what-it-is" className="scroll-mt-24 prose prose-slate max-w-none text-slate-700 leading-relaxed mb-10">
+          <section id="what-it-is" className="scroll-mt-24 guide-prose max-w-none text-slate-700 leading-relaxed mb-10">
             <h2 className="font-display text-2xl text-slate-900 tracking-tight mb-3 pb-2 border-b border-slate-200">
               What the Shore Path actually is
             </h2>

@@ -171,7 +171,12 @@ export default function MovingToLakeGeneva() {
                   check carrier coverage before signing.
                 </li>
               </ul>
-              <div className="not-prose overflow-x-auto rounded-sm border border-slate-200 bg-white mt-5">
+              <div
+                className="not-prose overflow-x-auto rounded-sm border border-slate-200 bg-white mt-5"
+                role="region"
+                aria-label="Comparison table, scrollable"
+                tabIndex={0}
+              >
                 <table className="w-full min-w-[680px] text-sm border-collapse">
                   <caption className="sr-only">
                     Chicago commute, Milwaukee commute and full remote work

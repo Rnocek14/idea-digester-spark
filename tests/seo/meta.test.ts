@@ -43,3 +43,42 @@ test("prerendered output carries real content and one og:title", { skip: !exists
   assert.ok(html.includes('"@type":"FAQPage"'), "FAQ schema should be baked in");
   assert.ok(html.length > 10000, "prerendered page should contain real rendered content");
 });
+
+// Two hardcoded route lists have to agree: scripts/prerender.mjs decides what gets
+// crawlable HTML, scripts/generate-sitemap.ts decides what Google is told exists.
+// They drifted once already — streblow-boats was prerendered and in llms.txt but absent
+// from the sitemap, so the page existed and nothing advertised it. At fleet scale this
+// rots silently, so it's asserted rather than remembered.
+test("every prerendered guide route is also in the sitemap", () => {
+  const prerender = readFileSync("scripts/prerender.mjs", "utf8");
+  const sitemap = readFileSync("scripts/generate-sitemap.ts", "utf8");
+
+  const prerendered = [...prerender.matchAll(/'(\/guides\/[a-z0-9-]+)'/g)].map((m) => m[1]);
+  assert.ok(prerendered.length > 15, "expected to find the guide route list in prerender.mjs");
+
+  const missing = prerendered.filter((p) => !sitemap.includes(`"${p}"`));
+  assert.deepEqual(
+    missing,
+    [],
+    `prerendered but missing from the sitemap: ${missing.join(", ")}`,
+  );
+});
+
+// The guide typography regression: @tailwindcss/typography is a dependency but was never
+// registered in tailwind.config.ts, so every `prose` class emitted zero CSS while
+// Tailwind's preflight zeroed paragraph margins and stripped list bullets. Guides render
+// through .guide-prose with explicit rules instead — if those rules go missing, articles
+// silently collapse into one wall of text again.
+test("guide typography rules exist and restore paragraph and list styling", () => {
+  const css = readFileSync("src/index.css", "utf8");
+  assert.ok(css.includes(".guide-prose p"), "guide paragraph spacing rule is missing");
+  assert.ok(/\.guide-prose ul\s*\{[^}]*list-style:\s*disc/.test(css), "guide list bullets are missing");
+  assert.ok(css.includes(".guide-prose .not-prose"), "the .not-prose opt-out must be honored");
+
+  const shell = readFileSync("src/components/guides/GuideShell.tsx", "utf8");
+  assert.ok(shell.includes("guide-prose"), "GuideShell must apply guide-prose");
+  assert.ok(
+    !/className="prose\b/.test(shell),
+    "GuideShell must not rely on bare `prose` — the typography plugin is not registered",
+  );
+});

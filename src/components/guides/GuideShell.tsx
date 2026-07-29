@@ -143,7 +143,7 @@ export function GuideShell({
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-10">
           <article className="min-w-0">
             {/* Intro */}
-            <div className="prose prose-slate max-w-none text-slate-700 leading-relaxed text-lg">
+            <div className="guide-prose max-w-none text-slate-700 leading-relaxed text-lg">
               {intro}
             </div>
 
@@ -155,7 +155,7 @@ export function GuideShell({
                 <h2 className="font-display text-2xl sm:text-3xl text-slate-900 tracking-tight mb-4 pb-2 border-b border-slate-200">
                   {s.heading}
                 </h2>
-                <div className="prose prose-slate max-w-none text-slate-700 leading-relaxed">
+                <div className="guide-prose max-w-none text-slate-700 leading-relaxed">
                   {s.body}
                 </div>
               </section>

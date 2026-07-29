@@ -118,3 +118,100 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+/*
+  Guide article typography.
+
+  Why this exists: @tailwindcss/typography is in package.json but was never added to
+  tailwind.config.ts `plugins`, so every `prose` class in this codebase emitted ZERO CSS.
+  Meanwhile Tailwind's preflight sets `p { margin: 0 }` and `ul,ol { list-style: none;
+  padding: 0 }`. The result was guide articles rendering as one undifferentiated block of
+  text with unstyled lists — invisible in code review, obvious to a reader.
+
+  Rather than registering the plugin (13 files site-wide consume `prose`, and their
+  layouts were built around the broken state), guide containers use `.guide-prose` and
+  get exactly these rules. Zero blast radius outside guides.
+
+  `.not-prose` is honored, matching the typography plugin's contract, because guide pages
+  already use it to opt tables and cards out of article styling.
+*/
+@layer components {
+  .guide-prose p,
+  .guide-prose ul,
+  .guide-prose ol,
+  .guide-prose dl,
+  .guide-prose blockquote {
+    margin-block: 1.15em;
+  }
+
+  .guide-prose > :first-child {
+    margin-top: 0;
+  }
+
+  .guide-prose > :last-child {
+    margin-bottom: 0;
+  }
+
+  .guide-prose ul,
+  .guide-prose ol {
+    padding-left: 1.5rem;
+  }
+
+  .guide-prose ul {
+    list-style: disc;
+  }
+
+  .guide-prose ol {
+    list-style: decimal;
+  }
+
+  .guide-prose li {
+    margin-block: 0.4em;
+    padding-left: 0.25rem;
+  }
+
+  .guide-prose li > ul,
+  .guide-prose li > ol {
+    margin-block: 0.4em;
+  }
+
+  .guide-prose h3 {
+    font-family: "Playfair Display", Georgia, serif;
+    font-size: 1.25rem;
+    line-height: 1.3;
+    color: theme("colors.slate.900");
+    margin-top: 1.75em;
+    margin-bottom: 0.5em;
+  }
+
+  .guide-prose h4 {
+    font-weight: 600;
+    color: theme("colors.slate.900");
+    margin-top: 1.5em;
+    margin-bottom: 0.4em;
+  }
+
+  .guide-prose strong {
+    font-weight: 600;
+    color: theme("colors.slate.900");
+  }
+
+  .guide-prose em {
+    font-style: italic;
+  }
+
+  /* Opt-out: cards, tables and grids inside a guide body manage their own spacing. */
+  .guide-prose .not-prose p,
+  .guide-prose .not-prose ul,
+  .guide-prose .not-prose ol,
+  .guide-prose .not-prose dl,
+  .guide-prose .not-prose li {
+    margin-block: 0;
+    padding-left: 0;
+  }
+
+  .guide-prose .not-prose ul,
+  .guide-prose .not-prose ol {
+    list-style: none;
+  }
+}

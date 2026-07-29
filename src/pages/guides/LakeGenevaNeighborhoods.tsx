@@ -5,6 +5,7 @@ import { SoftRealEstateCTA } from "@/components/guides/SoftRealEstateCTA";
 import { Link } from "react-router-dom";
 
 const TODAY = "2026-06-05";
+const UPDATED = "2026-07-29";
 
 const LINK = "text-blue-700 hover:underline font-medium";
 
@@ -71,7 +72,7 @@ export default function LakeGenevaNeighborhoods() {
       metaDescription="A neighborhood-by-neighborhood guide to Geneva Lake: Lake Geneva, Fontana, Williams Bay and Genoa City. Feel, pace, schools, lake access, and who tends to live where."
       path="/guides/lake-geneva-neighborhoods"
       datePublished={TODAY}
-      dateModified={TODAY}
+      dateModified={UPDATED}
       intro={
         <>
           <p className="mb-4">
@@ -342,7 +343,12 @@ export default function LakeGenevaNeighborhoods() {
                 The same information, compressed. The last column is the one
                 where buyers get surprised.
               </p>
-              <div className="overflow-x-auto rounded-sm border border-slate-200 bg-white">
+              <div
+                className="overflow-x-auto rounded-sm border border-slate-200 bg-white"
+                role="region"
+                aria-label="Comparison table, scrollable"
+                tabIndex={0}
+              >
                 <table className="w-full min-w-[860px] border-collapse text-sm">
                   <caption className="sr-only">
                     Geneva Lake towns compared on five attributes.

@@ -4,6 +4,7 @@ import { SoftRealEstateCTA } from "@/components/guides/SoftRealEstateCTA";
 import { Link } from "react-router-dom";
 
 const TODAY = "2026-06-05";
+const UPDATED = "2026-07-29";
 
 const LINK = "text-blue-700 hover:underline font-medium";
 
@@ -55,7 +56,7 @@ export default function ThisWeekendLakeGeneva() {
       metaDescription="A local's shortlist of what's worth your weekend in Lake Geneva, Wisconsin — events, food, the lake, the shore path, and the quieter corners most visitors miss."
       path="/guides/things-to-do-lake-geneva-this-weekend"
       datePublished={TODAY}
-      dateModified={TODAY}
+      dateModified={UPDATED}
       intro={
         <>
           <p>
@@ -144,7 +145,12 @@ export default function ThisWeekendLakeGeneva() {
                 Four trips get planned from this page, and they aren't
                 variations on one itinerary — they're different problems.
               </p>
-              <div className="overflow-x-auto rounded-sm border border-slate-200 bg-white">
+              <div
+                className="overflow-x-auto rounded-sm border border-slate-200 bg-white"
+                role="region"
+                aria-label="Comparison table, scrollable"
+                tabIndex={0}
+              >
                 <table className="w-full min-w-[760px] border-collapse text-sm">
                   <caption className="sr-only">
                     Four Lake Geneva weekend shapes compared on what to book

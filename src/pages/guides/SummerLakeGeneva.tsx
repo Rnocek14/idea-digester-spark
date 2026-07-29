@@ -4,6 +4,7 @@ import { SoftRealEstateCTA } from "@/components/guides/SoftRealEstateCTA";
 import { Link } from "react-router-dom";
 
 const TODAY = "2026-06-05";
+const UPDATED = "2026-07-29";
 
 const LINK = "text-blue-700 hover:underline font-medium";
 
@@ -57,7 +58,7 @@ export default function SummerLakeGeneva() {
       metaDescription="A local's summer guide to Lake Geneva, Wisconsin — boating, the shore path, beaches, lakeside dining, festivals, parking, and how to enjoy peak season without fighting the crowds."
       path="/guides/best-things-to-do-lake-geneva-in-summer"
       datePublished={TODAY}
-      dateModified={TODAY}
+      dateModified={UPDATED}
       intro={
         <>
           <p>
@@ -121,7 +122,12 @@ export default function SummerLakeGeneva() {
                 other the middle of the afternoon. Settle which you are before
                 planning anything else.
               </p>
-              <div className="overflow-x-auto rounded-sm border border-slate-200 bg-white">
+              <div
+                className="overflow-x-auto rounded-sm border border-slate-200 bg-white"
+                role="region"
+                aria-label="Comparison table, scrollable"
+                tabIndex={0}
+              >
                 <table className="w-full min-w-[760px] border-collapse text-sm">
                   <caption className="sr-only">
                     Five kinds of Lake Geneva summer trip compared on what to

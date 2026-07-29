@@ -62,6 +62,7 @@ const staticEntries: SitemapEntry[] = [
   { path: "/guides/lake-geneva-shore-path", changefreq: "weekly", priority: "0.95" },
   { path: "/guides/lake-geneva-shore-path/register", changefreq: "weekly", priority: "0.7" },
   { path: "/guides/lake-geneva-shore-path/passport", changefreq: "monthly", priority: "0.7" },
+  { path: "/guides/streblow-boats-geneva-lake", changefreq: "monthly", priority: "0.85" },
   { path: "/best-of/restaurants-lake-geneva", changefreq: "weekly", priority: "0.9" },
   { path: "/best-of/lake-geneva", changefreq: "weekly", priority: "0.9" },
   { path: "/guides/lake-geneva-public-access-guide", changefreq: "monthly", priority: "0.85" },

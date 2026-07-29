@@ -4,6 +4,7 @@ import { SoftRealEstateCTA } from "@/components/guides/SoftRealEstateCTA";
 import { Link } from "react-router-dom";
 
 const TODAY = "2026-06-05";
+const UPDATED = "2026-07-29";
 
 /**
  * West-end / east-end comparison. Every row in COMPARISON restates something
@@ -66,7 +67,7 @@ export default function FontanaVsLakeGeneva() {
       metaDescription="A practical comparison of Fontana-on-Geneva-Lake and Lake Geneva, Wisconsin — second-home appeal, dining, beaches, housing, and which side of the lake fits which kind of buyer."
       path="/guides/fontana-vs-lake-geneva"
       datePublished={TODAY}
-      dateModified={TODAY}
+      dateModified={UPDATED}
       intro={
         <>
           <p className="mb-4">
@@ -108,7 +109,12 @@ export default function FontanaVsLakeGeneva() {
                 jump to the two or three rows that actually move your
                 decision.
               </p>
-              <div className="not-prose overflow-x-auto rounded-sm border border-slate-200 bg-white">
+              <div
+                className="not-prose overflow-x-auto rounded-sm border border-slate-200 bg-white"
+                role="region"
+                aria-label="Comparison table, scrollable"
+                tabIndex={0}
+              >
                 <table className="w-full min-w-[620px] text-sm border-collapse">
                   <caption className="sr-only">
                     Fontana-on-Geneva-Lake and Lake Geneva compared

@@ -4,6 +4,7 @@ import { SoftRealEstateCTA } from "@/components/guides/SoftRealEstateCTA";
 import { Link } from "react-router-dom";
 
 const TODAY = "2026-06-05";
+const UPDATED = "2026-07-29";
 
 const LINK = "text-blue-700 hover:underline font-medium";
 
@@ -82,7 +83,7 @@ export default function ThingsToDoLakeGeneva() {
       metaDescription="A local's guide to Lake Geneva, Wisconsin — how to plan a day by season, group and time budget: the lake, the shore path, downtown, food, and what to skip."
       path="/guides/things-to-do-lake-geneva"
       datePublished={TODAY}
-      dateModified={TODAY}
+      dateModified={UPDATED}
       intro={
         <>
           <p>
@@ -168,7 +169,12 @@ export default function ThingsToDoLakeGeneva() {
                 different trips you're on, because a couple's weekend and a
                 family day trip use almost none of the same plan. Find your row.
               </p>
-              <div className="overflow-x-auto rounded-sm border border-slate-200 bg-white">
+              <div
+                className="overflow-x-auto rounded-sm border border-slate-200 bg-white"
+                role="region"
+                aria-label="Comparison table, scrollable"
+                tabIndex={0}
+              >
                 <table className="w-full min-w-[720px] border-collapse text-sm">
                   <caption className="sr-only">
                     Seven kinds of Lake Geneva trip, what to lead with, and

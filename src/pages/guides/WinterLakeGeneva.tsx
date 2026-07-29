@@ -4,6 +4,7 @@ import { SoftRealEstateCTA } from "@/components/guides/SoftRealEstateCTA";
 import { Link } from "react-router-dom";
 
 const TODAY = "2026-06-05";
+const UPDATED = "2026-07-29";
 
 const LINK = "text-blue-700 hover:underline font-medium";
 
@@ -98,7 +99,7 @@ export default function WinterLakeGeneva() {
       metaDescription="A local's guide to winter in Lake Geneva, Wisconsin — Winterfest, the National Snow-Sculpting Championship, ice fishing, cross-country skiing, and the quieter version of the shore path."
       path="/guides/things-to-do-lake-geneva-in-winter"
       datePublished={TODAY}
-      dateModified={TODAY}
+      dateModified={UPDATED}
       intro={
         <>
           <p>
@@ -161,7 +162,12 @@ export default function WinterLakeGeneva() {
                 booking orders, and very different exposure to the weather.
                 Settle which one you're on before you book anything.
               </p>
-              <div className="overflow-x-auto rounded-sm border border-slate-200 bg-white">
+              <div
+                className="overflow-x-auto rounded-sm border border-slate-200 bg-white"
+                role="region"
+                aria-label="Comparison table, scrollable"
+                tabIndex={0}
+              >
                 <table className="w-full min-w-[760px] border-collapse text-sm">
                   <caption className="sr-only">
                     Five winter trip types in Lake Geneva compared on what each
@@ -290,7 +296,12 @@ export default function WinterLakeGeneva() {
                 off isn't bad luck; it's the predictable result of not calling.
                 Six sources, in rough order of how much they're worth:
               </p>
-              <div className="mt-4 overflow-x-auto rounded-sm border border-slate-200 bg-white">
+              <div
+                className="mt-4 overflow-x-auto rounded-sm border border-slate-200 bg-white"
+                role="region"
+                aria-label="Comparison table, scrollable"
+                tabIndex={0}
+              >
                 <table className="w-full min-w-[640px] border-collapse text-sm">
                   <caption className="sr-only">
                     Where to check what's open in Lake Geneva in winter, and

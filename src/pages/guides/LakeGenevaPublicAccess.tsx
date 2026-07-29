@@ -152,7 +152,12 @@ export default function LakeGenevaPublicAccess() {
                 visitor needs, because the mistakes people make here are category errors rather
                 than deliberate rule-breaking.
               </p>
-              <div className="overflow-x-auto rounded-sm border border-slate-200 bg-white">
+              <div
+                className="overflow-x-auto rounded-sm border border-slate-200 bg-white"
+                role="region"
+                aria-label="Comparison table, scrollable"
+                tabIndex={0}
+              >
                 <table className="w-full min-w-[820px] border-collapse text-sm">
                   <caption className="sr-only">
                     Five kinds of Geneva Lake access compared on what each permits, what it does

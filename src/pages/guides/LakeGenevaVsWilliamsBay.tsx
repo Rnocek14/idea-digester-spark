@@ -4,6 +4,7 @@ import { SoftRealEstateCTA } from "@/components/guides/SoftRealEstateCTA";
 import { Link } from "react-router-dom";
 
 const TODAY = "2026-06-05";
+const UPDATED = "2026-07-29";
 
 /**
  * Head-to-head resident-intent guide. Every row in COMPARISON restates a
@@ -93,7 +94,7 @@ export default function LakeGenevaVsWilliamsBay() {
       metaDescription="A practical comparison of Lake Geneva and Williams Bay, Wisconsin — schools, downtowns, beaches, lake access, housing, and which side of Geneva Lake fits which kind of family."
       path="/guides/lake-geneva-vs-williams-bay"
       datePublished={TODAY}
-      dateModified={TODAY}
+      dateModified={UPDATED}
       intro={
         <>
           <p className="mb-4">
@@ -132,7 +133,12 @@ export default function LakeGenevaVsWilliamsBay() {
                 this — then jump to the two or three rows that actually
                 move your decision.
               </p>
-              <div className="not-prose overflow-x-auto rounded-sm border border-slate-200 bg-white">
+              <div
+                className="not-prose overflow-x-auto rounded-sm border border-slate-200 bg-white"
+                role="region"
+                aria-label="Comparison table, scrollable"
+                tabIndex={0}
+              >
                 <table className="w-full min-w-[620px] text-sm border-collapse">
                   <caption className="sr-only">
                     Lake Geneva and Williams Bay compared across position

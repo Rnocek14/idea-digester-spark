@@ -4,6 +4,7 @@ import { SoftRealEstateCTA } from "@/components/guides/SoftRealEstateCTA";
 import { Link } from "react-router-dom";
 
 const TODAY = "2026-06-05";
+const UPDATED = "2026-07-29";
 
 const LINK = "text-blue-700 hover:underline font-medium";
 
@@ -88,7 +89,7 @@ export default function CostOfLivingLakeGeneva() {
       metaDescription="A practical breakdown of the cost of living in Lake Geneva, Wisconsin — housing, property taxes, utilities, groceries, and how the lakefront premium changes the math."
       path="/guides/cost-of-living-lake-geneva"
       datePublished={TODAY}
-      dateModified={TODAY}
+      dateModified={UPDATED}
       intro={
         <>
           <p>
@@ -203,7 +204,12 @@ export default function CostOfLivingLakeGeneva() {
                 books. This is the page compressed into the form most people
                 actually need it in.
               </p>
-              <div className="overflow-x-auto rounded-sm border border-slate-200 bg-white">
+              <div
+                className="overflow-x-auto rounded-sm border border-slate-200 bg-white"
+                role="region"
+                aria-label="Comparison table, scrollable"
+                tabIndex={0}
+              >
                 <table className="w-full min-w-[760px] border-collapse text-sm">
                   <caption className="sr-only">
                     Three Lake Geneva household profiles compared on housing

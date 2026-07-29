@@ -4,6 +4,7 @@ import { SoftRealEstateCTA } from "@/components/guides/SoftRealEstateCTA";
 import { Link } from "react-router-dom";
 
 const TODAY = "2026-06-05";
+const UPDATED = "2026-07-29";
 
 const LINK = "text-blue-700 hover:underline font-medium";
 
@@ -60,7 +61,7 @@ export default function WhyPeopleLoveLakeGeneva() {
       metaDescription="What actually makes Geneva Lake different from other Midwest lake towns — the public shoreline path, the summer-era estates, the working wooden-boat fleet, and the year-round town underneath the resort."
       path="/guides/why-people-love-lake-geneva"
       datePublished={TODAY}
-      dateModified={TODAY}
+      dateModified={UPDATED}
       intro={
         <>
           <p>

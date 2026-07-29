@@ -4,6 +4,7 @@ import { SoftRealEstateCTA } from "@/components/guides/SoftRealEstateCTA";
 import { Link } from "react-router-dom";
 
 const TODAY = "2026-06-05";
+const UPDATED = "2026-07-29";
 
 export default function LakeGenevaWithKids() {
   return (
@@ -13,7 +14,7 @@ export default function LakeGenevaWithKids() {
       metaDescription="A family-tested guide to Lake Geneva, Wisconsin — beaches, boats, Yerkes Observatory, the magic theatre, ski lessons at Mountain Top, and where to eat when everyone's hungry."
       path="/guides/things-to-do-lake-geneva-with-kids"
       datePublished={TODAY}
-      dateModified={TODAY}
+      dateModified={UPDATED}
       intro={
         <>
           <p>

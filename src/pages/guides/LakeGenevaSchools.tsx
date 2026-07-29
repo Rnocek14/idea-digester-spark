@@ -141,7 +141,12 @@ export default function LakeGenevaSchools() {
                 come first: what grades a district actually serves, and
                 where its students go to high school.
               </p>
-              <div className="not-prose overflow-x-auto rounded-sm border border-slate-200 bg-white">
+              <div
+                className="not-prose overflow-x-auto rounded-sm border border-slate-200 bg-white"
+                role="region"
+                aria-label="Comparison table, scrollable"
+                tabIndex={0}
+              >
                 <table className="w-full min-w-[720px] text-sm border-collapse">
                   <caption className="sr-only">
                     Lake Geneva area school districts by grades served and

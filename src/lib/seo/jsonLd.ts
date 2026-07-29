@@ -21,6 +21,16 @@ export function articleJsonLd(opts: {
     datePublished: opts.datePublished,
     dateModified: opts.dateModified ?? opts.datePublished,
     image: opts.image,
+    // Google weighs authorship for local informational content, and an Article with no
+    // author at all is a weaker entity than one with a named organization behind it.
+    // This is an Organization rather than a Person deliberately: guides are written and
+    // maintained by the desk, not by a byline, and inventing a person to satisfy a schema
+    // field would be the same fabrication these pages spent a whole audit removing.
+    author: {
+      "@type": "Organization",
+      name: "Lake Geneva Brief",
+      url: SITE,
+    },
     publisher: {
       "@type": "Organization",
       name: "Lake Geneva Brief",
