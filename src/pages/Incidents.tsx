@@ -9,7 +9,7 @@ import { PublicHeader } from "@/components/PublicHeader";
 import { PublicFooter } from "@/components/PublicFooter";
 import { PageMeta } from "@/components/PageMeta";
 import { LG_CORE_KEYWORDS, LG_GEO_KEYWORDS } from "@/lib/seoKeywords";
-import { getCityId } from "@/lib/cityId";
+import { getCityId, runCityScoped } from "@/lib/cityId";
 
 type Incident = {
   id: string;
@@ -63,15 +63,16 @@ export default function Incidents() {
   const { data: incidents, isLoading, error } = useQuery({
     queryKey: ["incidents-public"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("incidents")
-        .select("*")
-        .eq("city_id", getCityId())
+      const { data, error } = await runCityScoped((scoped) => {
+          let q = supabase.from("incidents").select("*");
+          if (scoped) q = q.eq("city_id", getCityId());
+          return q
         .in("status", ["active", "developing", "monitoring", "resolved"])
         .order("status", { ascending: true })
         .order("priority_score", { ascending: false })
         .order("updated_at", { ascending: false })
         .limit(50);
+        });
 
       if (error) throw error;
       return data as Incident[];

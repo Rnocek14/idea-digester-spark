@@ -31,6 +31,7 @@ import { SuggestionBoxCard } from "@/components/SuggestionBox";
 import { getSubscribeSource, getReferralSource } from "@/lib/referralTracking";
 import { isAllowedStoryImage } from "@/lib/imagePolicy";
 import { useCityConfig } from "@/hooks/useCityConfig";
+import { runCityScoped } from "@/lib/cityId";
 import { NavLink } from "@/components/NavLink";
 import { Home, Star, Phone, ChevronDown } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -342,7 +343,7 @@ const LakeGenevaV2 = () => {
   };
 
   // Fetch stories with priority ordering + tier-0 cap + thin-feed fallback
-  const { data: stories = [], isLoading: storiesLoading } = useQuery({
+  const { data: stories = [], isLoading: storiesLoading, error: storiesError } = useQuery({
     queryKey: ["public-stories-v2", cityId],
     queryFn: async () => {
       const nowMs = Date.now();
@@ -400,21 +401,28 @@ const LakeGenevaV2 = () => {
           });
       };
 
-      // Fetch: include geo_tier 0-2 (was 1-2)
-      const { data, error } = await supabase
-        .from("content_queue")
-        .select("*, source:sources(name)")
-        .eq("city_id", cityId)
-        .in("status", ["published", "auto_published"])
-        .in("safety_level", ["safe", "soft_sensitive"])
-        .gte("geo_tier", 0)  // Phase 1: Include regional
-        .lte("geo_tier", 2)
-        .gte("created_at", twoWeeksAgo)
-        .gte("publish_date", twoWeeksAgo)
-        .lte("publish_date", now)
-        .order("geo_tier", { ascending: false })  // Tier 2 → 1 → 0 so hyperlocal fits inside LIMIT
-        .order("created_at", { ascending: false })
-        .limit(80);  // Fetch more to allow filtering
+      // Fetch: include geo_tier 0-2 (was 1-2). Built as a function so
+      // runCityScoped can retry it unscoped if the city_id migration hasn't
+      // landed yet — a missing column must never present as an empty town.
+      const fetchWindow = (scoped: boolean, since: string, cap: number) => {
+        let q = supabase.from("content_queue").select("*, source:sources(name)");
+        if (scoped) q = q.eq("city_id", cityId);
+        return q
+          .in("status", ["published", "auto_published"])
+          .in("safety_level", ["safe", "soft_sensitive"])
+          .gte("geo_tier", 0)  // Phase 1: Include regional
+          .lte("geo_tier", 2)
+          .gte("created_at", since)
+          .gte("publish_date", since)
+          .lte("publish_date", now)
+          .order("geo_tier", { ascending: false })  // Tier 2 → 1 → 0 so hyperlocal fits inside LIMIT
+          .order("created_at", { ascending: false })
+          .limit(cap);
+      };
+
+      const { data, error } = await runCityScoped((scoped) =>
+        fetchWindow(scoped, twoWeeksAgo, 80),  // Fetch more to allow filtering
+      );
 
       if (error) throw error;
 
@@ -423,20 +431,9 @@ const LakeGenevaV2 = () => {
       // Thin-feed fallback: if under threshold, expand window
       if (processed.length < MIN_FEED_ITEMS) {
         console.log(`[PHASE1] Thin feed (${processed.length} items), expanding to ${EXTENDED_WINDOW_DAYS}-day window`);
-        const { data: extendedData, error: extError } = await supabase
-          .from("content_queue")
-          .select("*, source:sources(name)")
-          .eq("city_id", cityId)
-          .in("status", ["published", "auto_published"])
-          .in("safety_level", ["safe", "soft_sensitive"])
-          .gte("geo_tier", 0)
-          .lte("geo_tier", 2)
-          .gte("created_at", threeWeeksAgo)
-          .gte("publish_date", threeWeeksAgo)
-          .lte("publish_date", now)
-          .order("geo_tier", { ascending: false })
-          .order("created_at", { ascending: false })
-          .limit(100);
+        const { data: extendedData, error: extError } = await runCityScoped((scoped) =>
+          fetchWindow(scoped, threeWeeksAgo, 100),
+        );
 
         if (!extError && extendedData) {
           processed = processStories(extendedData);
@@ -1181,6 +1178,15 @@ const LakeGenevaV2 = () => {
             {/* Story Grid - respects viewMode */}
             {storiesLoading ? (
               <div className="text-center py-16 text-slate-500">Loading today's stories...</div>
+            ) : storiesError ? (
+              /* A failed query must never masquerade as a quiet news day —
+                 that turns an outage into "this town has no news". */
+              <div className="text-center py-16">
+                <p className="text-slate-900 font-medium mb-2">We're having trouble loading stories</p>
+                <p className="text-slate-500 text-sm">
+                  This is on us, not a quiet news day. Please refresh in a moment.
+                </p>
+              </div>
             ) : filteredStories.length === 0 ? (
               <div className="text-center py-16">
                 <p className="text-slate-900 font-medium mb-2">No stories yet</p>
