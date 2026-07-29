@@ -35,6 +35,7 @@ const STATIC_ROUTES = [
   '/about', '/privacy', '/terms', '/cities',
   '/guides',
   '/guides/lake-geneva-shore-path',
+  '/guides/lake-geneva-shore-path/passport',
   '/guides/yerkes-observatory',
   '/guides/big-foot-beach-state-park',
   '/guides/where-to-stay-lake-geneva',
@@ -64,7 +65,7 @@ const STATIC_ROUTES = [
 // Data-backed routes. Prerendering these still bakes correct <title>/OG/JSON-LD
 // even when the database isn't reachable from the build environment, which is
 // the main win for link previews. Content fills in for real readers via JS.
-const DATA_ROUTES = ['/', '/today', '/events', '/incidents', '/eats', '/nightlife', '/jobs', '/deals', '/directory']
+const DATA_ROUTES = ['/', '/today', '/events', '/incidents', '/eats', '/nightlife', '/jobs', '/deals', '/directory', '/guides/lake-geneva-shore-path/register']
 
 const MIME = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript',

@@ -9,11 +9,24 @@ import { ArrivalCard } from "./ArrivalCard";
 
 const TRIGGERED_KEY = "shore-path-guided-walk-triggered";
 
+export type ArrivalRecord = {
+  stop_slug: string;
+  latitude: number;
+  longitude: number;
+  accuracy_m: number | null;
+};
+
 type Props = {
   open: boolean;
   onClose: () => void;
   stops: ShorePathStopRow[];
   onJumpToStop: (s: ShorePathStopRow) => void;
+  /**
+   * Called once per stop per session when the geofence fires, with the fix that
+   * triggered it. The server re-checks these coordinates before it will record a
+   * stop as verified, so this is a report rather than an assertion.
+   */
+  onArrival?: (arrival: ArrivalRecord) => void;
 };
 
 type Phase = "preamble" | "active";
@@ -33,7 +46,7 @@ function saveTriggered(s: Set<string>) {
   } catch { /* ignore */ }
 }
 
-export function GuidedWalkController({ open, onClose, stops, onJumpToStop }: Props) {
+export function GuidedWalkController({ open, onClose, stops, onJumpToStop, onArrival }: Props) {
   const [phase, setPhase] = useState<Phase>("preamble");
   const [arrival, setArrival] = useState<{ stop: ShorePathStopRow; distance: number } | null>(null);
   const triggeredRef = useRef<Set<string>>(loadTriggered());
@@ -41,6 +54,12 @@ export function GuidedWalkController({ open, onClose, stops, onJumpToStop }: Pro
   const active = open && phase === "active";
   const geo = useGeolocation(active);
   useWakeLock(active);
+
+  // Held in a ref so a parent re-render can't restart the geofence watcher.
+  const onArrivalRef = useRef(onArrival);
+  useEffect(() => {
+    onArrivalRef.current = onArrival;
+  }, [onArrival]);
 
   // Reset to preamble each time the sheet is closed.
   useEffect(() => {
@@ -60,6 +79,14 @@ export function GuidedWalkController({ open, onClose, stops, onJumpToStop }: Pro
     saveTriggered(triggeredRef.current);
     vibrate([180, 90, 180]);
     setArrival(hit);
+    // Report the fix that fired the geofence so the stop can be stamped. Never
+    // awaited: a slow or failed write must not hold up the arrival card.
+    onArrivalRef.current?.({
+      stop_slug: hit.stop.slug,
+      latitude: geo.lat,
+      longitude: geo.lng,
+      accuracy_m: Number.isFinite(geo.accuracy) ? geo.accuracy : null,
+    });
   }, [active, geo, stops]);
 
   // Nearest upcoming stop for the status bar.
