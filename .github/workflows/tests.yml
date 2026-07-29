@@ -30,3 +30,24 @@ jobs:
       # sitemap script, which needs Supabase env vars not present in CI.
       - name: Frontend build
         run: npx vite build
+
+      # Proves prerendering actually produces crawlable HTML. Prerendering
+      # itself never fails a build (it no-ops without a browser), so CI is
+      # where we verify it genuinely works.
+      - name: Install Chromium for prerender check
+        run: npx playwright install --with-deps chromium
+
+      - name: Prerender
+        run: node scripts/prerender.mjs
+
+      - name: Verify prerendered output is crawlable
+        run: |
+          set -e
+          F=dist/guides/yerkes-observatory/index.html
+          test -f "$F" || { echo "::error::prerender did not write $F"; exit 1; }
+          n=$(grep -c '<meta property="og:title"' "$F")
+          test "$n" -eq 1 || { echo "::error::expected exactly 1 og:title, found $n"; exit 1; }
+          grep -q '"@type":"FAQPage"' "$F" || { echo "::error::FAQ schema missing"; exit 1; }
+          words=$(sed 's/<script[^>]*>.*<\/script>//g; s/<[^>]*>/ /g' "$F" | wc -w)
+          test "$words" -gt 300 || { echo "::error::only $words words rendered"; exit 1; }
+          echo "prerender OK — $words words, 1 og:title, FAQ schema present"

@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { GuideShell } from "@/components/guides/GuideShell";
 
 /**
@@ -106,9 +107,9 @@ export default function LakeGenevaWebcams() {
               </ul>
               <p>
                 For numbers (temp, wind, humidity), see our{" "}
-                <a href="/lake-geneva-weather" className="text-blue-700 hover:underline">
+                <Link to="/lake-geneva-weather" className="text-blue-700 hover:underline">
                   Lake Geneva weather page
-                </a>
+                </Link>
                 .
               </p>
             </>
@@ -127,9 +128,9 @@ export default function LakeGenevaWebcams() {
               </p>
               <p>
                 For those, the right move is our{" "}
-                <a href="/today" className="text-blue-700 hover:underline">
+                <Link to="/today" className="text-blue-700 hover:underline">
                   daily Lake Report
-                </a>{" "}
+                </Link>{" "}
                 — it pulls together weather, water temp, sunrise/sunset, and
                 what's happening on the lake today, refreshed every morning.
               </p>

@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { GuideShell } from "@/components/guides/GuideShell";
 import WeatherWidget from "@/components/WeatherWidget";
 import WeatherForecast from "@/components/WeatherForecast";
@@ -46,9 +47,9 @@ export default function LakeGenevaWeather() {
               <p>
                 The week ahead, pulled from Open-Meteo for the Lake Geneva
                 coordinates. Best read alongside our daily{" "}
-                <a href="/today" className="text-blue-700 hover:underline">
+                <Link to="/today" className="text-blue-700 hover:underline">
                   Lake Report
-                </a>{" "}
+                </Link>{" "}
                 — that's where weather meets what's actually happening on the
                 lake today.
               </p>
@@ -76,7 +77,7 @@ export default function LakeGenevaWeather() {
                 <li><strong>September:</strong> 70–74°F — often the most pleasant swimming of the year.</li>
                 <li><strong>October:</strong> 55–62°F — boating only; the lake holds heat longer than the air.</li>
                 <li><strong>December–March:</strong> Lake typically freezes by mid-January in a normal winter; check{" "}
-                  <a href="/lake-geneva-webcams" className="text-blue-700 hover:underline">live cams</a>{" "}
+                  <Link to="/lake-geneva-webcams" className="text-blue-700 hover:underline">live cams</Link>{" "}
                   before driving up for ice fishing.
                 </li>
               </ul>
