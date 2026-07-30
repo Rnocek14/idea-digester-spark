@@ -1140,7 +1140,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
       ) : showTonightContent && !hasLaterPick && remainingTonightEvents.length === 0 && !tonightsPick ? (
         <div className="text-center py-6">
           <p className="text-sm text-muted-foreground mb-1">Nothing scheduled tonight</p>
-          <p className="text-[11px] text-muted-foreground/70 mb-3">Check back later or browse the full calendar</p>
+          <p className="text-[11px] text-slate-600 mb-3">Check back later or browse the full calendar</p>
           <Link 
             to="/lake-geneva?category=events" 
             className="text-xs text-primary hover:underline inline-block font-medium"
