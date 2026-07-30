@@ -608,7 +608,10 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
   const { data: tonightEvents } = useQuery({
     queryKey: ["live-music-tonight", todayStr],
     queryFn: async () => {
-      // First try events with event_date = today
+      // First try events with event_date = today.
+      // NOTE: we intentionally do NOT require the `nightlife` vertical here —
+      // many live-music items are only tagged ["local"], which used to make the
+      // widget read "Nothing scheduled tonight" while /events listed them.
       const { data: dateEvents, error: dateError } = await runCityScoped((scoped) =>
         maybeCity(supabase
         .from("content_queue")
@@ -616,10 +619,9 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
         .in("status", ["approved", "auto_published", "published"])
         .in("safety_level", ["safe", "soft_sensitive"])
         .eq("category", "events")
-        .contains("metadata", { verticals: ["nightlife"] })
         .eq("event_date", todayStr)
         .order("created_at", { ascending: false })
-        .limit(10)
+        .limit(20)
       );
 
       if (dateError) {
@@ -652,8 +654,11 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
         return eventMatchesDay(e, todayDayOfWeek) || isGenericRecurring(e);
       });
 
+      // Keep dated events that are nightlife-tagged or clearly evening entertainment
+      const datedTonight = ((dateEvents as NightlifeEvent[]) || []).filter(isEveningEntertainment);
+
       // Merge and deduplicate
-      const allEvents = [...(dateEvents || []), ...matchingRecurring] as NightlifeEvent[];
+      const allEvents = [...datedTonight, ...matchingRecurring] as NightlifeEvent[];
       const seenIds = new Set<string>();
       const uniqueEvents = allEvents.filter(e => {
         if (seenIds.has(e.id)) return false;
