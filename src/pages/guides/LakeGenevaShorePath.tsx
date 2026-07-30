@@ -166,6 +166,11 @@ const SECTIONS: { id: string; label: string }[] = [
 // Static index of the stops, in walking order. The detailed write-ups below
 // are loaded from the database; this list is rendered unconditionally so the
 // page — and its ItemList schema — never depends on that fetch succeeding.
+//
+// Because it duplicates `shore_path_stops`, it can drift out of it — and it did:
+// four names here contradicted the database after the sourced-content migrations
+// renamed them. tests/seo/stop-index-sync.test.ts now fails the build if any
+// name set by a content migration is missing from this list.
 const STOP_INDEX: {
   slug: string;
   name: string;
@@ -174,8 +179,8 @@ const STOP_INDEX: {
 }[] = [
   { slug: "library-park", name: "Library Park", community: "Lake Geneva", mile: 0.0 },
   { slug: "flat-iron-park", name: "Flat Iron Park", community: "Lake Geneva", mile: 0.4 },
-  { slug: "riviera-beach", name: "Riviera Beach & Pier", community: "Lake Geneva", mile: 0.6 },
-  { slug: "lake-geneva-public-beach", name: "Lake Geneva Public Beach", community: "Lake Geneva", mile: 0.9 },
+  { slug: "riviera-beach", name: "The Riviera & Cruise Line Docks", community: "Lake Geneva", mile: 0.6 },
+  { slug: "lake-geneva-public-beach", name: "The Public Beach", community: "Lake Geneva", mile: 0.9 },
   { slug: "maple-lawn-area", name: "Maple Lawn Walking Section", community: "Lake Geneva", mile: 1.6 },
   { slug: "black-point-estate", name: "Black Point Estate", community: "Lake Geneva", mile: 5.5 },
   { slug: "south-shore-club-area", name: "South Shore Path Stretch", community: "Linn", mile: 8.5 },
@@ -185,9 +190,9 @@ const STOP_INDEX: {
   { slug: "abbey-harbor-view", name: "Abbey Harbor View", community: "Fontana", mile: 13.9 },
   { slug: "kishwauketoe-edge", name: "Kishwauketoe Nature Conservancy Edge", community: "Williams Bay", mile: 15.5 },
   { slug: "edgewater-park", name: "Edgewater Park", community: "Williams Bay", mile: 16.3 },
-  { slug: "williams-bay-lakefront", name: "Williams Bay Lakefront Park", community: "Williams Bay", mile: 16.6 },
+  { slug: "williams-bay-lakefront", name: "Williams Bay Beach & Municipal Pier", community: "Williams Bay", mile: 16.6 },
   { slug: "yerkes-area", name: "Yerkes Observatory Area", community: "Williams Bay", mile: 17.5 },
-  { slug: "cedar-point-park", name: "Cedar Point Park", community: "Williams Bay", mile: 18.5 },
+  { slug: "cedar-point-park", name: "Cedar Point Path Stretch", community: "Williams Bay", mile: 18.5 },
 ];
 
 // Public access points with parking. Fees and hours are deliberately not
