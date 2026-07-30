@@ -54,12 +54,13 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    if (!OPENAI_API_KEY) {
-      return new Response(JSON.stringify({ error: "Missing OPENAI_API_KEY" }), {
+    if (!LOVABLE_API_KEY && !FALLBACK_OPENAI_KEY) {
+      return new Response(JSON.stringify({ error: "Missing LOVABLE_API_KEY or OPENAI_API_KEY" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
 
     const { force = false } = await req.json().catch(() => ({}));
 
