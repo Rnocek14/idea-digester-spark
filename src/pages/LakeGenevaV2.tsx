@@ -850,12 +850,8 @@ const LakeGenevaV2 = () => {
             {/* Mobile: LIVE section */}
             <div className="xl:hidden mb-8">
               <LiveColumnHeader />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-                <div className="bg-white rounded-sm border border-slate-200 p-3">
-                  <WeatherWidget />
-                </div>
-                <LiveIncidentsSidebar />
-              </div>
+              {/* Static LCP candidate: rendered before the data-dependent
+                  widgets so the first meaningful paint doesn't wait on fetches. */}
               <Link
                 to="/guides/lake-geneva-shore-path"
                 className="mt-4 block rounded-md border border-slate-200 bg-gradient-to-br from-sky-50 to-stone-50 p-4 hover:border-blue-500 transition-colors"
@@ -865,6 +861,12 @@ const LakeGenevaV2 = () => {
                 <p className="mt-1 text-xs text-slate-600 leading-relaxed">26 miles around Geneva Lake — 16 narrated stops, maps, and a guided walk mode.</p>
                 <span className="mt-2 inline-block text-xs font-medium text-blue-600">Open the guide →</span>
               </Link>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                <div className="bg-white rounded-sm border border-slate-200 p-3">
+                  <WeatherWidget />
+                </div>
+                <LiveIncidentsSidebar />
+              </div>
             </div>
 
             {/* Mobile: Quick "Tonight" teaser - hidden on desktop where sidebar handles this */}
