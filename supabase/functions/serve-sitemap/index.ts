@@ -43,6 +43,7 @@ const STATIC_ENTRIES: Entry[] = [
   { path: "/guides/moving-to-lake-geneva", changefreq: "weekly", priority: "0.9" },
   { path: "/guides/lake-geneva-neighborhoods", changefreq: "weekly", priority: "0.9" },
   { path: "/guides/things-to-do-lake-geneva-this-weekend", changefreq: "weekly", priority: "0.9" },
+  { path: "/guides/lake-geneva-winterfest", changefreq: "weekly", priority: "0.9" },
   { path: "/guides/things-to-do-lake-geneva-in-winter", changefreq: "weekly", priority: "0.9" },
   { path: "/guides/best-things-to-do-lake-geneva-in-summer", changefreq: "weekly", priority: "0.9" },
   { path: "/guides/things-to-do-lake-geneva-with-kids", changefreq: "weekly", priority: "0.9" },
