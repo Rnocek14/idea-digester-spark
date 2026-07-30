@@ -252,10 +252,10 @@ export default function ComingUpRail() {
               <TabsTrigger
                 key={b.key}
                 value={b.key}
-                className="text-sm data-[state=active]:bg-white data-[state=active]:text-slate-900"
+                className="text-sm text-slate-700 data-[state=active]:bg-white data-[state=active]:text-slate-900"
               >
                 {b.label}
-                <span className="ml-1.5 text-[10px] opacity-60 font-mono">
+                <span className="ml-1.5 text-[10px] text-slate-600 font-mono">
                   {b.events.length}
                 </span>
               </TabsTrigger>
