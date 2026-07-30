@@ -8,8 +8,10 @@ const corsHeaders = {
 };
 
 const EDITORIAL_SECRET = Deno.env.get("EDITORIAL_GENERATION_SECRET");
-const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-const MODEL = "gpt-4o-mini";
+const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+const FALLBACK_OPENAI_KEY = Deno.env.get("OPENAI_API_KEY");
+const MODEL = "google/gemini-2.5-flash";
+
 
 // Compute "today" in America/Chicago regardless of where Deno runs.
 function todayCT(): string {
