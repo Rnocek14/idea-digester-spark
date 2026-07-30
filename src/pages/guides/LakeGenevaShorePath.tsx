@@ -1287,14 +1287,19 @@ export default function LakeGenevaShorePath() {
         </Suspense>
       )}
 
-      {/* The milestone card owns the screen when it fires, so the conditions
-          question waits its turn rather than stacking on top of it. */}
+      {/* Three things want the bottom of the screen — the guided-walk sheet, the
+          arrival card it raises, and the conditions question — so they take
+          strict precedence rather than stacking into an unreadable pile.
+          The conditions question also waits for the walk to END: asked at stop 1
+          of 16 it would collect an answer about one stop and label the whole
+          outing with it. */}
       {register.newlyEarned ? (
         <RegisterMilestoneCard
           entry={register.newlyEarned}
           onDismiss={register.dismissNewlyEarned}
         />
       ) : (
+        !guidedOpen &&
         register.conditionsPrompt && (
           <ConditionsPrompt
             onAnswer={(answer) => void register.recordConditions(answer)}
