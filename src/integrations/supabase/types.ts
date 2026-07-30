@@ -3627,6 +3627,15 @@ export type Database = {
           weekly_digest: boolean
         }[]
       }
+      get_shore_path_notables: {
+        Args: {
+          p_city_id?: string
+          p_community?: string
+          p_min_stops?: number
+          p_season?: string
+        }
+        Returns: Json
+      }
       get_shore_path_almanac: {
         Args: { p_city_id?: string; p_min_samples?: number }
         Returns: Json

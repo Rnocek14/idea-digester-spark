@@ -126,3 +126,19 @@ export function normalizeAlmanac(raw: unknown): Almanac | null {
     warmest: obj<Almanac["warmest"]>(r.warmest),
   };
 }
+
+/**
+ * Minutes as a walker would say them: "45 min", "2h", "3h 20m".
+ *
+ * Used for the longest-outing superlative and the linger table, both of which
+ * routinely exceed an hour — raw minutes ("214 min") reads as a lab measurement
+ * rather than an afternoon.
+ */
+export function formatMinutes(mins: number | null | undefined): string {
+  if (mins == null || !isFinite(mins) || mins < 0) return "\u2014";
+  const m = Math.round(mins);
+  if (m < 60) return `${m} min`;
+  const h = Math.floor(m / 60);
+  const rem = m % 60;
+  return rem === 0 ? `${h}h` : `${h}h ${rem}m`;
+}
