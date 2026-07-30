@@ -82,6 +82,11 @@ const groups: GuideGroup[] = [
         blurb: "Ice castles, snow trails, cozy bars, and the off-season pace.",
       },
       {
+        title: "Lake Geneva Winterfest",
+        path: "/guides/lake-geneva-winterfest",
+        blurb: "Snow sculpting championship weekend — timing, parking, and crowds.",
+      },
+      {
         title: "Lake Geneva webcams",
         path: "/lake-geneva-webcams",
         blurb: "Every working live cam pointed at the lake.",
