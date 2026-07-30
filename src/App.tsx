@@ -59,6 +59,7 @@ import MovingToLakeGeneva from "./pages/guides/MovingToLakeGeneva";
 import LakeGenevaNeighborhoods from "./pages/guides/LakeGenevaNeighborhoods";
 import ThisWeekendLakeGeneva from "./pages/guides/ThisWeekendLakeGeneva";
 import WinterLakeGeneva from "./pages/guides/WinterLakeGeneva";
+import LakeGenevaWinterfest from "./pages/guides/LakeGenevaWinterfest";
 import SummerLakeGeneva from "./pages/guides/SummerLakeGeneva";
 import LakeGenevaWithKids from "./pages/guides/LakeGenevaWithKids";
 import LakeGenevaSchools from "./pages/guides/LakeGenevaSchools";
@@ -155,6 +156,7 @@ const App = () => (
             <Route path="/guides/lake-geneva-neighborhoods" element={<LakeGenevaNeighborhoods />} />
             <Route path="/guides/things-to-do-lake-geneva-this-weekend" element={<ThisWeekendLakeGeneva />} />
             <Route path="/guides/things-to-do-lake-geneva-in-winter" element={<WinterLakeGeneva />} />
+            <Route path="/guides/lake-geneva-winterfest" element={<LakeGenevaWinterfest />} />
             <Route path="/guides/best-things-to-do-lake-geneva-in-summer" element={<SummerLakeGeneva />} />
             <Route path="/guides/things-to-do-lake-geneva-with-kids" element={<LakeGenevaWithKids />} />
             <Route path="/guides/lake-geneva-schools" element={<LakeGenevaSchools />} />
