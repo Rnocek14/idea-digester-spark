@@ -74,6 +74,7 @@ export const InlineSubscribeCTA = () => {
           <Button 
             type="submit"
             disabled={isSubmitting}
+            aria-label="Subscribe to the Lake Geneva Brief newsletter"
             className="rounded-full bg-blue-600 hover:bg-blue-700 text-white px-4 h-9 shrink-0"
           >
             {isSubmitting ? '...' : <ArrowRight className="h-4 w-4" />}
