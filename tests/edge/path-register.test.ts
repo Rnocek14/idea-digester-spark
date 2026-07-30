@@ -43,9 +43,9 @@ const handler = deno.handler();
 
 // Real coordinates from the seeded shore_path_stops rows.
 const STOPS = [
-  { id: "s1", slug: "library-park", name: "Library Park", latitude: 42.5915, longitude: -88.4334, geofence_radius_m: null, leg_order_index: null },
-  { id: "s2", slug: "flat-iron-park", name: "Flat Iron Park", latitude: 42.5921, longitude: -88.4361, geofence_radius_m: null, leg_order_index: null },
-  { id: "s3", slug: "fontana-beach", name: "Fontana Beach", latitude: 42.547, longitude: -88.571, geofence_radius_m: null, leg_order_index: null },
+  { id: "s1", slug: "library-park", name: "Library Park", latitude: 42.5915, longitude: -88.4334, geofence_radius_m: null, leg_order_index: null, community: 'Lake Geneva' },
+  { id: "s2", slug: "flat-iron-park", name: "Flat Iron Park", latitude: 42.5921, longitude: -88.4361, geofence_radius_m: null, leg_order_index: null, community: 'Lake Geneva' },
+  { id: "s3", slug: "fontana-beach", name: "Fontana Beach", latitude: 42.547, longitude: -88.571, geofence_radius_m: null, leg_order_index: null, community: 'Lake Geneva' },
 ];
 
 const WALKER = {

@@ -141,6 +141,55 @@ export function PassportProgress({
         />
       </div>
 
+      {/* Shores — the rung between the first stop and all sixteen. Without this a
+          walker at 6 of 16 has ten stops and nothing to aim at. Grouped from each
+          stop's community, so it needs no leg map to be correct. */}
+      {(progress?.shores?.length ?? 0) > 0 && (
+        <div className="mt-4">
+          <div className="flex items-baseline justify-between mb-2">
+            <p className="text-[10px] font-mono uppercase tracking-widest text-slate-500">
+              By shore
+            </p>
+            <p className="text-[11px] text-slate-500">
+              {progress!.shores_completed} of {progress!.shores.length} finished
+            </p>
+          </div>
+          <ul className="space-y-1.5">
+            {progress!.shores.map((s) => {
+              const pctShore = s.stopsTotal > 0
+                ? Math.round((s.stopsVisited / s.stopsTotal) * 100)
+                : 0;
+              return (
+                <li key={s.community} className="flex items-center gap-3">
+                  <span
+                    className={`text-sm w-28 flex-shrink-0 truncate ${
+                      s.complete ? "text-emerald-800 font-medium" : "text-slate-700"
+                    }`}
+                  >
+                    {s.community}
+                  </span>
+                  <span className="flex-1 h-1.5 rounded-full bg-slate-200 overflow-hidden">
+                    <span
+                      className={`block h-full rounded-full ${
+                        s.complete ? "bg-emerald-500" : "bg-slate-400"
+                      }`}
+                      style={{ width: `${pctShore}%` }}
+                    />
+                  </span>
+                  <span className="text-[11px] tabular-nums text-slate-500 w-10 text-right flex-shrink-0">
+                    {s.complete ? (
+                      <Check className="h-3.5 w-3.5 inline text-emerald-600" />
+                    ) : (
+                      `${s.stopsVisited}/${s.stopsTotal}`
+                    )}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+
       {/* Season grid — the shoulder-season nudge, and the reason Four Seasons
           takes at least a year. */}
       {stopsTotal > 0 && (
