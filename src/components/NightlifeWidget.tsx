@@ -357,7 +357,7 @@ function getEventDisplayInfo(event: NightlifeEvent): { mainLine: string; subLine
 // Filter to include all nightlife events (broadened from music-only)
 function isValidNightlifeEvent(event: NightlifeEvent): boolean {
   const title = event.title.toLowerCase();
-  
+
   // Hard exclude low-value or non-entertainment events
   const excludeTitleKeywords = [
     'penn & teller', 'penn and teller', 'wonderful!', 'magic show',
@@ -365,18 +365,34 @@ function isValidNightlifeEvent(event: NightlifeEvent): boolean {
     'skeptics', 'las vegas headliners', 'carson hall', 'thank you',
     'dance away winter blues', 'kids can dance', 'yoga', 'brunch'
   ];
-  
+
   if (excludeTitleKeywords.some(kw => title.includes(kw))) return false;
-  
+
   // For undated events, require freshness to prevent lingering forever
   if (!event.event_date && event.created_at) {
     const ageDays = (Date.now() - new Date(event.created_at).getTime()) / (1000 * 60 * 60 * 24);
     if (ageDays > 14) return false;
   }
-  
+
   // Accept all nightlife vertical events that pass the exclusion filter
   return true;
 }
+
+/**
+ * Dated events for tonight qualify when they're tagged `nightlife`
+ * OR the title clearly reads as evening entertainment. Many live-music
+ * listings only carry the "local" vertical, so requiring the tag alone
+ * left the widget empty on nights that actually had shows.
+ */
+const EVENING_ENTERTAINMENT_PATTERN =
+  /\b(live music|music|concert|band|dj|karaoke|trivia|open mic|acoustic|comedy|bar crawl|happy hour|dance party|jam session)\b/i;
+
+function isEveningEntertainment(event: NightlifeEvent): boolean {
+  if (!isValidNightlifeEvent(event)) return false;
+  if (event.metadata?.verticals?.includes('nightlife')) return true;
+  return EVENING_ENTERTAINMENT_PATTERN.test(event.title || '');
+}
+
 
 function getEventEmoji(title: string, tags?: string[]): string {
   const t = title.toLowerCase();
@@ -608,7 +624,10 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
   const { data: tonightEvents } = useQuery({
     queryKey: ["live-music-tonight", todayStr],
     queryFn: async () => {
-      // First try events with event_date = today
+      // First try events with event_date = today.
+      // NOTE: we intentionally do NOT require the `nightlife` vertical here —
+      // many live-music items are only tagged ["local"], which used to make the
+      // widget read "Nothing scheduled tonight" while /events listed them.
       const { data: dateEvents, error: dateError } = await runCityScoped((scoped) =>
         maybeCity(supabase
         .from("content_queue")
@@ -616,10 +635,9 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
         .in("status", ["approved", "auto_published", "published"])
         .in("safety_level", ["safe", "soft_sensitive"])
         .eq("category", "events")
-        .contains("metadata", { verticals: ["nightlife"] })
         .eq("event_date", todayStr)
         .order("created_at", { ascending: false })
-        .limit(10)
+        .limit(20)
       );
 
       if (dateError) {
@@ -652,8 +670,11 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
         return eventMatchesDay(e, todayDayOfWeek) || isGenericRecurring(e);
       });
 
+      // Keep dated events that are nightlife-tagged or clearly evening entertainment
+      const datedTonight = ((dateEvents as NightlifeEvent[]) || []).filter(isEveningEntertainment);
+
       // Merge and deduplicate
-      const allEvents = [...(dateEvents || []), ...matchingRecurring] as NightlifeEvent[];
+      const allEvents = [...datedTonight, ...matchingRecurring] as NightlifeEvent[];
       const seenIds = new Set<string>();
       const uniqueEvents = allEvents.filter(e => {
         if (seenIds.has(e.id)) return false;
