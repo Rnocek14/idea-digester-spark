@@ -26,6 +26,11 @@ const groups: GuideGroup[] = [
         blurb: "The 21-mile public path that circles Geneva Lake, stop by stop.",
       },
       {
+        title: "The Shore Path Register",
+        path: "/guides/lake-geneva-shore-path/register",
+        blurb: "Everyone who has walked all 21 miles, by walker number. Not a leaderboard.",
+      },
+      {
         title: "Yerkes Observatory",
         path: "/guides/yerkes-observatory",
         blurb: "Williams Bay's 1897 observatory — tours, hours, and what to expect.",

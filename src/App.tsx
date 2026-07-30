@@ -71,6 +71,8 @@ import RestaurantsLakeGeneva from "./pages/best-of/RestaurantsLakeGeneva";
 import BestOfLakeGeneva from "./pages/best-of/BestOfLakeGeneva";
 import LakeGenevaShorePath from "./pages/guides/LakeGenevaShorePath";
 import LakeGenevaShorePathStop from "./pages/guides/LakeGenevaShorePathStop";
+import LakeGenevaShorePathRegister from "./pages/guides/LakeGenevaShorePathRegister";
+import LakeGenevaShorePathPassport from "./pages/guides/LakeGenevaShorePathPassport";
 import StreblowBoats from "./pages/guides/StreblowBoats";
 import LakeGenevaPublicAccess from "./pages/guides/LakeGenevaPublicAccess";
 import LakeGenevaFAQ from "./pages/guides/LakeGenevaFAQ";
@@ -161,6 +163,10 @@ const App = () => (
             <Route path="/guides/fontana-vs-lake-geneva" element={<FontanaVsLakeGeneva />} />
             <Route path="/guides/why-people-love-lake-geneva" element={<WhyPeopleLoveLakeGeneva />} />
             <Route path="/guides/lake-geneva-shore-path" element={<LakeGenevaShorePath />} />
+            {/* Static segments must be declared before :slug so the register and
+                passport aren't swallowed by the stop-detail route. */}
+            <Route path="/guides/lake-geneva-shore-path/register" element={<LakeGenevaShorePathRegister />} />
+            <Route path="/guides/lake-geneva-shore-path/passport" element={<LakeGenevaShorePathPassport />} />
             <Route path="/guides/lake-geneva-shore-path/:slug" element={<LakeGenevaShorePathStop />} />
             <Route path="/guides/streblow-boats-geneva-lake" element={<StreblowBoats />} />
             <Route path="/guides/lake-geneva-public-access-guide" element={<LakeGenevaPublicAccess />} />

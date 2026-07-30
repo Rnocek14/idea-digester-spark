@@ -11,6 +11,11 @@ import { ShorePathMap } from "@/components/shore-path/ShorePathMap";
 import { StickyMapStrip } from "@/components/shore-path/StickyMapStrip";
 import { StoryPlayer } from "@/components/shore-path/StoryPlayer";
 import { SoftRealEstateCTA } from "@/components/guides/SoftRealEstateCTA";
+import { PassportProgress } from "@/components/shore-path/PassportProgress";
+import { RegisterMilestoneCard } from "@/components/shore-path/RegisterMilestoneCard";
+import { ConditionsPrompt } from "@/components/shore-path/ConditionsPrompt";
+import { PathAlmanac } from "@/components/shore-path/PathAlmanac";
+import { usePathRegister } from "@/hooks/usePathRegister";
 
 // The walking-mode dialog and the guided-walk controller (geolocation, wake
 // lock, audio) are the heaviest things on the page and matter only to readers
@@ -149,6 +154,7 @@ const SECTIONS: { id: string; label: string }[] = [
   { id: "before-you-go", label: "Before you go" },
   { id: "what-it-is", label: "What the Shore Path is" },
   { id: "stops", label: "The walk, stop by stop" },
+  { id: "register", label: "The Shore Path Register" },
   { id: "distances", label: "Leg distances and restrooms" },
   { id: "which-section", label: "Which section should you walk?" },
   { id: "parking", label: "Parking and access points" },
@@ -279,6 +285,9 @@ export default function LakeGenevaShorePath() {
   const [arrivedStopId, setArrivedStopId] = useState<string | null>(null);
   const [mapInView, setMapInView] = useState(true);
   const mapRef = useRef<HTMLDivElement | null>(null);
+  // One instance for the page: the passport panel and the guided walk share it,
+  // so a stop stamped mid-walk updates the panel without a second fetch.
+  const register = usePathRegister();
 
   // Observe the hero map so we know whether to show the sticky strip.
   useEffect(() => {
@@ -779,6 +788,64 @@ export default function LakeGenevaShorePath() {
             </div>
           </section>
 
+          {/* The register. A stamp book, not a scoreboard — see the reasoning in
+              the register migration. Nothing here is timed and nothing is ranked;
+              the number is issued in finishing order and that is the whole prize. */}
+          <section id="register" className="scroll-mt-24 mb-12">
+            <h2 className="font-display text-2xl text-slate-900 tracking-tight mb-3 pb-2 border-b border-slate-200">
+              The Shore Path Register
+            </h2>
+            <p className="text-slate-700 leading-relaxed mb-4">
+              Walk all sixteen stops and you're entered on the register with a
+              permanent walker number, issued in the order people finish. There is
+              no timing and no leaderboard, and there never will be — this is a
+              footpath through other people's front yards, and the arrangement
+              only holds because walkers treat it that way. Take five years if you
+              like. The number is the same.
+            </p>
+
+            <PassportProgress
+              hasPassport={register.hasPassport}
+              walker={register.walker}
+              progress={register.progress}
+              entries={register.entries}
+              pendingCount={register.pendingCount}
+              isLoading={register.isLoading}
+              error={register.error}
+              onStart={() => void register.startPassport()}
+              onUpdateProfile={register.updateProfile}
+            />
+
+            <div className="mt-4 grid sm:grid-cols-2 gap-4">
+              <div className="rounded-md border border-slate-200 bg-white p-4">
+                <h3 className="font-display text-base text-slate-900 mb-1">
+                  How a stop gets stamped
+                </h3>
+                <p className="text-sm text-slate-700 leading-relaxed">
+                  Start a Guided Walk and your phone confirms each stop as you
+                  reach it. Stops confirmed by location are marked{" "}
+                  <strong>verified</strong>; anything we can't confirm is listed
+                  honestly as self-reported rather than quietly counted the same.
+                </p>
+              </div>
+              <div className="rounded-md border border-slate-200 bg-white p-4">
+                <h3 className="font-display text-base text-slate-900 mb-1">
+                  Prefer paper?
+                </h3>
+                <p className="text-sm text-slate-700 leading-relaxed">
+                  <Link
+                    to="/guides/lake-geneva-shore-path/passport"
+                    className="text-blue-700 hover:underline font-medium"
+                  >
+                    Print a passport
+                  </Link>{" "}
+                  and carry it instead. It works at zero battery, in the coves
+                  where service drops, and it's the better souvenir.
+                </p>
+              </div>
+            </div>
+          </section>
+
           {/* Restrooms + leg distances — practical planning info, sourced from
               the official Williams Bay Recreation Department map. */}
           <section id="distances" className="scroll-mt-24 mb-12">
@@ -970,6 +1037,14 @@ export default function LakeGenevaShorePath() {
               is open year-round in the sense that the easement doesn't close,
               but conditions decide the experience more than the calendar does.
             </p>
+
+            {/* Measured crowding, from logged walks. Sits above the seasonal
+                write-ups because it either supports what they claim or corrects
+                them, and the reader should see the data first. */}
+            <div className="mb-6">
+              <PathAlmanac />
+            </div>
+
             <h3 className="font-display text-xl text-slate-900 tracking-tight mb-1.5">
               Late spring
             </h3>
@@ -1207,8 +1282,25 @@ export default function LakeGenevaShorePath() {
             onClose={() => setGuidedOpen(false)}
             stops={stops}
             onJumpToStop={handleJumpToStop}
+            onArrival={(arrival) => void register.recordVisit(arrival)}
           />
         </Suspense>
+      )}
+
+      {/* The milestone card owns the screen when it fires, so the conditions
+          question waits its turn rather than stacking on top of it. */}
+      {register.newlyEarned ? (
+        <RegisterMilestoneCard
+          entry={register.newlyEarned}
+          onDismiss={register.dismissNewlyEarned}
+        />
+      ) : (
+        register.conditionsPrompt && (
+          <ConditionsPrompt
+            onAnswer={(answer) => void register.recordConditions(answer)}
+            onDismiss={register.dismissConditionsPrompt}
+          />
+        )
       )}
     </div>
   );

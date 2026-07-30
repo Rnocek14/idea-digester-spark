@@ -2750,6 +2750,243 @@ export type Database = {
           },
         ]
       }
+      path_legs: {
+        Row: {
+          city_id: string
+          created_at: string
+          from_label: string
+          id: string
+          is_published: boolean
+          miles: number
+          order_index: number
+          to_label: string
+          updated_at: string
+        }
+        Insert: {
+          city_id?: string
+          created_at?: string
+          from_label: string
+          id?: string
+          is_published?: boolean
+          miles: number
+          order_index: number
+          to_label: string
+          updated_at?: string
+        }
+        Update: {
+          city_id?: string
+          created_at?: string
+          from_label?: string
+          id?: string
+          is_published?: boolean
+          miles?: number
+          order_index?: number
+          to_label?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      path_register_entries: {
+        Row: {
+          certificate_code: string
+          city_id: string
+          completed_at: string
+          created_at: string
+          days_elapsed: number | null
+          display_name: string | null
+          entry_number: number
+          first_visit_at: string | null
+          home_town: string | null
+          id: string
+          is_public: boolean
+          stops_total: number
+          tier: string
+          updated_at: string
+          verification: string
+          walker_id: string
+        }
+        Insert: {
+          certificate_code: string
+          city_id?: string
+          completed_at?: string
+          created_at?: string
+          days_elapsed?: number | null
+          display_name?: string | null
+          entry_number: number
+          first_visit_at?: string | null
+          home_town?: string | null
+          id?: string
+          is_public?: boolean
+          stops_total?: number
+          tier: string
+          updated_at?: string
+          verification?: string
+          walker_id: string
+        }
+        Update: {
+          certificate_code?: string
+          city_id?: string
+          completed_at?: string
+          created_at?: string
+          days_elapsed?: number | null
+          display_name?: string | null
+          entry_number?: number
+          first_visit_at?: string | null
+          home_town?: string | null
+          id?: string
+          is_public?: boolean
+          stops_total?: number
+          tier?: string
+          updated_at?: string
+          verification?: string
+          walker_id?: string
+        }
+        Relationships: []
+      }
+      path_stop_visits: {
+        Row: {
+          accuracy_m: number | null
+          city_id: string
+          created_at: string
+          crowd_level: string | null
+          distance_m: number | null
+          dow_local: number | null
+          feels_like_f: number | null
+          group_size_band: string | null
+          hour_local: number | null
+          id: string
+          month_local: number | null
+          precip: string | null
+          season: string
+          session_id: string | null
+          stop_id: string
+          temp_f: number | null
+          verification: string
+          visit_date: string
+          visited_at: string
+          walker_id: string
+          wind_mph: number | null
+        }
+        Insert: {
+          accuracy_m?: number | null
+          city_id?: string
+          created_at?: string
+          crowd_level?: string | null
+          distance_m?: number | null
+          dow_local?: number | null
+          feels_like_f?: number | null
+          group_size_band?: string | null
+          hour_local?: number | null
+          id?: string
+          month_local?: number | null
+          precip?: string | null
+          season: string
+          session_id?: string | null
+          stop_id: string
+          temp_f?: number | null
+          verification?: string
+          visit_date: string
+          visited_at?: string
+          walker_id: string
+          wind_mph?: number | null
+        }
+        Update: {
+          accuracy_m?: number | null
+          city_id?: string
+          created_at?: string
+          crowd_level?: string | null
+          distance_m?: number | null
+          dow_local?: number | null
+          feels_like_f?: number | null
+          group_size_band?: string | null
+          hour_local?: number | null
+          id?: string
+          month_local?: number | null
+          precip?: string | null
+          season?: string
+          session_id?: string | null
+          stop_id?: string
+          temp_f?: number | null
+          verification?: string
+          visit_date?: string
+          visited_at?: string
+          walker_id?: string
+          wind_mph?: number | null
+        }
+        Relationships: []
+      }
+      path_weather_hourly: {
+        Row: {
+          city_id: string
+          created_at: string
+          feels_like_f: number | null
+          id: string
+          observed_hour: string
+          precip: string | null
+          source: string
+          temp_f: number | null
+          wind_mph: number | null
+        }
+        Insert: {
+          city_id?: string
+          created_at?: string
+          feels_like_f?: number | null
+          id?: string
+          observed_hour: string
+          precip?: string | null
+          source?: string
+          temp_f?: number | null
+          wind_mph?: number | null
+        }
+        Update: {
+          city_id?: string
+          created_at?: string
+          feels_like_f?: number | null
+          id?: string
+          observed_hour?: string
+          precip?: string | null
+          source?: string
+          temp_f?: number | null
+          wind_mph?: number | null
+        }
+        Relationships: []
+      }
+      path_walkers: {
+        Row: {
+          city_id: string
+          claim_token: string
+          created_at: string
+          display_name: string | null
+          email: string | null
+          home_town: string | null
+          id: string
+          is_public: boolean
+          updated_at: string
+        }
+        Insert: {
+          city_id?: string
+          claim_token: string
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          home_town?: string | null
+          id?: string
+          is_public?: boolean
+          updated_at?: string
+        }
+        Update: {
+          city_id?: string
+          claim_token?: string
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          home_town?: string | null
+          id?: string
+          is_public?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       shore_path_stops: {
         Row: {
           approx_mile: number | null
@@ -2766,6 +3003,7 @@ export type Database = {
           is_public_landmark: boolean
           is_published: boolean
           latitude: number | null
+          leg_order_index: number | null
           local_love_prompt: string | null
           longitude: number | null
           look_for: string | null
@@ -2793,6 +3031,7 @@ export type Database = {
           is_public_landmark?: boolean
           is_published?: boolean
           latitude?: number | null
+          leg_order_index?: number | null
           local_love_prompt?: string | null
           longitude?: number | null
           look_for?: string | null
@@ -2820,6 +3059,7 @@ export type Database = {
           is_public_landmark?: boolean
           is_published?: boolean
           latitude?: number | null
+          leg_order_index?: number | null
           local_love_prompt?: string | null
           longitude?: number | null
           look_for?: string | null
@@ -3365,6 +3605,10 @@ export type Database = {
           expiry_reminders: boolean
           weekly_digest: boolean
         }[]
+      }
+      get_shore_path_almanac: {
+        Args: { p_city_id?: string; p_min_samples?: number }
+        Returns: Json
       }
       get_skip_stats: { Args: never; Returns: Json }
       get_source_health_stats: {

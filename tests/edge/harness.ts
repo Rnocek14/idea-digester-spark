@@ -73,6 +73,17 @@ export function createMockSupabase(resolver: Resolver) {
     from(table: string) {
       return new MockBuilder(table, resolver, calls);
     },
+    /**
+     * Postgres function calls. Recorded as table `rpc:<name>` with op `rpc` and
+     * the args as payload, so a resolver matches them the same way it matches
+     * table queries.
+     */
+    async rpc(name: string, args?: unknown) {
+      const q: QueryCall = { table: `rpc:${name}`, op: "rpc", payload: args, filters: [] };
+      calls.push(q);
+      const r = await resolver(q);
+      return { data: r?.data !== undefined ? r.data : null, error: r?.error ?? null };
+    },
     auth: {
       getUser: async (_token?: string) => {
         const user = (globalThis as Record<string, unknown>).__mockAuthUser ?? null;
