@@ -84,7 +84,7 @@ function todayCT(): string {
 }
 
 /**
- * "Today's Brief" — an AI-written morning brief in prose, signed by Maggie
+ * "Today's Brief" — an AI-written morning brief in prose, signed by Gina
  * (the Brief's editor). Generated once each morning by `generate-daily-brief`
  * and stored in `daily_briefs`. Falls back to a title-assembly summary on
  * mornings where the brief hasn't been generated yet.
