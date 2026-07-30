@@ -157,10 +157,10 @@ export default function TodaysBriefBlock({ stories }: { stories: BriefStory[] })
 
         <div className="mt-4 pt-3 border-t border-slate-200/80 flex items-center gap-2">
           <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-amber-200/70 text-[11px] font-bold text-amber-900">
-            M
+            G
           </span>
           <span className="text-[11px] font-mono uppercase tracking-wider text-slate-500">
-            — Maggie, Editor · Lake Geneva Brief
+            — Gina, your Lake Geneva neighbor · Lake Geneva Brief
           </span>
         </div>
 
