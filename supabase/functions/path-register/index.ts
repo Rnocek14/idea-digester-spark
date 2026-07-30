@@ -23,6 +23,17 @@ import {
   type RegisterStop,
   type StopVisit,
 } from "../_shared/pathTiers.ts";
+import {
+  EMPTY_READING,
+  hasAnyReading,
+  hourKey,
+  isCrowdLevel,
+  isGroupSizeBand,
+  localClockParts,
+  openMeteoUrl,
+  parseOpenMeteoCurrent,
+  type WeatherReading,
+} from "../_shared/pathWeather.ts";
 
 const MAX_DISPLAY_NAME = 40;
 const MAX_HOME_TOWN = 60;
@@ -75,6 +86,70 @@ function cleanEmail(value: unknown): string | null {
 function toNumber(value: unknown): number | null {
   const n = typeof value === "string" ? Number(value) : value;
   return typeof n === "number" && isFinite(n) ? n : null;
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function cleanUuid(value: unknown): string | null {
+  return typeof value === "string" && UUID_RE.test(value.trim()) ? value.trim().toLowerCase() : null;
+}
+
+/**
+ * Conditions for the hour of this visit, from cache when we already have them.
+ *
+ * A sixteen-stop day would otherwise be sixteen upstream calls returning the same
+ * hour's reading. Never throws and never blocks a stop from being recorded: a
+ * walk with no temperature is still a walk, and the register matters more than
+ * the almanac.
+ */
+// deno-lint-ignore no-explicit-any
+async function conditionsForHour(
+  supabase: any,
+  cityId: string,
+  latitude: number,
+  longitude: number,
+  when: Date,
+): Promise<WeatherReading> {
+  const observedHour = hourKey(when);
+
+  try {
+    const { data: cached } = await supabase
+      .from("path_weather_hourly")
+      .select("temp_f, feels_like_f, wind_mph, precip")
+      .eq("city_id", cityId)
+      .eq("observed_hour", observedHour)
+      .maybeSingle();
+    if (cached) return cached as WeatherReading;
+  } catch (e) {
+    console.error("[path-register] weather cache read failed", e);
+  }
+
+  let reading: WeatherReading = EMPTY_READING;
+  try {
+    // Bounded: a slow weather API must not hold up an arrival card.
+    const res = await fetch(openMeteoUrl(latitude, longitude), {
+      signal: AbortSignal.timeout(4000),
+    });
+    if (res.ok) reading = parseOpenMeteoCurrent(await res.json());
+  } catch (e) {
+    console.error("[path-register] weather fetch failed", e);
+    return EMPTY_READING;
+  }
+
+  if (!hasAnyReading(reading)) return EMPTY_READING;
+
+  try {
+    await supabase
+      .from("path_weather_hourly")
+      .upsert(
+        { city_id: cityId, observed_hour: observedHour, ...reading },
+        { onConflict: "city_id,observed_hour", ignoreDuplicates: true },
+      );
+  } catch (e) {
+    console.error("[path-register] weather cache write failed", e);
+  }
+
+  return reading;
 }
 
 /** Public shape of a register entry. Never leaks walker_id or certificate_code. */
@@ -257,6 +332,42 @@ Deno.serve(async (req) => {
       return jsonResponse({ success: true, walker: updated });
     }
 
+    // -----------------------------------------------------------------------
+    // conditions — the one-tap crowd answer, applied across a walk's stops.
+    // -----------------------------------------------------------------------
+    // Ahead of the stops load because it needs neither stops nor legs.
+    if (action === "conditions") {
+      const sessionId = cleanUuid(body.session_id);
+      if (!sessionId) {
+        return jsonResponse({ error: "Missing walk session." }, 400);
+      }
+
+      // deno-lint-ignore no-explicit-any
+      const patch: Record<string, any> = {};
+      if (isCrowdLevel(body.crowd_level)) patch.crowd_level = body.crowd_level;
+      if (isGroupSizeBand(body.group_size_band)) patch.group_size_band = body.group_size_band;
+
+      if (Object.keys(patch).length === 0) {
+        return jsonResponse({ error: "Nothing to record." }, 400);
+      }
+
+      // Scoped to this walker's own rows as well as the session, so a guessed
+      // session id cannot rewrite somebody else's walk.
+      const { data: updated, error: condError } = await supabase
+        .from("path_stop_visits")
+        .update(patch)
+        .eq("walker_id", walker.id)
+        .eq("session_id", sessionId)
+        .select("id");
+
+      if (condError) {
+        console.error("[path-register] conditions update failed", condError);
+        return jsonResponse({ error: "Could not record conditions." }, 500);
+      }
+
+      return jsonResponse({ success: true, stops_updated: (updated ?? []).length });
+    }
+
     // Stops and legs, needed by both `visit` and `progress`.
     const { data: stopRows, error: stopsError } = await supabase
       .from("shore_path_stops")
@@ -318,6 +429,15 @@ Deno.serve(async (req) => {
         );
       }
 
+      const clock = localClockParts(now, timeZone);
+      const weather = await conditionsForHour(
+        supabase,
+        cityId,
+        cityConfig.latitude,
+        cityConfig.longitude,
+        now,
+      );
+
       const { error: visitError } = await supabase
         .from("path_stop_visits")
         .upsert(
@@ -331,6 +451,19 @@ Deno.serve(async (req) => {
             verification: proximity.verification,
             distance_m: Math.round(proximity.distanceM),
             accuracy_m: accuracy == null ? null : Math.round(accuracy),
+            session_id: cleanUuid(body.session_id),
+            hour_local: clock.hour,
+            dow_local: clock.dow,
+            month_local: clock.month,
+            // Crowd and group size normally arrive later via `conditions`, but
+            // accept them here so a walker who answers at the first stop isn't
+            // asked again.
+            crowd_level: isCrowdLevel(body.crowd_level) ? body.crowd_level : null,
+            group_size_band: isGroupSizeBand(body.group_size_band) ? body.group_size_band : null,
+            temp_f: weather.temp_f,
+            feels_like_f: weather.feels_like_f,
+            wind_mph: weather.wind_mph,
+            precip: weather.precip,
           },
           { onConflict: "walker_id,stop_id,visit_date", ignoreDuplicates: true },
         );

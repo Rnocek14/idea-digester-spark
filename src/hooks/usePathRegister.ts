@@ -12,6 +12,8 @@ const PENDING_KEY = "shorePathRegister.pendingVisits";
 
 export type Verification = "verified" | "imported" | "self_reported";
 export type SeasonBucket = "spring" | "summer" | "fall" | "winter";
+export type CrowdLevel = "empty" | "some" | "busy";
+export type GroupSizeBand = "solo" | "pair" | "small" | "large";
 
 export type RegisterEntry = {
   tier: "loop" | "four_seasons";
@@ -46,7 +48,14 @@ export type RegisterProgress = {
   legs_completed: number;
 };
 
-type PendingVisit = { stop_slug: string; latitude: number; longitude: number; accuracy_m: number | null };
+type PendingVisit = {
+  stop_slug: string;
+  latitude: number;
+  longitude: number;
+  accuracy_m: number | null;
+  /** Groups the stops of one outing so a single crowd answer covers them all. */
+  session_id?: string | null;
+};
 
 function readToken(): string | null {
   if (typeof window === "undefined") return null;
@@ -61,6 +70,27 @@ function writeToken(token: string) {
   try {
     window.localStorage.setItem(TOKEN_KEY, token);
   } catch { /* private browsing — the walk still works, it just won't persist */ }
+}
+
+/**
+ * A walk session id, minted on the first stop of an outing and reused for the
+ * rest of it. Kept in sessionStorage rather than localStorage so closing the tab
+ * ends the walk — otherwise a stop logged in October would be filed under a
+ * session from July and inherit its crowd answer.
+ */
+const SESSION_KEY = "shorePathRegister.sessionId";
+
+function currentSessionId(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    const existing = window.sessionStorage.getItem(SESSION_KEY);
+    if (existing) return existing;
+    const id = crypto.randomUUID();
+    window.sessionStorage.setItem(SESSION_KEY, id);
+    return id;
+  } catch {
+    return "";
+  }
 }
 
 function readPending(): PendingVisit[] {
@@ -123,6 +153,9 @@ export function usePathRegister() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pendingCount, setPendingCount] = useState<number>(() => readPending().length);
+  // Set to the session id once a stop lands, so the crowd question is only ever
+  // asked of someone who actually just walked somewhere.
+  const [conditionsPrompt, setConditionsPrompt] = useState<string | null>(null);
 
   // Guards a StrictMode double-mount from minting two passports.
   const claiming = useRef(false);
@@ -204,7 +237,8 @@ export function usePathRegister() {
         }
       }
 
-      const queue = [...readPending(), visit];
+      const sessionId = visit.session_id ?? currentSessionId();
+      const queue = [...readPending(), { ...visit, session_id: sessionId }];
       const unsent: PendingVisit[] = [];
       let last: InvokeResult | null = null;
 
@@ -223,9 +257,28 @@ export function usePathRegister() {
       writePending(unsent);
       setPendingCount(unsent.length);
       if (last) applyResult(last);
+      // A stop landed, so there is now a session worth asking about.
+      if (last) setConditionsPrompt(sessionId || null);
     },
     [applyResult, startPassport],
   );
+
+  /**
+   * The one-tap conditions answer, applied to every stop of this outing. Silent
+   * on failure: this is a nice-to-have on top of a walk, not the walk.
+   */
+  const recordConditions = useCallback(
+    async (answer: { crowd_level?: CrowdLevel; group_size_band?: GroupSizeBand }): Promise<void> => {
+      const t = readToken();
+      const sessionId = conditionsPrompt ?? currentSessionId();
+      if (!t || !sessionId) return;
+      setConditionsPrompt(null);
+      await invoke({ action: "conditions", claim_token: t, session_id: sessionId, ...answer });
+    },
+    [conditionsPrompt],
+  );
+
+  const dismissConditionsPrompt = useCallback(() => setConditionsPrompt(null), []);
 
   const updateProfile = useCallback(
     async (patch: Partial<WalkerProfile>): Promise<boolean> => {
@@ -258,10 +311,14 @@ export function usePathRegister() {
     pendingCount,
     isLoading,
     error,
+    /** Non-null when a stop has just landed and conditions haven't been answered. */
+    conditionsPrompt,
     startPassport,
     recordVisit,
+    recordConditions,
     updateProfile,
     refresh,
     dismissNewlyEarned,
+    dismissConditionsPrompt,
   };
 }

@@ -2848,40 +2848,106 @@ export type Database = {
           accuracy_m: number | null
           city_id: string
           created_at: string
+          crowd_level: string | null
           distance_m: number | null
+          dow_local: number | null
+          feels_like_f: number | null
+          group_size_band: string | null
+          hour_local: number | null
           id: string
+          month_local: number | null
+          precip: string | null
           season: string
+          session_id: string | null
           stop_id: string
+          temp_f: number | null
           verification: string
           visit_date: string
           visited_at: string
           walker_id: string
+          wind_mph: number | null
         }
         Insert: {
           accuracy_m?: number | null
           city_id?: string
           created_at?: string
+          crowd_level?: string | null
           distance_m?: number | null
+          dow_local?: number | null
+          feels_like_f?: number | null
+          group_size_band?: string | null
+          hour_local?: number | null
           id?: string
+          month_local?: number | null
+          precip?: string | null
           season: string
+          session_id?: string | null
           stop_id: string
+          temp_f?: number | null
           verification?: string
           visit_date: string
           visited_at?: string
           walker_id: string
+          wind_mph?: number | null
         }
         Update: {
           accuracy_m?: number | null
           city_id?: string
           created_at?: string
+          crowd_level?: string | null
           distance_m?: number | null
+          dow_local?: number | null
+          feels_like_f?: number | null
+          group_size_band?: string | null
+          hour_local?: number | null
           id?: string
+          month_local?: number | null
+          precip?: string | null
           season?: string
+          session_id?: string | null
           stop_id?: string
+          temp_f?: number | null
           verification?: string
           visit_date?: string
           visited_at?: string
           walker_id?: string
+          wind_mph?: number | null
+        }
+        Relationships: []
+      }
+      path_weather_hourly: {
+        Row: {
+          city_id: string
+          created_at: string
+          feels_like_f: number | null
+          id: string
+          observed_hour: string
+          precip: string | null
+          source: string
+          temp_f: number | null
+          wind_mph: number | null
+        }
+        Insert: {
+          city_id?: string
+          created_at?: string
+          feels_like_f?: number | null
+          id?: string
+          observed_hour: string
+          precip?: string | null
+          source?: string
+          temp_f?: number | null
+          wind_mph?: number | null
+        }
+        Update: {
+          city_id?: string
+          created_at?: string
+          feels_like_f?: number | null
+          id?: string
+          observed_hour?: string
+          precip?: string | null
+          source?: string
+          temp_f?: number | null
+          wind_mph?: number | null
         }
         Relationships: []
       }
@@ -3539,6 +3605,10 @@ export type Database = {
           expiry_reminders: boolean
           weekly_digest: boolean
         }[]
+      }
+      get_shore_path_almanac: {
+        Args: { p_city_id?: string; p_min_samples?: number }
+        Returns: Json
       }
       get_skip_stats: { Args: never; Returns: Json }
       get_source_health_stats: {

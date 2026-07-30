@@ -13,6 +13,8 @@ import { StoryPlayer } from "@/components/shore-path/StoryPlayer";
 import { SoftRealEstateCTA } from "@/components/guides/SoftRealEstateCTA";
 import { PassportProgress } from "@/components/shore-path/PassportProgress";
 import { RegisterMilestoneCard } from "@/components/shore-path/RegisterMilestoneCard";
+import { ConditionsPrompt } from "@/components/shore-path/ConditionsPrompt";
+import { PathAlmanac } from "@/components/shore-path/PathAlmanac";
 import { usePathRegister } from "@/hooks/usePathRegister";
 
 // The walking-mode dialog and the guided-walk controller (geolocation, wake
@@ -1035,6 +1037,14 @@ export default function LakeGenevaShorePath() {
               is open year-round in the sense that the easement doesn't close,
               but conditions decide the experience more than the calendar does.
             </p>
+
+            {/* Measured crowding, from logged walks. Sits above the seasonal
+                write-ups because it either supports what they claim or corrects
+                them, and the reader should see the data first. */}
+            <div className="mb-6">
+              <PathAlmanac />
+            </div>
+
             <h3 className="font-display text-xl text-slate-900 tracking-tight mb-1.5">
               Late spring
             </h3>
@@ -1277,11 +1287,20 @@ export default function LakeGenevaShorePath() {
         </Suspense>
       )}
 
-      {register.newlyEarned && (
+      {/* The milestone card owns the screen when it fires, so the conditions
+          question waits its turn rather than stacking on top of it. */}
+      {register.newlyEarned ? (
         <RegisterMilestoneCard
           entry={register.newlyEarned}
           onDismiss={register.dismissNewlyEarned}
         />
+      ) : (
+        register.conditionsPrompt && (
+          <ConditionsPrompt
+            onAnswer={(answer) => void register.recordConditions(answer)}
+            onDismiss={register.dismissConditionsPrompt}
+          />
+        )
       )}
     </div>
   );

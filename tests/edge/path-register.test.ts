@@ -5,6 +5,8 @@ import {
   createMockSupabase,
   makeRequest,
   callsFor,
+  installFetchMock,
+  jsonResponse as mockJson,
   TEST_ENV,
   importBundle,
   type Resolver,
@@ -12,6 +14,22 @@ import {
 } from "./harness.ts";
 
 const deno = installDeno({ ...TEST_ENV });
+
+// Open-Meteo. Tests that care about the weather path override `weatherPayload`;
+// everything else just gets a valid reading it can ignore.
+let weatherPayload: unknown = {
+  current: { temperature_2m: 68, apparent_temperature: 70, weather_code: 0, wind_speed_10m: 6 },
+};
+let weatherStatus = 200;
+const weatherFetch = installFetchMock([
+  {
+    match: (url) => url.includes("api.open-meteo.com"),
+    respond: () =>
+      weatherStatus === 200
+        ? mockJson(weatherPayload)
+        : new Response("upstream down", { status: weatherStatus }),
+  },
+]);
 let currentResolver: Resolver = () => undefined;
 const sharedCalls: QueryCall[] = [];
 (globalThis as Record<string, unknown>).__createMockSupabase = () =>
@@ -44,6 +62,10 @@ type ResolverOverrides = {
   walker?: unknown;
   claimCounts?: { global?: number; ip?: number };
   visitsToday?: number;
+  /** A cached weather row for the visit's hour, if the test wants a cache hit. */
+  cachedWeather?: unknown;
+  /** Rows returned by the `conditions` update. */
+  conditionsUpdated?: unknown[];
   // deno-lint-ignore no-explicit-any
   rpc?: (args: any) => unknown;
 };
@@ -70,7 +92,14 @@ function baseResolver(o: ResolverOverrides = {}): Resolver {
         },
       };
     }
+    if (q.table === "path_weather_hourly" && q.op === "select") {
+      return { data: "cachedWeather" in o ? o.cachedWeather : null };
+    }
+    if (q.table === "path_weather_hourly") return { data: null };
     if (q.table === "path_stop_visits" && q.head) return { count: o.visitsToday ?? 0 };
+    if (q.table === "path_stop_visits" && q.op === "update") {
+      return { data: o.conditionsUpdated ?? [] };
+    }
     if (q.table === "path_stop_visits" && q.op === "select") return { data: o.visits ?? [] };
     if (q.table === "path_stop_visits") return { data: null };
     if (q.table === "path_register_entries" && q.op === "select") return { data: o.entries ?? [] };
@@ -104,6 +133,11 @@ function baseResolver(o: ResolverOverrides = {}): Resolver {
 beforeEach(() => {
   sharedCalls.length = 0;
   currentResolver = baseResolver();
+  weatherFetch.requests.length = 0;
+  weatherStatus = 200;
+  weatherPayload = {
+    current: { temperature_2m: 68, apparent_temperature: 70, weather_code: 0, wind_speed_10m: 6 },
+  };
 });
 
 function post(body: unknown) {
@@ -445,4 +479,177 @@ test("profile cannot be used to move a walker to another city or reset their tok
   });
   const patch = callsFor(sharedCalls, "path_walkers", "update")[0].payload as Record<string, unknown>;
   assert.deepEqual(Object.keys(patch), ["display_name"]);
+});
+
+// ---------------------------------------------------------------------------
+// Conditions capture — the almanac's raw material
+// ---------------------------------------------------------------------------
+
+/** A visit at a real stop, with coordinates that will verify. */
+function atLibraryPark(extra: Record<string, unknown> = {}) {
+  return {
+    action: "visit",
+    claim_token: "spw_abc",
+    stop_slug: "library-park",
+    latitude: 42.5915,
+    longitude: -88.4334,
+    accuracy_m: 8,
+    ...extra,
+  };
+}
+
+function visitPayload() {
+  return callsFor(sharedCalls, "path_stop_visits", "upsert")[0].payload as Record<string, unknown>;
+}
+
+test("a visit stamps the local clock so the almanac can bucket it", async () => {
+  await post(atLibraryPark());
+  const p = visitPayload();
+  assert.equal(typeof p.hour_local, "number");
+  assert.ok((p.hour_local as number) >= 0 && (p.hour_local as number) <= 23);
+  assert.ok((p.dow_local as number) >= 0 && (p.dow_local as number) <= 6);
+  assert.ok((p.month_local as number) >= 1 && (p.month_local as number) <= 12);
+});
+
+test("a visit fetches and stores conditions without the walker typing anything", async () => {
+  await post(atLibraryPark());
+  assert.equal(weatherFetch.requests.length, 1, "expected one Open-Meteo call");
+  assert.match(weatherFetch.requests[0].url, /temperature_unit=fahrenheit/);
+
+  const p = visitPayload();
+  assert.equal(p.temp_f, 68);
+  assert.equal(p.feels_like_f, 70);
+  assert.equal(p.wind_mph, 6);
+  assert.equal(p.precip, "clear");
+});
+
+test("a cached hour is reused instead of calling upstream again", async () => {
+  currentResolver = baseResolver({
+    cachedWeather: { temp_f: 41, feels_like_f: 35, wind_mph: 12, precip: "cloud" },
+  });
+  await post(atLibraryPark());
+  assert.equal(weatherFetch.requests.length, 0, "a cache hit must not hit the network");
+  const p = visitPayload();
+  assert.equal(p.temp_f, 41);
+  assert.equal(p.precip, "cloud");
+});
+
+test("a fresh reading is written to the cache for the rest of the hour", async () => {
+  await post(atLibraryPark());
+  const cacheWrite = callsFor(sharedCalls, "path_weather_hourly", "upsert")[0];
+  assert.ok(cacheWrite, "expected the reading to be cached");
+  const payload = cacheWrite.payload as Record<string, unknown>;
+  assert.equal(payload.temp_f, 68);
+  assert.match(String(payload.observed_hour), /T\d{2}:00:00\.000Z$/);
+  assert.deepEqual(cacheWrite.opts, {
+    onConflict: "city_id,observed_hour",
+    ignoreDuplicates: true,
+  });
+});
+
+test("a weather outage does not stop the stop being recorded", async () => {
+  weatherStatus = 503;
+  const res = await post(atLibraryPark());
+  assert.equal(res.status, 200);
+  const p = visitPayload();
+  assert.equal(p.temp_f, null, "no reading, but the visit still lands");
+  assert.equal(p.verification, "verified");
+});
+
+test("an empty weather reading is not cached as if it were data", async () => {
+  weatherPayload = { current: {} };
+  await post(atLibraryPark());
+  assert.equal(callsFor(sharedCalls, "path_weather_hourly", "upsert").length, 0);
+  assert.equal(visitPayload().temp_f, null);
+});
+
+test("a walk session id is recorded when supplied and rejected when malformed", async () => {
+  const uuid = "3f2504e0-4f89-11d3-9a0c-0305e82c3301";
+  await post(atLibraryPark({ session_id: uuid }));
+  assert.equal(visitPayload().session_id, uuid);
+
+  sharedCalls.length = 0;
+  await post(atLibraryPark({ session_id: "'; drop table path_walkers; --" }));
+  assert.equal(visitPayload().session_id, null, "a non-uuid session must not be stored");
+});
+
+test("crowd answered at the first stop is stored, and junk is discarded", async () => {
+  await post(atLibraryPark({ crowd_level: "empty", group_size_band: "pair" }));
+  let p = visitPayload();
+  assert.equal(p.crowd_level, "empty");
+  assert.equal(p.group_size_band, "pair");
+
+  sharedCalls.length = 0;
+  await post(atLibraryPark({ crowd_level: "MOBBED", group_size_band: "47" }));
+  p = visitPayload();
+  assert.equal(p.crowd_level, null);
+  assert.equal(p.group_size_band, null);
+});
+
+test("conditions applies one answer across the whole session", async () => {
+  const uuid = "3f2504e0-4f89-11d3-9a0c-0305e82c3301";
+  currentResolver = baseResolver({ conditionsUpdated: [{ id: "v1" }, { id: "v2" }, { id: "v3" }] });
+  const res = await post({
+    action: "conditions",
+    claim_token: "spw_abc",
+    session_id: uuid,
+    crowd_level: "busy",
+    group_size_band: "small",
+  });
+  assert.equal(res.status, 200);
+  assert.equal((await res.json()).stops_updated, 3);
+
+  const update = callsFor(sharedCalls, "path_stop_visits", "update")[0];
+  assert.deepEqual(update.payload, { crowd_level: "busy", group_size_band: "small" });
+});
+
+test("conditions is scoped to the walker as well as the session", async () => {
+  const uuid = "3f2504e0-4f89-11d3-9a0c-0305e82c3301";
+  await post({ action: "conditions", claim_token: "spw_abc", session_id: uuid, crowd_level: "some" });
+  const update = callsFor(sharedCalls, "path_stop_visits", "update")[0];
+  // A guessed session id must not be enough to rewrite someone else's walk.
+  assert.ok(update.filters.some((f) => f.m === "eq" && f.args[0] === "walker_id" && f.args[1] === "w1"));
+  assert.ok(update.filters.some((f) => f.m === "eq" && f.args[0] === "session_id" && f.args[1] === uuid));
+});
+
+test("conditions requires a session", async () => {
+  const res = await post({ action: "conditions", claim_token: "spw_abc", crowd_level: "some" });
+  assert.equal(res.status, 400);
+  assert.match((await res.json()).error, /Missing walk session/);
+  assert.equal(callsFor(sharedCalls, "path_stop_visits", "update").length, 0);
+});
+
+test("conditions with nothing recordable is rejected rather than blanking rows", async () => {
+  const res = await post({
+    action: "conditions",
+    claim_token: "spw_abc",
+    session_id: "3f2504e0-4f89-11d3-9a0c-0305e82c3301",
+    crowd_level: "not-a-level",
+  });
+  assert.equal(res.status, 400);
+  assert.equal(callsFor(sharedCalls, "path_stop_visits", "update").length, 0);
+});
+
+test("conditions does not load stops or legs it has no use for", async () => {
+  await post({
+    action: "conditions",
+    claim_token: "spw_abc",
+    session_id: "3f2504e0-4f89-11d3-9a0c-0305e82c3301",
+    crowd_level: "empty",
+  });
+  assert.equal(callsFor(sharedCalls, "shore_path_stops").length, 0);
+  assert.equal(callsFor(sharedCalls, "path_legs").length, 0);
+});
+
+test("a refused visit does not spend a weather call", async () => {
+  const res = await post({
+    action: "visit",
+    claim_token: "spw_abc",
+    stop_slug: "fontana-beach",
+    latitude: 42.5915,
+    longitude: -88.4334,
+    accuracy_m: 8,
+  });
+  assert.equal(res.status, 422);
+  assert.equal(weatherFetch.requests.length, 0);
 });
