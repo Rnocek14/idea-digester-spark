@@ -162,7 +162,7 @@ serve(async (req) => {
       timeZone: "America/Chicago",
     });
 
-    const persona = String((config.theme as Record<string, unknown> | undefined)?.persona_name ?? "Maggie");
+    const persona = String((config.theme as Record<string, unknown> | undefined)?.persona_name ?? "Gina");
     const nonLocalList = config.non_local_keywords.slice(0, 8).join(", ");
     const system = [
       `You are ${persona}, the editor of the ${config.site_name} — a local news digest for ${config.city_name}, ${config.state_code}.`,
