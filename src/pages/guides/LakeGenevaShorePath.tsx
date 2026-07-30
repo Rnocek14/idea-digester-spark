@@ -47,12 +47,12 @@ const FAQS: { question: string; answer: string }[] = [
   {
     question: "How long does it take to walk the whole Shore Path?",
     answer:
-      "Walking the full 21 miles at a steady pace takes 8–10 hours. Most locals walk it in stages over several outings, often starting from Library Park in Lake Geneva, Fontana Beach, or Williams Bay Lakefront Park.",
+      "Walking the full 21 miles at a steady pace takes 8–10 hours. Most locals walk it in stages over several outings, often starting from Library Park in Lake Geneva, Fontana Beach, or the Williams Bay lakefront.",
   },
   {
     question: "Where can I park to access the Shore Path?",
     answer:
-      "Public parking is available in downtown Lake Geneva (Library Park area), Fontana Beach, Williams Bay Lakefront Park, Big Foot Beach State Park (entry fee), and Linn Pier. Avoid blocking private driveways along the path.",
+      "Public parking is available in downtown Lake Geneva (Library Park area), Fontana Beach, the Williams Bay lakefront (Edgewater Park and the village beach, sometimes called Williams Bay Lakefront Park), Big Foot Beach State Park (entry fee), and Linn Pier. Avoid blocking private driveways along the path.",
   },
   {
     question: "Is the Shore Path really public if it goes past private homes?",
@@ -77,7 +77,7 @@ const FAQS: { question: string; answer: string }[] = [
   {
     question: "Can I swim from the Shore Path?",
     answer:
-      "Swim only at designated public beaches — Lake Geneva Public Beach, Williams Bay, Fontana, and Big Foot Beach State Park. The shoreline in front of private homes is private waterfront; swimming there is not permitted.",
+      "Swim only at designated public beaches — the city beach at the Riviera in Lake Geneva (listed as both Riviera Beach and Lake Geneva Public Beach; it is one beach), Williams Bay, Fontana, and Big Foot Beach State Park. The shoreline in front of private homes is private waterfront; swimming there is not permitted.",
   },
   {
     question: "Where did the distances and access points on this page come from?",
@@ -92,7 +92,7 @@ const FAQS: { question: string; answer: string }[] = [
   {
     question: "What's a good shorter section to walk with kids?",
     answer:
-      "Williams Bay Lakefront Park to Edgewater Park is the family pick — flat, short, public beach access, restrooms, and a playground at the trailhead. Fontana Beach to Reid Park is the other easy win on the west end.",
+      "The Williams Bay lakefront — the village beach and Edgewater Park, which sit next to each other — is the family pick: flat, short, public beach access, restrooms, and a playground at the trailhead. Fontana Beach to Reid Park is the other easy win on the west end.",
   },
   {
     question: "Can I bike the Shore Path?",
@@ -102,7 +102,7 @@ const FAQS: { question: string; answer: string }[] = [
   {
     question: "Are there public restrooms on the Shore Path?",
     answer:
-      "Yes, at seven public locations: Edgewater Park and the Lakefront Recreation Building in Williams Bay; Elm Park, the Riviera, and the Lake Geneva Visitor Center in Lake Geneva; Big Foot Beach State Park on the south shore; and Reid Park in Fontana. Hours vary by season, so don't count on one being open outside the summer months. Plan your turnaround points around them.",
+      "Yes, at seven public locations: Edgewater Park and the Lakefront Recreation Building in Williams Bay; Elm Park, the Riviera, and the Lake Geneva Visitor Center in Lake Geneva; Big Foot Beach State Park on the south shore; and Reid Park in Fontana. Two cautions: hours vary by season, so don't count on one being open outside the summer months, and some sit inside a paid beach gate rather than on the path — Reid Park in Fontana and Edgewater Park in Williams Bay are the reliable free ones. Plan your turnaround points around them.",
   },
   {
     question: "How far is Williams Bay to Fontana on the Shore Path?",
@@ -117,7 +117,7 @@ const FAQS: { question: string; answer: string }[] = [
   {
     question: "Is there a shorter walk than the full 21 miles?",
     answer:
-      "Most people never walk the whole loop. Four common section walks: Library Park out and back toward Big Foot Beach (about four miles round-trip), Williams Bay Lakefront Park to Edgewater Park and back (about a mile and a half), Fontana Beach to Reid Park and back for sunset (about two miles), and Williams Bay to Fontana one-way (3.5 miles, half a day with lunch).",
+      "Most people never walk the whole loop. Four common section walks: Library Park out and back toward Big Foot Beach (about four miles round-trip), the Williams Bay village beach to Edgewater Park and back (about a mile and a half), Fontana Beach to Reid Park and back for sunset (about two miles), and Williams Bay to Fontana one-way (3.5 miles, half a day with lunch).",
   },
   {
     question: "Do I need a map to walk the Shore Path?",
@@ -205,7 +205,7 @@ const ACCESS_POINTS: { name: string; where: string; note: string }[] = [
     note: "The default start. City lots and metered street parking near the water, and the first place to fill on a summer weekend.",
   },
   {
-    name: "Riviera & Lake Geneva Public Beach",
+    name: "The Riviera & city beach",
     where: "Downtown lakefront",
     note: "Restrooms, the tour-boat pier, and the flattest walking on the whole path. Day-use fee at the beach in season for non-residents.",
   },
@@ -215,7 +215,7 @@ const ACCESS_POINTS: { name: string; where: string; note: string }[] = [
     note: "A Wisconsin state park entry sticker is required. Parking here is the easiest way to reach the south-shore stretch without circling downtown.",
   },
   {
-    name: "Williams Bay Lakefront Park & Edgewater Park",
+    name: "Williams Bay lakefront & Edgewater Park",
     where: "North shore",
     note: "Parking at the lakefront, restrooms at both parks, and a playground at the trailhead — the family end of the path.",
   },
@@ -255,7 +255,7 @@ const SECTION_WALKS: {
   {
     name: "Family-friendly bay walk",
     audience: "With kids · 30–45 min",
-    from: "Williams Bay Lakefront Park",
+    from: "Williams Bay village beach",
     to: "Edgewater Park & back",
     miles: "~1.5 mi round-trip",
     time: "30–45 min",
@@ -600,10 +600,26 @@ export default function LakeGenevaShorePath() {
               "more than 150 years" framing are the account as it is handed down
               around the lake and repeated by the shoreline communities; this
               desk has not reproduced a deed, plat, or court record here. Read it
-              as the traditional account rather than a citation. The numbers
-              further down this page — the seven leg distances and the public
-              restroom locations — do come from a published source, and we say
-              which one.
+              as the traditional account rather than a citation. In particular we
+              have found no source establishing that the path has been
+              continuously open — only that it has been walked for a very long
+              time, which is a different claim. The numbers further down this
+              page — the seven leg distances and the public restroom locations —
+              do come from a published source, and we say which one.
+            </p>
+            <p>
+              <strong>And the 1870s is not the beginning.</strong> Framing the
+              path as a Gilded Age creation gets the order of events backwards.
+              The route was a Potawatomi footpath between village sites at what
+              are now Fontana, Williams Bay and Lake Geneva, walked until the
+              removal of 1836 — the Historic Indian Trail marker in Library Park
+              dates use of the lakeside trail from 2500 BC. What the 1870s
+              brought was the railroad, the steamboat era, and the Chicago
+              families who built along the shore after the 1871 fire; the older
+              trail became the service path linking their properties. Worth
+              knowing too: that marker puts the trail at 26 miles where the
+              village and tourism bodies give 21 for the modern path, and this
+              desk has not reconciled the two.
             </p>
             <p>
               <strong>What it feels like underfoot.</strong> Because the path
