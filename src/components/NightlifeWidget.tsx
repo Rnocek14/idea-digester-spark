@@ -393,28 +393,6 @@ function isEveningEntertainment(event: NightlifeEvent): boolean {
   return EVENING_ENTERTAINMENT_PATTERN.test(event.title || '');
 }
 
-function isValidNightlifeEventLegacy(event: NightlifeEvent): boolean {
-  const title = event.title.toLowerCase();
-  
-  // Hard exclude low-value or non-entertainment events
-  const excludeTitleKeywords = [
-    'penn & teller', 'penn and teller', 'wonderful!', 'magic show',
-    'new year', 'happy new year', 'thank you for attending', 'casino',
-    'skeptics', 'las vegas headliners', 'carson hall', 'thank you',
-    'dance away winter blues', 'kids can dance', 'yoga', 'brunch'
-  ];
-  
-  if (excludeTitleKeywords.some(kw => title.includes(kw))) return false;
-  
-  // For undated events, require freshness to prevent lingering forever
-  if (!event.event_date && event.created_at) {
-    const ageDays = (Date.now() - new Date(event.created_at).getTime()) / (1000 * 60 * 60 * 24);
-    if (ageDays > 14) return false;
-  }
-  
-  // Accept all nightlife vertical events that pass the exclusion filter
-  return true;
-}
 
 function getEventEmoji(title: string, tags?: string[]): string {
   const t = title.toLowerCase();
