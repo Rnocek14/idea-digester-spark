@@ -52,6 +52,7 @@ class MockBuilder implements PromiseLike<{ data: unknown; error: unknown; count:
   ilike(...a: unknown[]) { return this.f("ilike", ...a); }
   order(...a: unknown[]) { return this.f("order", ...a); }
   limit(...a: unknown[]) { return this.f("limit", ...a); }
+  range(...a: unknown[]) { return this.f("range", ...a); }
   then<T1, T2>(
     onfulfilled?: ((v: { data: unknown; error: unknown; count: number | null }) => T1 | PromiseLike<T1>) | null,
     onrejected?: ((reason: unknown) => T2 | PromiseLike<T2>) | null

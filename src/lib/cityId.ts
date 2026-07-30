@@ -45,8 +45,21 @@ function isNonCanonicalHost(hostname: string): boolean {
 /**
  * The origin this page should present as canonical — scheme + host, no trailing
  * slash. Safe to call during prerender and in non-browser contexts.
+ *
+ * Pass `siteDomain` when the caller has already resolved the city (it holds a
+ * useCityConfig() row). That is strictly better than inferring the origin from
+ * `window`: it is correct during prerender, correct on a preview host, and
+ * correct in the one case host-sniffing cannot get right — a city reached on a
+ * domain that is not its canonical one. Callers without a resolved city omit it
+ * and get the host-derived behaviour.
  */
-export function getSiteOrigin(): string {
+export function getSiteOrigin(siteDomain?: string | null): string {
+  const explicit = String(siteDomain ?? "")
+    .trim()
+    .replace(/^https?:\/\//, "")
+    .replace(/\/+$/, "");
+  if (explicit) return `https://${explicit}`;
+
   if (typeof window === "undefined") return DEFAULT_SITE_ORIGIN;
 
   const override = (window as unknown as { __SITE_ORIGIN__?: string }).__SITE_ORIGIN__;

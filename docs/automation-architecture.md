@@ -46,6 +46,52 @@ frontend should migrate onto it incrementally (it has public read RLS).
 | SEO discovery | `serve-sitemap` fn generates the sitemap from the DB on request (robots.txt points to it) — no rebuild needed |
 | Ops visibility | daily health digest email, only when something is actually unhealthy, max 1/20h |
 
+## Public-serving edge functions (crawler-facing)
+
+Every function above is an *ingestion* or *maintenance* job. The functions below
+are different in kind: they are read-only and are invoked by a visiting crawler,
+not by a cron. They exist because the reader-facing site is a Vite SPA that ships
+an empty `<div id="root">`. Googlebot renders JavaScript eventually; GPTBot,
+ClaudeBot, PerplexityBot and OAI-SearchBot do not render it at all, so the
+structured record this system produces was invisible to them.
+
+| Function | Serves |
+|---|---|
+| `serve-page` | Server-rendered HTML for the database-backed routes: `/incidents`, `/incidents/archive` (paginated, including resolved entries), `/incidents/{slug}` with its recorded updates, `/stories/{...}`, and `/today`. Includes NewsArticle / CollectionPage / BreadcrumbList JSON-LD. |
+| `serve-data` | The citable dataset: `incidents.json`, `incidents.csv` and a schema.org `Dataset` descriptor at `dataset.json`. Publishes provenance per record (slug, type, status, timestamps, coarse geo label, named source of record) and **deliberately publishes no counts or totals** — see `docs/citable-data.md`. |
+| `serve-feed` | An Atom feed of recently published stories for the resolved city. |
+| `serve-sitemap` | The XML sitemap, built from database rows at request time rather than at build time. |
+| `serve-robots` | A per-city `robots.txt` whose `Sitemap:` line carries that city's own `?city_id=`. |
+| `serve-llms` | A per-city `llms.txt` describing the site to language models, generated from `city_config` plus the shared route table. |
+
+Two invariants hold across all six:
+
+- **One city resolver.** Every one of them calls `resolveCityConfig()` in
+  `_shared/renderPage.ts`: `?city_id=` first, then the `Host` /
+  `X-Forwarded-Host` header, then the template city. None of them hardcodes a
+  domain, city name or city id.
+- **One privacy path.** Any surface that emits incident text runs the tier gate
+  and then a redactor, both from `_shared/incidentGate.ts`. This includes
+  `serve-sitemap`: a sitemap URL contains `incidents.slug`, which is derived
+  upstream from the *raw* title, so gated rows are omitted rather than submitted
+  to a search engine.
+
+`incidentGate.ts` holds **two** redactors, deliberately, because they run at
+different times on different text:
+
+| Function | When | Input | Name rule |
+|---|---|---|---|
+| `redactPersonalDetails()` | ingestion, on write | raw third-party blotter/aggregator prose | removes any capitalised bigram not on a place allowlist |
+| `redactForPublicRender()` | render, on read | stored fields the ingesters generated | targeted (rank+name, "identified as X Y", "X Y, of", "First M. Last") |
+
+They must not be merged. The ingestion rule is correctly aggressive for scraped
+prose but destructive at render time — "Water Main Break" is a capitalised
+bigram and would vanish from a headline. Both sit behind the tier gate, never in
+place of it.
+
+**These functions change nothing until an operator wires the routes.** They are
+deployed code with no traffic pointed at them. See `docs/edge-serving.md`.
+
 ## What still needs a human (and the path to zero)
 
 | Task | Today | Path to zero-touch |

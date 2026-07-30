@@ -9,7 +9,10 @@ import { Card } from "@/components/ui/card";
 import { Briefcase, Plus, Search, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PageMeta } from "@/components/PageMeta";
-import { LG_CORE_KEYWORDS, LG_GEO_KEYWORDS } from "@/lib/seoKeywords";
+import { useCityConfig } from "@/hooks/useCityConfig";
+import { getCityId, runCityScoped } from "@/lib/cityId";
+import { jobPostingsJsonLd } from "@/lib/seo/jsonLd";
+import { getSiteOrigin } from "@/lib/cityId";
 
 type JobListing = {
   id: string;
@@ -51,20 +54,46 @@ const Jobs = () => {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const city = useCityConfig();
+
+  // JobPosting.jobLocation has to name a real place, and job_listings has no
+  // address columns — the city's own state code is what makes its locality
+  // unambiguous to Google. useCityConfig() does not carry it, so it is read
+  // here and cached for the session. Missing simply means no addressRegion.
+  const { data: stateCode } = useQuery({
+    queryKey: ["city-state-code", city.id],
+    queryFn: async () => {
+      // city_config is newer than the generated Supabase types.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data } = await (supabase as any)
+        .from("city_config")
+        .select("state_code")
+        .eq("id", city.id)
+        .maybeSingle();
+      return (data?.state_code as string | undefined) ?? null;
+    },
+    staleTime: 60 * 60 * 1000,
+  });
 
   const { data: jobs = [], isLoading } = useQuery({
     queryKey: ["public-jobs"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("job_listings")
-        .select("*")
-        .eq("status", "approved")
-        .gt("expires_at", new Date().toISOString())
-        .order("is_featured", { ascending: false })
-        .order("created_at", { ascending: false });
+      // City-scoped, like every other reader surface. Without this filter a
+      // second city's domain lists the first city's openings — and the
+      // JobPosting schema below would then assert that every one of them is
+      // located in whichever city served the page.
+      const { data, error } = await runCityScoped((scoped) => {
+        let q = supabase.from("job_listings").select("*");
+        if (scoped) q = q.eq("city_id", getCityId());
+        return q
+          .eq("status", "approved")
+          .gt("expires_at", new Date().toISOString())
+          .order("is_featured", { ascending: false })
+          .order("created_at", { ascending: false });
+      });
 
       if (error) throw error;
-      return data as JobListing[];
+      return (data ?? []) as JobListing[];
     },
     staleTime: 60000,
   });
@@ -84,39 +113,56 @@ const Jobs = () => {
   const featuredJobs = filteredJobs.filter(j => j.is_featured);
   const regularJobs = filteredJobs.filter(j => !j.is_featured);
 
+  // Schema is built from every live listing, not the filtered view: what a
+  // reader has narrowed down on screen says nothing about what is open.
+  // Listings that cannot satisfy Google's required fields emit nothing at all.
+  const jobSchema = jobPostingsJsonLd(jobs, {
+    city_name: city.city_name,
+    state_code: stateCode,
+    site_domain: city.site_domain,
+  });
+
+  const origin = getSiteOrigin(city.site_domain);
+
+  // Derived from the resolved city. The literal "Lake Geneva ..." / "Walworth
+  // County ..." terms that used to sit here shipped in the shared bundle and
+  // were therefore served on every city's domain.
+  const jobKeywords = [
+    `${city.city_name} jobs`,
+    `jobs in ${city.city_name}`,
+    `${city.city_name} hiring`,
+    `${city.city_name} employment`,
+    `${city.city_name} hospitality jobs`,
+    `${city.city_name} seasonal jobs`,
+    "local jobs",
+    "now hiring near me",
+  ];
+
   return (
     <PageShell>
       <PageMeta
-        title="Jobs in Lake Geneva, WI – Local Hiring | Lake Geneva Brief"
-        description="Browse current job openings from Lake Geneva area businesses — hospitality, retail, trades, and more."
+        title={`Jobs in ${city.city_name} – Local Hiring | ${city.site_name}`}
+        description={`Browse current job openings from ${city.city_name} area businesses — hospitality, retail, trades, and more.`}
         path="/jobs"
-        keywords={[
-          ...LG_CORE_KEYWORDS,
-          ...LG_GEO_KEYWORDS,
-          "Lake Geneva jobs",
-          "jobs Lake Geneva WI",
-          "Lake Geneva hiring",
-          "Lake Geneva employment",
-          "Walworth County jobs",
-          "Lake Geneva hospitality jobs",
-          "Lake Geneva summer jobs",
-          "Grand Geneva jobs",
+        keywords={jobKeywords}
+        jsonLd={[
+          {
+            "@context": "https://schema.org",
+            "@type": "CollectionPage",
+            name: `${city.city_name} Jobs`,
+            url: `${origin}/jobs`,
+          },
+          ...jobSchema,
         ]}
-        jsonLd={{
-          "@context": "https://schema.org",
-          "@type": "CollectionPage",
-          "name": "Lake Geneva Jobs",
-          "url": "https://lakegenevabrief.com/jobs"
-        }}
       />
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Hero */}
         <div className="text-center mb-8">
           <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
-            Now Hiring in Lake Geneva
+            Now Hiring in {city.city_name}
           </h1>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Local work opportunities from Lake Geneva area businesses. 
+            Local work opportunities from {city.city_name} area businesses.
             Find your next job in hospitality, retail, services, and more.
           </p>
         </div>
@@ -127,7 +173,7 @@ const Jobs = () => {
             <div>
               <h3 className="font-semibold text-foreground">Hiring locally?</h3>
               <p className="text-sm text-muted-foreground">
-                Post your job to reach Lake Geneva area job seekers
+                Post your job to reach {city.city_name} area job seekers
               </p>
             </div>
             <div className="flex gap-2">
@@ -232,7 +278,9 @@ const Jobs = () => {
                 </h2>
                 <div className="grid gap-4 md:grid-cols-2">
                   {featuredJobs.map((job) => (
-                    <JobCard key={job.id} job={job} />
+                    <div key={job.id} id={`job-${job.id}`} className="scroll-mt-24">
+                      <JobCard job={job} />
+                    </div>
                   ))}
                 </div>
               </div>
@@ -248,7 +296,9 @@ const Jobs = () => {
                 )}
                 <div className="grid gap-4 md:grid-cols-2">
                   {regularJobs.map((job) => (
-                    <JobCard key={job.id} job={job} />
+                    <div key={job.id} id={`job-${job.id}`} className="scroll-mt-24">
+                      <JobCard job={job} />
+                    </div>
                   ))}
                 </div>
               </div>
@@ -262,7 +312,7 @@ const Jobs = () => {
             Are you hiring?
           </h3>
           <p className="text-muted-foreground mb-4 max-w-md mx-auto">
-            Reach local job seekers in the Lake Geneva area. 
+            Reach local job seekers in the {city.city_name} area.
             Listings start at $50 for 30 days.
           </p>
           <Button asChild size="lg">

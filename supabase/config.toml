@@ -249,6 +249,28 @@ verify_jwt = false
 [functions.serve-sitemap]
 verify_jwt = false
 
+# Crawler-facing: must answer an anonymous GET with no Authorization header.
+[functions.serve-robots]
+verify_jwt = false
+
+[functions.serve-llms]
+verify_jwt = false
+
+# Newsreaders and aggregators send no Authorization header. Without this the
+# feed answers 401 and nothing downstream can subscribe.
+[functions.serve-feed]
+verify_jwt = false
+
+# The two functions this whole effort exists for. GPTBot, ClaudeBot,
+# PerplexityBot, OAI-SearchBot and Googlebot all send an anonymous GET with no
+# Authorization header; verify_jwt defaults to TRUE, so without these entries
+# both answer 401 to every crawler and serve nothing at all.
+[functions.serve-page]
+verify_jwt = false
+
+[functions.serve-data]
+verify_jwt = false
+
 [functions.bootstrap-city]
 verify_jwt = false
 
