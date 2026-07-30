@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight, MapPin, Heart } from "lucide-react";
 import { PublicHeader } from "@/components/PublicHeader";
 import { PageMeta } from "@/components/PageMeta";
 import { StoryPlayer } from "@/components/shore-path/StoryPlayer";
+import { StopSources, ThenAndNow } from "@/components/shore-path/StopSources";
 import { SoftRealEstateCTA } from "@/components/guides/SoftRealEstateCTA";
 import { breadcrumbJsonLd } from "@/lib/seo/jsonLd";
 import { useShorePathStopBySlug } from "@/hooks/useShorePathStopBySlug";
@@ -143,14 +144,18 @@ export default function LakeGenevaShorePathStop() {
           )}
         </header>
 
-        {stop.hero_image_url && (
-          <img
-            src={stop.hero_image_url}
-            alt={stop.name}
-            className="w-full rounded-md border border-slate-200 mb-6"
-            loading="lazy"
-          />
-        )}
+        {/* The same view a century earlier, beside the one you're looking at.
+            Falls back to the modern image alone until an archive image has both
+            a credit and a recorded rights status. */}
+        <ThenAndNow
+          historicalUrl={stop.historical_image_url}
+          year={stop.historical_image_year}
+          credit={stop.historical_image_credit}
+          sourceUrl={stop.historical_image_source_url}
+          rights={stop.historical_image_rights}
+          modernUrl={stop.hero_image_url}
+          stopName={stop.name}
+        />
 
         {/* Audio */}
         {stop.audio_url && (
@@ -184,6 +189,13 @@ export default function LakeGenevaShorePathStop() {
             <p className="text-sm text-amber-900 leading-snug">{stop.look_for}</p>
           </section>
         )}
+
+        {/* Where the history came from. Sits directly under the story it backs,
+            not buried at the foot of the page. */}
+        <StopSources
+          sources={stop.sources ?? []}
+          confidence={stop.history_confidence}
+        />
 
         {/* Local love prompt */}
         {stop.local_love_prompt && (

@@ -25,6 +25,20 @@ export type ShorePathStopRow = {
   audio_transcript: string | null;
   audio_voice_id: string | null;
   local_love_prompt: string | null;
+  leg_order_index: number | null;
+  /** Array of {url, publisher, supports}. Empty means unsourced, and the page says so. */
+  sources: Array<{ url?: string | null; publisher?: string | null; supports?: string | null }> | null;
+  history_confidence: "documented" | "traditional" | "thin" | null;
+  historical_image_url: string | null;
+  historical_image_year: string | null;
+  historical_image_credit: string | null;
+  historical_image_source_url: string | null;
+  historical_image_rights:
+    | "public_domain"
+    | "no_known_restrictions"
+    | "licensed"
+    | "permission_granted"
+    | null;
 };
 
 export function useShorePathStops() {
