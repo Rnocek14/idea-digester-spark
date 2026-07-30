@@ -206,25 +206,54 @@ serve(async (req) => {
         : evList.map((e) => `- ${e.title}${e.geo_label ? " (" + e.geo_label + ")" : ""}`).join("\n"),
     ].join("\n");
 
-    const aiResp = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          { role: "system", content: system },
-          { role: "user", content: sourceBlock },
-        ],
-        temperature: 0.7,
-      }),
-    });
+    // Try Lovable AI Gateway first (project credits), then fall back to OpenAI
+    // if the gateway key is missing. This avoids the OpenAI-only 429 quota issue.
+    let aiResp: Response;
+    let usedProvider = "lovable";
+    try {
+      aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: MODEL,
+          messages: [
+            { role: "system", content: system },
+            { role: "user", content: sourceBlock },
+          ],
+          temperature: 0.7,
+        }),
+      });
+      if (!aiResp.ok && aiResp.status === 401) throw new Error("lovable_auth_failed");
+    } catch (gatewayErr) {
+      if (!FALLBACK_OPENAI_KEY) {
+        console.error("[generate-daily-brief] Lovable AI Gateway failed and no fallback key", gatewayErr);
+        throw gatewayErr;
+      }
+      console.log("[generate-daily-brief] Falling back to OpenAI after gateway error", gatewayErr);
+      usedProvider = "openai";
+      aiResp = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${FALLBACK_OPENAI_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          messages: [
+            { role: "system", content: system },
+            { role: "user", content: sourceBlock },
+          ],
+          temperature: 0.7,
+        }),
+      });
+    }
 
     if (!aiResp.ok) {
       const errText = await aiResp.text();
-      console.error("[generate-daily-brief] OpenAI failed", aiResp.status, errText);
+      console.error(`[generate-daily-brief] ${usedProvider} failed`, aiResp.status, errText);
       // Persist the failure so it's visible
       await supabase.from("daily_briefs").upsert({
         brief_date,
@@ -234,15 +263,16 @@ serve(async (req) => {
         mentioned_story_ids,
         model: MODEL,
         status: "draft",
-        generation_error: `openai ${aiResp.status}: ${errText.slice(0, 500)}`,
+        generation_error: `${usedProvider} ${aiResp.status}: ${errText.slice(0, 500)}`,
       });
       return new Response(
-        JSON.stringify({ error: "openai_failed", status: aiResp.status, detail: errText.slice(0, 300) }),
+        JSON.stringify({ error: `${usedProvider}_failed`, status: aiResp.status, detail: errText.slice(0, 300) }),
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
     const aiJson = await aiResp.json();
+
     const body = String(aiJson?.choices?.[0]?.message?.content ?? "").trim();
 
     if (!body) {
