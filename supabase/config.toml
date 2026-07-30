@@ -233,6 +233,13 @@ verify_jwt = false
 [functions.report-incident]
 verify_jwt = false
 
+# Walkers have no account by design — a signup at the trailhead would kill the
+# feature before the first stop — so this cannot require a JWT. Abuse is bounded
+# inside the function instead: per-IP and global claim limits, a per-walker daily
+# visit cap, and server-side geofence verification of every claimed arrival.
+[functions.path-register]
+verify_jwt = false
+
 [functions.alert-source-health]
 verify_jwt = false
 
