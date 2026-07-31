@@ -22,6 +22,7 @@ const TARGETS = [
   "serve-robots",
   "serve-llms",
   "serve-feed",
+  "submit-indexnow",
   "auto-maintain-sources",
   "alert-source-health",
   "ingest-incident",

@@ -285,3 +285,7 @@ verify_jwt = false
 
 [functions.generate-weekly-recap]
 verify_jwt = false
+
+# Cron-invoked, not crawler-facing, but it must run without a user JWT.
+[functions.submit-indexnow]
+verify_jwt = false

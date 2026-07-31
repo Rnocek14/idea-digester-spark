@@ -1,3 +1,4 @@
+import { GuideNewsletterCTA } from "@/components/guides/GuideNewsletterCTA";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { PublicHeader } from "@/components/PublicHeader";
@@ -1209,6 +1210,16 @@ export default function LakeGenevaShorePath() {
             , for the practical side: schools, winters, commutes, and what
             year-round life on the lake actually asks of you.
           </p>
+
+          {/*
+            This page renders its own layout rather than GuideShell, so it did not
+            inherit the newsletter block when that moved into the shell — and it is a
+            top-four entry point by traffic. Capture goes here explicitly, above
+            "keep reading", so the reader is offered something before the exit links.
+          */}
+          <div className="mt-12">
+            <GuideNewsletterCTA />
+          </div>
 
           {/* Related guides */}
           <section className="mt-12 mb-12 pt-8 border-t border-slate-200">
