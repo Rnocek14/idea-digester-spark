@@ -72,6 +72,15 @@ Deno.serve(async (req) => {
     errors: [] as string[],
   };
 
+  // Current zero-run counter so this run can do the same health accounting
+  // sync-rss does — without it, this scraper could return empty forever and
+  // never trip the zero-run alarms in the health digest.
+  const { data: sourceRow } = await supabase
+    .from("sources")
+    .select("consecutive_zero_runs")
+    .eq("id", SOURCE_ID)
+    .maybeSingle();
+
   try {
     // 1. Fetch index page via Firecrawl
     const indexResp = await firecrawlScrape(INDEX_URL, firecrawlKey, ["html"]);
@@ -136,15 +145,30 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 4. Update source health
-    await supabase
-      .from("sources")
-      .update({
-        last_fetched_at: new Date().toISOString(),
-        last_successful_fetch_at: result.failed < targets.length ? new Date().toISOString() : undefined,
-        last_items_ingested_count: result.inserted,
-      })
-      .eq("id", SOURCE_ID);
+    // 4. Update source health. The index fetch succeeded, so this counts as a
+    // successful fetch; the zero-run counters cover the "HTTP 200 but nothing
+    // new" case (dedupe hits don't count as zero — skipped_existing means the
+    // source is alive, just already ingested).
+    const nowIso = new Date().toISOString();
+    const sawContent = result.inserted > 0 || result.skipped_existing > 0;
+    const healthUpdate: Record<string, unknown> = {
+      last_fetched_at: nowIso,
+      last_successful_fetch_at: nowIso,
+      last_items_ingested_count: result.inserted,
+      last_error_code: null,
+      last_error_detail: null,
+    };
+    if (sawContent) {
+      healthUpdate.consecutive_zero_runs = 0;
+      healthUpdate.health_severity = "ok";
+      if (result.inserted > 0) healthUpdate.last_nonzero_run_at = nowIso;
+    } else {
+      const nextRuns = (sourceRow?.consecutive_zero_runs ?? 0) + 1;
+      healthUpdate.last_zero_items_at = nowIso;
+      healthUpdate.consecutive_zero_runs = nextRuns;
+      healthUpdate.health_severity = nextRuns >= 10 ? "critical" : nextRuns >= 4 ? "warn" : "ok";
+    }
+    await supabase.from("sources").update(healthUpdate).eq("id", SOURCE_ID);
 
     return new Response(JSON.stringify(result), {
       status: 200,
@@ -152,6 +176,17 @@ Deno.serve(async (req) => {
     });
   } catch (e: any) {
     result.errors.push(e?.message ?? String(e));
+    // Record the failure on the source row so the health digest can see it —
+    // the cron that invokes this function ignores the HTTP response entirely.
+    await supabase
+      .from("sources")
+      .update({
+        last_fetched_at: new Date().toISOString(),
+        last_error_code: "scrape_failed",
+        last_error_detail: (e?.message ?? String(e)).slice(0, 500),
+        health_severity: "warn",
+      })
+      .eq("id", SOURCE_ID);
     return new Response(JSON.stringify(result), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -27,6 +27,7 @@ const TARGETS = [
   "alert-source-health",
   "ingest-incident",
   "ingest-email",
+  "ingest-news",
   "sync-511-traffic",
   "generate-weekly-recap",
   "path-register",
