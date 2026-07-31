@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { getSiteOrigin } from "@/lib/cityId";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { ArrowRight, Sunrise, Waves, Newspaper, Calendar } from "lucide-react";
@@ -64,11 +65,11 @@ export default function Today() {
     name: "The Lake Report — Lake Geneva today",
     description:
       "Lake Geneva at a glance: today's weather, top local stories, and what's happening tonight. Updated daily.",
-    url: "https://lakegenevabrief.com/today",
+    url: `${getSiteOrigin()}/today`,
     isPartOf: {
       "@type": "NewsMediaOrganization",
       name: "Lake Geneva Brief",
-      url: "https://lakegenevabrief.com",
+      url: `${getSiteOrigin()}`,
     },
   };
 

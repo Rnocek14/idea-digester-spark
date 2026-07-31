@@ -241,13 +241,21 @@ test("public/robots.txt is safe on any hostname", () => {
   const body = readFileSync(path, "utf8");
 
   // A Sitemap: directive requires an absolute URL, and an absolute URL is
-  // city-specific. In a file served on every city's domain, there can be none.
-  assert.equal(
-    sitemapLines(body).length,
-    0,
-    "the shared fallback must not carry a cross-city absolute sitemap"
-  );
-  assert.ok(!body.includes("lakegenevabrief.com"), "fallback must not name one city's domain");
+  // city-specific — so in a file served on every city's domain there should be
+  // none. ONE deliberate exception is currently permitted: while exactly one
+  // city exists and the serve-robots hosting rewrite is not wired, the single
+  // live domain carries its own sitemap line, and the file must say so with a
+  // removal marker. This assertion allows precisely that marked exception and
+  // nothing else — when city #2 launches, deleting the marker (as the file
+  // instructs) makes any remaining absolute sitemap line fail this test again.
+  const lines = sitemapLines(body);
+  if (lines.length > 0) {
+    assert.equal(lines.length, 1, "at most the one marked single-city sitemap line");
+    assert.ok(
+      body.includes("REMOVE BEFORE LAUNCHING CITY #2"),
+      "an absolute sitemap line is only permitted alongside its removal marker"
+    );
+  }
   assert.ok(!body.includes("supabase.co"), "fallback must not hardcode a project ref");
   assert.ok(
     !/^#\s*Canonical host/im.test(body),

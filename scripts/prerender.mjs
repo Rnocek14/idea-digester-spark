@@ -159,6 +159,81 @@ function serveDist(shell) {
   })
 }
 
+/**
+ * Fetch database-backed detail routes worth baking to static HTML.
+ *
+ * Why: Bing Webmaster shows ~a third of this site's known URLs excluded from the
+ * index, and the excluded class is exactly the pages that only exist if a crawler
+ * executes JavaScript — story and event detail pages. The fixed route lists above
+ * never included a single database row, so every /stories/{slug} the sitemap
+ * advertised was an empty <div id="root"> to any crawler that renders JS poorly
+ * (Bing) or not at all (every AI crawler).
+ *
+ * This runs in the SAME build environment as the prebuild sitemap script, so the
+ * same VITE_SUPABASE_* env vars are available. Plain PostgREST fetch — no SDK,
+ * because this file must stay dependency-free. Fails open: no env, no network, or
+ * a query error just means these routes are skipped and the build is unaffected.
+ *
+ * Incidents are deliberately NOT prerendered here. Their editorial/PII gate lives
+ * in the edge layer (supabase/functions/_shared/incidentGate.ts, Deno TS) and
+ * re-implementing it in this Node script would create a second copy that drifts.
+ * Incident pages are served crawlable by the serve-page edge function instead.
+ */
+async function fetchDynamicRoutes() {
+  const base = process.env.VITE_SUPABASE_URL
+  const key = process.env.VITE_SUPABASE_PUBLISHABLE_KEY
+  if (!base || !key) {
+    console.log('[prerender] Supabase env missing — skipping story/event routes.')
+    return []
+  }
+  const headers = { apikey: key, Authorization: `Bearer ${key}` }
+  const slugify = (t) =>
+    (t || '').toLowerCase().replace(/['"]/g, '').replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '').slice(0, 60).replace(/-+$/g, '')
+  const routes = []
+
+  try {
+    // Recent published stories — the bulk of the excluded-from-index class.
+    const q = new URLSearchParams({
+      select: 'id,title',
+      status: 'in.(published,auto_published)',
+      safety_level: 'eq.safe',
+      order: 'publish_date.desc.nullslast',
+      limit: '40',
+    })
+    const res = await fetch(`${base}/rest/v1/content_queue?${q}`, { headers })
+    if (res.ok) {
+      for (const s of await res.json()) {
+        const slug = slugify(s.title)
+        routes.push(slug ? `/stories/${slug}-${s.id}` : `/stories/${s.id}`)
+      }
+    }
+  } catch (e) {
+    console.log(`[prerender] story fetch failed (${e.message}) — skipping.`)
+  }
+
+  try {
+    // Upcoming events only — a prerendered page for a past event is a stale page
+    // with a permanent URL, which is worse than no page.
+    const q = new URLSearchParams({
+      select: 'id',
+      category: 'eq.events',
+      status: 'in.(published,auto_published)',
+      safety_level: 'eq.safe',
+      event_date: `gte.${new Date().toISOString().slice(0, 10)}`,
+      order: 'event_date.asc',
+      limit: '20',
+    })
+    const res = await fetch(`${base}/rest/v1/content_queue?${q}`, { headers })
+    if (res.ok) for (const e of await res.json()) routes.push(`/events/${e.id}`)
+  } catch (e) {
+    console.log(`[prerender] event fetch failed (${e.message}) — skipping.`)
+  }
+
+  if (routes.length) console.log(`[prerender] +${routes.length} story/event routes from the database`)
+  return routes
+}
+
 async function main() {
   if (!existsSync(DIST)) {
     console.log('[prerender] no dist/ — run vite build first. Skipping.')
@@ -208,7 +283,8 @@ async function main() {
     }
 
     server = await serveDist(shell)
-    const routes = [...STATIC_ROUTES, ...DATA_ROUTES]
+    const dynamicRoutes = await fetchDynamicRoutes()
+    const routes = [...STATIC_ROUTES, ...DATA_ROUTES, ...dynamicRoutes]
     const page = await browser.newPage({ userAgent: 'LakeGenevaBriefPrerender/1.0' })
     page.setDefaultTimeout(NAV_TIMEOUT_MS)
 
@@ -258,7 +334,7 @@ async function main() {
         // loading state, and writing that file would be worse than leaving the SPA
         // fallback in place. Give them one more chance, then skip rather than ship
         // an empty page.
-        if (STATIC_ROUTES.includes(route)) {
+        if (STATIC_ROUTES.includes(route) || route.startsWith('/stories/') || route.startsWith('/events/')) {
           const floor = route.startsWith('/guides/') ? MIN_GUIDE_TEXT : MIN_STATIC_TEXT
           const textLen = await page.evaluate(
             () => document.getElementById('root')?.innerText?.trim().length ?? 0,

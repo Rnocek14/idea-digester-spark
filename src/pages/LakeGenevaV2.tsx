@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { getSiteOrigin } from "@/lib/cityId";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -793,10 +794,10 @@ const LakeGenevaV2 = () => {
           "@context": "https://schema.org",
           "@type": "WebSite",
           "name": "Lake Geneva Brief",
-          "url": "https://lakegenevabrief.com/",
+          "url": `${getSiteOrigin()}/`,
           "potentialAction": {
             "@type": "SearchAction",
-            "target": "https://lakegenevabrief.com/?q={search_term_string}",
+            "target": `${getSiteOrigin()}/?q={search_term_string}`,
             "query-input": "required name=search_term_string"
           }
         }}

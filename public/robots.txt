@@ -17,6 +17,15 @@
 #
 # Everything below is safe on any hostname.
 
+# SINGLE-CITY PRAGMATISM — REMOVE BEFORE LAUNCHING CITY #2.
+# The fleet-correct design serves robots.txt per city via the serve-robots edge
+# function, and this static file stays hostname-neutral. But today exactly one
+# city exists, the hosting rewrite is not configured yet, and a missing sitemap
+# hint costs real discovery on the only live domain. So the absolute line below
+# is correct for now and wrong the moment a second domain serves this file.
+# When city #2 launches: delete this line and wire /robots.txt -> serve-robots.
+Sitemap: https://lakegenevabrief.com/sitemap.xml
+
 User-agent: Googlebot
 Allow: /
 Disallow: /dashboard

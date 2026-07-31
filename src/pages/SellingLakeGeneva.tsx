@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { getSiteOrigin } from "@/lib/cityId";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import lakeGenevaHero from "@/assets/lake-geneva-hero.jpg";
@@ -183,13 +184,13 @@ const SellingLakeGeneva = () => {
               "@type": "Place",
               "name": "Lake Geneva, Wisconsin",
             },
-            "url": "https://lakegenevabrief.com/selling-lake-geneva",
+            "url": `${getSiteOrigin()}/selling-lake-geneva`,
           },
           {
             "@context": "https://schema.org",
             "@type": "WebPage",
             "name": "Selling a Home in Lake Geneva",
-            "url": "https://lakegenevabrief.com/selling-lake-geneva",
+            "url": `${getSiteOrigin()}/selling-lake-geneva`,
           },
         ]}
       />

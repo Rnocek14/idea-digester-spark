@@ -6,6 +6,17 @@ import { writeFileSync } from "fs";
 import { resolve } from "path";
 import { createClient } from "@supabase/supabase-js";
 
+// The SAME editorial gate the edge functions apply. Incident slugs are built from the
+// raw title, so an ungated row publishes a person's name or house number inside
+// public/sitemap.xml itself — the exact leak that was found and fixed in serve-sitemap.
+// This build-time script had the identical query with no gate. The gate module is pure
+// functions with zero Deno APIs, so Node/tsx imports it directly and the two sitemaps
+// cannot drift apart.
+import {
+  containsPersonalDetail,
+  passesIncidentGate,
+} from "../supabase/functions/_shared/incidentGate";
+
 const BASE_URL = "https://lakegenevabrief.com";
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
@@ -123,12 +134,19 @@ async function fetchDynamic(): Promise<SitemapEntry[]> {
     const cutoff = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString();
     const { data: incidents } = await sb
       .from("incidents")
-      .select("slug, updated_at")
+      // Gate columns are selected so the editorial gate can actually see them.
+      .select("slug, title, incident_type, location, updated_at")
       .not("slug", "is", null)
       .gte("updated_at", cutoff)
       .order("updated_at", { ascending: false })
       .limit(500);
+    let gatedOut = 0;
     for (const i of incidents ?? []) {
+      // Fail closed: a Tier-4 incident (arrest, custody, a name in the title) must not
+      // appear in the sitemap even as a URL, and a slug cannot be redacted without
+      // breaking the URL it names.
+      if (!passesIncidentGate(i.title, i.incident_type, i.location)) { gatedOut++; continue; }
+      if (containsPersonalDetail(i.title)) { gatedOut++; continue; }
       entries.push({
         path: `/incidents/${i.slug}`,
         lastmod: (i.updated_at || "").toString().slice(0, 10) || undefined,
@@ -136,7 +154,7 @@ async function fetchDynamic(): Promise<SitemapEntry[]> {
         priority: "0.5",
       });
     }
-    console.log(`[sitemap] +${incidents?.length ?? 0} incident entries`);
+    console.log(`[sitemap] +${(incidents?.length ?? 0) - gatedOut} incident entries (${gatedOut} withheld by the editorial gate)`);
   } catch (err) {
     console.warn("[sitemap] incidents fetch failed:", err);
   }

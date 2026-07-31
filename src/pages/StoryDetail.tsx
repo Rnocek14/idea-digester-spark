@@ -1,4 +1,5 @@
 import { usePageView, pillarFromCategory } from "@/lib/trackStoryEvent";
+import { getSiteOrigin } from "@/lib/cityId";
 import { useEffect } from "react";
 import { useParams, Link, Navigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -184,8 +185,8 @@ export default function StoryDetail() {
       "@type": "NewsArticle",
       headline: story.title,
       description,
-      url: `https://lakegenevabrief.com${path}`,
-      mainEntityOfPage: `https://lakegenevabrief.com${path}`,
+      url: `${getSiteOrigin()}${path}`,
+      mainEntityOfPage: `${getSiteOrigin()}${path}`,
       datePublished: publishedISO,
       dateModified: modifiedISO,
       image: story.image_url ? [story.image_url] : undefined,
@@ -196,7 +197,7 @@ export default function StoryDetail() {
       publisher: {
         "@type": "NewsMediaOrganization",
         name: "Lake Geneva Brief",
-        url: "https://lakegenevabrief.com",
+        url: `${getSiteOrigin()}`,
       },
       isAccessibleForFree: true,
       speakable: {
@@ -208,9 +209,9 @@ export default function StoryDetail() {
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
       itemListElement: [
-        { "@type": "ListItem", position: 1, name: "Lake Geneva Brief", item: "https://lakegenevabrief.com/" },
-        { "@type": "ListItem", position: 2, name: story.category || "Stories", item: `https://lakegenevabrief.com/?category=${story.category || ""}` },
-        { "@type": "ListItem", position: 3, name: story.title, item: `https://lakegenevabrief.com${path}` },
+        { "@type": "ListItem", position: 1, name: "Lake Geneva Brief", item: `${getSiteOrigin()}/` },
+        { "@type": "ListItem", position: 2, name: story.category || "Stories", item: `${getSiteOrigin()}/?category=${story.category || ""}` },
+        { "@type": "ListItem", position: 3, name: story.title, item: `${getSiteOrigin()}${path}` },
       ],
     },
   ];

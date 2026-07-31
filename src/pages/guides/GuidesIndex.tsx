@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { PublicHeader } from "@/components/PublicHeader";
 import { PageMeta } from "@/components/PageMeta";
 import { breadcrumbJsonLd } from "@/lib/seo/jsonLd";
+import { getSiteOrigin } from "@/lib/cityId";
 
 type GuideEntry = {
   title: string;
@@ -176,7 +177,7 @@ export default function GuidesIndex() {
       name: "Lake Geneva Guides",
       description:
         "Cornerstone guides to Lake Geneva, Wisconsin — landmarks, things to do, moving, neighborhoods, and reference.",
-      url: `https://lakegenevabrief.com${path}`,
+      url: `${getSiteOrigin()}${path}`,
     },
   ];
 

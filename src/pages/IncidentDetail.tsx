@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { getSiteOrigin } from "@/lib/cityId";
 import { useParams, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -142,7 +143,7 @@ export default function IncidentDetail() {
         headline: incident.title,
         datePublished: incident.started_at,
         dateModified: incident.updated_at,
-        url: `https://lakegenevabrief.com/incidents/${incident.slug}`,
+        url: `${getSiteOrigin()}/incidents/${incident.slug}`,
         publisher: {
           "@type": "NewsMediaOrganization",
           name: "Lake Geneva Brief",

@@ -1,4 +1,5 @@
 import { Link, useParams, Navigate } from "react-router-dom";
+import { getSiteOrigin } from "@/lib/cityId";
 import { ArrowLeft, ArrowRight, MapPin, Heart } from "lucide-react";
 import { PublicHeader } from "@/components/PublicHeader";
 import { PageMeta } from "@/components/PageMeta";
@@ -9,7 +10,8 @@ import { breadcrumbJsonLd } from "@/lib/seo/jsonLd";
 import { useShorePathStopBySlug } from "@/hooks/useShorePathStopBySlug";
 
 const PARENT_PATH = "/guides/lake-geneva-shore-path";
-const SITE = "https://lakegenevabrief.com";
+// Resolved per request — a literal host here would make every fleet city claim city #1.
+const SITE = getSiteOrigin();
 
 function buildMeta(stop: {
   name: string;

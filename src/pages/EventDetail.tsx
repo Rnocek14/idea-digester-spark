@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { getSiteOrigin } from "@/lib/cityId";
 import { Link, useParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -128,7 +129,7 @@ export default function EventDetail() {
       },
     },
     description: description.substring(0, 300),
-    url: `https://lakegenevabrief.com/events/${event.id}`,
+    url: `${getSiteOrigin()}/events/${event.id}`,
     image: event.image_url || undefined,
   };
 
