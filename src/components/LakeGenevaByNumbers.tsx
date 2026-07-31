@@ -93,7 +93,7 @@ export default function LakeGenevaByNumbers() {
       >
         Market data via{" "}
         <span className="font-semibold text-slate-700">Gina Nocek</span>
-        <span className="text-slate-400"> · @properties</span>
+        <span className="text-slate-600"> · @properties</span>
       </Link>
     </section>
   );
