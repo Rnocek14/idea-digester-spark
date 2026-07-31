@@ -57,6 +57,69 @@ function resolveSourceId(source: string | undefined): string {
   return slugMap[source.toLowerCase()] ?? LAKE_GENEVA_NEWS_SOURCE_ID;
 }
 
+// Keyword screen standing in for the AI safety pass that sync-rss items get.
+// Matches the SENSITIVE definition used there: crime/courts, death/tragedy,
+// and charged civic topics. Anything that matches is held for human review;
+// a clean article from a trusted hyperlocal source auto-publishes, which is
+// the same tier default sync-rss applies when its classifier is unavailable.
+const SENSITIVE_SCREEN_KEYWORDS = [
+  // crime & courts
+  "arrest", "arrested", "police", "sheriff", "crime", "criminal", "charged",
+  "charges", "sentenced", "guilty", "lawsuit", "court", "jail", "prison",
+  "theft", "burglary", "robbery", "assault", "battery", "shooting", "shot",
+  "stabbed", "stabbing", "homicide", "murder", "drugs", "overdose", "dui", "owi",
+  // death & tragedy
+  "dies", "died", "death", "dead", "fatal", "fatality", "killed", "obituary",
+  "suicide", "drowned", "drowning", "crash", "collision", "missing person",
+  // charged topics
+  "protest", "election", "campaign", "layoff", "layoffs", "outbreak",
+  "abuse", "scandal", "fraud",
+];
+
+function matchSensitiveKeyword(text: string): string | null {
+  for (const kw of SENSITIVE_SCREEN_KEYWORDS) {
+    const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    if (new RegExp(`\\b${escaped}\\b`, "i").test(text)) return kw;
+  }
+  return null;
+}
+
+type IngestDecision = {
+  status: string;
+  safetyLevel: string;
+  safetyReason: string;
+  holdReason: string | null;
+  decisionPath: string;
+};
+
+function decideIngestStatus(geoTier: number, matchedKeyword: string | null): IngestDecision {
+  if (matchedKeyword) {
+    return {
+      status: "pending",
+      safetyLevel: "sensitive",
+      safetyReason: `Keyword screen matched "${matchedKeyword}" — held for human review`,
+      holdReason: "sensitive_keyword_screen",
+      decisionPath: "ingest_keyword_hold",
+    };
+  }
+  if (geoTier >= 1) {
+    return {
+      status: "auto_published",
+      safetyLevel: "safe",
+      safetyReason: "Keyword screen clean; trusted hyperlocal source",
+      holdReason: null,
+      decisionPath: "ingest_trusted_auto",
+    };
+  }
+  return {
+    status: "pending",
+    safetyLevel: "soft_sensitive",
+    safetyReason: "Keyword screen clean but source is not hyperlocal — held for review",
+    holdReason: "untrusted_tier",
+    decisionPath: "ingest_t0_hold",
+  };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -158,20 +221,33 @@ Deno.serve(async (req) => {
       }
     }
 
+    const geoTier = item.geo_tier ?? defaultGeoTier;
+    const screenText = `${item.title} ${item.summary || ""} ${(item.content || "").substring(0, 2000)}`;
+    const matchedKeyword = matchSensitiveKeyword(screenText);
+    const decision = decideIngestStatus(geoTier, matchedKeyword);
+
     const payload = {
       source_id: sourceId,
       title: item.title.trim().slice(0, 500),
       content: item.content || item.summary || "",
       summary: item.summary || (item.content ? item.content.substring(0, 300) : null),
-      status: "pending" as const,
+      status: decision.status,
       category: item.category || "news",
       original_url: originalUrl,
       normalized_url: normalizedUrl,
-      publish_date: item.published_at || item.publish_date || null,
+      // Never null: a missing original publish time falls back to ingestion
+      // time. The public feed filters on publish_date, so a null here made
+      // the article permanently invisible even after approval.
+      publish_date: item.published_at || item.publish_date || new Date().toISOString(),
       author: item.author || null,
       image_url: item.image_url || null,
-      geo_tier: item.geo_tier ?? defaultGeoTier,
+      geo_tier: geoTier,
       geo_label: item.geo_label || "Lake Geneva",
+      safety_level: decision.safetyLevel,
+      safety_tags: matchedKeyword ? ["keyword_screen", matchedKeyword] : ["keyword_screen"],
+      safety_reason: decision.safetyReason,
+      hold_reason: decision.holdReason,
+      decision_path: decision.decisionPath,
       metadata: {
         ...(item.metadata || {}),
         source_slug: item.source || "lakegenevanews",
@@ -204,25 +280,27 @@ Deno.serve(async (req) => {
     results.push({ status: "inserted", article_id: row.id, url: originalUrl });
   }
 
-  // Update Source Health on the LakeGenevaNews row
+  // Update Source Health on the LakeGenevaNews row. Keys are omitted (not
+  // nulled) when this run carries no signal for them — the previous version
+  // wrote last_nonzero_run_at: null on every zero-insert run, erasing the
+  // real timestamp the health digest relies on.
   const nowIso = new Date().toISOString();
-  await supabase
-    .from("sources")
-    .update({
-      last_fetched_at: nowIso,
-      last_successful_fetch_at: nowIso,
-      last_items_ingested_count: inserted,
-      last_nonzero_run_at: inserted > 0 ? nowIso : sourceRow.metadata?.last_nonzero_run_at ?? null,
-      last_zero_items_at: inserted === 0 ? nowIso : null,
-      consecutive_zero_runs: inserted === 0
-        ? undefined  // let DB keep prev; we don't have prev here without re-read
-        : 0,
-      health_severity: "ok",
-      last_error_code: null,
-      last_error_detail: null,
-      updated_at: nowIso,
-    })
-    .eq("id", sourceId);
+  const healthUpdate: Record<string, unknown> = {
+    last_fetched_at: nowIso,
+    last_successful_fetch_at: nowIso,
+    last_items_ingested_count: inserted,
+    last_error_code: null,
+    last_error_detail: null,
+    updated_at: nowIso,
+  };
+  if (inserted > 0) {
+    healthUpdate.last_nonzero_run_at = nowIso;
+    healthUpdate.consecutive_zero_runs = 0;
+    healthUpdate.health_severity = "ok";
+  } else {
+    healthUpdate.last_zero_items_at = nowIso;
+  }
+  await supabase.from("sources").update(healthUpdate).eq("id", sourceId);
 
   // Audit log
   await supabase.from("activity_log").insert({

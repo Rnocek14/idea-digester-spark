@@ -4,7 +4,7 @@ import { Switch } from "@/components/ui/switch";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Activity, Mail, Share2, FileText, AlertTriangle, Power } from "lucide-react";
+import { Activity, Mail, Share2, FileText, AlertTriangle, Power, Newspaper } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import type { Json } from "@/integrations/supabase/types";
@@ -46,7 +46,8 @@ export function SystemHealthCard() {
         lastAutoPublish,
         pendingSensitive,
         lastNewsletter,
-        socialPending
+        socialPending,
+        newestLiveStory
       ] = await Promise.all([
         supabase
           .from('content_queue')
@@ -76,7 +77,18 @@ export function SystemHealthCard() {
         supabase
           .from('post_queue')
           .select('id', { count: 'exact', head: true })
-          .eq('status', 'pending')
+          .eq('status', 'pending'),
+        // Same status + safety filters the public feed applies — "Last Ingest"
+        // can look healthy while everything lands in pending and the site
+        // itself goes stale. This metric watches what readers actually see.
+        supabase
+          .from('content_queue')
+          .select('created_at')
+          .in('status', ['published', 'auto_published'])
+          .in('safety_level', ['safe', 'soft_sensitive'])
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single()
       ]);
 
       return {
@@ -85,6 +97,7 @@ export function SystemHealthCard() {
         pendingSensitiveCount: pendingSensitive.count || 0,
         lastNewsletterSentAt: lastNewsletter.data?.sent_at,
         socialPendingCount: socialPending.count || 0,
+        newestLiveStoryAt: newestLiveStory.data?.created_at,
       };
     },
     staleTime: 30000,
@@ -119,6 +132,10 @@ export function SystemHealthCard() {
     if (!timestamp) return 'Never';
     return formatDistanceToNow(new Date(timestamp), { addSuffix: true });
   };
+
+  const STALE_LIVE_STORY_HOURS = 24;
+  const liveStoryStale = !metrics?.newestLiveStoryAt ||
+    Date.now() - new Date(metrics.newestLiveStoryAt).getTime() > STALE_LIVE_STORY_HOURS * 60 * 60 * 1000;
 
   const isLoading = settingsLoading || metricsLoading;
 
@@ -237,6 +254,18 @@ export function SystemHealthCard() {
               <span>Last Auto-Publish</span>
             </div>
             <span className="text-muted-foreground">{formatTime(metrics?.lastAutoPublishAt)}</span>
+          </div>
+
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center gap-2">
+              <Newspaper className={`h-4 w-4 ${liveStoryStale ? 'text-destructive' : 'text-muted-foreground'}`} />
+              <span>Newest Live Story</span>
+            </div>
+            {liveStoryStale ? (
+              <Badge variant="destructive">{formatTime(metrics?.newestLiveStoryAt)}</Badge>
+            ) : (
+              <span className="text-muted-foreground">{formatTime(metrics?.newestLiveStoryAt)}</span>
+            )}
           </div>
 
           <div className="flex items-center justify-between text-sm">

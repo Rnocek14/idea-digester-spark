@@ -1278,16 +1278,19 @@ serve(async (req) => {
       }
     }
     
-    // Helper to reset failure count on success
+    // Helper to reset failure count on success. Also clears the probation
+    // counter auto-maintain-sources tracks, so a source that recovers gets a
+    // full retry budget for its next unrelated outage.
     async function resetSourceFailures(source: any) {
-      if (source.metadata?.consecutive_failures > 0) {
+      if (source.metadata?.consecutive_failures > 0 || source.metadata?.auto_reactivations > 0) {
         console.log(`✅ Resetting failure count for "${source.name}"`);
         await supabase
           .from("sources")
-          .update({ 
+          .update({
             metadata: {
               ...source.metadata,
               consecutive_failures: 0,
+              auto_reactivations: 0,
               last_error: null,
               last_error_at: null
             }

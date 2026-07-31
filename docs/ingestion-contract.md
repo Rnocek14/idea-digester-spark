@@ -47,9 +47,20 @@ This document defines the standardized contract for external automation tools (n
 
 ### Status Rules
 
-- All automated content **must** enter with `status = "pending"`
-- This ensures human editorial review via the Content Queue
-- Status transitions: `pending` → `approved` → `published` (or `rejected`)
+- Callers always send `status = "pending"`; the server decides the real status.
+- `ingest-news` applies the same publish gate sync-rss items get, using a
+  keyword screen in place of the AI safety pass:
+  - Sensitive-topic keyword match (crime/courts, death/tragedy, charged
+    topics) → `pending` with `hold_reason = "sensitive_keyword_screen"`,
+    `safety_level = "sensitive"` — human review required.
+  - Clean + hyperlocal source (`geo_tier >= 1`) → `auto_published`,
+    `safety_level = "safe"` (`decision_path = "ingest_trusted_auto"`).
+  - Clean + non-hyperlocal → `pending` with `hold_reason = "untrusted_tier"`.
+- `safety_level` and `publish_date` are always written. A missing original
+  publish time falls back to ingestion time (a DB trigger enforces this for
+  every insert path) — the public feed filters on both columns, so NULLs made
+  articles permanently invisible.
+- Status transitions: `pending` → `auto_published`/`published` (or `rejected`)
 
 ### Location Tags
 
