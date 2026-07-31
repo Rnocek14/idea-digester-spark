@@ -10,7 +10,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "predev": "bunx tsx scripts/generate-sitemap.ts",
-    "prebuild": "bunx tsx scripts/generate-sitemap.ts",
+    "prebuild": "bunx tsx scripts/generate-sitemap.ts && bunx tsx scripts/generate-shore-path-gpx.ts",
     "test:edge": "node tests/edge/build.mjs && tsx --test tests/edge/*.test.ts tests/seo/*.test.ts",
     "postbuild": "node scripts/prerender.mjs",
     "prerender": "node scripts/prerender.mjs"

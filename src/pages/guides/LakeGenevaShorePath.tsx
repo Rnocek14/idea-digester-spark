@@ -882,6 +882,20 @@ export default function LakeGenevaShorePath() {
               Recreation Department. To plan a section, pick two endpoints and
               add the legs between them — the seven legs total 21 miles.
             </p>
+            <p className="text-slate-700 leading-relaxed mb-4">
+              If you plan on a phone or a GPS watch, the sixteen public stops
+              are available as a{" "}
+              <a
+                href="/shore-path-geneva-lake.gpx"
+                download
+                className="text-blue-700 hover:underline font-medium"
+              >
+                GPX file of Shore Path waypoints
+              </a>{" "}
+              — every public landmark in walking order, with mile positions.
+              It imports into any mapping or hiking app, and it&apos;s free to
+              reuse with attribution.
+            </p>
             <div className="grid md:grid-cols-2 gap-4">
               <div className="rounded-md border border-slate-200 bg-white p-5">
                 <div className="flex items-center gap-2 mb-3">

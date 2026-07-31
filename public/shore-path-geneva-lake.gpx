@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Lake Geneva Brief — lakegenevabrief.com"
+     xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata>
+    <name>Geneva Lake Shore Path — public stops</name>
+    <desc>Waypoints for the public landmarks along the 21-mile Geneva Lake Shore Path,
+in walking order. Every waypoint is a public landmark — a park, public beach, public
+pier, or historic site open to visitors. Leg distances and access points come from the
+official Geneva Lake Shore Path map published by the Williams Bay Recreation Department;
+the stop curation is Lake Geneva Brief's own. The path crosses private property under a
+long-standing public-access easement: stay on the path, and treat it as the front yards
+it runs through. Free to use with attribution to lakegenevabrief.com.</desc>
+  </metadata>
+  <wpt lat="42.5915" lon="-88.4334">
+    <name>1. Library Park</name>
+    <desc>Lake Geneva · mile 0.0 — The most common starting point for the Shore Path. A public park beside the Lake Geneva Public Library with benches, shoreline access, and a clear view across the lake.</desc>
+  </wpt>
+  <wpt lat="42.5921" lon="-88.4361">
+    <name>2. Flat Iron Park</name>
+    <desc>Lake Geneva · mile 0.4 — A small downtown park where the Riviera Ballroom anchors the lakefront. Summer concerts and the seasonal farmers market happen here.</desc>
+  </wpt>
+  <wpt lat="42.5926" lon="-88.4378">
+    <name>3. Riviera Beach &amp; Pier</name>
+    <desc>Lake Geneva · mile 0.6 — Lake Geneva's downtown public beach. Tour boats depart from the adjacent pier in season.</desc>
+  </wpt>
+  <wpt lat="42.5934" lon="-88.4395">
+    <name>4. Lake Geneva Public Beach</name>
+    <desc>Lake Geneva · mile 0.9 — A wider sandy beach with lifeguards in season. Day-use fee in summer for non-residents.</desc>
+  </wpt>
+  <wpt lat="42.595" lon="-88.4445">
+    <name>5. Maple Lawn Walking Section</name>
+    <desc>Lake Geneva · mile 1.6 — A stretch where the path narrows and the shoreline becomes quieter. You are walking on a public easement that runs in front of long-standing lakefront properties — stay on the path and keep voices down.</desc>
+  </wpt>
+  <wpt lat="42.578" lon="-88.481">
+    <name>6. Black Point Estate</name>
+    <desc>Lake Geneva · mile 5.5 — A Wisconsin Historical Society site. Black Point is one of the few Gilded Age lakefront homes open to the public, by guided tour arrival via the Lake Geneva Cruise Line.</desc>
+  </wpt>
+  <wpt lat="42.564" lon="-88.49">
+    <name>7. South Shore Path Stretch</name>
+    <desc>Linn · mile 8.5 — The southern shoreline. Longer between public access points than the north shore, so plan water and turnaround accordingly.</desc>
+  </wpt>
+  <wpt lat="42.556" lon="-88.535">
+    <name>8. Linn Pier Public Access</name>
+    <desc>Linn · mile 10.5 — A public access point on the south shore with a small parking area. A good waypoint for an out-and-back walk if you're not doing the full 21 miles.</desc>
+  </wpt>
+  <wpt lat="42.547" lon="-88.571">
+    <name>9. Fontana Beach</name>
+    <desc>Fontana · mile 13.0 — Fontana's public swimming beach at the western tip of the lake. Restrooms, picnic area, and a long stretch of sand.</desc>
+  </wpt>
+  <wpt lat="42.5485" lon="-88.5685">
+    <name>10. Reid Park</name>
+    <desc>Fontana · mile 13.4 — A small lakefront park in downtown Fontana adjacent to the public beach. Benches and shade.</desc>
+  </wpt>
+  <wpt lat="42.55" lon="-88.563">
+    <name>11. Abbey Harbor View</name>
+    <desc>Fontana · mile 13.9 — The path skirts the public sidewalk past The Abbey Resort's harbor area. Stay on marked walkways.</desc>
+  </wpt>
+  <wpt lat="42.574" lon="-88.544">
+    <name>12. Kishwauketoe Nature Conservancy Edge</name>
+    <desc>Williams Bay · mile 15.5 — A 230-acre publicly accessible nature preserve adjacent to the Shore Path. Worth a side loop if you have time.</desc>
+  </wpt>
+  <wpt lat="42.5775" lon="-88.5395">
+    <name>13. Edgewater Park</name>
+    <desc>Williams Bay · mile 16.3 — A small lakefront park in Williams Bay with shade and benches. A natural rest stop.</desc>
+  </wpt>
+  <wpt lat="42.579" lon="-88.538">
+    <name>14. Williams Bay Lakefront Park</name>
+    <desc>Williams Bay · mile 16.6 — Williams Bay's main public beach and lakefront park. Pier, swimming area, and grass for picnicking.</desc>
+  </wpt>
+  <wpt lat="42.5705" lon="-88.556">
+    <name>15. Yerkes Observatory Area</name>
+    <desc>Williams Bay · mile 17.5 — The 1897 observatory sits a short walk uphill from the lake. Recently reopened for public tours through the Yerkes Future Foundation.</desc>
+  </wpt>
+  <wpt lat="42.582" lon="-88.526">
+    <name>16. Cedar Point Park</name>
+    <desc>Williams Bay · mile 18.5 — A wooded public park on the north shore. Quieter than the village beaches.</desc>
+  </wpt>
+</gpx>
