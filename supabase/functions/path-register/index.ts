@@ -371,7 +371,7 @@ Deno.serve(async (req) => {
     // Stops and legs, needed by both `visit` and `progress`.
     const { data: stopRows, error: stopsError } = await supabase
       .from("shore_path_stops")
-      .select("id, slug, name, latitude, longitude, geofence_radius_m, leg_order_index")
+      .select("id, slug, name, latitude, longitude, geofence_radius_m, leg_order_index, community")
       .eq("is_published", true)
       .order("order_index", { ascending: true });
 
@@ -556,6 +556,8 @@ Deno.serve(async (req) => {
         four_seasons_complete: progress.fourSeasonsComplete,
         legs: progress.legs,
         legs_completed: progress.legsCompleted,
+        shores: progress.shores,
+        shores_completed: progress.shoresCompleted,
       },
       entries,
       newly_earned: newlyEarned,

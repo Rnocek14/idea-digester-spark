@@ -2999,12 +2999,19 @@ export type Database = {
           description: string | null
           geofence_radius_m: number
           hero_image_url: string | null
+          history_confidence: string | null
+          historical_image_credit: string | null
+          historical_image_rights: string | null
+          historical_image_source_url: string | null
+          historical_image_url: string | null
+          historical_image_year: string | null
           id: string
           is_public_landmark: boolean
           is_published: boolean
           latitude: number | null
           leg_order_index: number | null
           local_love_prompt: string | null
+          sources: Json
           longitude: number | null
           look_for: string | null
           map_x_pct: number | null
@@ -3027,12 +3034,19 @@ export type Database = {
           description?: string | null
           geofence_radius_m?: number
           hero_image_url?: string | null
+          history_confidence?: string | null
+          historical_image_credit?: string | null
+          historical_image_rights?: string | null
+          historical_image_source_url?: string | null
+          historical_image_url?: string | null
+          historical_image_year?: string | null
           id?: string
           is_public_landmark?: boolean
           is_published?: boolean
           latitude?: number | null
           leg_order_index?: number | null
           local_love_prompt?: string | null
+          sources?: Json
           longitude?: number | null
           look_for?: string | null
           map_x_pct?: number | null
@@ -3055,12 +3069,19 @@ export type Database = {
           description?: string | null
           geofence_radius_m?: number
           hero_image_url?: string | null
+          history_confidence?: string | null
+          historical_image_credit?: string | null
+          historical_image_rights?: string | null
+          historical_image_source_url?: string | null
+          historical_image_url?: string | null
+          historical_image_year?: string | null
           id?: string
           is_public_landmark?: boolean
           is_published?: boolean
           latitude?: number | null
           leg_order_index?: number | null
           local_love_prompt?: string | null
+          sources?: Json
           longitude?: number | null
           look_for?: string | null
           map_x_pct?: number | null
@@ -3605,6 +3626,15 @@ export type Database = {
           expiry_reminders: boolean
           weekly_digest: boolean
         }[]
+      }
+      get_shore_path_notables: {
+        Args: {
+          p_city_id?: string
+          p_community?: string
+          p_min_stops?: number
+          p_season?: string
+        }
+        Returns: Json
       }
       get_shore_path_almanac: {
         Args: { p_city_id?: string; p_min_samples?: number }

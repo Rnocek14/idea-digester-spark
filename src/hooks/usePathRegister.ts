@@ -46,6 +46,9 @@ export type RegisterProgress = {
   four_seasons_complete: boolean;
   legs: Array<{ orderIndex: number; stopsTotal: number; stopsVisited: number; complete: boolean }>;
   legs_completed: number;
+  /** Per-shore progress — the rung between the first stop and all sixteen. */
+  shores: Array<{ community: string; stopsTotal: number; stopsVisited: number; complete: boolean }>;
+  shores_completed: number;
 };
 
 type PendingVisit = {

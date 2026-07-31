@@ -24,6 +24,7 @@ const LIBRARY_PARK: RegisterStop = {
   longitude: -88.4334,
   geofence_radius_m: null,
   leg_order_index: null,
+  community: 'Lake Geneva',
 };
 const FONTANA_BEACH: RegisterStop = {
   id: "stop-9",
@@ -33,6 +34,7 @@ const FONTANA_BEACH: RegisterStop = {
   longitude: -88.571,
   geofence_radius_m: null,
   leg_order_index: null,
+  community: 'Lake Geneva',
 };
 
 function stops(n: number): RegisterStop[] {
@@ -44,6 +46,8 @@ function stops(n: number): RegisterStop[] {
     longitude: -88.43 - i * 0.001,
     geofence_radius_m: null,
     leg_order_index: null,
+    // Alternating shores so the grouping has something to group.
+    community: i % 2 === 0 ? 'Lake Geneva' : 'Williams Bay',
   }));
 }
 
@@ -319,4 +323,97 @@ test("malformed timestamps do not poison the date range", () => {
   assert.equal(p.stopsVisited, 2);
   assert.equal(p.firstVisitAt, "2026-10-03T18:00:00.000Z");
   assert.equal(p.daysElapsed, 1);
+});
+
+// ---------------------------------------------------------------------------
+// Shore progress — the rung between the first stop and all sixteen
+// ---------------------------------------------------------------------------
+// Leg badges cannot fill this gap yet: a single leg_order_index can't express
+// that an access-point stop sits on two legs at once, so any assignment yields
+// false positives or false negatives. Shores group from `community`, which is
+// already correct in the data and needs no map.
+
+function shoreStops(spec: Array<[string, number]>): RegisterStop[] {
+  const out: RegisterStop[] = [];
+  let n = 0;
+  for (const [community, count] of spec) {
+    for (let i = 0; i < count; i++) {
+      n++;
+      out.push({
+        id: `stop-${n}`, slug: `stop-${n}`, name: `Stop ${n}`,
+        latitude: 42.59, longitude: -88.43,
+        geofence_radius_m: null, leg_order_index: null, community,
+      });
+    }
+  }
+  return out;
+}
+
+test("shores appear in walking order, not alphabetical order", () => {
+  const s = shoreStops([["Lake Geneva", 5], ["Linn", 3], ["Fontana", 3], ["Williams Bay", 5]]);
+  const p = computeProgress(s, []);
+  assert.deepEqual(
+    p.shores.map((x) => x.community),
+    ["Lake Geneva", "Linn", "Fontana", "Williams Bay"],
+    "the ladder should read the way the walk does",
+  );
+  assert.deepEqual(p.shores.map((x) => x.stopsTotal), [5, 3, 3, 5]);
+});
+
+test("finishing one shore completes it without completing the loop", () => {
+  const s = shoreStops([["Lake Geneva", 5], ["Linn", 3], ["Fontana", 3], ["Williams Bay", 5]]);
+  const visits = s.slice(0, 5).map((stop, i) =>
+    visit(stop.id, "summer", `2026-07-0${i + 1}T15:00:00Z`),
+  );
+  const p = computeProgress(s, visits);
+
+  assert.equal(p.loopComplete, false, "5 of 16 is not the loop");
+  assert.equal(p.shoresCompleted, 1, "but one shore is genuinely finished");
+  assert.equal(p.shores[0].complete, true);
+  assert.equal(p.shores[0].stopsVisited, 5);
+  assert.equal(p.shores[1].complete, false);
+  assert.equal(p.shores[1].stopsVisited, 0);
+});
+
+test("partial progress on a shore is reported, not rounded away", () => {
+  const s = shoreStops([["Lake Geneva", 5], ["Fontana", 3]]);
+  const p = computeProgress(s, [
+    visit("stop-1", "summer", "2026-07-01T15:00:00Z"),
+    visit("stop-6", "summer", "2026-07-02T15:00:00Z"),
+  ]);
+  assert.equal(p.shores[0].stopsVisited, 1);
+  assert.equal(p.shores[0].complete, false);
+  assert.equal(p.shores[1].stopsVisited, 1);
+  assert.equal(p.shoresCompleted, 0);
+});
+
+test("closing the loop completes every shore", () => {
+  const s = shoreStops([["Lake Geneva", 5], ["Linn", 3], ["Fontana", 3], ["Williams Bay", 5]]);
+  const p = computeProgress(s, s.map((stop, i) =>
+    visit(stop.id, "summer", `2026-07-${String(i + 1).padStart(2, "0")}T15:00:00Z`),
+  ));
+  assert.equal(p.loopComplete, true);
+  assert.equal(p.shoresCompleted, 4);
+  assert.ok(p.shores.every((x) => x.complete));
+});
+
+test("a stop with no community is left out rather than grouped under a blank", () => {
+  const s = shoreStops([["Lake Geneva", 2]]);
+  s.push({
+    id: "orphan", slug: "orphan", name: "Orphan", latitude: null, longitude: null,
+    geofence_radius_m: null, leg_order_index: null, community: null,
+  });
+  s.push({
+    id: "blank", slug: "blank", name: "Blank", latitude: null, longitude: null,
+    geofence_radius_m: null, leg_order_index: null, community: "   ",
+  });
+  const p = computeProgress(s, []);
+  assert.deepEqual(p.shores.map((x) => x.community), ["Lake Geneva"]);
+  assert.ok(!p.shores.some((x) => x.community.trim() === ""), "no blank heading");
+});
+
+test("an unvisited shore never counts as complete", () => {
+  const p = computeProgress(shoreStops([["Fontana", 3]]), []);
+  assert.equal(p.shores[0].complete, false);
+  assert.equal(p.shoresCompleted, 0);
 });

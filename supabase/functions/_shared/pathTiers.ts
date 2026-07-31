@@ -18,6 +18,8 @@ export type RegisterStop = {
   longitude: number | null;
   geofence_radius_m: number | null;
   leg_order_index: number | null;
+  /** The shore this stop sits on. Drives the mid-progression ladder. */
+  community: string | null;
 };
 
 export type StopVisit = {
@@ -153,6 +155,22 @@ export type LegProgress = {
   complete: boolean;
 };
 
+/**
+ * Progress along one shore of the lake.
+ *
+ * This is the rung between "first stop" and "all sixteen". Leg badges were meant
+ * to be that rung and can't be yet — see the shore-progress migration for why a
+ * single leg index can't honestly describe a stop that sits on two legs at once.
+ * Shores are grouped from `community`, which is already in the data and needs no
+ * map to be correct.
+ */
+export type ShoreProgress = {
+  community: string;
+  stopsTotal: number;
+  stopsVisited: number;
+  complete: boolean;
+};
+
 export type WalkerProgress = {
   stopsVisited: number;
   stopsTotal: number;
@@ -171,6 +189,9 @@ export type WalkerProgress = {
   fourSeasonsComplete: boolean;
   legs: LegProgress[];
   legsCompleted: number;
+  /** Per-shore progress, in walking order of first appearance. */
+  shores: ShoreProgress[];
+  shoresCompleted: number;
 };
 
 const VERIFICATION_RANK: Record<Verification, number> = {
@@ -258,6 +279,33 @@ export function computeProgress(
     })
     .sort((a, b) => a.orderIndex - b.orderIndex);
 
+  // Shores, in the order they first appear in walking order — so the ladder
+  // reads the way the walk does rather than alphabetically. A stop with no
+  // community is left out of the ladder entirely rather than grouped under a
+  // blank heading; the migration raises if any published stop is missing one.
+  const shoreOrder: string[] = [];
+  const shoreStops = new Map<string, RegisterStop[]>();
+  for (const s of stops) {
+    const key = (s.community ?? "").trim();
+    if (!key) continue;
+    if (!shoreStops.has(key)) {
+      shoreStops.set(key, []);
+      shoreOrder.push(key);
+    }
+    shoreStops.get(key)!.push(s);
+  }
+  const visitedSet = new Set(visitedStopIds);
+  const shores: ShoreProgress[] = shoreOrder.map((community) => {
+    const group = shoreStops.get(community)!;
+    const visited = group.filter((s) => visitedSet.has(s.id)).length;
+    return {
+      community,
+      stopsTotal: group.length,
+      stopsVisited: visited,
+      complete: group.length > 0 && visited >= group.length,
+    };
+  });
+
   return {
     stopsVisited,
     stopsTotal,
@@ -272,6 +320,8 @@ export function computeProgress(
     fourSeasonsComplete: seasonsCompleted.length === SEASONS.length,
     legs: legProgress,
     legsCompleted: legProgress.filter((l) => l.complete).length,
+    shores,
+    shoresCompleted: shores.filter((s) => s.complete).length,
   };
 }
 

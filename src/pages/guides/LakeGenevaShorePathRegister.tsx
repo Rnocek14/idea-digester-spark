@@ -6,6 +6,7 @@ import { PublicHeader } from "@/components/PublicHeader";
 import { PageMeta } from "@/components/PageMeta";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { NotableWalks } from "@/components/shore-path/NotableWalks";
 import { breadcrumbJsonLd } from "@/lib/seo/jsonLd";
 
 const PATH = "/guides/lake-geneva-shore-path/register";
@@ -214,6 +215,10 @@ export default function LakeGenevaShorePathRegister() {
             </p>
           </>
         )}
+
+        {/* Superlatives over logged walks. Lives here rather than on the guide
+            because this is the page for browsing what other people have done. */}
+        <NotableWalks />
 
         <div className="mt-8 rounded-md border border-slate-200 bg-white p-5">
           <h2 className="font-display text-xl text-slate-900 tracking-tight mb-2">
