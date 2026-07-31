@@ -1,3 +1,4 @@
+import { usePageView, pillarFromCategory } from "@/lib/trackStoryEvent";
 import { useEffect } from "react";
 import { useParams, Link, Navigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -88,6 +89,16 @@ export default function StoryDetail() {
     },
     enabled: !!id,
     staleTime: 60_000,
+  });
+
+  // Record the read. Gated on the story having loaded so a failed fetch is not
+  // counted as a view, and keyed on the story id so a slug change is not a new read.
+  usePageView({
+    pillar: pillarFromCategory(story?.category),
+    entityType: "content_queue",
+    entityId: story?.id ?? null,
+    slug: idOrSlug,
+    enabled: !!story?.id,
   });
 
   const { data: related = [] } = useQuery({

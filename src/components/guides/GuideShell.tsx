@@ -1,3 +1,4 @@
+import { usePageView } from "@/lib/trackStoryEvent";
 import { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { PublicHeader } from "@/components/PublicHeader";
@@ -65,6 +66,10 @@ export function GuideShell({
   introExtra,
   bottomExtra,
 }: GuideShellProps) {
+  // The guides are the entire SEO bet; until now nothing recorded whether a human
+  // ever reached one. View plus read-through, so we can tell crawlers from readers.
+  usePageView({ pillar: "other", entityType: "guide", slug: path });
+
   const jsonLd: Record<string, unknown>[] = [
     articleJsonLd({
       title: metaTitle,
