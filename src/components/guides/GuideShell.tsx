@@ -1,3 +1,4 @@
+import { GuideNewsletterCTA } from "@/components/guides/GuideNewsletterCTA";
 import { usePageView } from "@/lib/trackStoryEvent";
 import { ReactNode } from "react";
 import { Link } from "react-router-dom";
@@ -184,6 +185,22 @@ export function GuideShell({
             )}
 
             {bottomExtra && <div className="mt-10">{bottomExtra}</div>}
+
+            {/*
+              Newsletter capture on EVERY guide, not per-page opt-in.
+
+              Analytics for July: guides drew ~120 views against 46 for the homepage,
+              and the three best performers — public access, Yerkes, Shore Path — each
+              had no capture block at all. Search traffic arrived on the strongest
+              pages and left with nothing offered. Opt-in placement meant the pages
+              that earned the most readers were the ones most likely to be missed.
+
+              Here it is structural: every existing guide gets it, every future guide
+              inherits it, and every city in the fleet does too, with no per-page work.
+            */}
+            <div className="mt-10">
+              <GuideNewsletterCTA />
+            </div>
 
             {/* Related guides */}
             {related && related.length > 0 && (

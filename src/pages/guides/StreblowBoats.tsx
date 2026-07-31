@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import { GuideShell } from "@/components/guides/GuideShell";
-import { GuideNewsletterCTA } from "@/components/guides/GuideNewsletterCTA";
 import { SoftRealEstateCTA } from "@/components/guides/SoftRealEstateCTA";
 
 /**
@@ -471,7 +470,6 @@ export default function StreblowBoats() {
       ]}
       bottomExtra={
         <>
-          <GuideNewsletterCTA />
           <SoftRealEstateCTA variant="neighborhoods" />
         </>
       }

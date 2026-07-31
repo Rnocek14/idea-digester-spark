@@ -1,5 +1,4 @@
 import { GuideShell } from "@/components/guides/GuideShell";
-import { GuideNewsletterCTA } from "@/components/guides/GuideNewsletterCTA";
 import { SoftRealEstateCTA } from "@/components/guides/SoftRealEstateCTA";
 import { Link } from "react-router-dom";
 
@@ -225,7 +224,6 @@ export default function LakeGenevaWithKids() {
       ]}
       bottomExtra={
         <>
-          <GuideNewsletterCTA />
           <SoftRealEstateCTA variant="neighborhoods" />
         </>
       }

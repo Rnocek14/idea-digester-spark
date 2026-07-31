@@ -1,5 +1,4 @@
 import { GuideShell } from "@/components/guides/GuideShell";
-import { GuideNewsletterCTA } from "@/components/guides/GuideNewsletterCTA";
 import { Link } from "react-router-dom";
 
 const LINK = "text-blue-700 hover:underline font-medium";
@@ -748,7 +747,6 @@ export default function WhereToStayLakeGeneva() {
           ),
         },
       ]}
-      bottomExtra={<GuideNewsletterCTA />}
       faqs={[
         {
           question: "What is the best resort in Lake Geneva?",
