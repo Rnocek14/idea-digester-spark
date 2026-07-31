@@ -24,6 +24,7 @@ import TodaysBriefBlock from "@/components/TodaysBriefBlock";
 import WeeklyRecapBlock from "@/components/WeeklyRecapBlock";
 import LakeBeatLine from "@/components/LakeBeatLine";
 import HistoryTodayBlock from "@/components/HistoryTodayBlock";
+import ShorePathRegisterBlock from "@/components/ShorePathRegisterBlock";
 import BusinessStoryBlock from "@/components/BusinessStoryBlock";
 import { InlineSubscribeCTA } from "@/components/InlineSubscribeCTA";
 import { StickySubscribeBanner } from "@/components/StickySubscribeBanner";
@@ -1069,6 +1070,10 @@ const LakeGenevaV2 = () => {
                 <LakeBeatLine />
                 {/* Anchored daily content: Today in Lake Geneva History */}
                 <HistoryTodayBlock />
+                {/* The Shore Path Register. Placed here because the register is
+                    otherwise buried two-thirds down a long guide page, and a
+                    register nobody finds stays empty. */}
+                <ShorePathRegisterBlock />
                 {/* Rotating business spotlight (Phase 3 — Business Story Engine) */}
                 <BusinessStoryBlock />
                 {/* Editorial greeting — one warm line to set publication voice */}
