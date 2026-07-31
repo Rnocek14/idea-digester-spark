@@ -9,6 +9,7 @@ import { PageMeta } from "@/components/PageMeta";
 import WeatherWidget from "@/components/WeatherWidget";
 import HappeningTodayWidget from "@/components/HappeningTodayWidget";
 import LakeBeatLine from "@/components/LakeBeatLine";
+import ShorePathRegisterBlock from "@/components/ShorePathRegisterBlock";
 import { storyPath } from "@/lib/slug";
 import { getCityId, runCityScoped } from "@/lib/cityId";
 
@@ -129,6 +130,12 @@ export default function Today() {
             {" "}guide for current trail notes.
           </p>
         </section>
+
+        {/* The register. /today is the site's other high-traffic surface, and the
+            register is otherwise buried in a guide page. */}
+        <div className="mb-7">
+          <ShorePathRegisterBlock />
+        </div>
 
         {/* Top 3 stories */}
         <section aria-labelledby="top-stories" className="mb-8">
