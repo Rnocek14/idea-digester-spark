@@ -1512,7 +1512,7 @@ const LakeGenevaV2 = () => {
                 <div className="pb-3 border-b-2 border-amber-500 mb-4">
                   <div className="flex items-baseline justify-between">
                     <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-foreground">LATER</h2>
-                    <span className="text-[10px] font-mono text-amber-600 uppercase">[PLANS]</span>
+                    <span className="text-[10px] font-mono text-amber-700 uppercase">[PLANS]</span>
                   </div>
                   <p className="text-[10px] font-mono text-muted-foreground mt-1 uppercase">What's worth looking forward to</p>
                 </div>
@@ -1530,7 +1530,7 @@ const LakeGenevaV2 = () => {
           <div className="pb-3 border-b-2 border-amber-500 mb-4">
             <div className="flex items-baseline justify-between">
               <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-foreground">LATER</h2>
-              <span className="text-[10px] font-mono text-amber-600 uppercase">[PLANS]</span>
+              <span className="text-[10px] font-mono text-amber-700 uppercase">[PLANS]</span>
             </div>
             <p className="text-[10px] font-mono text-muted-foreground mt-1 uppercase">What's worth looking forward to</p>
           </div>
