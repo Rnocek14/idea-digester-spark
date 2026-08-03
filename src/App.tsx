@@ -75,6 +75,8 @@ const LakeGenevaShorePathStop = lazy(() => import("./pages/guides/LakeGenevaShor
 const LakeGenevaShorePathRegister = lazy(() => import("./pages/guides/LakeGenevaShorePathRegister"));
 const LakeGenevaShorePathPassport = lazy(() => import("./pages/guides/LakeGenevaShorePathPassport"));
 const StreblowBoats = lazy(() => import("./pages/guides/StreblowBoats"));
+const LakeGenevaMailboat = lazy(() => import("./pages/guides/LakeGenevaMailboat"));
+const LakeGenevaBoatRentals = lazy(() => import("./pages/guides/LakeGenevaBoatRentals"));
 const LakeGenevaPublicAccess = lazy(() => import("./pages/guides/LakeGenevaPublicAccess"));
 const LakeGenevaFAQ = lazy(() => import("./pages/guides/LakeGenevaFAQ"));
 const LakeGenevaWebcams = lazy(() => import("./pages/guides/LakeGenevaWebcams"));
@@ -171,6 +173,8 @@ const App = () => (
             <Route path="/guides/lake-geneva-shore-path/passport" element={<LakeGenevaShorePathPassport />} />
             <Route path="/guides/lake-geneva-shore-path/:slug" element={<LakeGenevaShorePathStop />} />
             <Route path="/guides/streblow-boats-geneva-lake" element={<StreblowBoats />} />
+            <Route path="/guides/lake-geneva-mailboat" element={<LakeGenevaMailboat />} />
+            <Route path="/guides/lake-geneva-boat-rentals" element={<LakeGenevaBoatRentals />} />
             <Route path="/guides/lake-geneva-public-access-guide" element={<LakeGenevaPublicAccess />} />
             <Route path="/guides/lake-geneva-faq" element={<LakeGenevaFAQ />} />
             <Route path="/lake-geneva-webcams" element={<LakeGenevaWebcams />} />

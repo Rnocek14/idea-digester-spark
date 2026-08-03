@@ -4,7 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Lake Geneva Brief – Local News, Simplified</title>
-    <meta name="description" content="Lake Geneva Brief is the five-minute local newsletter covering city hall, schools, business, dining, and events in Lake Geneva.">
     <meta name="author" content="Lake Geneva Brief" />
     <meta name="google-site-verification" content="sZy4jbEYRn2Fr3PfUoiEmQ2IuvqOKI8TFacvteY83KY" />
     <meta name="google-site-verification" content="q_Hmondkzx1T9qYJEcYZmEmaMzDvI-qqtGemogLSaNw" />
@@ -33,8 +32,6 @@
 
     
     
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://lakegenevabrief.com/" />
     <meta property="og:site_name" content="Lake Geneva Brief" />
     <meta property="og:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/SvWZJGynpjYPoF316Lv9RVB7o2F2/social-images/social-1764815719524-ChatGPT Image Dec 3, 2025, 07_21_23 PM.png">
 
@@ -46,13 +43,22 @@
   
   
   <!--
-    og:title / og:description / twitter:title / twitter:description are set
-    per-page by src/components/PageMeta.tsx (react-helmet-async). They are
-    deliberately NOT hardcoded here: helmet appends rather than replaces, and
-    social crawlers read the FIRST matching tag — so a static copy here would
-    win and every shared link would preview as the generic site card.
-    og:image / og:site_name / og:type / og:url stay as defaults because
-    PageMeta only overrides them when a page supplies its own.
+    description / og:title / og:description / og:url / og:type /
+    twitter:title / twitter:description are set per-page by
+    src/components/PageMeta.tsx (react-helmet-async). They are deliberately NOT
+    hardcoded here: helmet APPENDS rather than replaces, and social crawlers
+    read the FIRST matching tag — so a static copy here wins and every shared
+    link previews as the generic site card.
+
+    This bit us for real: og:url was pinned to "https://lakegenevabrief.com/",
+    so every one of the ~40 indexed pages advertised the homepage URL in link
+    previews, and the static description shadowed every per-page one. Every
+    indexed route renders PageMeta (the pages that don't are admin-only or
+    noindex), so there is nothing left for these defaults to catch.
+
+    og:image and og:site_name DO stay: PageMeta sets og:image only when a page
+    supplies one, and never sets og:site_name.
+    tests/seo/meta.test.ts enforces both halves of this.
   -->
   <script type="application/ld+json">
   {"@context":"https://schema.org","@type":"NewsMediaOrganization","name":"Lake Geneva Brief","url":"https://lakegenevabrief.com/","logo":"https://storage.googleapis.com/gpt-engineer-file-uploads/SvWZJGynpjYPoF316Lv9RVB7o2F2/uploads/1764815751185-ChatGPT%20Image%20Dec%203%2C%202025%2C%2007_15_47%20PM.png","sameAs":["https://twitter.com/LakeGenevaBrief"],"areaServed":{"@type":"Place","name":"Lake Geneva, Wisconsin"}}
