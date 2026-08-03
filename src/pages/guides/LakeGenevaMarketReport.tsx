@@ -38,8 +38,9 @@ export default function LakeGenevaMarketReport() {
             This month's snapshot
           </p>
           <p className="text-slate-700 text-base leading-relaxed">
-            Numbers are pulled from Walworth County MLS and refreshed at
-            the start of each month. For the live, address-level view of
+            Numbers come from the Zillow Home Value Index (public research
+            data, zip-level) and refresh automatically each month; the
+            listings count carries between refreshes. For the live, address-level view of
             what's listed and what's pending, the running picture is best
             seen alongside Gina Nocek's working notes on the{" "}
             <Link to="/selling-lake-geneva" className="text-blue-700 hover:underline font-medium">

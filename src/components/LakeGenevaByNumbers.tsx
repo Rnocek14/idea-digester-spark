@@ -91,7 +91,7 @@ export default function LakeGenevaByNumbers() {
         to="/selling-lake-geneva"
         className="mt-3 pt-3 border-t border-slate-200 block text-[11px] text-slate-500 hover:text-slate-800 transition-colors"
       >
-        Market data via{" "}
+        Source: Zillow Home Value Index · Presented by{" "}
         <span className="font-semibold text-slate-700">Gina Nocek</span>
         <span className="text-slate-600"> · @properties</span>
       </Link>
