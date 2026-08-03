@@ -153,7 +153,7 @@ export default function LakeGenevaPublicAccess() {
                 than deliberate rule-breaking.
               </p>
               <div
-                className="overflow-x-auto rounded-sm border border-slate-200 bg-white"
+                className="overflow-x-auto scroll-x-hint rounded-sm border border-slate-200 bg-white"
                 role="region"
                 aria-label="Comparison table, scrollable"
                 tabIndex={0}

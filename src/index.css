@@ -215,3 +215,29 @@ All colors MUST be HSL.
     list-style: none;
   }
 }
+
+/*
+  Horizontal-scroll affordance.
+
+  Mobile is the majority of this site's readers, and several guides carry
+  comparison tables wider than a phone (min-w-[760px] inside overflow-x-auto).
+  The scroll WORKS, but nothing tells a reader that more table exists to the
+  right — the third column just cuts mid-word, which reads as a broken layout
+  rather than a scrollable one. These are pure-CSS scroll shadows: a soft edge
+  shadow appears on whichever side has more content, and white cover gradients
+  (background-attachment: local) slide over the shadows at the scroll ends so
+  the hint vanishes exactly when there is nothing more to see. No JS, no
+  listeners, works everywhere Tailwind's bg-white containers are used.
+*/
+@layer components {
+  .scroll-x-hint {
+    background:
+      linear-gradient(to right, #fff 30%, rgba(255, 255, 255, 0)) left / 32px 100%,
+      linear-gradient(to left, #fff 30%, rgba(255, 255, 255, 0)) right / 32px 100%,
+      radial-gradient(farthest-side at 0 50%, rgba(15, 23, 42, 0.16), transparent) left / 14px 100%,
+      radial-gradient(farthest-side at 100% 50%, rgba(15, 23, 42, 0.16), transparent) right / 14px 100%;
+    background-color: #fff;
+    background-repeat: no-repeat;
+    background-attachment: local, local, scroll, scroll;
+  }
+}

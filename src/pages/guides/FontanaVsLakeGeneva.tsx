@@ -109,7 +109,7 @@ export default function FontanaVsLakeGeneva() {
                 decision.
               </p>
               <div
-                className="not-prose overflow-x-auto rounded-sm border border-slate-200 bg-white"
+                className="not-prose overflow-x-auto scroll-x-hint rounded-sm border border-slate-200 bg-white"
                 role="region"
                 aria-label="Comparison table, scrollable"
                 tabIndex={0}

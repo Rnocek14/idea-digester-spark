@@ -40,7 +40,7 @@ export const PublicHeader = () => {
         {/* Main nav */}
         <div className="flex items-center justify-between py-3 gap-4">
           <NavLink to="/" className="flex items-baseline gap-2 group">
-            <span className="font-display text-xl tracking-tight text-brand group-hover:text-brand-accent transition-colors">
+            <span className="font-display text-xl tracking-tight text-brand group-hover:text-brand-accent transition-colors whitespace-nowrap shrink-0">
               {city.site_name}
             </span>
             <span className="hidden text-[10px] uppercase tracking-[0.15em] text-gray-500 sm:inline">
@@ -70,7 +70,7 @@ export const PublicHeader = () => {
           </div>
 
           {/* Mobile Nav – scrollable so all items remain reachable */}
-          <div className="flex sm:hidden items-center gap-2 overflow-x-auto">
+          <div className="flex sm:hidden items-center gap-2 overflow-x-auto scroll-x-hint">
             {navItems.map((item) => (
               <NavLink
                 key={item.to}

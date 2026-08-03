@@ -40,6 +40,13 @@ jobs:
       - name: Prerender
         run: node scripts/prerender.mjs
 
+      # Mobile is the majority of this site's readers (July: 99 mobile vs 75
+      # desktop). This renders every key route at iPhone and small-Android
+      # widths and fails on any page-level horizontal scroll or element
+      # overflowing the viewport — the defect class a code review never sees.
+      - name: Mobile layout audit
+        run: node scripts/mobile-audit.mjs
+
       - name: Verify prerendered output is crawlable
         run: |
           set -e

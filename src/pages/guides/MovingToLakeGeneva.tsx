@@ -171,7 +171,7 @@ export default function MovingToLakeGeneva() {
                 </li>
               </ul>
               <div
-                className="not-prose overflow-x-auto rounded-sm border border-slate-200 bg-white mt-5"
+                className="not-prose overflow-x-auto scroll-x-hint rounded-sm border border-slate-200 bg-white mt-5"
                 role="region"
                 aria-label="Comparison table, scrollable"
                 tabIndex={0}

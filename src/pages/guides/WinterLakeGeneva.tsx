@@ -162,7 +162,7 @@ export default function WinterLakeGeneva() {
                 Settle which one you're on before you book anything.
               </p>
               <div
-                className="overflow-x-auto rounded-sm border border-slate-200 bg-white"
+                className="overflow-x-auto scroll-x-hint rounded-sm border border-slate-200 bg-white"
                 role="region"
                 aria-label="Comparison table, scrollable"
                 tabIndex={0}
@@ -296,7 +296,7 @@ export default function WinterLakeGeneva() {
                 Six sources, in rough order of how much they're worth:
               </p>
               <div
-                className="mt-4 overflow-x-auto rounded-sm border border-slate-200 bg-white"
+                className="mt-4 overflow-x-auto scroll-x-hint rounded-sm border border-slate-200 bg-white"
                 role="region"
                 aria-label="Comparison table, scrollable"
                 tabIndex={0}
