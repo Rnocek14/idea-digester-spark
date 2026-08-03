@@ -77,7 +77,7 @@ export default function Today() {
   return (
     <div className="min-h-screen bg-stone-50 flex flex-col">
       <PageMeta
-        title="The Lake Report — Lake Geneva today, weather + what's open"
+        title="Lake Geneva Today: Weather & What's Open"
         description="Lake Geneva at a glance: today's weather, top local stories, what's happening tonight, sunrise + sunset. The daily Lake Geneva briefing, updated all day."
         path="/today"
         jsonLd={jsonLd}
