@@ -138,8 +138,11 @@ const Advertise = () => {
         <div className="flex flex-wrap items-start justify-between gap-6">
           <div className="max-w-xl space-y-3">
             <h1 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
-              Reach Lake Geneva locals where they already pay attention.
+              Advertise with Lake Geneva Brief
             </h1>
+            <p className="text-base font-medium text-slate-800">
+              Reach Lake Geneva locals where they already pay attention.
+            </p>
             <p className="text-sm text-slate-600">
               Lake Geneva Brief is the five-minute newsletter locals read to stay on
               top of city hall, schools, events, and real estate. Your business can

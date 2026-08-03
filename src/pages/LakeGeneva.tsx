@@ -722,8 +722,8 @@ const LakeGeneva = () => {
       description="Fast, trustworthy updates on Lake Geneva city hall, schools, events, and real estate."
     >
       <PageMeta
-        title="Lake Geneva Brief – Today's Local News & Events"
-        description="Today's Lake Geneva, WI news: city hall, schools, dining, events, real estate, and live incidents — curated daily by The Brief."
+        title="Lake Geneva Brief Classic Edition (Archive View)"
+        description="The classic Lake Geneva Brief layout, kept as an archive view. Same local reporting on city hall, schools, dining, and events in a simpler format."
         path="/v1"
       />
       <WelcomeModal />
