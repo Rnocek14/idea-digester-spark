@@ -80,6 +80,10 @@ const LakeGenevaFAQ = lazy(() => import("./pages/guides/LakeGenevaFAQ"));
 const LakeGenevaWebcams = lazy(() => import("./pages/guides/LakeGenevaWebcams"));
 const LakeGenevaWeather = lazy(() => import("./pages/guides/LakeGenevaWeather"));
 const GuidesIndex = lazy(() => import("./pages/guides/GuidesIndex"));
+const BusinessesIndex = lazy(() => import("./pages/businesses/BusinessesIndex"));
+const YogeezeFrozenYogurt = lazy(() => import("./pages/businesses/YogeezeFrozenYogurt"));
+const BrunosLiquors = lazy(() => import("./pages/businesses/BrunosLiquors"));
+const StinebrinksPigglyWiggly = lazy(() => import("./pages/businesses/StinebrinksPigglyWiggly"));
 const YerkesObservatory = lazy(() => import("./pages/guides/YerkesObservatory"));
 const BigFootBeach = lazy(() => import("./pages/guides/BigFootBeach"));
 const WhereToStayLakeGeneva = lazy(() => import("./pages/guides/WhereToStayLakeGeneva"));
@@ -148,6 +152,10 @@ const App = () => (
             <Route path="/community/local-love" element={<CommunityLocalLove />} />
             <Route path="/community/voices" element={<CommunityVoices />} />
             <Route path="/guides" element={<GuidesIndex />} />
+            <Route path="/businesses" element={<BusinessesIndex />} />
+            <Route path="/businesses/yogeeze-frozen-yogurt" element={<YogeezeFrozenYogurt />} />
+            <Route path="/businesses/brunos-liquors" element={<BrunosLiquors />} />
+            <Route path="/businesses/stinebrinks-piggly-wiggly" element={<StinebrinksPigglyWiggly />} />
             <Route path="/guides/yerkes-observatory" element={<YerkesObservatory />} />
             <Route path="/guides/big-foot-beach-state-park" element={<BigFootBeach />} />
             <Route path="/guides/where-to-stay-lake-geneva" element={<WhereToStayLakeGeneva />} />

@@ -330,3 +330,47 @@ export function jobPostingsJsonLd(
     .map((job) => jobPostingJsonLd(job, city))
     .filter((node): node is Record<string, unknown> => node !== null);
 }
+
+export type LocalBusinessSource = {
+  /** schema.org type — e.g. "GroceryStore", "LiquorStore", "IceCreamShop". */
+  type?: string;
+  name: string;
+  description?: string;
+  streetAddress: string;
+  addressLocality?: string;
+  addressRegion?: string;
+  postalCode?: string;
+  telephone?: string;
+  /** The business's own website, not this site's page. */
+  url?: string;
+  /** Our page about the business. */
+  path?: string;
+  /** Human-readable hours, e.g. "Mo-Su 09:00-21:00". Only pass verified values. */
+  openingHours?: string[];
+};
+
+/**
+ * LocalBusiness schema for a single business page. Only verified fields are
+ * emitted — unverified hours or phone numbers are simply omitted rather than
+ * guessed, since a wrong number in schema is worse than no schema.
+ */
+export function localBusinessJsonLd(b: LocalBusinessSource): Record<string, unknown> {
+  const node: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": b.type || "LocalBusiness",
+    name: b.name,
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: b.streetAddress,
+      addressLocality: b.addressLocality || "Lake Geneva",
+      addressRegion: b.addressRegion || "WI",
+      postalCode: b.postalCode || "53147",
+      addressCountry: "US",
+    },
+  };
+  if (b.description) node.description = b.description;
+  if (b.telephone) node.telephone = b.telephone;
+  if (b.url) node.url = b.url;
+  if (b.openingHours && b.openingHours.length > 0) node.openingHours = b.openingHours;
+  return node;
+}

@@ -41,6 +41,8 @@ export type GuideShellProps = {
   introExtra?: ReactNode;
   /** Slot rendered after all sections, before related guides. */
   bottomExtra?: ReactNode;
+  /** Additional JSON-LD nodes (e.g. LocalBusiness for a business page). */
+  extraJsonLd?: Record<string, unknown>[];
 };
 
 /**
@@ -66,6 +68,7 @@ export function GuideShell({
   heroCaption,
   introExtra,
   bottomExtra,
+  extraJsonLd,
 }: GuideShellProps) {
   // The guides are the entire SEO bet; until now nothing recorded whether a human
   // ever reached one. View plus read-through, so we can tell crawlers from readers.
@@ -87,6 +90,7 @@ export function GuideShell({
     ]),
   ];
   if (faqs && faqs.length > 0) jsonLd.push(faqJsonLd(faqs));
+  if (extraJsonLd && extraJsonLd.length > 0) jsonLd.push(...extraJsonLd);
 
   return (
     <div className="min-h-screen bg-stone-50">
