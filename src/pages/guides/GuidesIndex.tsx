@@ -160,6 +160,11 @@ const groups: GuideGroup[] = [
         path: "/market-report",
         blurb: "What's happening in the real estate market right now.",
       },
+      {
+        title: "Local businesses",
+        path: "/businesses",
+        blurb: "Hours, addresses and what locals use them for — the Pig, Bruno's, Yogeeze.",
+      },
     ],
   },
 ];
