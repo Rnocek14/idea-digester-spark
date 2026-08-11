@@ -371,7 +371,6 @@ export function localBusinessJsonLd(b: LocalBusinessSource): Record<string, unkn
   if (b.description) node.description = b.description;
   if (b.telephone) node.telephone = b.telephone;
   if (b.url) node.url = b.url;
-  if (b.openingHours && b.openingHours.length > 0) node.openingHoursSpecification = undefined;
   if (b.openingHours && b.openingHours.length > 0) node.openingHours = b.openingHours;
   return node;
 }
