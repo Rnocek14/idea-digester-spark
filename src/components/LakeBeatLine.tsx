@@ -25,11 +25,20 @@ export default function LakeBeatLine() {
       const { data } = await runCityScoped((scoped) =>
         maybeCity(supabase
         .from("lake_beats")
-        .select("body"), scoped)
+        .select("body, temp_f"), scoped)
         .eq("beat_date", todayCT())
         .maybeSingle()
       );
-      if (!cancelled) setBody(data?.body?.trim() || null);
+      if (cancelled) return;
+      const text = data?.body?.trim() || null;
+      const temp = data?.temp_f;
+      // Guard against beats written off missing weather data (e.g. "0° and clear
+      // on the lake") — a wrong number reads worse than no line at all.
+      const badTemp =
+        temp === null || temp === undefined || Number(temp) === 0 ||
+        Number(temp) < -40 || Number(temp) > 130;
+      const mentionsZero = !!text && /(^|\D)0\s*°/.test(text);
+      setBody(badTemp || mentionsZero ? null : text);
     })();
     return () => {
       cancelled = true;
