@@ -671,6 +671,8 @@ async function renderToday(
     .eq("city_id", config.id)
     .in("status", PUBLIC_STORY_STATUSES)
     .eq("safety_level", "safe")
+    // tier 0 = regional wire; the brief is this town's record, not the metro's.
+    .gte("geo_tier", 1)
     .neq("category", "events")
     .gte("created_at", since)
     .order("priority_score", { ascending: false, nullsFirst: false })

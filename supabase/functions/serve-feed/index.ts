@@ -229,6 +229,9 @@ Deno.serve(async (req) => {
       .select(STORY_COLUMNS)
       .eq("city_id", config.id)
       .in("status", PUBLIC_STORY_STATUSES)
+      // tier 0 = regional wire the ingester could not tie to this lake; a city feed
+      // syndicating metro crime is exactly what unsubscribes look like.
+      .gte("geo_tier", 1)
       .eq("safety_level", "safe")
       .order("publish_date", { ascending: false, nullsFirst: false })
       .limit(FEED_LIMIT);

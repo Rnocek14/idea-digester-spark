@@ -64,6 +64,7 @@ export default function EditorialLaterRail() {
         ), scoped)
         .in("status", ["approved", "auto_published", "published"])
         .in("safety_level", ["safe", "soft_sensitive"])
+        .gte("geo_tier", 1)
         .gte("event_date", fallbackStart)
         .lte("event_date", horizon)
         .order("geo_tier", { ascending: true })

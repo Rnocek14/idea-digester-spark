@@ -28,7 +28,7 @@ SELECT count(*) AS live_on_homepage
 FROM content_queue
 WHERE status IN ('published','auto_published')
   AND safety_level IN ('safe','soft_sensitive')
-  AND geo_tier BETWEEN 0 AND 2
+  AND geo_tier BETWEEN 1 AND 2  -- 0 = regional, excluded
   AND publish_date BETWEEN now() - interval '14 days' AND now();
 
 -- Mix by category. One category dominating usually means one source is carrying

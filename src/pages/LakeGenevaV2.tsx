@@ -412,7 +412,11 @@ const LakeGenevaV2 = () => {
         return q
           .in("status", ["published", "auto_published"])
           .in("safety_level", ["safe", "soft_sensitive"])
-          .gte("geo_tier", 0)  // Phase 1: Include regional
+          // geo_tier 0 is what the ingester stamps on REGIONAL stories it could not
+          // tie to the lake ("Non-local story detected, forcing tier 0"). Including it
+          // was a launch crutch to fill the feed — and it filled the feed with
+          // Milwaukee crime wearing a Lake Geneva byline. Local means tier 1-2.
+          .gte("geo_tier", 1)
           .lte("geo_tier", 2)
           .gte("created_at", since)
           .gte("publish_date", since)
