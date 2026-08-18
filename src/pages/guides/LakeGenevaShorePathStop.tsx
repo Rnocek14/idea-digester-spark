@@ -270,10 +270,84 @@ export default function LakeGenevaShorePathStop() {
           </Link>
         </div>
 
+        {/* Next-step links — a stop page was a dead end for search traffic
+            arriving straight from Google. */}
+        <section className="mt-12 pt-8 border-t border-slate-200">
+          <p className="text-[10px] font-mono uppercase tracking-widest text-slate-500 mb-4">
+            Keep reading
+          </p>
+          <div className="grid sm:grid-cols-2 gap-3">
+            {[
+              {
+                to: "/guides/things-to-do-lake-geneva",
+                title: "Things to do in Lake Geneva",
+                blurb: "What else is worth your time beyond the shoreline.",
+              },
+              {
+                to: "/guides/where-to-stay-lake-geneva",
+                title: "Where to stay",
+                blurb: "Resorts, inns, and rentals — some of them right on the path.",
+              },
+              {
+                to: "/lake-geneva-eats",
+                title: "Where to eat after the walk",
+                blurb: "Restaurants and patios near the downtown trailhead.",
+              },
+              {
+                to: "/guides/lake-geneva-public-access-guide",
+                title: "Beaches & boat launches",
+                blurb: "Every public access point on Geneva Lake.",
+              },
+            ].map((r) => (
+              <Link
+                key={r.to}
+                to={r.to}
+                className="block rounded-md border border-slate-200 bg-white p-4 hover:border-blue-500 hover:shadow-sm transition-all"
+              >
+                <p className="font-display text-lg text-slate-900">{r.title}</p>
+                <p className="text-sm text-slate-600 mt-1 leading-relaxed">{r.blurb}</p>
+              </Link>
+            ))}
+          </div>
+        </section>
+
         <div className="mt-12">
           <SoftRealEstateCTA />
         </div>
+
+        {/* Spacer so the sticky bar never covers the last block on phones. */}
+        <div className="h-20 sm:h-0" aria-hidden="true" />
       </div>
+
+      {/* Sticky "next stop" bar — lets a walker chain through the 16 stops
+          without scrolling to the bottom of every page. */}
+      {next && (
+        <div className="fixed bottom-0 inset-x-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur">
+          <div className="mx-auto max-w-3xl px-4 py-2 flex items-center gap-3">
+            {prev && (
+              <Link
+                to={`${PARENT_PATH}/${prev.slug}`}
+                aria-label={`Previous stop: ${prev.name}`}
+                className="flex-shrink-0 rounded-md border border-slate-200 p-2 text-slate-600 hover:text-slate-900 hover:border-slate-400"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Link>
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-mono uppercase tracking-widest text-slate-500 leading-none">
+                Stop {stop.order_index} of 16 · Up next
+              </p>
+              <p className="text-sm text-slate-900 truncate mt-0.5">{next.name}</p>
+            </div>
+            <Link
+              to={`${PARENT_PATH}/${next.slug}`}
+              className="flex-shrink-0 inline-flex items-center gap-1.5 rounded-md bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-700"
+            >
+              Next stop <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

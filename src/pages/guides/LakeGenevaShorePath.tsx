@@ -1267,6 +1267,16 @@ export default function LakeGenevaShorePath() {
                 blurb="A wider tour of the area — what's worth your time beyond the path."
               />
               <RelatedCard
+                to="/guides/where-to-stay-lake-geneva"
+                title="Where to stay in Lake Geneva"
+                blurb="Resorts, inns, and rentals — including which ones sit right on the path."
+              />
+              <RelatedCard
+                to="/lake-geneva-eats"
+                title="Where to eat after the walk"
+                blurb="Restaurants and patios near the downtown end of the Shore Path."
+              />
+              <RelatedCard
                 to="/guides/best-things-to-do-lake-geneva-in-summer"
                 title="Lake Geneva in summer"
                 blurb="When the Shore Path is busiest, and what else is happening on the water."
