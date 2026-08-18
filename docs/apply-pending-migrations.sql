@@ -719,6 +719,41 @@ WHERE status = 'pending'
   AND geo_tier >= 1
   AND created_at >= now() - interval '14 days';
 
+-- ===== 20260803120000_schedule_real_estate_refresh.sql =======================
+-- Monthly refresh of real_estate_metrics from Zillow's public research CSVs.
+-- The table was hand-seeded once and had no writer anywhere in the codebase,
+-- so /market-report served stale figures under an "updated monthly" banner.
+-- Zillow publishes ZHVI updates around the middle of each month, so the 18th
+-- catches the fresh file without racing it.
+SELECT cron.schedule(
+  'refresh-real-estate-monthly',
+  '0 13 18 * *',
+  $$
+  SELECT net.http_post(
+    url := 'https://mzumvkrpnxhkvhdyzgqa.supabase.co/functions/v1/refresh-real-estate-metrics',
+    headers := '{"Content-Type": "application/json"}'::jsonb,
+    body := '{}'::jsonb
+  ) AS request_id;
+  $$
+);
+
+-- ===== submit-indexnow hourly ===============================================
+-- Promoted from docs/RUNBOOK.md item 5 into code: the Bing-family index is
+-- where 84 of 95 search visits come from, and IndexNow tells it about new
+-- content in minutes instead of days. The function batches per city and
+-- no-ops when nothing changed in the window, so hourly is cheap.
+SELECT cron.schedule(
+  'submit-indexnow-hourly',
+  '5 * * * *',
+  $$
+  SELECT net.http_post(
+    url := 'https://mzumvkrpnxhkvhdyzgqa.supabase.co/functions/v1/submit-indexnow',
+    headers := '{"Content-Type": "application/json"}'::jsonb,
+    body := '{}'::jsonb
+  ) AS request_id;
+  $$
+);
+
 -- ===== VERIFICATION ========================================================
 -- Every row should say true / a sane count. If city_id_present is false the
 -- multi-city batch did not land; if stranded_now_visible is 0 that is fine

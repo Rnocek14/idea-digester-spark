@@ -25,6 +25,7 @@ on:
     paths:
       - "supabase/**"
       - "docs/apply-pending-migrations.sql"
+      - ".github/workflows/deploy-supabase.yml"
 
 jobs:
   deploy:
@@ -104,16 +105,31 @@ jobs:
             exit 1
           fi
 
+      # Probe with OPTIONS, never GET: a GET actually RUNS these functions
+      # (run #3's probe triggered a real Zillow refresh and an IndexNow
+      # submission), and serve-page's router answers a bare GET with its own
+      # 404 — which this step once misread as "function missing" and failed a
+      # fully successful deploy. Every function answers the CORS preflight
+      # with 200 if it exists; only the platform 404s.
       - name: Verify functions are live
         run: |
           set -e
           for fn in serve-sitemap serve-page submit-indexnow refresh-real-estate-metrics; do
-            code=$(curl -sS -o /dev/null -w "%{http_code}" \
+            code=$(curl -sS -o /dev/null -w "%{http_code}" -X OPTIONS \
               "https://$PROJECT_REF.supabase.co/functions/v1/$fn")
-            echo "$fn -> $code"
+            echo "$fn OPTIONS -> $code"
             if [ "$code" = "404" ]; then
               echo "::error::$fn still 404 after deploy"
               exit 1
             fi
           done
-          echo "All probes returned non-404 — production now matches the repo."
+          # One real render proves the crawler path end to end (no side effects:
+          # serve-page only reads).
+          code=$(curl -sS -o /dev/null -w "%{http_code}" \
+            "https://$PROJECT_REF.supabase.co/functions/v1/serve-page?path=/today")
+          echo "serve-page?path=/today -> $code"
+          if [ "$code" != "200" ]; then
+            echo "::error::serve-page failed to render /today ($code)"
+            exit 1
+          fi
+          echo "All probes passed — production now matches the repo."
