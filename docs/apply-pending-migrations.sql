@@ -789,6 +789,51 @@ WHERE default_geo_tier > 0
   AND (url ILIKE '%tmj4%' OR url ILIKE '%fox6%' OR url ILIKE '%urbanmilwaukee%'
     OR url ILIKE '%cbs58%' OR url ILIKE '%jsonline%' OR url ILIKE '%spectrumnews%');
 
+-- 8) The incident backfill (older deployed version) minted "incidents" out of
+--    regional crime stories and stamped them "Walworth County / Lake Geneva
+--    area" — the sitemap was advertising /incidents/police-seek-suspect-
+--    after-three-teens-shot-in-milwaukee as Lake Geneva news. The deployed
+--    backfill now only converts geo_tier=1 stories; this rejects the junk
+--    already minted: any incident whose source story is now known-regional
+--    (tier 0), or whose title names a metro city with no local-area keyword.
+--    'rejected' removes them from the public RLS set and the sitemap.
+UPDATE public.incidents i
+SET status = 'rejected',
+    resolution_reason = 'Regional story misfiled as a local incident'
+WHERE i.status IN ('active', 'developing', 'monitoring', 'resolved')
+  AND (
+    EXISTS (SELECT 1 FROM public.content_queue c
+            WHERE c.id = i.source_story_id AND c.geo_tier = 0)
+    OR (
+      (i.title ILIKE '%milwaukee%' OR i.title ILIKE '%racine%' OR i.title ILIKE '%kenosha%'
+        OR i.title ILIKE '%madison%' OR i.title ILIKE '%waukesha%')
+      AND NOT (i.title ILIKE '%lake geneva%' OR i.title ILIKE '%geneva lake%'
+        OR i.title ILIKE '%walworth%' OR i.title ILIKE '%williams bay%'
+        OR i.title ILIKE '%fontana%' OR i.title ILIKE '%delavan%'
+        OR i.title ILIKE '%elkhorn%' OR i.title ILIKE '%whitewater%'
+        OR i.title ILIKE '%east troy%' OR i.title ILIKE '%genoa city%'
+        OR i.title ILIKE '%twin lakes%' OR i.title ILIKE '%burlington%'
+        -- "…issued by NWS Milwaukee/Sullivan" is the local forecast
+        -- OFFICE's name, not the alert's geography — those are Walworth
+        -- County alerts and belong to statement 9, not this one.
+        OR i.title ILIKE '%nws milwaukee%')
+    )
+  );
+
+-- 9) NWS-issued advisories/warnings that were filed as incidents and have
+--    long lapsed (an "Air Quality Alert issued July 14" was still in the
+--    August sitemap). Weather-window incidents older than 3 days resolve;
+--    genuinely current alerts are re-created by sync-nws-alerts on its next
+--    15-minute run, so nothing live is lost.
+UPDATE public.incidents
+SET status = 'resolved',
+    resolved_at = COALESCE(resolved_at, now()),
+    resolution_reason = COALESCE(resolution_reason, 'Alert window lapsed')
+WHERE status IN ('active', 'developing', 'monitoring')
+  AND (title ILIKE '%advisory issued%' OR title ILIKE '%warning issued%'
+    OR title ILIKE '%alert issued%' OR title ILIKE '%watch issued%')
+  AND updated_at < now() - interval '3 days';
+
 -- ===== 20260803120000_schedule_real_estate_refresh.sql =======================
 -- Monthly refresh of real_estate_metrics from Zillow's public research CSVs.
 -- The table was hand-seeded once and had no writer anywhere in the codebase,
