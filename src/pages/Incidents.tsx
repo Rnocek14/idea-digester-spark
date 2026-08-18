@@ -220,15 +220,15 @@ function IncidentCard({
       <Card className="hover:bg-accent/50 transition-colors cursor-pointer">
         <CardContent className="py-4">
           <div className="flex items-start justify-between gap-4">
-            <div className="flex items-start gap-3">
+            <div className="flex items-start gap-3 min-w-0 flex-1">
               <div className="mt-1 text-muted-foreground">
                 {typeIcons[incident.incident_type] || typeIcons.other}
               </div>
-              <div>
-                <h3 className="font-medium text-foreground leading-tight">
+              <div className="min-w-0">
+                <h3 className="font-medium text-foreground leading-tight break-words">
                   {incident.title}
                 </h3>
-                <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
+                <div className="flex flex-wrap items-center gap-2 mt-1 text-sm text-muted-foreground">
                   <span className="inline-flex items-center gap-1.5">
                     <StatusDot status={incident.status} />
                     {statusLabels[incident.status]}
