@@ -166,6 +166,9 @@ async function fetchDynamic(): Promise<SitemapEntry[]> {
       .from("incidents")
       // Gate columns are selected so the editorial gate can actually see them.
       .select("slug, title, incident_type, location, updated_at")
+      // RLS already hides rejected rows from the anon key, but state it
+      // explicitly — the filter is the contract, not a side effect of policy.
+      .in("status", ["active", "developing", "monitoring", "resolved"])
       .not("slug", "is", null)
       .gte("updated_at", cutoff)
       .order("updated_at", { ascending: false })
@@ -199,6 +202,7 @@ async function fetchDynamic(): Promise<SitemapEntry[]> {
       .select("id, title, updated_at, publish_date")
       .in("status", ["published", "auto_published"])
       .eq("safety_level", "safe")
+      .gte("geo_tier", 1) // tier 0 = regional; not this city's record (mirror serve-sitemap)
       .gte("publish_date", cutoff)
       .order("publish_date", { ascending: false, nullsFirst: false })
       .limit(1000);
