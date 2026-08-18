@@ -15,24 +15,17 @@ human in the loop. Verified live: `city_config` seeded, publish_date backfill
 0 NULLs, 38+ cron jobs listed, crawler functions serving real HTML, and a
 fresh Zillow row for 53147 (median $465,610, +4.97% YoY) written today.
 
+Also deleted (2026-08-18, later): the Lovable build-log check. Root cause
+fixed in code — generate-sitemap.ts loads .env itself now (tsx never
+populated process.env), and the same commit gave it serve-sitemap's
+editorial filters, because the moment the generator finally ran it shipped
+every tier-0 regional story into the public sitemap. 266 clean entries now.
+
 Last updated: 2026-08-18.
 
 ---
 
-## 1. Check the Lovable build log (60 seconds, decides a lot)
-
-**What it decides:** whether the build has database access. If it doesn't,
-three shipped features silently no-op: dynamic sitemap entries, story/event
-prerendering, and GPX regeneration.
-
-**Action:** open the latest Lovable build log and search for
-`[sitemap] Supabase env missing`.
-
-**Verify:** the line is absent → all three run; present → set
-`VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` in the build
-environment and rebuild.
-
-## 2. Wire the hosting rewrites
+## 1. Wire the hosting rewrites
 
 **What it unlocks:** the six crawler-facing edge functions (real HTML for
 stories/incidents, the data endpoints, per-city robots/llms, the Atom feed)
@@ -48,7 +41,7 @@ serve-llms).
 `Sitemap:` line carrying `?city_id=`; a story URL fetched with
 `curl -A GPTBot` returns readable HTML rather than an empty `<div id="root">`.
 
-## 3. Secrets and the leftover login
+## 2. Secrets and the leftover login
 
 **Action:** Supabase → Edge Function secrets: set `ALERT_EMAIL` (and the
 Resend key if unset) so the staleness watchdog can email you instead of
@@ -59,7 +52,7 @@ code, but the account itself is a live login until deleted.
 **Verify:** next `alert-source-health` run lands in your inbox; the user list
 has no devadmin.
 
-## 4. Send the three outreach emails (the only thing that moves Google)
+## 3. Send the three outreach emails (the only thing that moves Google)
 
 **Why:** Bing indexes you cleanly (113 pages, 0 errors) and still sent 617
 impressions in six months — that ceiling is authority, and the backlink
