@@ -8,10 +8,17 @@
 -- DROP-before-CREATE for policies/triggers), so running this against a
 -- database that already has some of it is harmless.
 --
--- HOW TO RUN: Supabase Dashboard -> SQL Editor -> paste this entire file -> Run.
+-- HOW TO RUN: normally you don't — .github/workflows/deploy-supabase.yml runs
+-- this file through the Management API on every push to main touching it.
+-- Manual fallback: Supabase Dashboard -> SQL Editor -> paste -> Run.
 -- Then check the verification block at the bottom, and /debug/feed on the site
 -- (city scoping should read "enabled").
 -- ============================================================================
+
+-- Scheduling below uses pg_cron + pg_net. Both are no-ops if already enabled;
+-- if the project never had them, this is what turns scheduling on at all.
+CREATE EXTENSION IF NOT EXISTS pg_cron;
+CREATE EXTENSION IF NOT EXISTS pg_net;
 
 -- ===== 20260718120000_harden_incidents_rls.sql ===============================
 -- Harden incidents RLS.
@@ -373,12 +380,30 @@ CREATE INDEX IF NOT EXISTS idx_content_queue_city_status_publish
 CREATE INDEX IF NOT EXISTS idx_incidents_city_status_updated
   ON public.incidents (city_id, status, updated_at DESC);
 
--- subscribers.city_id already exists as nullable text with "NULL means Lake
--- Geneva" semantics. Normalize to the registry convention. No FK: historic
--- free-text values may exist and subscriber writes must never fail on a
--- config mismatch — reconcile via reporting instead.
-UPDATE public.subscribers SET city_id = 'default' WHERE city_id IS NULL;
-ALTER TABLE public.subscribers ALTER COLUMN city_id SET DEFAULT 'default';
+-- subscribers.city_id normalization — TYPE-AWARE, because the live column
+-- diverged from the repo's migration history: production has it as uuid
+-- (from an early Lovable-era schema), not the nullable text the git-side
+-- migrations assumed. First deploy run failed exactly here (22P02: invalid
+-- input syntax for type uuid: "default"). Only normalize when the column is
+-- actually text; a uuid column keeps its NULL-means-Lake-Geneva semantics
+-- untouched (nothing in the app writes or filters subscribers.city_id, so
+-- there is no behavior to preserve — reconcile via reporting if ever needed).
+DO $$
+DECLARE
+  coltype text;
+BEGIN
+  SELECT data_type INTO coltype
+    FROM information_schema.columns
+   WHERE table_schema = 'public'
+     AND table_name = 'subscribers'
+     AND column_name = 'city_id';
+  IF coltype IN ('text', 'character varying') THEN
+    UPDATE public.subscribers SET city_id = 'default' WHERE city_id IS NULL;
+    ALTER TABLE public.subscribers ALTER COLUMN city_id SET DEFAULT 'default';
+  ELSE
+    RAISE NOTICE 'subscribers.city_id is % — skipping text normalization', coltype;
+  END IF;
+END $$;
 
 -- ===== 20260718160000_city_theme.sql =========================================
 -- Per-city theme/identity. Config values make a city site FUNCTION; the theme
