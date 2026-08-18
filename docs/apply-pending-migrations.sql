@@ -704,20 +704,90 @@ SET
   safety_reason = 'Backfill: keyword screen (safety_level was NULL, invisible to feed and bulk approval)'
 WHERE safety_level IS NULL;
 
--- 4) Unstick the recent backlog: hyperlocal keyword-screened-safe rows that
---    were stranded in 'pending' auto-publish, matching the decision the fixed
---    ingest-news would have made at insert time. Limited to the feed's own
---    14-day window so nothing stale resurfaces.
+-- 4) REMOVED (2026-08-18): the one-shot "unstick the backlog" auto-publish
+--    used to live here. It fired once and promoted 143 pending rows — but 35
+--    of them were lakegenevanews.net wire syndication (/news/nation-world/,
+--    /news/state-regional/) mislabeled tier 1 by the source default, and the
+--    keyword screen checks safety, not localness, so "Trump facing pressure
+--    from MAGA Republicans" reached the Lake Geneva sitemap. It must never
+--    re-run: with the fixed ingest-news live, publish decisions are made
+--    correctly at insert time, and a recurring editorial promotion in a
+--    deploy file would keep overriding the pipeline's holds forever.
+
+-- 5) Repair that promotion's damage, and the underlying mislabeling. The
+--    paper's own URL taxonomy is the classifier: only /news/local/ is local.
+--    Everything else from lakegenevanews.net drops to tier 0 (invisible to
+--    every reader surface, which all filter geo_tier >= 1), and the rows the
+--    backfill wrongly published go back to pending with a hold reason.
+--    Idempotent: second run matches zero rows.
 UPDATE public.content_queue
 SET
-  status = 'auto_published',
-  decision_path = 'freshness_backfill_auto',
-  hold_reason = NULL
-WHERE status = 'pending'
-  AND safety_level = 'safe'
-  AND safety_tags @> '["keyword_screen"]'::jsonb
-  AND geo_tier >= 1
-  AND created_at >= now() - interval '14 days';
+  geo_tier = 0,
+  geo_label = 'Regional',
+  status = CASE
+    WHEN decision_path = 'freshness_backfill_auto' AND status = 'auto_published'
+    THEN 'pending' ELSE status END,
+  hold_reason = CASE
+    WHEN decision_path = 'freshness_backfill_auto' AND status = 'auto_published'
+    THEN 'syndicated_nonlocal_section' ELSE hold_reason END
+WHERE normalized_url LIKE '%lakegenevanews.net/news/%'
+  AND normalized_url NOT LIKE '%lakegenevanews.net/news/local/%'
+  AND geo_tier >= 1;
+
+-- 6) Expire weather alerts whose own NWS window has lapsed. Supersede logic
+--    only fires when a NEW alert of the same type arrives, so an April Frost
+--    Advisory stayed "live" into August (28 such rows in the sitemap).
+--    sync-nws-alerts now does this on every run; this clears the backlog.
+--    Casts handle NWS offset timestamps; rows from older deployments that
+--    never stored expires/ends fall back to publish_date + 3 days.
+UPDATE public.content_queue
+SET status = 'expired', reviewed_at = now()
+WHERE category = 'weather'
+  AND status IN ('published', 'auto_published')
+  AND COALESCE(
+        NULLIF(metadata->>'ends', '')::timestamptz,
+        NULLIF(metadata->>'expires', '')::timestamptz,
+        publish_date + interval '3 days'
+      ) < now();
+
+-- 7) Milwaukee-metro outlets are regional by definition: their stories only
+--    belong on Lake Geneva surfaces when they are actually ABOUT the area.
+--    Demote tier-1 rows from metro hosts whose title carries no local-area
+--    keyword ("Ohio Investor Buys Milwaukee Airport Hotel" was live at
+--    tier 1), and drop the source defaults so future ingests are held for
+--    review instead of trusted. The keyword exception keeps genuinely local
+--    coverage ("Lake Geneva team wins in Kenosha" stays tier 1).
+UPDATE public.content_queue
+SET geo_tier = 0, geo_label = 'Regional'
+WHERE geo_tier >= 1
+  AND (normalized_url ILIKE '%tmj4.com%'
+    OR normalized_url ILIKE '%fox6now.com%'
+    OR normalized_url ILIKE '%urbanmilwaukee.com%'
+    OR normalized_url ILIKE '%cbs58.com%'
+    OR normalized_url ILIKE '%jsonline.com%'
+    OR normalized_url ILIKE '%spectrumnews1.com%'
+    -- The paper's "local" section is shared across its Lee Enterprises
+    -- sister papers (Kenosha News, Racine Journal Times), so even
+    -- /news/local/ carries other counties' civic copy. Same keyword test:
+    -- a story naming only Kenosha/Racine/Milwaukee places is not tier 1.
+    OR (normalized_url ILIKE '%lakegenevanews.net%'
+        AND (title ILIKE '%kenosha%' OR title ILIKE '%racine%' OR title ILIKE '%milwaukee%')))
+  AND NOT (title ILIKE '%lake geneva%' OR title ILIKE '%geneva lake%'
+    OR title ILIKE '%walworth%' OR title ILIKE '%williams bay%'
+    OR title ILIKE '%fontana%' OR title ILIKE '%delavan%'
+    OR title ILIKE '%elkhorn%' OR title ILIKE '%whitewater%'
+    OR title ILIKE '%east troy%' OR title ILIKE '%genoa city%'
+    OR title ILIKE '%twin lakes%' OR title ILIKE '%pell lake%'
+    OR title ILIKE '%powers lake%' OR title ILIKE '%big foot%'
+    OR title ILIKE '%bloomfield%' OR title ILIKE '%lake como%'
+    OR title ILIKE '%lyons%' OR title ILIKE '%darien%'
+    OR title ILIKE '%sharon%' OR title ILIKE '%burlington%');
+
+UPDATE public.sources
+SET default_geo_tier = 0
+WHERE default_geo_tier > 0
+  AND (url ILIKE '%tmj4%' OR url ILIKE '%fox6%' OR url ILIKE '%urbanmilwaukee%'
+    OR url ILIKE '%cbs58%' OR url ILIKE '%jsonline%' OR url ILIKE '%spectrumnews%');
 
 -- ===== 20260803120000_schedule_real_estate_refresh.sql =======================
 -- Monthly refresh of real_estate_metrics from Zillow's public research CSVs.

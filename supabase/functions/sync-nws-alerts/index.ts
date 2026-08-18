@@ -290,6 +290,47 @@ async function supersedeOlderAlerts(opts: {
   return oldAlerts.length;
 }
 
+// Expire published alerts whose own NWS window has lapsed. Supersede only
+// fires when a NEW alert of the same type arrives — without this, an April
+// Frost Advisory stays "live" until October (28 such rows were found in the
+// sitemap on 2026-08-18). Timestamps are compared in JS because NWS uses
+// offset timestamps (-05:00/-06:00) that don't compare lexicographically
+// against UTC strings in a PostgREST text filter. Rows from older deployments
+// that never stored expires/ends fall back to publish_date + 3 days.
+async function expireLapsedAlerts(supabase: any): Promise<number> {
+  const { data: liveAlerts, error } = await supabase
+    .from('content_queue')
+    .select('id, publish_date, metadata')
+    .eq('category', 'weather')
+    .in('status', ['auto_published', 'published']);
+
+  if (error || !liveAlerts?.length) return 0;
+
+  const now = Date.now();
+  const lapsed = liveAlerts.filter((row: any) => {
+    const meta = row.metadata ?? {};
+    const raw = meta.ends || meta.expires;
+    const cutoff = raw
+      ? Date.parse(raw)
+      : Date.parse(row.publish_date) + 3 * 24 * 60 * 60 * 1000;
+    return Number.isFinite(cutoff) && cutoff < now;
+  });
+
+  if (!lapsed.length) return 0;
+
+  const { error: updateError } = await supabase
+    .from('content_queue')
+    .update({ status: 'expired', reviewed_at: new Date().toISOString() })
+    .in('id', lapsed.map((r: any) => r.id));
+
+  if (updateError) {
+    console.error('[expire] Error expiring lapsed alerts:', updateError);
+    return 0;
+  }
+  console.log(`[expire] Expired ${lapsed.length} lapsed weather alerts`);
+  return lapsed.length;
+}
+
 // Link weather alert to an incident (find or create)
 async function linkAlertToIncident(opts: {
   supabase: any;
@@ -424,6 +465,10 @@ Deno.serve(async (req) => {
   };
 
   try {
+    // Every run, lapsed-window alerts leave the live surfaces — including
+    // runs where NWS reports nothing active (exactly when old alerts linger).
+    await expireLapsedAlerts(supabase);
+
     console.log('[sync-nws] Fetching NWS alerts for zone:', NWS_ZONE);
 
     // Fetch alerts from NWS API

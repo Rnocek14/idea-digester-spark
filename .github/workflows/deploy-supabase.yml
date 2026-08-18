@@ -27,6 +27,12 @@ on:
       - "docs/apply-pending-migrations.sql"
       - ".github/workflows/deploy-supabase.yml"
 
+# One deploy at a time; a queued push waits for the running one rather than
+# racing it through the Management API and the functions CLI.
+concurrency:
+  group: deploy-supabase
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest

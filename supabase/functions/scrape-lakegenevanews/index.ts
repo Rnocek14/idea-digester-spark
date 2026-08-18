@@ -25,6 +25,24 @@ async function firecrawlScrape(url: string, key: string, formats: string[] = ["m
   return await res.json();
 }
 
+// The paper's own URL taxonomy is the geo classifier. lakegenevanews.net is
+// the paper of record, but its site carries wire/syndicated sections too —
+// /news/nation-world/ is USA Today content and /news/state-regional/ is
+// statewide Lee Enterprises copy. On 2026-08-18 those sections reached the
+// live site as tier-1 "Lake Geneva" stories ("Trump facing pressure…",
+// "Mediterranean Sea…") because everything from this source inherited the
+// source's default tier. Only /news/local/ earns the trusted-local tier;
+// syndication sections are skipped outright (no Firecrawl spend), and
+// anything else — root-level articles, videos, unknown sections — ingests at
+// tier 0 so it is held for review instead of auto-published.
+const SKIP_SECTIONS = new Set(["nation-world", "state-regional"]);
+
+function sectionOf(url: string): string {
+  const path = url.replace("https://lakegenevanews.net/news/", "");
+  const slash = path.indexOf("/");
+  return slash > 0 ? path.slice(0, slash) : "";
+}
+
 function extractArticleLinks(html: string): string[] {
   if (!html) return [];
   const urls = new Set<string>();
@@ -39,7 +57,9 @@ function extractArticleLinks(html: string): string[] {
     const path = href.replace("https://lakegenevanews.net/news/", "");
     if (!path || path.startsWith("?") || path.startsWith("page/")) continue;
     if (path.length < 8) continue;
-    urls.add(href.split("#")[0].split("?")[0]);
+    const clean = href.split("#")[0].split("?")[0];
+    if (SKIP_SECTIONS.has(sectionOf(clean))) continue;
+    urls.add(clean);
   }
   return Array.from(urls).slice(0, 30);
 }
@@ -112,6 +132,7 @@ Deno.serve(async (req) => {
         const meta = data.metadata ?? {};
         result.scraped++;
 
+        const section = sectionOf(articleUrl);
         const payload = {
           source: "lakegenevanews",
           url: articleUrl,
@@ -122,10 +143,14 @@ Deno.serve(async (req) => {
           published_at: meta.publishedTime || meta["article:published_time"] || null,
           image_url: meta.ogImage || null,
           category: "news",
+          // Only the paper's own "local" section earns the trusted tier that
+          // auto-publishes; everything else is held (tier 0) for review.
+          geo_tier: section === "local" ? 1 : 0,
           metadata: {
             scraped_at: new Date().toISOString(),
             source_type: "firecrawl",
             ingest_method: "edge_function_cron",
+            paper_section: section || "root",
           },
         };
 
