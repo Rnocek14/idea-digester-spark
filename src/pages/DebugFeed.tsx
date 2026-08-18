@@ -73,16 +73,16 @@ export default function DebugFeed() {
         q
           .in("status", ["published", "auto_published"])
           .in("safety_level", ["safe", "soft_sensitive"])
-          .gte("geo_tier", 0)
+          .gte("geo_tier", 1)
           .lte("geo_tier", 2),
       );
-      out.push({ label: "+ geo_tier between 0 and 2", count: d.count, error: d.error });
+      out.push({ label: "+ geo_tier between 1 and 2 (0 = regional, excluded by design)", count: d.count, error: d.error });
 
       const e = await countWith((q: Any) =>
         q
           .in("status", ["published", "auto_published"])
           .in("safety_level", ["safe", "soft_sensitive"])
-          .gte("geo_tier", 0)
+          .gte("geo_tier", 1)
           .lte("geo_tier", 2)
           .gte("created_at", twoWeeksAgo),
       );
@@ -92,7 +92,7 @@ export default function DebugFeed() {
         q
           .in("status", ["published", "auto_published"])
           .in("safety_level", ["safe", "soft_sensitive"])
-          .gte("geo_tier", 0)
+          .gte("geo_tier", 1)
           .lte("geo_tier", 2)
           .gte("created_at", twoWeeksAgo)
           .gte("publish_date", twoWeeksAgo)
@@ -110,7 +110,7 @@ export default function DebugFeed() {
           .eq("city_id", getCityId())
           .in("status", ["published", "auto_published"])
           .in("safety_level", ["safe", "soft_sensitive"])
-          .gte("geo_tier", 0)
+          .gte("geo_tier", 1)
           .lte("geo_tier", 2)
           .gte("created_at", twoWeeksAgo)
           .gte("publish_date", twoWeeksAgo)

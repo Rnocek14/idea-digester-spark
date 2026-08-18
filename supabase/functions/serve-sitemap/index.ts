@@ -165,6 +165,7 @@ Deno.serve(async (req) => {
       .eq("city_id", cityId)
       .in("status", ["published", "auto_published"])
       .eq("safety_level", "safe")
+      .gte("geo_tier", 1) // tier 0 = regional; not this city's record
       .gte("publish_date", storyCutoff)
       .order("publish_date", { ascending: false, nullsFirst: false })
       .limit(1000);

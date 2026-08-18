@@ -198,6 +198,7 @@ async function fetchDynamicRoutes() {
       select: 'id,title',
       status: 'in.(published,auto_published)',
       safety_level: 'eq.safe',
+      geo_tier: 'gte.1',
       order: 'publish_date.desc.nullslast',
       limit: '40',
     })

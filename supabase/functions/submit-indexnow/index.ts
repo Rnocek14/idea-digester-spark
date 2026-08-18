@@ -84,6 +84,7 @@ export async function collectUrls(
     .eq("city_id", config.id)
     .in("status", ["published", "auto_published"])
     .in("safety_level", ["safe", "soft_sensitive"])
+    .gte("geo_tier", 1)
     .gte("updated_at", sinceIso)
     .order("updated_at", { ascending: false })
     .limit(MAX_URLS);
