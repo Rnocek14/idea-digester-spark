@@ -2,7 +2,7 @@
 // Pulls dynamic event + incident slugs/ids from Supabase so /events/:id
 // and /incidents/:slug routes are discoverable by crawlers.
 
-import { writeFileSync } from "fs";
+import { writeFileSync, readFileSync, existsSync } from "fs";
 import { resolve } from "path";
 import { createClient } from "@supabase/supabase-js";
 
@@ -18,6 +18,32 @@ import {
 } from "../supabase/functions/_shared/incidentGate";
 
 const BASE_URL = "https://lakegenevabrief.com";
+
+// tsx does NOT load .env the way Vite does, so relying on process.env alone made
+// every local/CI build silently skip dynamic entries ("Supabase env missing").
+// Read the dotenv files ourselves; real process env always wins.
+function loadEnvFiles() {
+  for (const file of [".env.local", ".env"]) {
+    const p = resolve(process.cwd(), file);
+    if (!existsSync(p)) continue;
+    for (const raw of readFileSync(p, "utf8").split(/\r?\n/)) {
+      const line = raw.trim();
+      if (!line || line.startsWith("#")) continue;
+      const eq = line.indexOf("=");
+      if (eq === -1) continue;
+      const key = line.slice(0, eq).trim();
+      let value = line.slice(eq + 1).trim();
+      if (
+        (value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'"))
+      ) {
+        value = value.slice(1, -1);
+      }
+      if (!process.env[key]) process.env[key] = value;
+    }
+  }
+}
+loadEnvFiles();
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
