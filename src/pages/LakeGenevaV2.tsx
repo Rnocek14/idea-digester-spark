@@ -887,7 +887,7 @@ const LakeGenevaV2 = () => {
                   same temporal rail as desktop (Tonight → Weekend → Next Week) which
                   self-hides empty sections, and only fall back to the nightlife widget
                   when there is genuinely nothing on the calendar. */}
-              <RightRailTemporal />
+              <RightRailTemporal fallback={<NightlifeWidget tonightOnly />} />
             </div>
 
             {/* LATEST Header - L-L-L mnemonic consistency */}
