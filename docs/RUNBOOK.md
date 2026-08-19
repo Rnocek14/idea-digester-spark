@@ -21,38 +21,30 @@ populated process.env), and the same commit gave it serve-sitemap's
 editorial filters, because the moment the generator finally ran it shipped
 every tier-0 regional story into the public sitemap. 266 clean entries now.
 
-Last updated: 2026-08-18.
+Also deleted (2026-08-19): most of the hosting-rewrites item and all of the
+secrets item. Build-time fallbacks now cover the rewrite gap on the live
+domain — /feed.xml and /llms.txt are snapshotted from the deployed edge
+functions at every build, robots.txt carries a second Sitemap: line pointing
+at the always-fresh edge sitemap, and story pages are prerendered to real
+HTML at build. The devadmin@gmail.com login is deleted by the deploy SQL.
+
+Last updated: 2026-08-19.
 
 ---
 
-## 1. Wire the hosting rewrites
+## 1. Add ALERT_EMAIL as a GitHub secret (2 minutes)
 
-**What it unlocks:** the six crawler-facing edge functions (real HTML for
-stories/incidents, the data endpoints, per-city robots/llms, the Atom feed)
-are deployed and verified working — but nothing routes the public domain to
-them yet, so they receive zero traffic.
+**What it unlocks:** the staleness watchdog emails you when a source dies
+instead of logging quietly.
 
-**Action:** follow [`docs/edge-serving.md`](./edge-serving.md) — it lists the
-exact path → function mapping (`/robots.txt` → serve-robots, `/feed.xml` →
-serve-feed, `/data/*` → serve-data, crawler HTML → serve-page, `/llms.txt` →
-serve-llms).
+**Action:** github.com/Rnocek14/idea-digester-spark → Settings → Secrets and
+variables → Actions (the same screen SUPABASE_ACCESS_TOKEN lives on) → add
+`ALERT_EMAIL` with the address you want alerts at. The next deploy forwards
+it to the functions runtime automatically.
 
-**Verify:** `curl https://lakegenevabrief.com/robots.txt` shows a
-`Sitemap:` line carrying `?city_id=`; a story URL fetched with
-`curl -A GPTBot` returns readable HTML rather than an empty `<div id="root">`.
+**Verify:** the next `alert-source-health` run lands in your inbox.
 
-## 2. Secrets and the leftover login
-
-**Action:** Supabase → Edge Function secrets: set `ALERT_EMAIL` (and the
-Resend key if unset) so the staleness watchdog can email you instead of
-logging quietly. Supabase → Authentication: delete the `devadmin@gmail.com`
-user if it still exists — its hardcoded credentials were removed from the
-code, but the account itself is a live login until deleted.
-
-**Verify:** next `alert-source-health` run lands in your inbox; the user list
-has no devadmin.
-
-## 3. Send the three outreach emails (the only thing that moves Google)
+## 2. Send the three outreach emails (the only thing that moves Google)
 
 **Why:** Bing indexes you cleanly (113 pages, 0 errors) and still sent 617
 impressions in six months — that ceiling is authority, and the backlink
@@ -75,7 +67,13 @@ the entire game.
 - `docs/diagnose-news-and-readers.sql` in the SQL editor — publish volume by
   day, view→read ratio, **returning sessions** (the one bot-proof audience
   number).
-- Bing Webmaster — impressions trending, excluded count falling once the
-  rewrites land.
+- Bing Webmaster — impressions trending, excluded count falling now that
+  the sitemap is clean and the crawler surfaces are live.
 - On your phone, once: open a guide, feel the table scroll hint, check the
   header is one line. CI now guards mobile layout automatically.
+
+Future upgrade, not a task: putting the domain behind Cloudflare's free tier
+unlocks the per-request versions of everything the build now snapshots
+(always-fresh feed, per-city robots, crawler HTML for stories published
+between builds) — see docs/edge-serving.md. Required before city #2, optional
+until then.

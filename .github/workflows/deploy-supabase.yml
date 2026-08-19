@@ -85,6 +85,31 @@ jobs:
           echo "publish_date trigger:"; q "SELECT count(*) FROM pg_trigger WHERE tgname LIKE '%publish_date%'"
           echo "cron jobs:"; q "SELECT jobname FROM cron.job ORDER BY jobname"
 
+      # Optional operator secrets, forwarded from GitHub to the functions
+      # runtime. Add ALERT_EMAIL (and RESEND_API_KEY, if it ever rotates) as
+      # repository secrets — the same screen SUPABASE_ACCESS_TOKEN lives on —
+      # and the next deploy pushes them to Supabase. Silently skips when
+      # unset; values never appear in logs.
+      - name: Forward optional function secrets
+        env:
+          ALERT_EMAIL: ${{ secrets.ALERT_EMAIL }}
+          RESEND_API_KEY_FWD: ${{ secrets.RESEND_API_KEY }}
+        run: |
+          set -e
+          body="[]"
+          [ -n "$ALERT_EMAIL" ] && body=$(jq -c --arg v "$ALERT_EMAIL" '. + [{name:"ALERT_EMAIL",value:$v}]' <<<"$body")
+          [ -n "$RESEND_API_KEY_FWD" ] && body=$(jq -c --arg v "$RESEND_API_KEY_FWD" '. + [{name:"RESEND_API_KEY",value:$v}]' <<<"$body")
+          if [ "$body" = "[]" ]; then
+            echo "no optional secrets configured — skipping"
+            exit 0
+          fi
+          code=$(curl -sS -o /tmp/sec.json -w "%{http_code}" -X POST \
+            "https://api.supabase.com/v1/projects/$PROJECT_REF/secrets" \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            -H "Content-Type: application/json" --data "$body")
+          echo "secrets api: $code"
+          if [ "$code" -ge 400 ]; then head -c 500 /tmp/sec.json; exit 1; fi
+
       # ---------------------------------------------------------------
       # 2. Edge functions: deploy EVERYTHING under supabase/functions/.
       #    The CLI reads supabase/config.toml, so each function keeps its

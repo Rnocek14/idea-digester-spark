@@ -869,6 +869,22 @@ SELECT cron.schedule(
   $$
 );
 
+-- ===== leftover dev login ====================================================
+-- devadmin@gmail.com was a hardcoded dev credential; the code that used it is
+-- gone but the auth account itself remained a live login. Guarded so an
+-- unexpected FK from a profile/role table can never fail the deploy — if the
+-- delete is blocked, the NOTICE says why and a human finishes it in the
+-- dashboard. Idempotent: once deleted, matches zero rows forever.
+DO $$
+BEGIN
+  DELETE FROM auth.users WHERE email = 'devadmin@gmail.com';
+  IF FOUND THEN
+    RAISE NOTICE 'devadmin@gmail.com auth user deleted';
+  END IF;
+EXCEPTION WHEN OTHERS THEN
+  RAISE NOTICE 'devadmin cleanup skipped: %', SQLERRM;
+END $$;
+
 -- ===== VERIFICATION ========================================================
 -- Every row should say true / a sane count. If city_id_present is false the
 -- multi-city batch did not land; if stranded_now_visible is 0 that is fine

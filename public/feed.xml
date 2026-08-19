@@ -1,0 +1,470 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <id>https://lakegenevabrief.com/feed.xml</id>
+  <title type="text">Lake Geneva Brief</title>
+  <subtitle type="text">Local reporting for Lake Geneva, WI.</subtitle>
+  <updated>2026-08-18T23:18:47.988Z</updated>
+  <link rel="self" type="application/atom+xml" href="https://lakegenevabrief.com/feed.xml"/>
+  <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/"/>
+  <author><name>Lake Geneva Brief</name><uri>https://lakegenevabrief.com</uri></author>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/9d580cc0-47c3-4620-98ec-7e71ff359c63</id>
+    <title type="text">August 17 recap: Lake Geneva news you may have missed today</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/august-17-recap-lake-geneva-news-you-may-have-missed-today-9d580cc0-47c3-4620-98ec-7e71ff359c63"/>
+    <updated>2026-08-18T23:18:47.988Z</updated>
+    <published>2026-08-18T12:01:44.008Z</published>
+    <author><name>Lake Geneva Regional News</name></author>
+    <category term="news"/>
+    <summary type="text">Get a quick digest of today&#39;s top local news stories from Lake Geneva Regional News.</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/d1a3f038-d79a-4d3e-aa13-79e41becf0a7</id>
+    <title type="text">Lake Geneva neighbors: Obituaries for August 18</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/lake-geneva-neighbors-obituaries-for-august-18-d1a3f038-d79a-4d3e-aa13-79e41becf0a7"/>
+    <updated>2026-08-18T23:18:47.988Z</updated>
+    <published>2026-08-18T12:01:37.347Z</published>
+    <author><name>Lake Geneva Regional News</name></author>
+    <category term="news"/>
+    <summary type="text">Read through the obituaries published today in Lake Geneva Regional News.</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/d9acefc7-c62a-4623-8abe-dc996ba4e4a0</id>
+    <title type="text">🌱 Lakeside Literary Festival and 10 more events</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/lakeside-literary-festival-and-10-more-events-d9acefc7-c62a-4623-8abe-dc996ba4e4a0"/>
+    <updated>2026-08-18T09:00:35.286Z</updated>
+    <published>2026-08-18T09:00:35.274Z</published>
+    <category term="news"/>
+    <summary type="text">Community Corner🌱 Lakeside Literary Festival and 10 more eventsAlso, don&#39;t miss Julius Bindrim III on the Lake Geneva Patch calendarPatch AM Team, Patch StaffPosted Tue, Aug 18, 2026 at 2:30 am…</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/e7ebb19c-fd98-41d2-bea2-b4d6a0fbb292</id>
+    <title type="text">School board narrowly approves superintendent’s contract</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/school-board-narrowly-approves-superintendent-s-contract-e7ebb19c-fd98-41d2-bea2-b4d6a0fbb292"/>
+    <updated>2026-08-18T23:18:47.988Z</updated>
+    <published>2026-08-17T11:30:58.624Z</published>
+    <author><name>DENNIS HINES dhines@lakegenevanews.net</name></author>
+    <category term="news"/>
+    <summary type="text">The board did not discuss details of the contract before voting, which several members of the audience disapproved of., The board did not discuss details of the contract before voting, which several members of the audience disapproved of.</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/a20800bc-874c-4ed5-bca3-938f7b864b52</id>
+    <title type="text">Tran excited to lead Gateway as president, CEO</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/tran-excited-to-lead-gateway-as-president-ceo-a20800bc-874c-4ed5-bca3-938f7b864b52"/>
+    <updated>2026-08-18T23:18:47.988Z</updated>
+    <published>2026-08-17T11:30:54.581Z</published>
+    <author><name>RYAN PATTERSON ryan.patterson@journaltimes.com</name></author>
+    <category term="news"/>
+    <summary type="text">As Gateway Technical College president and CEO, Veronique Tran aims to increase educational opportunities for area residents and set the college up for the long run., As Gateway Technical College president and CEO, Veronique Tran aims to increase educational opportunities for area residents and…</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/0576efb8-a0ab-4eae-93d6-ff99f0227aa8</id>
+    <title type="text">Lake Geneva neighbors: Obituaries for August 17</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/lake-geneva-neighbors-obituaries-for-august-17-0576efb8-a0ab-4eae-93d6-ff99f0227aa8"/>
+    <updated>2026-08-18T23:18:47.988Z</updated>
+    <published>2026-08-17T11:30:28.604Z</published>
+    <author><name>Lake Geneva Regional News</name></author>
+    <category term="news"/>
+    <summary type="text">Read through the obituaries published today in Lake Geneva Regional News.</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/37cc3707-82b8-45a7-9838-0eb6f7451098</id>
+    <title type="text">Wisconsin Space Conference takes flight at Carthage College</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/wisconsin-space-conference-takes-flight-at-carthage-college-37cc3707-82b8-45a7-9838-0eb6f7451098"/>
+    <updated>2026-08-18T23:18:47.988Z</updated>
+    <published>2026-08-16T11:01:05.156Z</published>
+    <author><name>SAMANTHA DIETEL sdietel@kenoshanews.com</name></author>
+    <category term="news"/>
+    <summary type="text">Carthage College hosted the conference on its campus for the first time and drew nearly 200 attendees, who gathered inside the college’s Todd Wehr Center Friday. Many students and teachers, Carthage College hosted the conference on its campus for the first time and drew nearly 200 attendees, who…</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/16b06214-fafa-4908-9018-c4c3e9527844</id>
+    <title type="text">Lake Geneva neighbors: Obituaries for August 16</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/lake-geneva-neighbors-obituaries-for-august-16-16b06214-fafa-4908-9018-c4c3e9527844"/>
+    <updated>2026-08-18T23:18:47.988Z</updated>
+    <published>2026-08-16T11:00:49.838Z</published>
+    <author><name>Lake Geneva Regional News</name></author>
+    <category term="news"/>
+    <summary type="text">Read through the obituaries published today in Lake Geneva Regional News.</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/b72936f6-34e6-4ef1-9434-e1a5e3ce5d1e</id>
+    <title type="text">Pam McCaslin featured in Late Summer Art Show at Lake Geneva’s Gallery 223</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/pam-mccaslin-featured-in-late-summer-art-show-at-lake-geneva-b72936f6-34e6-4ef1-9434-e1a5e3ce5d1e"/>
+    <updated>2026-08-16T13:00:10.270Z</updated>
+    <published>2026-08-15T13:11:30.000Z</published>
+    <category term="civic"/>
+    <summary type="text">By Carrie Dodt LAKE GENEVA — Artist Pam McCaslin of Burlington is among the artists featured in the Geneva Lakes Art Foundation’s Late Summer Art Show, on display at Gallery 223 through Sept. 20. McCa</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/c0950578-4e46-492c-a454-a765dd688586</id>
+    <title type="text">School staff and volunteers to complete required training</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/school-staff-and-volunteers-to-complete-required-training-c0950578-4e46-492c-a454-a765dd688586"/>
+    <updated>2026-08-18T23:18:47.988Z</updated>
+    <published>2026-08-15T11:00:28.221Z</published>
+    <author><name>DENNIS HINES dhines@lakegenevanews.net</name></author>
+    <category term="news"/>
+    <summary type="text">Lake Geneva School staff and volunteers will now be required to complete a required training requirement as it relates to proper communication with students, as well as reports of student, Lake Geneva School staff and volunteers will now be required to complete a required training requirement as…</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/d750e6ad-c4bf-4343-b68d-15968638a01e</id>
+    <title type="text">Lake Geneva brush drop-off site closed for Venetian Fest</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/lake-geneva-brush-drop-off-site-closed-for-venetian-fest-d750e6ad-c4bf-4343-b68d-15968638a01e"/>
+    <updated>2026-08-18T23:18:47.988Z</updated>
+    <published>2026-08-15T10:30:38.595Z</published>
+    <author><name>Lake Geneva Regional News</name></author>
+    <category term="news"/>
+    <summary type="text">Normal brush drop-off hours will resume Aug. 24., Normal brush drop-off hours will resume Aug. 24., Podcaster Show Player, Podcaster Show Player</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/5571bd40-c603-4c93-a3f8-55430a101786</id>
+    <title type="text">Lake Geneva neighbors: Obituaries for August 15</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/lake-geneva-neighbors-obituaries-for-august-15-5571bd40-c603-4c93-a3f8-55430a101786"/>
+    <updated>2026-08-18T23:18:47.988Z</updated>
+    <published>2026-08-15T10:30:32.506Z</published>
+    <author><name>Lake Geneva Regional News</name></author>
+    <category term="news"/>
+    <summary type="text">Read through the obituaries published today in Lake Geneva Regional News.</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/63b8bc47-36c4-4689-a6f1-18272889579a</id>
+    <title type="text">Energy Hour at PIER 290</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/energy-hour-at-pier-290-63b8bc47-36c4-4689-a6f1-18272889579a"/>
+    <updated>2026-08-15T06:01:09.365Z</updated>
+    <published>2026-08-15T06:01:02.938Z</published>
+    <category term="events"/>
+    <summary type="text">Why celebrate once when you can do it twice? We’re bringing the energy to PIER 290 for TWO DAYS of live DJ beats, featured cocktail specials, and a special Red Bull Rush Delivery promotional pop-up on</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/7244f69e-e0eb-40aa-97df-150fc408ee28</id>
+    <title type="text">Lake Geneva gets ready for Venetian Fest 2026</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/lake-geneva-gets-ready-for-venetian-fest-2026-7244f69e-e0eb-40aa-97df-150fc408ee28"/>
+    <updated>2026-08-15T13:00:09.326Z</updated>
+    <published>2026-08-14T20:55:10.000Z</published>
+    <category term="civic"/>
+    <summary type="text">LAKE GENEVA &amp;#8212; The 64th Annual Lake Geneva Jaycees Venetian Festival runs from Aug. 19–23, 2026, at Flat Iron, Library, and Seminary Parks in downtown Lake Geneva. This major summer event feature</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/f5127c8e-94d3-4c6f-ae5e-5246de55f040</id>
+    <title type="text">Harvest Moon 5K, Battle on the Border return to local parks</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/harvest-moon-5k-battle-on-the-border-return-to-local-parks-f5127c8e-94d3-4c6f-ae5e-5246de55f040"/>
+    <updated>2026-08-18T23:18:47.988Z</updated>
+    <published>2026-08-14T10:31:03.909Z</published>
+    <author><name>BRIAN ROSENZWEIG, brosenzweig@kenoshanews.com</name></author>
+    <category term="news"/>
+    <summary type="text">The Parks commission approved the return of three annual events including UW-Parkside’s “Bags on the Beach” cornhole tournament and Kenosha Running Club’s annual Harvest Moon 5K., The Parks commission approved the return of three annual events including UW-Parkside’s “Bags on the Beach” cornhole…</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/dae771b0-9c82-4213-86b5-b07be70e5dad</id>
+    <title type="text">August 13 recap: Lake Geneva news you may have missed today</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/august-13-recap-lake-geneva-news-you-may-have-missed-today-dae771b0-9c82-4213-86b5-b07be70e5dad"/>
+    <updated>2026-08-18T23:18:47.988Z</updated>
+    <published>2026-08-14T10:30:31.577Z</published>
+    <author><name>Lake Geneva Regional News</name></author>
+    <category term="news"/>
+    <summary type="text">Thursday&#39;s news: What you missed while you were at work.</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/f49fafbb-36e1-4a74-87b6-09be951dd99a</id>
+    <title type="text">Lake Geneva neighbors: Obituaries for August 14</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/lake-geneva-neighbors-obituaries-for-august-14-f49fafbb-36e1-4a74-87b6-09be951dd99a"/>
+    <updated>2026-08-18T23:18:47.988Z</updated>
+    <published>2026-08-14T10:30:27.727Z</published>
+    <author><name>Lake Geneva Regional News</name></author>
+    <category term="news"/>
+    <summary type="text">Read through the obituaries published today in Lake Geneva Regional News.</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/71c50657-0ba2-450f-bedf-8a980f5a7b8b</id>
+    <title type="text">Live Music: Tobias – August 27, 2026</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/live-music-tobias-august-27-2026-71c50657-0ba2-450f-bedf-8a980f5a7b8b"/>
+    <updated>2026-08-14T03:31:18.883Z</updated>
+    <published>2026-08-14T03:31:12.229Z</published>
+    <category term="events"/>
+    <summary type="text">Enjoy live music by Tobias with your dinner at PIER 290!</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/26d32a13-b23f-43e7-9ba0-4be24626dc07</id>
+    <title type="text">🌱 How to get ready for school and a sweet downtown crawl</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/how-to-get-ready-for-school-and-a-sweet-downtown-crawl-26d32a13-b23f-43e7-9ba0-4be24626dc07"/>
+    <updated>2026-08-15T13:00:09.326Z</updated>
+    <published>2026-08-14T00:01:01.009Z</published>
+    <category term="news"/>
+    <summary type="text">Community Corner🌱 How to get ready for school and a sweet downtown crawlComing up: Julius Bindrim III on the Lake Geneva Patch calendarPatch AM Team, Patch StaffPosted Thu, Aug 13, 2026 at 2:30 am…</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/2ba3796d-97a3-4ff6-9018-36c0abbcae0c</id>
+    <title type="text">Trevor business to host run/walk at UW-Parkside Aug. 15</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/trevor-business-to-host-run-walk-at-uw-parkside-aug-15-2ba3796d-97a3-4ff6-9018-36c0abbcae0c"/>
+    <updated>2026-08-18T23:18:47.988Z</updated>
+    <published>2026-08-13T10:30:45.312Z</published>
+    <author><name>KENOSHA NEWS STAFF</name></author>
+    <category term="news"/>
+    <summary type="text">Trevor-based Vonco Products will host a “Walk Where You Are” 3K Run/Walk on Aug. 15 to support the American Heart Association for the sixth consecutive year. This year the event, Trevor-based Vonco Products will host a “Walk Where You Are” 3K Run/Walk on Aug. 15 to support the American Heart…</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/fd85f8ec-0647-40a7-9f91-b17152e87a7b</id>
+    <title type="text">August 12 recap: Lake Geneva news you may have missed today</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/august-12-recap-lake-geneva-news-you-may-have-missed-today-fd85f8ec-0647-40a7-9f91-b17152e87a7b"/>
+    <updated>2026-08-18T23:18:47.988Z</updated>
+    <published>2026-08-13T10:30:06.228Z</published>
+    <author><name>Lake Geneva Regional News</name></author>
+    <category term="news"/>
+    <summary type="text">Don&#39;t miss Wednesday&#39;s most popular stories from Lake Geneva Regional News.</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/3bce01a4-0a05-4d25-97e0-5fabe9fc34bd</id>
+    <title type="text">Pleasant Prairie expands development district west of I-94</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/pleasant-prairie-expands-development-district-west-of-i-94-3bce01a4-0a05-4d25-97e0-5fabe9fc34bd"/>
+    <updated>2026-08-18T23:18:47.988Z</updated>
+    <published>2026-08-13T10:02:02.941Z</published>
+    <author><name>BRIAN ROSENZWEIG brosenzweig@kenoshanews.com</name></author>
+    <category term="news"/>
+    <summary type="text">The Village Board voted to add new territory to the Tax Incremental District west of Interstate 94, expanding the total project cost to nearly $83.4 million., The Village Board voted to add new territory to the Tax Incremental District west of Interstate 94, expanding the total project cost to…</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/f832de28-29ea-40ca-b918-7a322556b789</id>
+    <title type="text">Lake Geneva neighbors: Obituaries for August 13</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/lake-geneva-neighbors-obituaries-for-august-13-f832de28-29ea-40ca-b918-7a322556b789"/>
+    <updated>2026-08-18T23:18:47.988Z</updated>
+    <published>2026-08-13T10:01:23.376Z</published>
+    <author><name>Lake Geneva Regional News</name></author>
+    <category term="news"/>
+    <summary type="text">Read through the obituaries published today in Lake Geneva Regional News.</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/f5e6fea3-aa5a-4583-82ed-20bc63417df6</id>
+    <title type="text">Twin Lakes&#39; Aquanuts skied their way to 7th national title</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/twin-lakes-aquanuts-skied-their-way-to-7th-national-title-f5e6fea3-aa5a-4583-82ed-20bc63417df6"/>
+    <updated>2026-08-18T23:18:47.988Z</updated>
+    <published>2026-08-12T10:30:41.755Z</published>
+    <author><name>ROSE ANDROWICH, randrowich@kenoshanews.com</name></author>
+    <category term="news"/>
+    <summary type="text">The Aquanuts barefooted, swiveled and flipped their way into success at this year’s National Championship for water show skiing., The Aquanuts barefooted, swiveled and flipped their way into success at this year’s National Championship for water show skiing., Podcaster Show Player, Podcaster Show…</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/d5c2361d-20d6-41b1-865d-6dbe8f1c761d</id>
+    <title type="text">Walworth County officials seeking items for time capsule</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/walworth-county-officials-seeking-items-for-time-capsule-d5c2361d-20d6-41b1-865d-6dbe8f1c761d"/>
+    <updated>2026-08-18T23:18:47.988Z</updated>
+    <published>2026-08-12T10:30:31.418Z</published>
+    <author><name>DENNIS HINES dhines@lakegenevanews.net</name></author>
+    <category term="news"/>
+    <summary type="text">Walworth County officials are seeking items for a time capsule that is being created to honor the 250th anniversary of the signing of the American Declaration of Independence. Residents are being asked to donate documents, photographs, educational materials, demographic profiles, artwork or…</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/3a54c713-5766-40ed-a404-826e61ee43f2</id>
+    <title type="text">Lake Geneva neighbors: Obituaries for August 12</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/lake-geneva-neighbors-obituaries-for-august-12-3a54c713-5766-40ed-a404-826e61ee43f2"/>
+    <updated>2026-08-18T23:18:47.988Z</updated>
+    <published>2026-08-12T10:00:19.798Z</published>
+    <author><name>Lake Geneva Regional News</name></author>
+    <category term="news"/>
+    <summary type="text">Read through the obituaries published today in Lake Geneva Regional News.</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/9a8e459c-aa72-4a79-8090-5f266f79df79</id>
+    <title type="text">Twin Lakes card store burglary, Pokémon cards among $340K stolen</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/twin-lakes-card-store-burglary-pok-mon-cards-among-340k-stol-9a8e459c-aa72-4a79-8090-5f266f79df79"/>
+    <updated>2026-08-12T13:00:06.492Z</updated>
+    <published>2026-08-11T23:00:25.546Z</published>
+    <category term="news"/>
+    <summary type="text">Twin Lakes card store burglary, Pokémon cards among $340K stolen</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/248ccded-0583-4a6f-8fb0-fb0f63a13254</id>
+    <title type="text">🌱 How a late-night police chase raced through quiet Lake Geneva streets</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/how-a-late-night-police-chase-raced-through-quiet-lake-genev-248ccded-0583-4a6f-8fb0-fb0f63a13254"/>
+    <updated>2026-08-12T13:00:06.492Z</updated>
+    <published>2026-08-11T21:00:22.345Z</published>
+    <category term="news"/>
+    <summary type="text">Community Corner🌱 How a late-night police chase raced through quiet Lake Geneva streetsAlso, don&#39;t miss Julius Bindrim III on the Lake Geneva Patch calendarPatch AM Team, Patch StaffPosted Tue, Aug 11, 2026 at 2:32 am…</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/170b0db0-3522-46f2-b253-e24c4db504bb</id>
+    <title type="text">Commission OKs permit for renovation of Lake Geneva building</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/commission-oks-permit-for-renovation-of-lake-geneva-building-170b0db0-3522-46f2-b253-e24c4db504bb"/>
+    <updated>2026-08-18T23:18:47.988Z</updated>
+    <published>2026-08-11T10:01:12.817Z</published>
+    <author><name>DENNIS HINES dhines@lakegenevanews.net</name></author>
+    <category term="news"/>
+    <summary type="text">Coulter Crossings LLC of Williams Bay wants to renovate the building as part of Project Cursive., Coulter Crossings LLC of Williams Bay wants to renovate the building as part of Project Cursive.</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/56814a44-2a2e-498d-b07d-2d776049fff2</id>
+    <title type="text">Community rallies around Somers [age withheld] after accident</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/community-rallies-around-somers-4-year-old-after-accident-56814a44-2a2e-498d-b07d-2d776049fff2"/>
+    <updated>2026-08-18T23:18:47.988Z</updated>
+    <published>2026-08-11T10:01:03.388Z</published>
+    <author><name>Brian Rosenzweig, brosenzweig@kenoshanews.com</name></author>
+    <category term="news"/>
+    <summary type="text">The community has rallied around a Somers [age withheld] and his family following his surgery after losing part of his leg from a mower accident, from a business owner building a, The community has rallied around a Somers [age withheld] and his family following his surgery after losing part of his leg…</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/f75c201a-75f2-4371-b28d-fb59b34cb399</id>
+    <title type="text">August 10 recap: Lake Geneva news you may have missed today</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/august-10-recap-lake-geneva-news-you-may-have-missed-today-f75c201a-75f2-4371-b28d-fb59b34cb399"/>
+    <updated>2026-08-18T23:18:47.988Z</updated>
+    <published>2026-08-11T09:30:26.578Z</published>
+    <author><name>Lake Geneva Regional News</name></author>
+    <category term="news"/>
+    <summary type="text">Get a quick digest of today&#39;s top local news stories from Lake Geneva Regional News.</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/3fceebd8-a24b-46c8-b9d5-2a1ff0062e5f</id>
+    <title type="text">Lake Geneva neighbors: Obituaries for August 11</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/lake-geneva-neighbors-obituaries-for-august-11-3fceebd8-a24b-46c8-b9d5-2a1ff0062e5f"/>
+    <updated>2026-08-18T23:18:47.988Z</updated>
+    <published>2026-08-11T09:30:19.992Z</published>
+    <author><name>Lake Geneva Regional News</name></author>
+    <category term="news"/>
+    <summary type="text">Read through the obituaries published today in Lake Geneva Regional News.</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/6079644a-78f4-4084-b415-2fade681b027</id>
+    <title type="text">Special Weather Statement until SUN 11:15 AM CDT</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/special-weather-statement-until-sun-11-15-am-cdt-6079644a-78f4-4084-b415-2fade681b027"/>
+    <updated>2026-08-18T23:18:47.988Z</updated>
+    <published>2026-08-10T09:30:08.107Z</published>
+    <author><name>Lake Geneva Regional News</name></author>
+    <category term="news"/>
+    <summary type="text">Strong Thunderstorms Bringing Gusty Winds to Western Walworth and Eastern Rock Counties This Morning, Strong Thunderstorms Bringing Gusty Winds to Western Walworth and Eastern Rock Counties This Morning, Podcaster Show Player, Podcaster Show Player</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/eddd0a75-76bf-4c8f-93a0-5c5aa2e629d1</id>
+    <title type="text">Severe Thunderstorm Warning from SUN 11:28 AM CDT until SUN 12:15 PM CDT</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/severe-thunderstorm-warning-from-sun-11-28-am-cdt-until-sun-eddd0a75-76bf-4c8f-93a0-5c5aa2e629d1"/>
+    <updated>2026-08-18T23:18:47.988Z</updated>
+    <published>2026-08-10T09:01:46.116Z</published>
+    <author><name>Lake Geneva Regional News</name></author>
+    <category term="news"/>
+    <summary type="text">Severe Thunderstorms with High Winds and Hail Impacting Southeastern Wisconsin, Severe Thunderstorms with High Winds and Hail Impacting Southeastern Wisconsin, Podcaster Show Player, Podcaster Show Player</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/068b857a-3d44-4ce4-b05f-7575f0c0652e</id>
+    <title type="text">Lake Geneva neighbors: Obituaries for August 10</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/lake-geneva-neighbors-obituaries-for-august-10-068b857a-3d44-4ce4-b05f-7575f0c0652e"/>
+    <updated>2026-08-18T23:18:47.988Z</updated>
+    <published>2026-08-10T09:00:36.332Z</published>
+    <author><name>Lake Geneva Regional News</name></author>
+    <category term="news"/>
+    <summary type="text">Read through the obituaries published today in Lake Geneva Regional News.</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/71d6fb1a-a7a8-4d64-a92f-5e8b63ffab5d</id>
+    <title type="text">Lake Geneva neighbors: Obituaries for August 9</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/lake-geneva-neighbors-obituaries-for-august-9-71d6fb1a-a7a8-4d64-a92f-5e8b63ffab5d"/>
+    <updated>2026-08-18T23:18:47.988Z</updated>
+    <published>2026-08-09T09:00:18.600Z</published>
+    <author><name>Lake Geneva Regional News</name></author>
+    <category term="news"/>
+    <summary type="text">Read through the obituaries published today in Lake Geneva Regional News.</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/b4721fdd-d18b-4d05-a00a-4aa12f97c7c1</id>
+    <title type="text">Lake Geneva neighbors: Obituaries for August 7</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/lake-geneva-neighbors-obituaries-for-august-7-b4721fdd-d18b-4d05-a00a-4aa12f97c7c1"/>
+    <updated>2026-08-18T23:18:47.988Z</updated>
+    <published>2026-08-08T09:01:37.552Z</published>
+    <author><name>Lake Geneva Regional News</name></author>
+    <category term="news"/>
+    <summary type="text">Read through the obituaries published today in Lake Geneva Regional News.</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/94ca206a-e1f2-4057-bcab-c4bf61e74f2d</id>
+    <title type="text">Top stories for Aug. 7, 2026</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/top-stories-for-aug-7-2026-94ca206a-e1f2-4057-bcab-c4bf61e74f2d"/>
+    <updated>2026-08-18T23:18:47.988Z</updated>
+    <published>2026-08-08T09:01:33.919Z</published>
+    <author><name>Lake Geneva Regional News</name></author>
+    <category term="news"/>
+    <summary type="text">Top stories for Aug. 7, 2026, in the Wisconsin State Journal</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/3333a84b-3e54-4489-b655-692ef40a2101</id>
+    <title type="text">Conduct policy updates sent Lake Geneva City Council</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/conduct-policy-updates-sent-lake-geneva-city-council-3333a84b-3e54-4489-b655-692ef40a2101"/>
+    <updated>2026-08-18T23:18:47.988Z</updated>
+    <published>2026-08-07T08:30:25.505Z</published>
+    <author><name>DENNIS HINES dhines@lakegenevanews.net</name></author>
+    <category term="news"/>
+    <summary type="text">The changes still must be approved by the full City Council., The changes still must be approved by the full City Council.</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/c8a9be1f-3e82-48de-a732-9981077a8dcc</id>
+    <title type="text">A former Madison gas station is being transformed into a farm stand</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/a-former-madison-gas-station-is-being-transformed-into-a-far-c8a9be1f-3e82-48de-a732-9981077a8dcc"/>
+    <updated>2026-08-18T23:18:47.988Z</updated>
+    <published>2026-08-07T08:01:34.078Z</published>
+    <author><name>Lake Geneva Regional News</name></author>
+    <category term="news"/>
+    <summary type="text">Click here to view this video from [email withheld].</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/d96ee01a-1caa-49a9-bfe9-6af8f33973fb</id>
+    <title type="text">August 6 recap: Lake Geneva news you may have missed today</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/august-6-recap-lake-geneva-news-you-may-have-missed-today-d96ee01a-1caa-49a9-bfe9-6af8f33973fb"/>
+    <updated>2026-08-18T23:18:47.988Z</updated>
+    <published>2026-08-07T08:00:40.047Z</published>
+    <author><name>Lake Geneva Regional News</name></author>
+    <category term="news"/>
+    <summary type="text">Thursday&#39;s news: What you missed while you were at work.</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/81004342-d741-4ab0-bae3-80a8d742f984</id>
+    <title type="text">Salsa and tortilla entrepreneur eager to open first store after success at Lake Geneva Farmers Market</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/salsa-and-tortilla-entrepreneur-eager-to-open-first-store-af-81004342-d741-4ab0-bae3-80a8d742f984"/>
+    <updated>2026-08-09T13:00:08.691Z</updated>
+    <published>2026-08-07T02:14:47.000Z</published>
+    <category term="news"/>
+    <summary type="text">Jonathan Correa built La Cosecha Tortilla Company&#39;s reputation at the weekly Lake Geneva Farmers Market four years. He will soon open a restaurant near Delavan Lake to feed the demand all week.</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/65f72217-8ff4-4763-90c2-ca342cb84a22</id>
+    <title type="text">🌱 Lakeside Literary Festival and 10 more events</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/lakeside-literary-festival-and-10-more-events-65f72217-8ff4-4763-90c2-ca342cb84a22"/>
+    <updated>2026-08-06T13:00:09.939Z</updated>
+    <published>2026-08-06T12:03:02.167Z</published>
+    <category term="news"/>
+    <summary type="text">Community Corner🌱 Lakeside Literary Festival and 10 more eventsSpotted on the Lake Geneva calendar: Julius Bindrim IIIPatch AM Team, Patch StaffPosted Thu, Aug 6, 2026 at 2:30 am…</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/268edaf4-1e31-44b1-a300-8d709c1db932</id>
+    <title type="text">The corniest festival in Somers is kicking off August 8</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/the-corniest-festival-in-somers-is-kicking-off-august-8-268edaf4-1e31-44b1-a300-8d709c1db932"/>
+    <updated>2026-08-18T23:18:47.988Z</updated>
+    <published>2026-08-06T08:00:59.260Z</published>
+    <author><name>ROSE ANDROWICH, randrowich@kenoshanews.com</name></author>
+    <category term="news"/>
+    <summary type="text">Jerry Smith Farms is buttering up for its sweet corn festival next week, Jerry Smith Farms is buttering up for its sweet corn festival next week, Podcaster Show Player, Podcaster Show Player</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/c09dc109-627e-4c56-90ee-c9fbf586ceb1</id>
+    <title type="text">Twin Lakes Fire/Rescue unveils new fire suppression vehicle</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/twin-lakes-fire-rescue-unveils-new-fire-suppression-vehicle-c09dc109-627e-4c56-90ee-c9fbf586ceb1"/>
+    <updated>2026-08-18T23:18:47.988Z</updated>
+    <published>2026-08-06T08:00:30.519Z</published>
+    <author><name>Milana Doné milanadone@journaltimes.com</name></author>
+    <category term="news"/>
+    <summary type="text">Twin Lakes Fire/Rescue has a new ultra high-pressure fire suppression pickup truck designed to boost the department&#39;s initial response. The new truck was funded by the Village of Twin Lakes, Twin Lakes Fire/Rescue has a new ultra high-pressure fire suppression pickup truck designed to boost the…</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/af8a0da3-ef88-4383-ab3c-d87004f929ab</id>
+    <title type="text">Holy Rosary Church Festival kicks off Friday</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/holy-rosary-church-festival-kicks-off-friday-af8a0da3-ef88-4383-ab3c-d87004f929ab"/>
+    <updated>2026-08-18T23:18:47.988Z</updated>
+    <published>2026-08-06T07:30:45.025Z</published>
+    <author><name>ROSE ANDROWICH, randrowich@kenoshanews.com</name></author>
+    <category term="news"/>
+    <summary type="text">The festival at Holy Rosary in Kenosha, 2224 45th St. will be held from 5-10 p.m. on Aug. 7; 3-10 p.m. on Aug. 8; and noon-8 p.m. on Aug.9. On-site, The festival at Holy Rosary in Kenosha, 2224 45th St. will be held from 5-10 p.m. on Aug. 7; 3-10 p.m. on Aug. 8; and noon-8 p.m. on Aug.9. On-site…</summary>
+  </entry>
+  <entry>
+    <id>https://lakegenevabrief.com/stories/ed741917-62f4-4c2e-be2c-e30cee77f1bd</id>
+    <title type="text">August 5 recap: Lake Geneva news you may have missed today</title>
+    <link rel="alternate" type="text/html" href="https://lakegenevabrief.com/stories/august-5-recap-lake-geneva-news-you-may-have-missed-today-ed741917-62f4-4c2e-be2c-e30cee77f1bd"/>
+    <updated>2026-08-18T23:18:47.988Z</updated>
+    <published>2026-08-06T07:30:22.435Z</published>
+    <author><name>Lake Geneva Regional News</name></author>
+    <category term="news"/>
+    <summary type="text">Don&#39;t miss Wednesday&#39;s most popular stories from Lake Geneva Regional News.</summary>
+  </entry>
+</feed>
