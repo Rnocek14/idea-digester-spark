@@ -53,6 +53,7 @@ import {
   toParagraphs,
   truncate,
 } from "../_shared/renderPage.ts";
+import { cleanScrapedBody } from "../_shared/cleanScrapedBody.ts";
 
 // Statuses an anonymous reader is allowed to see, mirroring the incidents RLS
 // policy in 20260718120000_harden_incidents_rls.sql.
@@ -563,7 +564,9 @@ async function renderStoryDetail(
   const title = stripTags(data.title);
   const canonicalPath = storyPath(data.id, data.title);
   const summary = stripTags(data.summary);
-  const bodyText = String(data.content ?? "");
+  // Crawlers were being served the scraper's navigation chrome verbatim
+  // ("[Skip to main content](…)") whenever the voice rewrite had not run.
+  const bodyText = cleanScrapedBody(String(data.content ?? ""));
   const description = truncate(summary || bodyText || title, 200);
   const published = isoDate(data.publish_date || data.created_at);
   const modified = isoDate(data.updated_at);

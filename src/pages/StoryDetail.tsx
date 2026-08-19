@@ -10,6 +10,7 @@ import { PublicFooter } from "@/components/PublicFooter";
 import { PageMeta } from "@/components/PageMeta";
 import { StoryReactions } from "@/components/StoryReactions";
 import { extractStoryId, storyPath } from "@/lib/slug";
+import { cleanScrapedBody, scrapedExcerpt } from "@/lib/cleanScrapedBody";
 import { format } from "date-fns";
 
 /**
@@ -167,9 +168,10 @@ export default function StoryDetail() {
   const path = storyPath(story.id, story.title);
   const publishedISO = story.publish_date || story.created_at;
   const modifiedISO = story.updated_at || publishedISO;
+  // Scraper artifacts must never become the search snippet — the raw body
+  // begins "[Skip to main content](…)" whenever the voice rewrite hasn't run.
   const description =
-    story.summary ||
-    (story.content ? story.content.slice(0, 180).replace(/\s+/g, " ").trim() + "…" : story.title);
+    story.summary || scrapedExcerpt(story.content) || story.title;
 
   const guides = CATEGORY_GUIDES[story.category || ""] || [];
   const domain = sourceDomain(story.original_url);
@@ -293,9 +295,9 @@ export default function StoryDetail() {
           </p>
         )}
 
-        {story.content && (
+        {cleanScrapedBody(story.content) && (
           <div className="prose prose-slate max-w-none text-[15.5px] leading-relaxed text-slate-800 mb-8 whitespace-pre-line">
-            {story.content}
+            {cleanScrapedBody(story.content)}
           </div>
         )}
 
