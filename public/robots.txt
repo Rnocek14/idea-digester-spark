@@ -23,11 +23,10 @@
 # city exists, the hosting rewrite is not configured yet, and a missing sitemap
 # hint costs real discovery on the only live domain. So the absolute line below
 # is correct for now and wrong the moment a second domain serves this file.
-# When city #2 launches: delete these lines and wire /robots.txt -> serve-robots.
-# Two sitemaps on purpose: the static one refreshes per build; the edge one is
-# always current (cross-host Sitemap: references are valid from robots.txt).
+# When city #2 launches: delete this line and wire /robots.txt -> serve-robots.
+# (Between-build freshness comes from the hourly IndexNow cron, not a second
+# sitemap line — a cross-host line would hardcode the project ref here.)
 Sitemap: https://lakegenevabrief.com/sitemap.xml
-Sitemap: https://mzumvkrpnxhkvhdyzgqa.supabase.co/functions/v1/serve-sitemap?city_id=default
 
 User-agent: Googlebot
 Allow: /

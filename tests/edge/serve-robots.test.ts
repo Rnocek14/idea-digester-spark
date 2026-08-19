@@ -267,11 +267,39 @@ test("public/robots.txt is safe on any hostname", () => {
   assert.match(body, /serve-robots/, "must point an operator at the per-city function");
 });
 
-test("public/llms.txt carries no city-specific absolute URLs", () => {
+// POLICY CHANGE (2026-08-19): public/llms.txt is no longer a hostname-neutral
+// stub. The hosting rewrite that would serve the per-city function still does
+// not exist, so scripts/generate-edge-fallbacks.ts snapshots the DEPLOYED
+// serve-llms output into this file at every build — the same single-city
+// pragmatism the robots.txt sitemap line already carries, and the same
+// trade-off: correct while exactly one city exists, replaced by real rewrites
+// before city #2. These tests guard the NEW contract: the snapshot must look
+// like real serve-llms output, and the generator must carry the single-city
+// marker so the city-#2 grep finds it.
+test("public/llms.txt is a real serve-llms snapshot", () => {
   const path = fileURLToPath(new URL("../../public/llms.txt", import.meta.url));
   const body = readFileSync(path, "utf8");
 
-  assert.ok(!body.includes("lakegenevabrief.com"), "fallback must not name one city's domain");
-  assert.ok(!/\]\(https?:\/\//.test(body), "fallback links must be relative to the serving domain");
-  assert.match(body, /serve-llms/, "must point an operator at the per-city function");
+  assert.match(body, /^# .+/m, "snapshot starts with an llms.txt title heading");
+  assert.match(body, /^> .+/m, "snapshot carries the summary blockquote");
+  assert.ok(body.length > 300, "snapshot is real content, not an error body");
+});
+
+test("public/feed.xml is a real serve-feed snapshot", () => {
+  const path = fileURLToPath(new URL("../../public/feed.xml", import.meta.url));
+  const body = readFileSync(path, "utf8");
+
+  assert.match(body, /<feed[\s>]/, "snapshot is an Atom feed");
+  assert.match(body, /<entry>/, "snapshot carries at least one entry");
+});
+
+test("the fallback generator carries the single-city removal marker", () => {
+  const path = fileURLToPath(
+    new URL("../../scripts/generate-edge-fallbacks.ts", import.meta.url),
+  );
+  const body = readFileSync(path, "utf8");
+  assert.ok(
+    body.includes("SINGLE-CITY PRAGMATISM"),
+    "generate-edge-fallbacks.ts must carry the marker that the city-#2 launch checklist greps for",
+  );
 });
