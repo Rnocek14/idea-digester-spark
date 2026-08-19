@@ -16,7 +16,7 @@ import {
  * Compact headline-only list (no images, no filter chips, no hero) —
  * pairs with EditorialLaterRail ("Worth a look") shown directly below.
  */
-export default function RightRailTemporal() {
+export default function RightRailTemporal({ fallback = null }: { fallback?: React.ReactNode }) {
   const { data: events = [], isLoading } = useQuery({
     queryKey: ["right-rail-temporal"],
     queryFn: async () => {
@@ -86,7 +86,7 @@ export default function RightRailTemporal() {
     { key: "next_week", label: "Next Week", hint: "Plan ahead", items: nextWeek.slice(0, 4) },
   ].filter((s) => s.items.length > 0);
 
-  if (sections.length === 0) return null;
+  if (sections.length === 0) return <>{fallback}</>;
 
   return (
     <div className="space-y-5">

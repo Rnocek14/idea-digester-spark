@@ -875,15 +875,19 @@ const LakeGenevaV2 = () => {
               </div>
             </div>
 
-            {/* Mobile: Quick "Tonight" teaser - hidden on desktop where sidebar handles this */}
             <div className="xl:hidden mt-6 mb-6 p-5 bg-stone-50 border border-slate-200 rounded-md">
               <div className="flex items-baseline justify-between mb-4">
-                <span className="text-xs font-mono uppercase tracking-wider text-slate-600 font-semibold">[TONIGHT]</span>
+                <span className="text-xs font-mono uppercase tracking-wider text-slate-600 font-semibold">[WHAT'S ON]</span>
                 <a href="#later-mobile" className="text-xs font-mono text-blue-600 hover:underline py-2 -my-2">
                   See all plans →
                 </a>
               </div>
-              <NightlifeWidget tonightOnly />
+              {/* Mobile plans block: the nightlife-only "Tonight" query is empty most
+                  weekdays, so mobile always read "Nothing scheduled tonight". Use the
+                  same temporal rail as desktop (Tonight → Weekend → Next Week) which
+                  self-hides empty sections, and only fall back to the nightlife widget
+                  when there is genuinely nothing on the calendar. */}
+              <RightRailTemporal fallback={<NightlifeWidget tonightOnly />} />
             </div>
 
             {/* LATEST Header - L-L-L mnemonic consistency */}
