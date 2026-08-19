@@ -85,6 +85,39 @@ jobs:
           echo "publish_date trigger:"; q "SELECT count(*) FROM pg_trigger WHERE tgname LIKE '%publish_date%'"
           echo "cron jobs:"; q "SELECT jobname FROM cron.job ORDER BY jobname"
 
+      # Editorial health. The daily brief block on the homepage rendered empty
+      # for six weeks and nothing said so: the AI provider was returning 429,
+      # each run persisted a `draft` row with the error, and the same-day guard
+      # then treated its own failure as success. The guard is fixed; this step
+      # makes the underlying provider failure impossible to miss next time.
+      - name: Verify editorial pipeline is producing
+        run: |
+          set -e
+          q() {
+            jq -n --arg q "$1" '{query: $q}' > /tmp/q.json
+            curl -sS -X POST "https://api.supabase.com/v1/projects/$PROJECT_REF/database/query" \
+              -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+              -H "Content-Type: application/json" --data @/tmp/q.json
+          }
+          echo "latest daily briefs:"
+          q "SELECT brief_date, status, left(coalesce(generation_error,''),60) AS err
+               FROM daily_briefs ORDER BY brief_date DESC LIMIT 3"
+          echo "latest lake beats:"
+          q "SELECT beat_date, left(coalesce(generation_error,''),60) AS err
+               FROM lake_beats ORDER BY beat_date DESC LIMIT 3"
+          echo "local stories published per day (last 5):"
+          q "SELECT publish_date::date AS day, count(*)
+               FROM content_queue
+              WHERE status IN ('published','auto_published') AND geo_tier >= 1
+                AND publish_date > now() - interval '5 days'
+              GROUP BY 1 ORDER BY 1 DESC"
+          # Names only — never values. A missing LOVABLE_API_KEY is the usual
+          # reason editorial generation falls back to a rate-limited provider.
+          echo "configured function secrets (names only):"
+          curl -sS "https://api.supabase.com/v1/projects/$PROJECT_REF/secrets" \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" | jq -r '.[].name' | sort | tr '\n' ' '
+          echo
+
       # Optional operator secrets, forwarded from GitHub to the functions
       # runtime. Add ALERT_EMAIL (and RESEND_API_KEY, if it ever rotates) as
       # repository secrets — the same screen SUPABASE_ACCESS_TOKEN lives on —

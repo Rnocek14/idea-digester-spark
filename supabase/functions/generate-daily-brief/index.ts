@@ -88,14 +88,23 @@ serve(async (req) => {
     // would otherwise sneak it past a combined check.
     const isRegional = (s: any) => REGIONAL_KW.test(String(s?.title ?? ""));
 
-    // Idempotent unless forced
+    // Idempotent unless forced — but ONLY a published brief counts as done.
+    //
+    // When the AI call fails this function persists a `draft` row carrying
+    // generation_error (so the failure is visible). The guard used to skip on
+    // ANY existing row, which made a transient provider failure permanent: the
+    // homepage brief block went empty on 2026-07-06 and stayed empty for six
+    // weeks, because every later run that day — and every retry after — saw
+    // the failed draft and reported "already_generated". Retrying a draft is
+    // free (same-day, same inputs) and lets the brief heal itself the moment
+    // the provider recovers.
     const { data: existing } = await supabase
       .from("daily_briefs")
-      .select("brief_date, created_at")
+      .select("brief_date, created_at, status")
       .eq("brief_date", brief_date)
       .eq("city_id", config.id)
       .maybeSingle();
-    if (existing && !force) {
+    if (existing && existing.status === "published" && !force) {
       return new Response(
         JSON.stringify({ skipped: true, reason: "already_generated", brief_date }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },

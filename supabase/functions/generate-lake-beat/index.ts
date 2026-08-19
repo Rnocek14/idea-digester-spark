@@ -61,13 +61,17 @@ serve(async (req) => {
 
     const config = await getCityConfig(supabase);
     const beat_date = todayCT();
+    // Same-day guard, but a row that recorded a generation_error is a
+    // degraded fallback ("62° and overcast on the lake."), not a finished
+    // beat — retry it so the line upgrades to real prose once the AI provider
+    // recovers, instead of the template surviving all day.
     const { data: existing } = await supabase
       .from("lake_beats")
-      .select("beat_date")
+      .select("beat_date, generation_error")
       .eq("beat_date", beat_date)
       .eq("city_id", config.id)
       .maybeSingle();
-    if (existing && !force) {
+    if (existing && !existing.generation_error && !force) {
       return new Response(JSON.stringify({ skipped: true, beat_date }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
