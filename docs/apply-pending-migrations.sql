@@ -901,3 +901,16 @@ SELECT
   (SELECT count(*) FROM content_queue
    WHERE status IN ('published','auto_published')
      AND publish_date > now() - interval '48 hours')                       AS stories_live_last_48h;
+
+-- ===== 2026-08-31 DATA FIX: Venetian Masquerade Ball date =================
+-- Scraped as 2026-08-30 but the source page says Sunday, August 23, 2026
+-- (startDate "2026-08-23"). Correcting removes it from upcoming-event feeds.
+UPDATE public.content_queue
+SET event_date = '2026-08-23'
+WHERE id = '22c5252d-49d9-44a2-8ca7-231d359f158a'
+  AND title = 'VENETIAN MASQUERADE BALL 2026'
+  AND event_date = '2026-08-30';
+
+-- Verify: should return 1 row with event_date 2026-08-23
+SELECT id, title, event_date FROM public.content_queue
+WHERE id = '22c5252d-49d9-44a2-8ca7-231d359f158a';
