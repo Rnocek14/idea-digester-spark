@@ -256,18 +256,6 @@
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/events/71c50657-0ba2-450f-bedf-8a980f5a7b8b</loc>
-    <lastmod>2026-08-14</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/events/22c5252d-49d9-44a2-8ca7-231d359f158a</loc>
-    <lastmod>2026-08-23</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
     <loc>https://lakegenevabrief.com/events/78a43b9e-3aa9-4f47-a560-6dfd6a4b6330</loc>
     <lastmod>2026-08-18</lastmod>
     <changefreq>weekly</changefreq>
@@ -454,13 +442,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/incidents/live-updates-power-out-trees-down-as-high-winds-tear-across-walworth-county</loc>
+    <loc>https://lakegenevabrief.com/incidents/3-children-dead-other-passengers-rescued-after-boat-capsizes-in-geneva-lake</loc>
     <lastmod>2026-07-04</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/incidents/3-children-dead-other-passengers-rescued-after-boat-capsizes-in-geneva-lake</loc>
+    <loc>https://lakegenevabrief.com/incidents/live-updates-power-out-trees-down-as-high-winds-tear-across-walworth-county</loc>
     <lastmod>2026-07-04</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -478,32 +466,128 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/incidents/genoa-city-cat-owner-saddened-after-officer-discovers-four-dead-cats-inside-a-ho</loc>
-    <lastmod>2026-06-30</lastmod>
+    <loc>https://lakegenevabrief.com/stories/kusd-board-moves-forward-with-community-poll-staff-audit-9ce11730-c074-492e-a22f-5040a98b1ca3</loc>
+    <lastmod>2026-08-30</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/incidents/tree-down-on-wrigley-drive-6k7qd</loc>
-    <lastmod>2026-06-29</lastmod>
+    <loc>https://lakegenevabrief.com/stories/lake-geneva-neighbors-obituaries-for-august-30-36fb4c0c-466f-4c5a-8b21-70137444917c</loc>
+    <lastmod>2026-08-30</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/lake-geneva-neighbors-obituaries-for-august-29-2fa46b73-d9c8-4f9c-b9ec-1ca6bdf85b8e</loc>
+    <lastmod>2026-08-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/fair-exhibitor-finds-housing-for-her-cows-after-storm-damage-baf8b2ff-0e34-430f-a799-6b5625981576</loc>
+    <lastmod>2026-08-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/what-proposed-initiatives-could-mean-for-uw-parkside-613c8114-b4eb-4090-8a39-bfa84912df91</loc>
+    <lastmod>2026-08-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/wiseye-morning-minute-data-centers-and-the-governors-race-0a83bbcd-f935-459f-b746-8e95ab0bbb87</loc>
+    <lastmod>2026-08-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/august-27-recap-lake-geneva-news-you-may-have-missed-today-7834e265-8269-4834-ab43-ef278e9e5f52</loc>
+    <lastmod>2026-08-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/lake-geneva-neighbors-obituaries-for-august-28-e2e4eb1e-16a3-4ee3-9ef5-95ef1d5a9a4b</loc>
+    <lastmod>2026-08-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/traver-school-welcomes-new-principal-for-2026-27-school-year-2562cb3d-6c47-4cd4-b8ae-a9f780e472f0</loc>
+    <lastmod>2026-08-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/wiseye-morning-minute-study-committee-on-district-attorney-f-860b83f1-30e7-471c-99e4-1abd157528b6</loc>
+    <lastmod>2026-08-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/carthage-greets-record-student-numbers-in-fall-2026-class-d1e1fd6d-d9a2-4f5c-9557-036c8616d841</loc>
+    <lastmod>2026-08-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/lawn-street-house-damaged-in-wednesday-evening-fire-88894a98-4513-44b9-b5fe-3b175dc3c96a</loc>
+    <lastmod>2026-08-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/raymond-school-hosts-open-house-picnic-fc2ab630-a412-4ce8-8fd8-9d4b1aa8eb82</loc>
+    <lastmod>2026-08-27</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/kenosha-unified-revises-renews-superintendents-contract-ab7a7b66-45da-4c42-8e5f-b8b69bab4cac</loc>
+    <lastmod>2026-08-27</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/logan-kelley-opens-free-movie-exchange-library-in-kenosha-c6d85c70-f183-490b-9348-f22eee7f4548</loc>
+    <lastmod>2026-08-27</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/racine-public-library-seeking-presenters-for-science-fair-0e6ba328-6960-4479-b98b-ac62f30eb4f0</loc>
+    <lastmod>2026-08-27</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/how-a-lake-geneva-spec-home-just-set-a-8-5m-record-b3ffc245-c1ac-4c75-913a-cc1a75a95b38</loc>
+    <lastmod>2026-08-27</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/meet-the-badger-high-leader-putting-lake-geneva-on-wisconsin-79e799b4-480a-4edb-b68c-c9b2336986f8</loc>
+    <lastmod>2026-08-27</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/geneva-lake-conservancy-to-host-annual-meeting-and-dinner-78193aa6-e070-42ca-80ba-1eb848fdac14</loc>
-    <lastmod>2026-08-26</lastmod>
+    <lastmod>2026-08-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/lake-geneva-neighbors-obituaries-for-august-26-2041f56c-7d98-4ad9-91fa-b5f2b82fc4f8</loc>
-    <lastmod>2026-08-26</lastmod>
+    <lastmod>2026-08-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/rusd-board-seeks-applicants-to-fill-district-2-seat-eb2ec291-5df2-435c-b7b3-baa236adfb52</loc>
-    <lastmod>2026-08-26</lastmod>
+    <lastmod>2026-08-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -894,12 +978,6 @@
   <url>
     <loc>https://lakegenevabrief.com/stories/lake-geneva-neighbors-obituaries-for-august-14-f49fafbb-36e1-4a74-87b6-09be951dd99a</loc>
     <lastmod>2026-08-18</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/stories/live-music-tobias-august-27-2026-71c50657-0ba2-450f-bedf-8a980f5a7b8b</loc>
-    <lastmod>2026-08-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -1348,13 +1426,13 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/stories/smaller-wisconsin-communities-hope-federal-cleanup-grants-ca-6c246f9a-85e4-4bd8-b757-073a26bf6393</loc>
+    <loc>https://lakegenevabrief.com/stories/before-pride-superior-s-main-club-offered-a-place-to-belong-a034aad4-39bc-46ba-ab7b-fe0b53fbc867</loc>
     <lastmod>2026-08-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/stories/before-pride-superior-s-main-club-offered-a-place-to-belong-a034aad4-39bc-46ba-ab7b-fe0b53fbc867</loc>
+    <loc>https://lakegenevabrief.com/stories/smaller-wisconsin-communities-hope-federal-cleanup-grants-ca-6c246f9a-85e4-4bd8-b757-073a26bf6393</loc>
     <lastmod>2026-08-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
@@ -1554,24 +1632,6 @@
   <url>
     <loc>https://lakegenevabrief.com/stories/lake-geneva-family-vacation-ends-in-tragedy-on-northern-wisc-5764f27a-01b0-4849-b50e-ec8a3a05c1fb</loc>
     <lastmod>2026-06-08</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/stories/shrimp-crab-boil-magpies-c782ee77-e9cd-4e18-991f-7681fe5fcb68</loc>
-    <lastmod>2026-05-30</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/stories/spotted-cow-fish-fry-at-the-waterfront-f2ae7e1d-3eee-442c-b21c-9a0b3439bb3f</loc>
-    <lastmod>2026-05-30</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/stories/williams-bay-school-alumni-take-last-look-at-former-schoolho-51c60978-60a8-49bd-8211-e00d1c24644e</loc>
-    <lastmod>2026-05-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
