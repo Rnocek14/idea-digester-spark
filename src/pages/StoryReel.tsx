@@ -154,17 +154,17 @@ const StoryReel = () => {
         </Link>
       </div>
 
-      {/* Progress rail */}
-      {reelStories.length > 0 && (
-        <div className="absolute right-1.5 top-1/2 z-20 hidden -translate-y-1/2 flex-col gap-1 sm:flex">
-          {reelStories.map((s: any, i: number) => (
-            <span
-              key={s.id}
-              className={`h-1.5 w-1.5 rounded-full transition-colors ${i === activeIndex ? "bg-white" : "bg-white/30"}`}
-            />
-          ))}
-        </div>
-      )}
+      {/* Dot navigator — one dot per story in today's run */}
+      <div className="absolute inset-x-0 top-[calc(max(0.75rem,env(safe-area-inset-top))+3rem)] z-20">
+        <StoryDots
+          stories={reelStories}
+          activeIndex={activeIndex}
+          readIds={readIds}
+          onJump={jumpToIndex}
+          tone="dark"
+        />
+      </div>
+
 
       <div
         ref={containerRef}
