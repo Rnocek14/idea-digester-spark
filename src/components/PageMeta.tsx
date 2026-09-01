@@ -10,6 +10,8 @@ interface PageMetaProps {
   ogType?: "website" | "article";
   ogImage?: string;
   keywords?: string[];
+  /** App surfaces (reel, saved list) that should stay out of the index. */
+  noindex?: boolean;
 }
 
 /**
@@ -30,7 +32,7 @@ function serializeJsonLd(node: unknown): string {
     .replace(/\u2029/g, "\\u2029");
 }
 
-export function PageMeta({ title, description, path, jsonLd, ogType = "website", ogImage, keywords }: PageMetaProps) {
+export function PageMeta({ title, description, path, jsonLd, ogType = "website", ogImage, keywords, noindex }: PageMetaProps) {
   const url = `${getSiteOrigin()}${path}`;
   const ldArray = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
   return (
@@ -41,6 +43,7 @@ export function PageMeta({ title, description, path, jsonLd, ogType = "website",
         <meta name="keywords" content={keywords.join(", ")} />
       ) : null}
       <link rel="canonical" href={url} />
+      {noindex ? <meta name="robots" content="noindex, follow" /> : null}
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />
       <meta property="og:url" content={url} />
