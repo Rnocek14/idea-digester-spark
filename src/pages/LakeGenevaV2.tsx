@@ -38,6 +38,10 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { PageMeta } from "@/components/PageMeta";
 import { LG_ALL_KEYWORDS } from "@/lib/seoKeywords";
 import { useLocalFeed } from "@/hooks/useLocalFeed";
+import { StoryDots } from "@/components/StoryDots";
+import { useActiveStoryIndex } from "@/hooks/useActiveStoryIndex";
+import { trackStoryEvent, pillarFromCategory } from "@/lib/trackStoryEvent";
+
 
 // Category order for topic mode filtering
 const categoryOrder = ['news', 'civic', 'events', 'dining', 'community', 'schools', 'real_estate'];
@@ -421,6 +425,31 @@ const LakeGenevaV2 = () => {
 
   const filteredStories = getFilteredStories();
 
+  // Dot navigator: one dot per story card rendered on this page, in order.
+  const dotStories = (filteredStories as Story[]).slice(0, 24).map((s) => ({
+    id: s.id,
+    title: s.title,
+    geo_tier: s.geo_tier ?? null,
+  }));
+  const { activeIndex: dotActiveIndex, readIds: dotReadIds } = useActiveStoryIndex(
+    dotStories.map((s) => s.id),
+    isMobile,
+  );
+  const jumpToDotStory = (index: number) => {
+    const story = dotStories[index];
+    if (!story) return;
+    scrollToStory(story.id);
+    void trackStoryEvent({
+      pillar: pillarFromCategory((filteredStories as Story[])[index]?.category),
+      eventType: "homepage_click",
+      entityType: "content_queue",
+      entityId: story.id,
+      metadata: { surface: "dots", position: index },
+    });
+  };
+
+
+
   // Read today's brief's mentioned_story_ids so the pyramid doesn't re-show
   // the same headlines the prose brief already named. Falls back to no-dedupe
   // if the brief hasn't been generated yet today.
@@ -766,7 +795,20 @@ const LakeGenevaV2 = () => {
                   </div>
                 )}
               </div>
+
+              {/* Mobile dot navigator — one dot per story, colour = locality */}
+              {isMobile && dotStories.length >= 4 && (
+                <StoryDots
+                  className="mt-2 -mx-4"
+                  stories={dotStories}
+                  activeIndex={dotActiveIndex}
+                  readIds={dotReadIds}
+                  onJump={jumpToDotStory}
+                  tone="light"
+                />
+              )}
             </div>
+
 
             {/* Lead stories - pyramid: first full-width, second+third side by side */}
             {/* Show pyramid only in 'all' mode, hide in 'recent' mode for pure chronological */}

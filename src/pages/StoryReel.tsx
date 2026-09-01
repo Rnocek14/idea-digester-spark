@@ -14,11 +14,9 @@ import {
 } from "@/lib/savedStories";
 import { trackStoryEvent, pillarFromCategory } from "@/lib/trackStoryEvent";
 
-const GEO_PILL: Record<number, { label: string; className: string }> = {
-  1: { label: "Lake Geneva", className: "bg-blue-500/90 text-white" },
-  2: { label: "Walworth", className: "bg-amber-500/90 text-white" },
-  0: { label: "Wisconsin", className: "bg-slate-500/90 text-white" },
-};
+import { StoryDots, GEO_PILL, geoTierKey } from "@/components/StoryDots";
+
+
 
 const relativeTime = (iso?: string | null) => {
   if (!iso) return null;
@@ -83,6 +81,33 @@ const StoryReel = () => {
     root.querySelectorAll("[data-reel-card]").forEach((el) => observer.observe(el));
     return () => observer.disconnect();
   }, [reelStories]);
+
+  // Read state for the dot row: everything the reader has landed on so far.
+  const [readIds, setReadIds] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    const story = reelStories[activeIndex];
+    if (!story) return;
+    setReadIds((prev) => (prev.has(story.id) ? prev : new Set(prev).add(story.id)));
+  }, [activeIndex, reelStories]);
+
+  const jumpToIndex = (index: number) => {
+    const root = containerRef.current;
+    const target = root?.querySelector<HTMLElement>(`[data-index="${index}"]`);
+    if (!target) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    target.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+    const story = reelStories[index];
+    if (story) {
+      void trackStoryEvent({
+        pillar: pillarFromCategory(story.category),
+        eventType: "homepage_click",
+        entityType: "content_queue",
+        entityId: story.id,
+        metadata: { surface: "dots", position: index },
+      });
+    }
+  };
+
 
   const handleSave = (story: any) => {
     const nowSaved = toggleSavedStory(toSaved(story));
@@ -156,17 +181,17 @@ const StoryReel = () => {
         </Link>
       </div>
 
-      {/* Progress rail */}
-      {reelStories.length > 0 && (
-        <div className="absolute right-1.5 top-1/2 z-20 hidden -translate-y-1/2 flex-col gap-1 sm:flex">
-          {reelStories.map((s: any, i: number) => (
-            <span
-              key={s.id}
-              className={`h-1.5 w-1.5 rounded-full transition-colors ${i === activeIndex ? "bg-white" : "bg-white/30"}`}
-            />
-          ))}
-        </div>
-      )}
+      {/* Dot navigator — one dot per story in today's run */}
+      <div className="absolute inset-x-0 top-[calc(max(0.75rem,env(safe-area-inset-top))+3rem)] z-20">
+        <StoryDots
+          stories={reelStories}
+          activeIndex={activeIndex}
+          readIds={readIds}
+          onJump={jumpToIndex}
+          tone="dark"
+        />
+      </div>
+
 
       <div
         ref={containerRef}
@@ -178,7 +203,7 @@ const StoryReel = () => {
 
         {!storiesLoading &&
           reelStories.map((story: any, index: number) => {
-            const pill = GEO_PILL[(story.geo_tier ?? 0) as number];
+            const pill = GEO_PILL[geoTierKey(story.geo_tier)];
             const saved = savedIds.has(story.id);
             return (
               <section
