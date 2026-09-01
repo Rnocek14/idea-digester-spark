@@ -31,9 +31,7 @@ import { StickySubscribeBanner } from "@/components/StickySubscribeBanner";
 import { PresentedBySection } from "@/components/PresentedBySection";
 import { SuggestionBoxCard } from "@/components/SuggestionBox";
 import { getSubscribeSource, getReferralSource } from "@/lib/referralTracking";
-import { isAllowedStoryImage } from "@/lib/imagePolicy";
 import { useCityConfig } from "@/hooks/useCityConfig";
-import { runCityScoped } from "@/lib/cityId";
 import { NavLink } from "@/components/NavLink";
 import { Home, Star, Phone, ChevronDown } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -275,7 +273,7 @@ const LakeGenevaV2 = () => {
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  const { data: stories = [], isLoading: storiesLoading, error: storiesError } = useLocalFeed();
+  const { stories, storiesLoading, storiesError } = useLocalFeed();
 
   // Query sponsor
   const { data: sponsor } = useQuery({

@@ -84,7 +84,7 @@ export const useLocalFeed = () => {
   };
 
   // Fetch stories with priority ordering + tier-0 cap + thin-feed fallback
-  const { data: stories = [], isLoading: storiesLoading, error: storiesError } = useQuery({
+  const { data: stories = [], isLoading: storiesLoading, error: storiesError } = useQuery<any[]>({
     queryKey: ["public-stories-v2", cityId],
     queryFn: async () => {
       const nowMs = Date.now();
