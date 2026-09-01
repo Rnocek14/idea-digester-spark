@@ -33,7 +33,7 @@ import { SuggestionBoxCard } from "@/components/SuggestionBox";
 import { getSubscribeSource, getReferralSource } from "@/lib/referralTracking";
 import { useCityConfig } from "@/hooks/useCityConfig";
 import { NavLink } from "@/components/NavLink";
-import { Home, Star, Phone, ChevronDown } from "lucide-react";
+import { Home, Star, Phone, ChevronDown, ChevronUp } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { PageMeta } from "@/components/PageMeta";
 import { LG_ALL_KEYWORDS } from "@/lib/seoKeywords";
