@@ -646,7 +646,26 @@ const LakeGenevaV2 = () => {
               );
             })()}
 
+            {/* Mobile-only: full-screen swipeable story reel */}
+            {isMobile && stories.length > 2 && (
+              <Link
+                to="/reel"
+                className="mb-6 flex items-center justify-between gap-3 rounded-lg bg-slate-800 px-4 py-4 text-white"
+              >
+                <span className="min-w-0">
+                  <span className="block text-sm font-semibold">Swipe the Brief</span>
+                  <span className="mt-0.5 block text-xs text-slate-300">
+                    {stories.length} local stories, one flick at a time
+                  </span>
+                </span>
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/15">
+                  <ChevronUp className="h-5 w-5" />
+                </span>
+              </Link>
+            )}
+
             {/* VIEW MODE TOGGLE - sticky (V1 feature) */}
+
             <div className="sticky top-[73px] z-20 bg-background py-3 border-b border-slate-200 mb-6">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 {/* Desktop: Toggle Pills */}
