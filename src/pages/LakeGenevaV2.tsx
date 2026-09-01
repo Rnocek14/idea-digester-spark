@@ -38,6 +38,10 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { PageMeta } from "@/components/PageMeta";
 import { LG_ALL_KEYWORDS } from "@/lib/seoKeywords";
 import { useLocalFeed } from "@/hooks/useLocalFeed";
+import { StoryDots } from "@/components/StoryDots";
+import { useActiveStoryIndex } from "@/hooks/useActiveStoryIndex";
+import { trackStoryEvent, pillarFromCategory } from "@/lib/trackStoryEvent";
+
 
 // Category order for topic mode filtering
 const categoryOrder = ['news', 'civic', 'events', 'dining', 'community', 'schools', 'real_estate'];
