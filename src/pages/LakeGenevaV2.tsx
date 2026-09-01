@@ -766,7 +766,20 @@ const LakeGenevaV2 = () => {
                   </div>
                 )}
               </div>
+
+              {/* Mobile dot navigator — one dot per story, colour = locality */}
+              {isMobile && dotStories.length >= 4 && (
+                <StoryDots
+                  className="mt-2 -mx-4"
+                  stories={dotStories}
+                  activeIndex={dotActiveIndex}
+                  readIds={dotReadIds}
+                  onJump={jumpToDotStory}
+                  tone="light"
+                />
+              )}
             </div>
+
 
             {/* Lead stories - pyramid: first full-width, second+third side by side */}
             {/* Show pyramid only in 'all' mode, hide in 'recent' mode for pure chronological */}
