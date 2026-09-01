@@ -7,6 +7,8 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import HostnameRouter from "./components/HostnameRouter";
 import LakeGenevaV2 from "./pages/LakeGenevaV2";
 const LakeGenevaNightlife = lazy(() => import("./pages/LakeGenevaNightlife"));
+const StoryReel = lazy(() => import("./pages/StoryReel"));
+const SavedStories = lazy(() => import("./pages/SavedStories"));
 const LakeGenevaEats = lazy(() => import("./pages/LakeGenevaEats"));
 const FishFryGuide = lazy(() => import("./pages/FishFryGuide"));
 const SellingLakeGeneva = lazy(() => import("./pages/SellingLakeGeneva"));
@@ -125,6 +127,8 @@ const App = () => (
             <Route path="/v1" element={<LakeGeneva />} />
             <Route path="/v2" element={<Navigate to="/" replace />} />
             <Route path="/today" element={<Today />} />
+            <Route path="/reel" element={<StoryReel />} />
+            <Route path="/saved" element={<SavedStories />} />
             <Route path="/cities" element={<FindYourCity />} />
             <Route path="/debug/feed" element={<DebugFeed />} />
             <Route path="/about" element={<About />} />
