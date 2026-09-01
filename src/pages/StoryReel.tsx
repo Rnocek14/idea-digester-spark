@@ -203,7 +203,7 @@ const StoryReel = () => {
 
         {!storiesLoading &&
           reelStories.map((story: any, index: number) => {
-            const pill = GEO_PILL[(story.geo_tier ?? 0) as number];
+            const pill = GEO_PILL[geoTierKey(story.geo_tier)];
             const saved = savedIds.has(story.id);
             return (
               <section
