@@ -39,6 +39,7 @@ import { Home, Star, Phone, ChevronDown } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { PageMeta } from "@/components/PageMeta";
 import { LG_ALL_KEYWORDS } from "@/lib/seoKeywords";
+import { useLocalFeed } from "@/hooks/useLocalFeed";
 
 // Category order for topic mode filtering
 const categoryOrder = ['news', 'civic', 'events', 'dining', 'community', 'schools', 'real_estate'];
