@@ -14,11 +14,9 @@ import {
 } from "@/lib/savedStories";
 import { trackStoryEvent, pillarFromCategory } from "@/lib/trackStoryEvent";
 
-const GEO_PILL: Record<number, { label: string; className: string }> = {
-  1: { label: "Lake Geneva", className: "bg-blue-500/90 text-white" },
-  2: { label: "Walworth", className: "bg-amber-500/90 text-white" },
-  0: { label: "Wisconsin", className: "bg-slate-500/90 text-white" },
-};
+import { StoryDots, GEO_PILL, geoTierKey } from "@/components/StoryDots";
+
+
 
 const relativeTime = (iso?: string | null) => {
   if (!iso) return null;
