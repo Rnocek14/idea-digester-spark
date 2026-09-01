@@ -227,7 +227,7 @@ const StoryReel = () => {
                     <button
                       type="button"
                       onClick={() => openStory(story)}
-                      className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-slate-900"
+                      className="inline-flex min-h-[44px] shrink-0 items-center gap-2 whitespace-nowrap rounded-full bg-white px-5 text-sm font-semibold text-slate-900"
                     >
                       Read the story <ArrowRight className="h-4 w-4" />
                     </button>
