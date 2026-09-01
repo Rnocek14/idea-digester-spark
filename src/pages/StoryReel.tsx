@@ -82,6 +82,33 @@ const StoryReel = () => {
     return () => observer.disconnect();
   }, [reelStories]);
 
+  // Read state for the dot row: everything the reader has landed on so far.
+  const [readIds, setReadIds] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    const story = reelStories[activeIndex];
+    if (!story) return;
+    setReadIds((prev) => (prev.has(story.id) ? prev : new Set(prev).add(story.id)));
+  }, [activeIndex, reelStories]);
+
+  const jumpToIndex = (index: number) => {
+    const root = containerRef.current;
+    const target = root?.querySelector<HTMLElement>(`[data-index="${index}"]`);
+    if (!target) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    target.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+    const story = reelStories[index];
+    if (story) {
+      void trackStoryEvent({
+        pillar: pillarFromCategory(story.category),
+        eventType: "homepage_click",
+        entityType: "content_queue",
+        entityId: story.id,
+        metadata: { surface: "dots", position: index },
+      });
+    }
+  };
+
+
   const handleSave = (story: any) => {
     const nowSaved = toggleSavedStory(toSaved(story));
     toast.success(nowSaved ? "Saved to your list" : "Removed from your list", {
