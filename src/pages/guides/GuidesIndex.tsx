@@ -32,6 +32,16 @@ const groups: GuideGroup[] = [
         blurb: "Everyone who has walked all 21 miles, by walker number. Not a leaderboard.",
       },
       {
+        title: "The U.S. Mailboat",
+        path: "/guides/lake-geneva-mailboat",
+        blurb: "The only mail route in America delivered by someone jumping off a moving boat.",
+      },
+      {
+        title: "Getting on the water",
+        path: "/guides/lake-geneva-boat-rentals",
+        blurb: "Rentals, tours and launches — plus the lake rules that catch visitors out.",
+      },
+      {
         title: "Yerkes Observatory",
         path: "/guides/yerkes-observatory",
         blurb: "Williams Bay's 1897 observatory — tours, hours, and what to expect.",
@@ -86,6 +96,11 @@ const groups: GuideGroup[] = [
         title: "Lake Geneva Winterfest",
         path: "/guides/lake-geneva-winterfest",
         blurb: "Snow sculpting championship weekend — timing, parking, and crowds.",
+      },
+      {
+        title: "Where to stay",
+        path: "/guides/where-to-stay-lake-geneva",
+        blurb: "Resorts, inns, and rentals — what each end of the lake is like to sleep on.",
       },
       {
         title: "Lake Geneva webcams",
