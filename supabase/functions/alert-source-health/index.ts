@@ -155,7 +155,12 @@ Deno.serve(async (req) => {
       live_story_age_hours: liveAgeHours === null ? null : Math.round(liveAgeHours * 10) / 10,
       ingest_stale: ingestStale,
       live_story_stale: liveStale,
+      published_last_7d: totalPublished7d,
+      top_source_name: topSourceName,
+      top_source_share_pct: Math.round(topSourceShare * 100),
+      over_concentrated: overConcentrated,
     };
+
 
     // Always record the snapshot — a health check that can't email must never
     // be indistinguishable from a health check that found nothing.
