@@ -524,11 +524,22 @@ const PipelineHealth = () => {
           <h1 className="text-3xl font-bold">Pipeline Health</h1>
           <p className="text-muted-foreground">Real-time content pipeline monitoring</p>
         </div>
-        <Badge variant="outline" className="text-xs">
-          <Activity className="h-3 w-3 mr-1" />
-          Updated {format(new Date(), 'h:mm a')}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => retagMutation.mutate()}
+            disabled={retagMutation.isPending}
+          >
+            {retagMutation.isPending ? "Checking…" : "Fix out-of-area labels"}
+          </Button>
+          <Badge variant="outline" className="text-xs">
+            <Activity className="h-3 w-3 mr-1" />
+            Updated {format(new Date(), 'h:mm a')}
+          </Badge>
+        </div>
       </div>
+
 
       {/* Alerts */}
       {alerts.length > 0 && (
