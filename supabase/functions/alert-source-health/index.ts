@@ -171,8 +171,12 @@ Deno.serve(async (req) => {
       message: needsAttention
         ? `Source health: ${unhealthy.length} unhealthy source(s)` +
           (ingestStale ? `; no ingest in ${snapshot.ingest_age_hours ?? "?"}h` : "") +
-          (liveStale ? `; no live story in ${snapshot.live_story_age_hours ?? "?"}h` : "")
+          (liveStale ? `; no live story in ${snapshot.live_story_age_hours ?? "?"}h` : "") +
+          (overConcentrated
+            ? `; ${snapshot.top_source_share_pct}% of stories from "${topSourceName}"`
+            : "")
         : "Source health: all healthy",
+
       details: snapshot,
     });
 
