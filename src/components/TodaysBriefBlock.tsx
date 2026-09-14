@@ -74,6 +74,18 @@ const categoryLead = (category: string | null): string => {
   return "Worth knowing";
 };
 
+// The brief is the first thing a reader sees, so it should never lead with
+// obituary roundups or out-of-area headlines. Kept title-only, matching the
+// ingestion-side locality rule.
+const OBIT_RE = /\bobituar|\bdeath notice|\bin memoriam\b|\bfuneral\b/i;
+const NONLOCAL_RE =
+  /\b(kenosha|racine|union grove|milwaukee|madison|janesville|beloit|burlington|whitewater|waukesha|chicago)\b/i;
+
+function isBriefWorthy(s: BriefStory): boolean {
+  const t = s.title || "";
+  return !OBIT_RE.test(t) && !NONLOCAL_RE.test(t);
+}
+
 function todayCT(): string {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: "America/Chicago",
@@ -170,7 +182,8 @@ export default function TodaysBriefBlock({ stories }: { stories: BriefStory[] })
   }
 
   // Fallback: title-assembly brief (used until 5am or on generation failure)
-  const items = stories.slice(0, 3);
+  const eligible = stories.filter(isBriefWorthy);
+  const items = eligible.slice(0, 3);
   if (items.length < 2) return null;
 
   return (
