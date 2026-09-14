@@ -33,6 +33,10 @@ const MIN_HOURS_BETWEEN_ALERTS = 20;
 // full day is broken, not quiet.
 const STALE_INGEST_HOURS = 12;
 const STALE_LIVE_STORY_HOURS = 24;
+// One source supplying this much of a week's published stories is a single
+// point of failure, however green its own status light looks.
+const CONCENTRATION_THRESHOLD = 0.8;
+
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
