@@ -1,3 +1,4 @@
+import { aiFetch } from "../_shared/ai.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { DOMParser } from "https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts";
 
@@ -646,7 +647,7 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const openaiKey = Deno.env.get("OPENAI_API_KEY");
+    const openaiKey = Deno.env.get("OPENAI_API_KEY") ?? Deno.env.get("LOVABLE_API_KEY"); // gate only: aiFetch picks the provider
 
     if (!openaiKey) {
       return new Response(JSON.stringify({ success: false, error: "OPENAI_API_KEY not configured" }),
@@ -776,7 +777,7 @@ Deno.serve(async (req) => {
         console.log(`Combined ${pageContents.length} sources: ${combinedContent.length} chars`);
 
         // Call GPT-4o
-        const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+        const openaiResponse = await aiFetch("https://api.openai.com/v1/chat/completions", {
           method: "POST",
           headers: { "Authorization": `Bearer ${openaiKey}`, "Content-Type": "application/json" },
           body: JSON.stringify({

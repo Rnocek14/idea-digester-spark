@@ -114,6 +114,29 @@ const PipelineHealth = () => {
       toast.error(`Failed to kick fetch: ${error.message}`);
     },
   });
+
+  // Re-label stories that are live with the wrong town. The public key cannot
+  // update content_queue, so this runs through an admin-only function.
+  const retagMutation = useMutation({
+    mutationFn: async () => {
+      const response = await supabase.functions.invoke("retag-nonlocal", { body: {} });
+      if (response.error) throw new Error(response.error.message);
+      return response.data as { retagged: number; checked: number };
+    },
+    onSuccess: (data) => {
+      toast.success(
+        data.retagged > 0
+          ? `Moved ${data.retagged} out-of-area stories out of the local feed`
+          : "No out-of-area stories found in the local feed"
+      );
+      queryClient.invalidateQueries({ queryKey: ["pipeline-health"] });
+    },
+    onError: (error: Error) => {
+      toast.error(`Could not re-label stories: ${error.message}`);
+    },
+  });
+
+
   
   const { data: metrics, isLoading, error } = useQuery({
     queryKey: ["pipeline-health"],
@@ -501,11 +524,22 @@ const PipelineHealth = () => {
           <h1 className="text-3xl font-bold">Pipeline Health</h1>
           <p className="text-muted-foreground">Real-time content pipeline monitoring</p>
         </div>
-        <Badge variant="outline" className="text-xs">
-          <Activity className="h-3 w-3 mr-1" />
-          Updated {format(new Date(), 'h:mm a')}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => retagMutation.mutate()}
+            disabled={retagMutation.isPending}
+          >
+            {retagMutation.isPending ? "Checking…" : "Fix out-of-area labels"}
+          </Button>
+          <Badge variant="outline" className="text-xs">
+            <Activity className="h-3 w-3 mr-1" />
+            Updated {format(new Date(), 'h:mm a')}
+          </Badge>
+        </div>
       </div>
+
 
       {/* Alerts */}
       {alerts.length > 0 && (

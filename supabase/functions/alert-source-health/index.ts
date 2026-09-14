@@ -33,6 +33,10 @@ const MIN_HOURS_BETWEEN_ALERTS = 20;
 // full day is broken, not quiet.
 const STALE_INGEST_HOURS = 12;
 const STALE_LIVE_STORY_HOURS = 24;
+// One source supplying this much of a week's published stories is a single
+// point of failure, however green its own status light looks.
+const CONCENTRATION_THRESHOLD = 0.8;
+
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -108,7 +112,41 @@ Deno.serve(async (req) => {
     const ingestStale = ingestAgeHours === null || ingestAgeHours > STALE_INGEST_HOURS;
     const liveStale = liveAgeHours === null || liveAgeHours > STALE_LIVE_STORY_HOURS;
 
-    const needsAttention = unhealthy.length > 0 || ingestStale || liveStale;
+    // SOURCE CONCENTRATION: every individual source can look healthy while one
+    // feed quietly carries the entire site (65 of 69 stories in one fortnight).
+    // That is a single point of failure, not coverage — so watch the mix, not
+    // just the parts.
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: recentPublished } = await supabase
+      .from("content_queue")
+      .select("source_id")
+      .in("status", ["published", "auto_published"])
+      .gte("created_at", weekAgo)
+      .limit(2000);
+
+    // Defensive: a query stub or an unexpected shape must not crash the digest.
+    const publishedRows = Array.isArray(recentPublished) ? recentPublished : [];
+    const perSource = new Map<string, number>();
+    for (const row of publishedRows) {
+      const key = row.source_id ?? "unknown";
+      perSource.set(key, (perSource.get(key) ?? 0) + 1);
+    }
+    const totalPublished7d = publishedRows.length;
+    let topSourceShare = 0;
+    let topSourceName: string | null = null;
+    if (totalPublished7d >= 10) {
+      for (const [sourceId, count] of perSource) {
+        const share = count / totalPublished7d;
+        if (share > topSourceShare) {
+          topSourceShare = share;
+          topSourceName = (sources ?? []).find((s) => s.id === sourceId)?.name ?? sourceId;
+        }
+      }
+    }
+    const overConcentrated = topSourceShare >= CONCENTRATION_THRESHOLD;
+
+    const needsAttention = unhealthy.length > 0 || ingestStale || liveStale || overConcentrated;
+
 
     const snapshot = {
       sources_checked: sources?.length ?? 0,
@@ -119,7 +157,12 @@ Deno.serve(async (req) => {
       live_story_age_hours: liveAgeHours === null ? null : Math.round(liveAgeHours * 10) / 10,
       ingest_stale: ingestStale,
       live_story_stale: liveStale,
+      published_last_7d: totalPublished7d,
+      top_source_name: topSourceName,
+      top_source_share_pct: Math.round(topSourceShare * 100),
+      over_concentrated: overConcentrated,
     };
+
 
     // Always record the snapshot — a health check that can't email must never
     // be indistinguishable from a health check that found nothing.
@@ -130,8 +173,12 @@ Deno.serve(async (req) => {
       message: needsAttention
         ? `Source health: ${unhealthy.length} unhealthy source(s)` +
           (ingestStale ? `; no ingest in ${snapshot.ingest_age_hours ?? "?"}h` : "") +
-          (liveStale ? `; no live story in ${snapshot.live_story_age_hours ?? "?"}h` : "")
+          (liveStale ? `; no live story in ${snapshot.live_story_age_hours ?? "?"}h` : "") +
+          (overConcentrated
+            ? `; ${snapshot.top_source_share_pct}% of stories from "${topSourceName}"`
+            : "")
         : "Source health: all healthy",
+
       details: snapshot,
     });
 
@@ -173,7 +220,11 @@ Deno.serve(async (req) => {
             snapshot.live_story_age_hours ?? "unknown"
           }h old (threshold ${STALE_LIVE_STORY_HOURS}h) — check the publish gate / pending backlog.</li>`
         : "",
+      overConcentrated
+        ? `<li><strong>Coverage concentrated:</strong> ${snapshot.top_source_share_pct}% of the last ${totalPublished7d} published stories came from "${topSourceName}" — the other sources are not contributing.</li>`
+        : "",
     ].join("");
+
 
     const rows = unhealthy
       .map((s) => {
@@ -214,6 +265,8 @@ Deno.serve(async (req) => {
       unhealthy.length ? `${unhealthy.length} source${unhealthy.length === 1 ? "" : "s"}` : "",
       ingestStale ? "ingest stale" : "",
       liveStale ? "feed stale" : "",
+      overConcentrated ? "one source carrying the feed" : "",
+
     ].filter(Boolean);
 
     const html = `
