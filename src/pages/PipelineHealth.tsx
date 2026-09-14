@@ -114,6 +114,29 @@ const PipelineHealth = () => {
       toast.error(`Failed to kick fetch: ${error.message}`);
     },
   });
+
+  // Re-label stories that are live with the wrong town. The public key cannot
+  // update content_queue, so this runs through an admin-only function.
+  const retagMutation = useMutation({
+    mutationFn: async () => {
+      const response = await supabase.functions.invoke("retag-nonlocal", { body: {} });
+      if (response.error) throw new Error(response.error.message);
+      return response.data as { retagged: number; checked: number };
+    },
+    onSuccess: (data) => {
+      toast.success(
+        data.retagged > 0
+          ? `Moved ${data.retagged} out-of-area stories out of the local feed`
+          : "No out-of-area stories found in the local feed"
+      );
+      queryClient.invalidateQueries({ queryKey: ["pipeline-health"] });
+    },
+    onError: (error: Error) => {
+      toast.error(`Could not re-label stories: ${error.message}`);
+    },
+  });
+
+
   
   const { data: metrics, isLoading, error } = useQuery({
     queryKey: ["pipeline-health"],
