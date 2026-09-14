@@ -108,7 +108,39 @@ Deno.serve(async (req) => {
     const ingestStale = ingestAgeHours === null || ingestAgeHours > STALE_INGEST_HOURS;
     const liveStale = liveAgeHours === null || liveAgeHours > STALE_LIVE_STORY_HOURS;
 
-    const needsAttention = unhealthy.length > 0 || ingestStale || liveStale;
+    // SOURCE CONCENTRATION: every individual source can look healthy while one
+    // feed quietly carries the entire site (65 of 69 stories in one fortnight).
+    // That is a single point of failure, not coverage — so watch the mix, not
+    // just the parts.
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: recentPublished } = await supabase
+      .from("content_queue")
+      .select("source_id")
+      .in("status", ["published", "auto_published"])
+      .gte("created_at", weekAgo)
+      .limit(2000);
+
+    const perSource = new Map<string, number>();
+    for (const row of recentPublished ?? []) {
+      const key = row.source_id ?? "unknown";
+      perSource.set(key, (perSource.get(key) ?? 0) + 1);
+    }
+    const totalPublished7d = recentPublished?.length ?? 0;
+    let topSourceShare = 0;
+    let topSourceName: string | null = null;
+    if (totalPublished7d >= 10) {
+      for (const [sourceId, count] of perSource) {
+        const share = count / totalPublished7d;
+        if (share > topSourceShare) {
+          topSourceShare = share;
+          topSourceName = (sources ?? []).find((s) => s.id === sourceId)?.name ?? sourceId;
+        }
+      }
+    }
+    const overConcentrated = topSourceShare >= CONCENTRATION_THRESHOLD;
+
+    const needsAttention = unhealthy.length > 0 || ingestStale || liveStale || overConcentrated;
+
 
     const snapshot = {
       sources_checked: sources?.length ?? 0,
