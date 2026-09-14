@@ -1,3 +1,4 @@
+import { aiFetch } from "../_shared/ai.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -510,17 +511,22 @@ const NON_LOCAL_TITLE_CITIES = [
 ];
 
 // Check if story title prominently features a non-local city (should be excluded from feed)
-function isNonLocalStory(title: string, summary?: string | null): boolean {
+//
+// The local-keyword escape hatch deliberately looks at the TITLE ONLY. The AI
+// summarizer is instructed to "make the local relevance explicit", so almost
+// every summary it writes mentions Lake Geneva — which used to satisfy the
+// check below and let Kenosha/Racine stories through labelled as Lake Geneva.
+// A headline about another city is another city's story, whatever the summary
+// says about it.
+function isNonLocalStory(title: string, _summary?: string | null): boolean {
   const titleLower = (title || '').toLowerCase();
-  const summaryLower = (summary || '').toLowerCase();
-  const text = `${titleLower} ${summaryLower}`;
-  
-  // Check if a local keyword is present (takes priority)
-  const hasLocalKeyword = STRONG_COVERAGE_KEYWORDS.some(k => text.includes(k));
+
+  // A local place named in the headline itself takes priority.
+  const hasLocalKeyword = STRONG_COVERAGE_KEYWORDS.some(k => titleLower.includes(k));
   if (hasLocalKeyword) {
-    return false; // Has local keyword, not non-local
+    return false;
   }
-  
+
   // Check if a non-local city appears in the title (strong signal of non-local story)
   for (const city of NON_LOCAL_TITLE_CITIES) {
     if (titleLower.includes(city)) {
@@ -529,6 +535,7 @@ function isNonLocalStory(title: string, summary?: string | null): boolean {
   }
   return false;
 }
+
 
 // Hyperlocal tier detection for geo-filtering
 // Expanded with venue names, neighborhood shorthand, ZIP, and local landmarks
@@ -1151,7 +1158,7 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const openaiApiKey = Deno.env.get("OPENAI_API_KEY")!;
+    const openaiApiKey = (Deno.env.get("OPENAI_API_KEY") ?? Deno.env.get("LOVABLE_API_KEY"))!; // gate only: aiFetch picks the provider
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -1166,6 +1173,22 @@ serve(async (req) => {
     } else {
       console.log(`Loaded ${rules?.length || 0} active auto-publish rules`);
     }
+
+    // OBITUARY CAP: obituary roundups arrive daily and are cheap to ingest, so
+    // they can quietly become most of the feed (14 of 69 stories in one recent
+    // fortnight). Allow one visible obituary item per day; the rest are held
+    // for review rather than dropped.
+    const OBIT_DAILY_CAP = 1;
+    const todayStartIso = new Date(new Date().toISOString().slice(0, 10) + "T00:00:00Z").toISOString();
+    const { count: obitCountToday } = await supabase
+      .from("content_queue")
+      .select("id", { count: "exact", head: true })
+      .in("status", ["published", "auto_published"])
+      .gte("publish_date", todayStartIso)
+      .or("title.ilike.%obituar%,title.ilike.%obituaries%");
+    let obitsPublishedToday = obitCountToday ?? 0;
+    console.log(`⚰️ Obituary items already live today: ${obitsPublishedToday} (cap ${OBIT_DAILY_CAP})`);
+
 
     // Build sources query with optional filters
     let sourcesQuery = supabase
@@ -1831,7 +1854,7 @@ serve(async (req) => {
               console.log(`⏳ AI retry ${attempt + 1}/${AI_MAX_RETRIES} after ${backoffMs}ms backoff...`);
               await new Promise(r => setTimeout(r, backoffMs));
             }
-            aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+            aiResponse = await aiFetch("https://api.openai.com/v1/chat/completions", {
               method: "POST",
               headers: {
                 "Authorization": `Bearer ${openaiApiKey}`,
@@ -2024,21 +2047,23 @@ When in doubt between safe and soft_sensitive, choose safe. When in doubt betwee
           // Detect locality tier for hyperlocal filtering BEFORE status decision
           const locality = detectLocality(title, aiResult.summary);
           
-          // FIXED: Only use source default_geo_tier if source is hyperlocal (tier 1 or 2)
-          // Regional sources (tier 0) should ONLY get elevated if keywords explicitly match
-          // This prevents Milwaukee stories from regional sources getting tier 2
+          // Order matters: the non-local check runs FIRST. detectLocality reads
+          // title + AI summary, and the summary nearly always name-drops Lake
+          // Geneva, so a Kenosha headline used to score tier 1 and sit in the
+          // feed as local news. A non-local headline is capped at tier 0 no
+          // matter what the summary says.
           let geoTier: number;
           let geoLabel: string | null;
-          
-          if (locality.tier > 0) {
-            // Keyword match found - use detected tier
-            geoTier = locality.tier;
-            geoLabel = locality.label;
-          } else if (isNonLocalStory(title, aiResult.summary)) {
-            // Non-local city in title without local keywords - force tier 0
+
+          if (isNonLocalStory(title, aiResult.summary)) {
+            // Non-local city in the headline - regional at best
             geoTier = 0;
             geoLabel = null;
             console.log(`🚫 Non-local story detected, forcing tier 0: "${title.substring(0, 50)}..."`);
+          } else if (locality.tier > 0) {
+            // Keyword match found - use detected tier
+            geoTier = locality.tier;
+            geoLabel = locality.label;
           } else if (source.default_geo_tier && source.default_geo_tier >= 1) {
             // Hyperlocal source (tier 1 or 2) - trust the source default
             geoTier = source.default_geo_tier;
@@ -2048,6 +2073,7 @@ When in doubt between safe and soft_sensitive, choose safe. When in doubt betwee
             geoTier = 0;
             geoLabel = null;
           }
+
           
           // Parse event date BEFORE status decision (needed for expired event gate)
           const isNightlifeContent = aiResult.verticals?.includes('nightlife') || 
@@ -2077,9 +2103,23 @@ When in doubt between safe and soft_sensitive, choose safe. When in doubt betwee
 
           // Now decide status with geoTier + eventDate for full gate logic
           const statusResult = decideStatusForStory(rules as AutoPublishRule[], source.id, aiCategory, safetyLevel, geoTier, eventDate, title);
-          const status = statusResult.status;
-          const holdReason = statusResult.holdReason;
-          const decisionPath = statusResult.decisionPath;
+          let status = statusResult.status;
+          let holdReason = statusResult.holdReason;
+          let decisionPath = statusResult.decisionPath;
+
+          // Apply the daily obituary cap after the normal gates.
+          const isObituaryItem = /obituar/i.test(title);
+          if (isObituaryItem && (status === "published" || status === "auto_published")) {
+            if (obitsPublishedToday >= OBIT_DAILY_CAP) {
+              status = "pending";
+              holdReason = "obituary_daily_cap";
+              decisionPath = "obit_cap";
+              console.log(`⚰️ Obituary cap reached — holding "${title.substring(0, 40)}..."`);
+            } else {
+              obitsPublishedToday += 1;
+            }
+          }
+
 
           // Classify breaking news priority (with freshness check)
           const trustedForLocality = source.metadata?.trust_locality === true;

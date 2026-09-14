@@ -1,3 +1,4 @@
+import { aiFetch } from "../_shared/ai.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { DOMParser } from "https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts";
@@ -136,7 +137,7 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const openaiKey = Deno.env.get("OPENAI_API_KEY");
+    const openaiKey = Deno.env.get("OPENAI_API_KEY") ?? Deno.env.get("LOVABLE_API_KEY"); // gate only: aiFetch picks the provider
     const firecrawlKey = Deno.env.get("FIRECRAWL_API_KEY");
 
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -301,7 +302,7 @@ serve(async (req) => {
 
         if (openaiKey && content.length > 200) {
           try {
-            const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+            const aiResponse = await aiFetch("https://api.openai.com/v1/chat/completions", {
               method: "POST",
               headers: {
                 "Authorization": `Bearer ${openaiKey}`,
