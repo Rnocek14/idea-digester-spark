@@ -1,39 +1,37 @@
-# The Dot Field — thumb-scrub navigation
+# Coverage health check — and how to fix it
 
-A new full-screen way to move through the day's brief: a field of dots you drag your thumb across in any direction. Whichever dot is under your thumb lights up, the phone gives a tiny tap, and that story's preview floats above your hand. Lift off to open it.
+## Where things stand right now (live data, last 14 days)
 
-## What it feels like
+- **69 stories live**, but only **6 in the last 48 hours**. The site looks thin.
+- **65 of those 69 came from a single source** (Lake Geneva Regional News). Everything else has gone quiet.
+- **Every single story is filed as "news."** Zero events, zero community, zero dining published in two weeks.
+- **Only 1 upcoming event in the next 45 days** (Oktoberfest, Oct 11). The events calendar is effectively empty.
+- **Roughly 1 in 5 stories isn't local.** 15 Kenosha items, 5 Racine, plus Union Grove, Madison and Milwaukee pieces — all labeled as Lake Geneva.
+- **14 of 69 are obituary roundups**, and one Kenosha story published twice.
+- **Almost every source last produced around Aug 28** and hasn't since: Visit Lake Geneva Events, Fox6 Lake Geneva, Fox6 Walworth County, Walworth County Community News, Spectrum, TMJ4, plus the library, school district, city calendar and fire department feeds.
 
-- Open `/field` (a "Feel the Brief" card on the mobile homepage, plus a switch on the reel's top bar).
-- The screen is a loose grid of dots — one per story in today's run, laid out in rows that fill the thumb zone rather than a single line.
-- Put a thumb down anywhere. The nearest dot becomes the selection: it swells, gets a soft halo, and neighbours nudge slightly away, like a magnet under a sheet.
-- Slide in any direction. Each time the selection crosses to a new dot you get one short haptic tap (10ms) plus a subtle scale pulse. Fast scrubbing across many dots gives that ribbed, "running your thumb over a comb" feeling.
-- A preview card floats above the field the whole time you're touching: geo label, headline, 2-line summary, source and time. It follows the selection instantly, no fade-in lag, and repositions so your thumb never covers it.
-- Lift your thumb on a dot to open that story. Drag off the field's edge (or press the X) to cancel without opening.
-- Colour still carries locality — blue Lake Geneva, amber Walworth, slate wider Wisconsin — so the field itself shows how local today's brief is. Stories you've already read are solid; unread are faded.
+Honest read: coverage is **not fresh and not local enough**. One feed is carrying the whole site, and it's feeding in out-of-area news and obituaries.
 
-## Details that make it Apple-like
+## Plan
 
-- Selection follows a spring, not the raw finger: the halo eases into the dot, so the motion feels weighted.
-- Haptics fire only on dot change, never continuously, and never twice for the same dot.
-- Reduce-motion: no springs or pulses, preview swaps instantly, haptics still fire.
-- Devices without vibration (iPhone Safari, desktop) simply lose the tap; everything else is unchanged.
-- Keyboard and screen readers get the same content as a plain list with arrow-key movement.
+### 1. Find out why the feeds stopped on Aug 28
+Check the scheduled jobs and the fetch logs for the quiet sources. A single date across many unrelated feeds points at the schedule or the fetcher itself, not at the publishers. Fix whatever that turns out to be, then re-run the fetchers by hand and confirm items land.
 
-## Where it lives
+### 2. Get events flowing again
+Visit Lake Geneva Events, the city calendar, the library and the venue calendars are the events backbone and all are silent. Repair the ones that can be repaired, retire the ones whose pages no longer exist, and backfill the next 60 days so the events pages and the "Later" rail have something real in them.
 
-- New route `/field`, noindexed like the reel and saved pages.
-- Mobile homepage: a "Feel the Brief" entry card next to the existing "Swipe the Brief" card.
-- Reel top bar: a small toggle to jump between reel and field, keeping the same story run.
-- Desktop: `/field` shows the reel instead, since the interaction is thumb-only.
+### 3. Stop out-of-area news being labeled local
+Add a location check on the way in: a story whose town isn't in the Lake Geneva area gets pushed to the regional tier or held, instead of appearing as Lake Geneva. Re-tag the existing Kenosha and Racine items already live.
+
+### 4. Cap obituaries and kill the duplicate
+Limit obituary roundups to one visible item per day so they can't crowd the feed, and remove the repeated Kenosha story.
+
+### 5. Make the silence loud next time
+The health digest already watches for stale feeds — it clearly didn't reach anyone for two weeks. Confirm the alert email is actually configured and add a check for "one source is producing more than 80% of stories," which is the exact shape of this failure.
 
 ## Technical notes
 
-- New `src/pages/DotField.tsx` plus `src/components/DotFieldCanvas.tsx`. Feed comes from the existing `useLocalFeed` hook, so the field, reel and homepage stay in sync.
-- Layout: dots positioned absolutely from a computed grid (columns based on viewport width, ~44px pitch so hit areas stay comfortable), measured once per resize into a ref array of centres.
-- Hit testing on `pointermove` against the cached centres (nearest centre within a radius), not DOM hit tests — keeps the scrub at 60fps. Single `pointerdown`/`move`/`up`/`cancel` set on the container with `touch-action: none` so the page never scrolls under the thumb.
-- Haptics: `navigator.vibrate(10)` guarded by a capability check, fired only when the selected index changes. No library.
-- Locality palette and labels keep coming from `StoryDots.tsx` (`GEO_PILL`, `geoTierKey`) — no duplicated colour maps.
-- Read state reuses the same per-session approach as the reel (component state seeded from stories already seen). No new storage, no schema changes.
-- Analytics: dot selections are not tracked (too noisy); a lift-to-open fires the existing `trackStoryEvent` `homepage_click` with `metadata.surface: "dot_field"` and the position.
-- Existing dot row, reel and swipe-to-save behaviour are untouched.
+- Sources to inspect first: `sync-rss` scheduling in `cron.job`, plus `sources.last_error_code` / `last_error_detail` for the ~10 feeds with high `consecutive_zero_runs`.
+- Locality gate belongs in the ingestion classifier alongside the existing `default_geo_tier` inheritance rule, not in frontend code.
+- Obituary cap and duplicate cleanup are data/ingestion changes; no UI work needed.
+- `alert-source-health` needs `ALERT_EMAIL` and `RESEND_API_KEY` verified in secrets — without them it only logs to `activity_log`.
