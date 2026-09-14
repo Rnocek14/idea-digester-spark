@@ -124,12 +124,14 @@ Deno.serve(async (req) => {
       .gte("created_at", weekAgo)
       .limit(2000);
 
+    // Defensive: a query stub or an unexpected shape must not crash the digest.
+    const publishedRows = Array.isArray(recentPublished) ? recentPublished : [];
     const perSource = new Map<string, number>();
-    for (const row of recentPublished ?? []) {
+    for (const row of publishedRows) {
       const key = row.source_id ?? "unknown";
       perSource.set(key, (perSource.get(key) ?? 0) + 1);
     }
-    const totalPublished7d = recentPublished?.length ?? 0;
+    const totalPublished7d = publishedRows.length;
     let topSourceShare = 0;
     let topSourceName: string | null = null;
     if (totalPublished7d >= 10) {
