@@ -263,6 +263,8 @@ Deno.serve(async (req) => {
       unhealthy.length ? `${unhealthy.length} source${unhealthy.length === 1 ? "" : "s"}` : "",
       ingestStale ? "ingest stale" : "",
       liveStale ? "feed stale" : "",
+      overConcentrated ? "one source carrying the feed" : "",
+
     ].filter(Boolean);
 
     const html = `
