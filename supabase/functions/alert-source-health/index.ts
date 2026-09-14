@@ -218,7 +218,11 @@ Deno.serve(async (req) => {
             snapshot.live_story_age_hours ?? "unknown"
           }h old (threshold ${STALE_LIVE_STORY_HOURS}h) — check the publish gate / pending backlog.</li>`
         : "",
+      overConcentrated
+        ? `<li><strong>Coverage concentrated:</strong> ${snapshot.top_source_share_pct}% of the last ${totalPublished7d} published stories came from "${topSourceName}" — the other sources are not contributing.</li>`
+        : "",
     ].join("");
+
 
     const rows = unhealthy
       .map((s) => {
