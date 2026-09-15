@@ -42,6 +42,13 @@ import { StoryDots } from "@/components/StoryDots";
 import { useActiveStoryIndex } from "@/hooks/useActiveStoryIndex";
 import { trackStoryEvent, pillarFromCategory } from "@/lib/trackStoryEvent";
 
+/**
+ * Homepage share card. Spaces are percent-encoded: several social crawlers
+ * drop an og:image URL containing raw spaces and render no preview at all.
+ */
+const HOME_SOCIAL_IMAGE =
+  "https://storage.googleapis.com/gpt-engineer-file-uploads/SvWZJGynpjYPoF316Lv9RVB7o2F2/social-images/social-1764815719524-ChatGPT%20Image%20Dec%203,%202025,%2007_21_23%20PM.png";
+
 
 // Category order for topic mode filtering
 const categoryOrder = ['news', 'civic', 'events', 'dining', 'community', 'schools', 'real_estate'];
