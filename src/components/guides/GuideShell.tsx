@@ -235,6 +235,9 @@ export function GuideShell({
               Here it is structural: every existing guide gets it, every future guide
               inherits it, and every city in the fleet does too, with no per-page work.
             */}
+            {/* Live local news, so a guide reader learns this is a working paper. */}
+            <GuideLocalNow />
+
             <div className="mt-10">
               <GuideNewsletterCTA />
             </div>
