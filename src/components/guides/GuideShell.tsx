@@ -158,6 +158,38 @@ export function GuideShell({
               {intro}
             </div>
 
+            {/*
+              Mobile jump list. Half the traffic is phones, and these guides run
+              long — on a phone the only way to reach section four was to scroll
+              past three. The desktop sidebar TOC never showed there at all.
+            */}
+            {sections.length > 2 && (
+              <details className="lg:hidden mt-6 rounded-md border border-slate-200 bg-white">
+                <summary className="cursor-pointer px-4 py-3 text-sm font-medium text-slate-800 min-h-[44px] flex items-center">
+                  In this guide
+                </summary>
+                <ul className="px-4 pb-3 space-y-1">
+                  {sections.map((s) => (
+                    <li key={s.id}>
+                      <a
+                        href={`#${s.id}`}
+                        className="block py-2 text-sm text-blue-700 leading-snug"
+                      >
+                        {s.heading}
+                      </a>
+                    </li>
+                  ))}
+                  {faqs && faqs.length > 0 && (
+                    <li>
+                      <a href="#faqs" className="block py-2 text-sm text-blue-700">
+                        Common questions
+                      </a>
+                    </li>
+                  )}
+                </ul>
+              </details>
+            )}
+
             {introExtra && <div className="mt-8">{introExtra}</div>}
 
             {/* Sections */}
