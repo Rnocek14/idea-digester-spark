@@ -1003,3 +1003,60 @@ SELECT
   EXISTS (SELECT 1 FROM information_schema.columns
           WHERE table_name='subscribers' AND column_name='welcome_sent_at') AS welcome_column,
   (SELECT count(*) FROM pg_trigger WHERE tgname = 'trigger_send_welcome_email') AS welcome_trigger;
+
+-- ===== 20260915130000_manual_social_posting.sql =========================
+-- Verbatim from supabase/migrations/20260915130000_manual_social_posting.sql.
+-- Idempotent: DROP-before-ADD on the constraint, IF NOT EXISTS elsewhere.
+
+-- Manual posting for platforms we have no API access to.
+--
+-- Facebook and Instagram posts were being marked `simulated` — written, then
+-- dropped on the floor with the note "Would have posted to real platform API".
+-- In a town this size those two platforms are where the readers actually are,
+-- so the queue was doing all the work of drafting and none of the reaching.
+--
+-- Until Meta API access exists, the honest state for such a post is "written,
+-- waiting for a human to publish it". That is what `awaiting_manual` means, and
+-- it is a WORKING state: the post stays in the queue, visible and actionable,
+-- instead of being filed away as if it had been handled.
+
+ALTER TABLE public.post_queue DROP CONSTRAINT IF EXISTS post_queue_status_check;
+
+ALTER TABLE public.post_queue ADD CONSTRAINT post_queue_status_check
+CHECK (status = ANY (ARRAY[
+  'pending'::text,
+  'queued'::text,
+  'sent'::text,
+  'failed'::text,
+  'simulated'::text,   -- retained: historical rows still carry it
+  'expired'::text,
+  'blocked'::text,
+  'awaiting_manual'::text,
+  'skipped'::text
+]));
+
+-- Distinguishes "a person published this by hand" from "an API sent it", so
+-- reach per platform stays answerable once some posting is automated again.
+ALTER TABLE public.post_queue
+  ADD COLUMN IF NOT EXISTS posted_manually boolean NOT NULL DEFAULT false;
+
+COMMENT ON COLUMN public.post_queue.posted_manually IS
+  'True when an operator published this post by hand from the Post Today screen, rather than it going out through a platform API.';
+
+-- The Post Today screen reads exactly one slice: what is waiting on a human,
+-- oldest scheduled first.
+CREATE INDEX IF NOT EXISTS idx_post_queue_awaiting_manual
+  ON public.post_queue(scheduled_for)
+  WHERE status = 'awaiting_manual';
+
+-- Deliberately NOT backfilled. Converting the historical `simulated` rows would
+-- dump a backlog of stale posts — events long past, last winter's holiday
+-- copy — into a screen whose whole value is that everything on it is worth
+-- posting right now. History stays history.
+
+-- Verify: should return one row, both true
+SELECT
+  EXISTS (SELECT 1 FROM information_schema.columns
+          WHERE table_name='post_queue' AND column_name='posted_manually') AS posted_manually_column,
+  (SELECT pg_get_constraintdef(oid) LIKE '%awaiting_manual%'
+     FROM pg_constraint WHERE conname='post_queue_status_check')        AS awaiting_manual_allowed;

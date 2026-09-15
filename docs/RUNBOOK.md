@@ -109,6 +109,29 @@ No redeploy needed for a name or domain change.
 masthead should all name the same publication, and the mail client should show
 its own one-click Unsubscribe button next to the sender.
 
+## 5. Post the Facebook and Instagram queue (daily, ~5 minutes)
+
+**What changed:** the pipeline was writing Facebook and Instagram posts and
+marking them `simulated` — drafted, counted as handled, seen by nobody. Those
+two platforms are where most of the town actually is, so that was the single
+biggest hole in reach. With no Meta API access they cannot be automated, but
+they no longer disappear: they land on **Dashboard → Post Today** as
+`awaiting_manual`.
+
+**Action:** open `/dashboard/post-today` on your phone. Each card has the
+image (Save image), the caption (Copy caption), a button that opens the app,
+and **Mark as posted** when it is up. Skip anything that has gone stale.
+
+**Verify:** the screen empties out. `SELECT platform, count(*) FROM post_queue
+WHERE status = 'awaiting_manual' GROUP BY 1;` should trend to zero daily.
+
+**Delete this item when:** Meta API access exists. Then add `facebook` and
+`instagram` to `API_CAPABLE` in
+`supabase/functions/_shared/socialRouting.ts`, give `apiConfigured` a real
+answer for them in `process-post-queue`, and the same posts start going out
+without you. Everything else — the drafting, the scheduling, the rate limits,
+the safety gates — is already built and already running.
+
 ---
 
 ## Weekly pulse (five minutes, after the list above is done)

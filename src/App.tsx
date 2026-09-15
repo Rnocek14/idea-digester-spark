@@ -31,6 +31,7 @@ const Sponsors = lazy(() => import("./pages/Sponsors"));
 const Directory = lazy(() => import("./pages/Directory"));
 const Newsletter = lazy(() => import("./pages/Newsletter"));
 const SocialQueue = lazy(() => import("./pages/SocialQueue"));
+const PostToday = lazy(() => import("./pages/PostToday"));
 const SponsorAnalytics = lazy(() => import("./pages/SponsorAnalytics"));
 const Leads = lazy(() => import("./pages/Leads"));
 const ImageTest = lazy(() => import("./pages/ImageTest"));
@@ -201,6 +202,7 @@ const App = () => (
               <Route path="leads" element={<Leads />} />
               <Route path="newsletter" element={<Newsletter />} />
               <Route path="social-queue" element={<SocialQueue />} />
+              <Route path="post-today" element={<PostToday />} />
               <Route path="sponsor-analytics" element={<SponsorAnalytics />} />
               <Route path="image-test" element={<ImageTest />} />
               <Route path="engagement" element={<EngagementMonitor />} />

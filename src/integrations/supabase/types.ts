@@ -2113,6 +2113,7 @@ export type Database = {
           metadata: Json | null
           platform: string
           post_text: string
+          posted_manually: boolean
           scheduled_for: string
           sent_at: string | null
           sponsor_id: string | null
@@ -2130,6 +2131,7 @@ export type Database = {
           metadata?: Json | null
           platform: string
           post_text: string
+          posted_manually?: boolean
           scheduled_for: string
           sent_at?: string | null
           sponsor_id?: string | null
@@ -2147,6 +2149,7 @@ export type Database = {
           metadata?: Json | null
           platform?: string
           post_text?: string
+          posted_manually?: boolean
           scheduled_for?: string
           sent_at?: string | null
           sponsor_id?: string | null
@@ -3450,6 +3453,7 @@ export type Database = {
           unsubscribe_token: string
           unsubscribed_at: string | null
           updated_at: string
+          welcome_sent_at: string | null
         }
         Insert: {
           city_id?: string | null
@@ -3473,6 +3477,7 @@ export type Database = {
           unsubscribe_token?: string
           unsubscribed_at?: string | null
           updated_at?: string
+          welcome_sent_at?: string | null
         }
         Update: {
           city_id?: string | null
@@ -3496,6 +3501,7 @@ export type Database = {
           unsubscribe_token?: string
           unsubscribed_at?: string | null
           updated_at?: string
+          welcome_sent_at?: string | null
         }
         Relationships: []
       }

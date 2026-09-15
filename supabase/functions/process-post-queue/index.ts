@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 import { createHmac } from "node:crypto";
+import { routePost } from "../_shared/socialRouting.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -530,19 +531,41 @@ serve(async (req) => {
         continue;
       }
 
-      // Handle Facebook/Instagram - SIMULATED MODE
-      console.log(`[process-post-queue] 📝 SIMULATED POST to ${post.platform.toUpperCase()}`);
-      console.log(`[process-post-queue] Content: ${post.post_text.substring(0, 100)}...`);
+      // Everything that is not a live API send. Until Meta API access exists,
+      // Facebook and Instagram land here — and "simulated" was the wrong answer
+      // for them: it marked the post handled and dropped it, so the queue wrote
+      // posts nobody ever saw. They now wait for a human on the Post Today
+      // screen, which is the truth about their state.
+      const route = routePost({
+        platform: post.platform,
+        toggles: { x: xEnabled, facebook: facebookEnabled, instagram: instagramEnabled },
+        apiConfigured: post.platform === "x" ? twitterConfigured : false,
+      });
+
+      if (route.action === "skip") {
+        console.log(`[process-post-queue] ⏳ Skipped: ${route.reason}`);
+        results.push({
+          post_id: post.id,
+          platform: post.platform,
+          success: false,
+          skipped: true,
+          reason: "platform_disabled",
+        });
+        continue;
+      }
+
+      console.log(
+        `[process-post-queue] 🙋 Queued for manual posting to ${post.platform.toUpperCase()}: ${route.reason}`,
+      );
 
       await supabaseClient
         .from("post_queue")
         .update({
-          status: "simulated",
-          sent_at: now.toISOString(),
+          status: "awaiting_manual",
           metadata: {
             ...post.metadata,
-            simulated_at: now.toISOString(),
-            simulation_note: "Would have posted to real platform API",
+            awaiting_manual_since: now.toISOString(),
+            awaiting_manual_reason: route.reason,
           },
         })
         .eq("id", post.id);
@@ -552,7 +575,8 @@ serve(async (req) => {
         post_id: post.id,
         platform: post.platform,
         success: true,
-        simulated: true,
+        awaiting_manual: true,
+        reason: route.reason,
       });
     }
 
