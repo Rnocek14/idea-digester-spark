@@ -236,16 +236,9 @@ async function extractWithAI(
   sourceName: string,
   category: string
 ): Promise<{ posts: any[] }> {
-  const openaiKey = Deno.env.get('OPENAI_API_KEY');
-  const lovableKey = Deno.env.get('LOVABLE_API_KEY');
-  
-  const apiKey = openaiKey || lovableKey;
-  const apiUrl = openaiKey 
-    ? 'https://api.openai.com/v1/chat/completions'
-    : 'https://ai.gateway.lovable.dev/v1/chat/completions';
-  
-  if (!apiKey) {
-    throw new Error('No AI API key configured (OPENAI_API_KEY or LOVABLE_API_KEY)');
+  // Provider routing lives in _shared/ai.ts (Lovable gateway first, OpenAI fallback).
+  if (!aiConfigured()) {
+    throw new Error('No AI API key configured (LOVABLE_API_KEY or OPENAI_API_KEY)');
   }
 
   // Add category-specific context to the prompt
