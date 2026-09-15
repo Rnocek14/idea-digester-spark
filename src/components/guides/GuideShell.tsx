@@ -1,4 +1,5 @@
 import { GuideNewsletterCTA } from "@/components/guides/GuideNewsletterCTA";
+import { GuideLocalNow } from "@/components/guides/GuideLocalNow";
 import { usePageView } from "@/lib/trackStoryEvent";
 import { ReactNode } from "react";
 import { Link } from "react-router-dom";
