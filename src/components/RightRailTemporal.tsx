@@ -46,6 +46,35 @@ export default function RightRailTemporal({ fallback = null }: { fallback?: Reac
     staleTime: 5 * 60 * 1000,
   });
 
+  /**
+   * Nothing dated inside the 14-day window is common in shoulder season (and
+   * whenever an event source goes quiet). Rather than rendering nothing, fall
+   * back to the next events on the calendar however far out they sit.
+   */
+  const { data: upcoming = [] } = useQuery({
+    queryKey: ["right-rail-upcoming-fallback"],
+    enabled: !isLoading && events.length === 0,
+    queryFn: async () => {
+      const todayStr = localDateStr(new Date());
+      const { data, error } = await runCityScoped((scoped) =>
+        maybeCity(supabase
+        .from("content_queue")
+        .select(
+          "id, title, summary, category, event_date, event_time, performer, original_url, image_url, geo_tier, geo_label, metadata",
+        ), scoped)
+        .in("status", ["approved", "auto_published", "published"])
+        .in("safety_level", ["safe", "soft_sensitive"])
+        .gte("event_date", todayStr)
+        .order("event_date", { ascending: true })
+        .order("event_time", { ascending: true, nullsFirst: false })
+        .limit(6)
+      );
+      if (error) throw error;
+      return (data || []) as EventRow[];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   if (isLoading) return null;
 
   const today = new Date();
