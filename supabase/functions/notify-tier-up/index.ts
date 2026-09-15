@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { DEFAULT_SITE_ORIGIN } from "../_shared/emailIdentity.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -124,7 +125,7 @@ function buildEmailHtml(
   const dealsLink = tier.threshold >= 5
     ? `
     <div style="text-align: center; margin-top: 24px;">
-      <a href="${Deno.env.get("APP_BASE_URL") || "https://lakegeneva.news"}/deals" 
+      <a href="${Deno.env.get("APP_BASE_URL") || DEFAULT_SITE_ORIGIN}/deals" 
          style="display: inline-block; background-color: #2563eb; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600;">
         View Your Exclusive Deals
       </a>

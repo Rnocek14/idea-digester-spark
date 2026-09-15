@@ -1,7 +1,8 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { DEFAULT_SITE_ORIGIN } from "../_shared/emailIdentity.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-const APP_BASE_URL = Deno.env.get("APP_BASE_URL") ?? "https://lakegeneva.news";
+const APP_BASE_URL = Deno.env.get("APP_BASE_URL") ?? DEFAULT_SITE_ORIGIN;
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -93,7 +94,7 @@ serve(async (req: Request) => {
 
         <p style="color: #94A3B8; font-size: 12px; margin-top: 40px; text-align: center;">
           Lake Geneva Brief · Local Jobs Board<br/>
-          <a href="${APP_BASE_URL}" style="color: #94A3B8;">lakegeneva.news</a>
+          <a href="${APP_BASE_URL}" style="color: #94A3B8;">${APP_BASE_URL.replace(/^https?:\/\//, "")}</a>
         </p>
       </div>
     `;

@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { DEFAULT_SITE_ORIGIN } from "../_shared/emailIdentity.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -152,7 +153,7 @@ serve(async (req) => {
 
       try {
         // Generate payment URL - if we have a checkout session, use Stripe directly
-        const baseUrl = Deno.env.get("APP_BASE_URL") || "https://lakegeneva.news";
+        const baseUrl = Deno.env.get("APP_BASE_URL") || DEFAULT_SITE_ORIGIN;
         const paymentUrl = `${baseUrl}/sponsors?tab=billing`;
 
         await sendReminderEmail(

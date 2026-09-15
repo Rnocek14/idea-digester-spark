@@ -30,7 +30,7 @@ import { InlineSubscribeCTA } from "@/components/InlineSubscribeCTA";
 import { StickySubscribeBanner } from "@/components/StickySubscribeBanner";
 import { PresentedBySection } from "@/components/PresentedBySection";
 import { SuggestionBoxCard } from "@/components/SuggestionBox";
-import { getSubscribeSource, getReferralSource } from "@/lib/referralTracking";
+import { getSubscribeSource, getReferralSource, getReferralCode } from "@/lib/referralTracking";
 import { useCityConfig } from "@/hooks/useCityConfig";
 import { NavLink } from "@/components/NavLink";
 import { Home, Star, Phone, ChevronDown, ChevronUp } from "lucide-react";
@@ -348,9 +348,17 @@ const LakeGenevaV2 = () => {
   const subscribeMutation = useMutation({
     mutationFn: async (subscriberEmail: string) => {
       const source = getSubscribeSource("v2-footer");
+      // referred_by_code is what `increment_referral_count` fires on — the
+      // `source` string alone credits nobody. This is the busiest capture point
+      // on the site, so omitting it silently zeroed most referrals.
       const { error } = await supabase
         .from("subscribers")
-        .insert({ email: subscriberEmail, status: "active", source });
+        .insert({
+          email: subscriberEmail,
+          status: "active",
+          source,
+          referred_by_code: getReferralCode(),
+        });
       if (error) throw error;
     },
     onSuccess: () => {

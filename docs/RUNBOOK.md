@@ -58,6 +58,57 @@ three ready-to-send emails (library, chamber, historical society), each under
 months is the realistic yield, and against an empty backlink column that is
 the entire game.
 
+## 3. Verify the welcome email can actually fire (5 minutes)
+
+**What it unlocks:** the one-time welcome email to every new subscriber. The
+`trigger_send_welcome_email` trigger posts to the `send-welcome-email` edge
+function using the service-role key from a database GUC. If that GUC was never
+set, the trigger logs a WARNING and skips — signups still succeed, they just
+stay silent, exactly as before.
+
+**Action:** SQL editor →
+`SELECT current_setting('app.settings.service_role_key', true) IS NOT NULL AS ok;`
+If that reads false, set it once (Settings → API → service_role key):
+`ALTER DATABASE postgres SET app.settings.service_role_key = '<key>';`
+Same GUC `notify-tier-up` already depends on, so a false here means tier-up
+emails have never fired either.
+
+**Verify:** subscribe with a throwaway address, then
+`SELECT email, welcome_sent_at FROM subscribers ORDER BY subscribed_at DESC LIMIT 1;`
+— `welcome_sent_at` stamped means it sent.
+
+## 4. Decide the one sending domain (30 minutes, mostly DNS)
+
+**Why:** the publication answers to four names. The site is
+`lakegenevabrief.com`, newsletter mail leaves from `newsletter@citybrief.info`,
+and two functions still send from a third domain. In a town where the whole
+product is trust, that reads as four outfits; to Gmail, a From-domain that does
+not match the site is a weaker signal than one that does.
+
+**Already done in code:** every reader-facing link and every masthead now comes
+from `city_config` (`site_domain`, `site_name`, `from_email`), so changing the
+row changes the newsletter, the unsubscribe page and the welcome email at once.
+No redeploy needed for a name or domain change.
+
+**Action (yours, because it needs DNS and a Resend decision):**
+1. Pick the one domain. `lakegenevabrief.com` is the canonical site and the
+   cheapest choice — everything already points there.
+2. Verify it in Resend (resend.com/domains) and update the `city_config` row:
+   `UPDATE city_config SET from_email = 'newsletter@<domain>',
+    breaking_from_email = 'breaking@<domain>' WHERE id = '<city id>';`
+3. Two From addresses are still hardcoded because repointing them at an
+   unverified mailbox would silently break those sends — change them once the
+   domain above is verified:
+   `supabase/functions/notify-expiring-jobs/index.ts` (`jobs@lakegeneva.news`)
+   and `supabase/functions/notify-tier-up/index.ts` (`hello@lakegeneva.news`,
+   which also signs itself "Lake Geneva News" — a fourth name).
+4. Set `APP_BASE_URL` in the functions runtime to the chosen origin. Unset is
+   now safe (it falls back to the canonical site), but explicit is better.
+
+**Verify:** send yourself a test issue. The From domain, every link, and the
+masthead should all name the same publication, and the mail client should show
+its own one-click Unsubscribe button next to the sender.
+
 ---
 
 ## Weekly pulse (five minutes, after the list above is done)

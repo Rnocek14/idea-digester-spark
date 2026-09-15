@@ -39,17 +39,20 @@ export const ReferralProgram = ({ subscriberEmail }: ReferralProgramProps) => {
     fetchReferralData();
   }, [subscriberEmail]);
 
-  // Generate a display code if we don't have a real one yet
-  const displayCode = referralCode || (subscriberEmail 
-    ? subscriberEmail.split('@')[0].slice(0, 6).toUpperCase()
-    : Math.random().toString(36).substring(2, 8).toUpperCase());
-  
-  const referralLink = `${window.location.origin}/?ref=${displayCode}`;
+  // Only a code that exists in `subscribers.referral_code` can be credited:
+  // `increment_referral_count` matches a new row's `referred_by_code` against
+  // it. A derived or random stand-in produces a link that looks like it works,
+  // silently credits nobody, and teaches the reader that sharing is pointless —
+  // so when there is no real code we show how to get one instead of a link.
+  const referralLink = referralCode
+    ? `${window.location.origin}/?ref=${referralCode}`
+    : null;
 
   const currentTier = getCurrentTier(referralCount);
   const nextTier = getNextTier(referralCount);
 
   const handleCopy = async () => {
+    if (!referralLink) return;
     try {
       await navigator.clipboard.writeText(referralLink);
       setCopied(true);
@@ -61,6 +64,7 @@ export const ReferralProgram = ({ subscriberEmail }: ReferralProgramProps) => {
   };
 
   const handleShare = async () => {
+    if (!referralLink) return;
     if (navigator.share) {
       try {
         await navigator.share({
@@ -137,31 +141,40 @@ export const ReferralProgram = ({ subscriberEmail }: ReferralProgramProps) => {
           </div>
         )}
         
-        <div className="flex items-center gap-2">
-          <div className="flex-1 bg-white rounded-lg border border-amber-200 px-3 py-2 text-xs text-slate-600 font-mono truncate">
-            {referralLink}
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleCopy}
-            className="shrink-0 border-amber-300 hover:bg-amber-100"
-          >
-            {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-          </Button>
-        </div>
+        {referralLink ? (
+          <>
+            <div className="flex items-center gap-2">
+              <div className="flex-1 bg-white rounded-lg border border-amber-200 px-3 py-2 text-xs text-slate-600 font-mono truncate">
+                {referralLink}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCopy}
+                className="shrink-0 border-amber-300 hover:bg-amber-100"
+              >
+                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              </Button>
+            </div>
 
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleShare}
-            className="flex-1 border-amber-300 hover:bg-amber-100"
-          >
-            <Share2 className="h-4 w-4 mr-2" />
-            Share
-          </Button>
-        </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleShare}
+                className="flex-1 border-amber-300 hover:bg-amber-100"
+              >
+                <Share2 className="h-4 w-4 mr-2" />
+                Share
+              </Button>
+            </div>
+          </>
+        ) : (
+          <div className="bg-white/80 rounded-lg p-3 border border-amber-200 text-sm text-slate-600">
+            Your personal link is in every morning's email — subscribe and it
+            arrives with your welcome message.
+          </div>
+        )}
 
         <div className="text-xs text-slate-500 flex items-center gap-1.5 pt-2 border-t border-amber-200">
           <Users className="h-3 w-3" />

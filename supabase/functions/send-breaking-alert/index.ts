@@ -3,6 +3,9 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.84.0";
 import { Resend } from "https://esm.sh/resend@4.0.0";
 import { requireAdmin } from "../_shared/auth.ts";
+import { getCityConfig } from "../_shared/cityConfig.ts";
+import { bulkMailHeaders, unsubscribeUrl as buildUnsubscribeUrl } from "../_shared/emailIdentity.ts";
+import { DEFAULT_SITE_ORIGIN } from "../_shared/emailIdentity.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -29,7 +32,7 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
-    const baseUrl = Deno.env.get("APP_BASE_URL") || "https://lakegeneva.news";
+    const baseUrl = Deno.env.get("APP_BASE_URL") || DEFAULT_SITE_ORIGIN;
 
     if (!supabaseUrl || !supabaseServiceKey) {
       throw new Error("Missing Supabase environment variables");
@@ -41,6 +44,13 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const resend = new Resend(resendApiKey);
+
+    // Breaking alerts keep their own From (a distinct address is deliberate —
+    // readers filter on it), but the name and address come from city_config.
+    const cityConfig = await getCityConfig(supabase);
+    const breakingFrom = `${cityConfig.site_name} <${
+      cityConfig.breaking_from_email || cityConfig.from_email
+    }>`;
 
     // Fetch the breaking news content
     const { data: content, error: contentError } = await supabase
@@ -139,14 +149,15 @@ serve(async (req) => {
 
       for (const supporter of batch) {
         try {
-          const unsubscribeUrl = `${supabaseUrl}/functions/v1/unsubscribe?token=${supporter.unsubscribe_token}`;
+          const unsubscribeUrl = buildUnsubscribeUrl(supabaseUrl, supporter.unsubscribe_token);
           const personalizedHtml = htmlBody.replace("{{UNSUBSCRIBE_URL}}", unsubscribeUrl);
 
           const { error: sendError } = await resend.emails.send({
-            from: "Lake Geneva Local <breaking@citybrief.info>",
+            from: breakingFrom,
             to: supporter.email,
             subject: subject,
             html: personalizedHtml,
+            headers: bulkMailHeaders(unsubscribeUrl),
           });
 
           if (sendError) {

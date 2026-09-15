@@ -2,6 +2,14 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.84.0";
 import { Resend } from "https://esm.sh/resend@4.0.0";
 import { requireAdmin } from "../_shared/auth.ts";
+import { getCityConfig } from "../_shared/cityConfig.ts";
+import {
+  siteOrigin as resolveSiteOrigin,
+  fromAddress,
+  referralUrl,
+  bulkMailHeaders,
+  unsubscribeUrl as buildUnsubscribeUrl,
+} from "../_shared/emailIdentity.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,6 +20,8 @@ interface Subscriber {
   id: string;
   email: string;
   unsubscribe_token: string;
+  referral_code: string | null;
+  referral_count: number | null;
 }
 
 serve(async (req) => {
@@ -156,10 +166,15 @@ async function sendNewsletterEmail(supabase: any, newsletter: any, supabaseUrl: 
 
   const resend = new Resend(resendApiKey);
 
+  // Sender identity and reader-facing origin both come from city_config, so a
+  // second city never inherits city #1's domain or masthead.
+  const cityConfig = await getCityConfig(supabase);
+  const siteOrigin = resolveSiteOrigin(cityConfig);
+
   // Fetch active subscribers
   const { data: subscribers, error: subError } = await supabase
     .from("subscribers")
-    .select("id, email, unsubscribe_token")
+    .select("id, email, unsubscribe_token, referral_code, referral_count")
     .eq("status", "active");
 
   if (subError) {
@@ -184,27 +199,33 @@ async function sendNewsletterEmail(supabase: any, newsletter: any, supabaseUrl: 
     
     for (const subscriber of batch) {
       try {
-        // Replace placeholder unsubscribe link with real token-based link
-        const unsubscribeUrl = `${supabaseUrl}/functions/v1/unsubscribe?token=${subscriber.unsubscribe_token}`;
-        let htmlBody = newsletter.html_body.replace(
-          /\[UNSUBSCRIBE_URL\]/g,
-          unsubscribeUrl
-        );
-        const textBody = newsletter.text_body.replace(
-          /\[UNSUBSCRIBE_URL\]/g,
-          unsubscribeUrl
-        );
+        // Replace every per-subscriber placeholder. This function ships a body
+        // built by autopilot-newsletter, so it must substitute the SAME set of
+        // placeholders — a missed one is a raw "[REFERRAL_URL]" in the inbox.
+        const unsubscribeUrl = buildUnsubscribeUrl(supabaseUrl, subscriber.unsubscribe_token);
+        const refUrl =
+          referralUrl(siteOrigin, subscriber.referral_code) || siteOrigin;
+        const refCount = String(subscriber.referral_count ?? 0);
+        let htmlBody = newsletter.html_body
+          .replace(/\[UNSUBSCRIBE_URL\]/g, unsubscribeUrl)
+          .replace(/\[REFERRAL_URL\]/g, refUrl)
+          .replace(/\[REFERRAL_COUNT\]/g, refCount);
+        const textBody = newsletter.text_body
+          .replace(/\[UNSUBSCRIBE_URL\]/g, unsubscribeUrl)
+          .replace(/\[REFERRAL_URL\]/g, refUrl)
+          .replace(/\[REFERRAL_COUNT\]/g, refCount);
 
         // Add tracking pixel and rewrite links
         htmlBody = rewriteLinksForTracking(htmlBody, newsletter.id, subscriber.id, supabaseUrl);
         htmlBody = addTrackingPixel(htmlBody, newsletter.id, subscriber.id, supabaseUrl);
 
         const { error: sendError } = await resend.emails.send({
-          from: "Lake Geneva Brief <newsletter@citybrief.info>",
+          from: fromAddress(cityConfig),
           to: subscriber.email,
           subject: newsletter.subject,
           html: htmlBody,
           text: textBody,
+          headers: bulkMailHeaders(unsubscribeUrl),
         });
 
         if (sendError) {

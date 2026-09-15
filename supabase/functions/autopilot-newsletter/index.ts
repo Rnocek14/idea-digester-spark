@@ -1,6 +1,20 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.84.0";
-import { getCityConfig } from "../_shared/cityConfig.ts";
+import { getCityConfig, type CityConfig } from "../_shared/cityConfig.ts";
+import {
+  siteOrigin as resolveSiteOrigin,
+  fromAddress,
+  referralUrl,
+  bulkMailHeaders,
+  unsubscribeUrl as buildUnsubscribeUrl,
+} from "../_shared/emailIdentity.ts";
+
+/**
+ * Publication identity for one edition, resolved from `city_config` once per
+ * run and threaded through both builders. Nothing in a template may hardcode a
+ * domain or a name: city #2 sends the same code and must not link to city #1.
+ */
+type NewsletterBrand = { origin: string; siteName: string; cityName: string };
 import { Resend } from "https://esm.sh/resend@4.0.0";
 
 const corsHeaders = {
@@ -204,6 +218,11 @@ serve(async (req) => {
     // Multi-city: scope everything to the current city (loop lands with city #2).
     const cityConfig = await getCityConfig(supabase);
     const cityId = cityConfig.id;
+    const brand: NewsletterBrand = {
+      origin: resolveSiteOrigin(cityConfig),
+      siteName: cityConfig.site_name,
+      cityName: cityConfig.city_name,
+    };
 
     // KILL SWITCH CHECK
     const { data: settings } = await supabase
@@ -269,7 +288,7 @@ serve(async (req) => {
           throw new Error(`Failed to fetch newsletter for sending: ${fetchFullError?.message}`);
         }
         
-        const { sent, failed, errors, subscriberCount } = await sendNewsletterEmail(supabase, fullNewsletter, supabaseUrl);
+        const { sent, failed, errors, subscriberCount } = await sendNewsletterEmail(supabase, fullNewsletter, supabaseUrl, cityConfig);
         
         console.log(`📧 Send result: sent=${sent}, failed=${failed}, subscriberCount=${subscriberCount}, errors=${JSON.stringify(errors)}`);
         
@@ -784,6 +803,7 @@ serve(async (req) => {
         .maybeSingle();
       const dailyBriefBody = (briefRow?.body || "").trim() || null;
       newsletter = buildNewsletterV2({
+        brand,
         latestStories: selectedStories,
         briefingStories, // Pass pre-computed briefingStories
         optimizedStories,
@@ -809,6 +829,7 @@ serve(async (req) => {
         selectedStories,
         optimizedStories,
         editionDate,
+        brand,
         headerSponsor,
         evergreenItems,
         jobListings || [],
@@ -926,7 +947,7 @@ serve(async (req) => {
 
     if (shouldSend) {
       console.log("📧 Auto-send enabled, sending newsletter...");
-      const { sent, failed, errors, subscriberCount } = await sendNewsletterEmail(supabase, savedNewsletter, supabaseUrl);
+      const { sent, failed, errors, subscriberCount } = await sendNewsletterEmail(supabase, savedNewsletter, supabaseUrl, cityConfig);
       
       console.log(`📧 Send result: sent=${sent}, failed=${failed}, subscriberCount=${subscriberCount}`);
       
@@ -1080,6 +1101,7 @@ function buildNewsletter(
   stories: Story[],
   optimized: { id: string; newsletter_voice: string }[],
   editionDate: string,
+  brand: NewsletterBrand,
   sponsor?: any,
   evergreen?: { id: string; title: string; content: string; category: string }[],
   jobs?: { id: string; title: string; business_name: string; category: string; job_type: string; pay_display: string | null; location_text: string | null; apply_url: string | null; contact_email: string; is_featured: boolean | null }[],
@@ -1211,7 +1233,7 @@ function buildNewsletter(
   const jobsHtml = jobs && jobs.length > 0 ? `
     <div style="margin-bottom: 32px; background-color: #e0f2fe; border-radius: 8px; padding: 20px;">
       <h2 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 700; color: #0369a1;">
-        💼 Now Hiring in Lake Geneva
+        💼 Now Hiring in ${brand.cityName}
       </h2>
       ${jobs.map(job => {
         const emoji = jobCategoryEmoji[job.category?.toLowerCase()] || "💼";
@@ -1235,7 +1257,7 @@ function buildNewsletter(
         `;
       }).join("")}
       <p style="margin: 16px 0 0 0; font-size: 13px; text-align: center;">
-        <a href="https://lakegeneva.news/jobs" target="_blank" rel="noopener noreferrer" style="color: #0369a1; text-decoration: none; font-weight: 600;">
+        <a href="${brand.origin}/jobs" target="_blank" rel="noopener noreferrer" style="color: #0369a1; text-decoration: none; font-weight: 600;">
           View all local job openings →
         </a>
       </p>
@@ -1269,7 +1291,7 @@ function buildNewsletter(
           These readers help spread local news: ${advocateNames.join(", ")}
         </p>
         <p style="margin: 12px 0 0 0; font-size: 12px; color: #92400e;">
-          <a href="https://lakegeneva.news?ref=newsletter" style="color: #92400e; text-decoration: underline;">
+          <a href="[REFERRAL_URL]" style="color: #92400e; text-decoration: underline;">
             Refer friends and join them! →
           </a>
         </p>
@@ -1313,13 +1335,13 @@ function buildNewsletter(
 <body style="margin: 0; padding: 0; background-color: #f7fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
   <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
     <div style="padding: 32px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-align: center;">
-      <h1 style="margin: 0; font-size: 28px; font-weight: 700;">Lake Geneva Local</h1>
+      <h1 style="margin: 0; font-size: 28px; font-weight: 700;">${brand.siteName}</h1>
       <p style="margin: 8px 0 0 0; font-size: 16px; opacity: 0.9;">${dateLabel}</p>
     </div>
     
     <div style="padding: 32px 24px;">
       <p style="margin: 0 0 24px 0; font-size: 16px; line-height: 1.6; color: #4a5568;">
-        Good morning, Lake Geneva! 👋<br>
+        Good morning, ${brand.cityName}! 👋<br>
         Here's what's happening around town this week.
       </p>
       
@@ -1335,10 +1357,25 @@ function buildNewsletter(
       
       ${advocatesHtml}
       
+      <div style="margin-top: 28px; padding: 18px 20px; background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px; text-align: center;">
+        <p style="margin: 0 0 6px; font-size: 14px; color: #2d3748; font-weight: 600;">
+          Know a neighbor who should be reading this?
+        </p>
+        <p style="margin: 0 0 10px; font-size: 13px; color: #4a5568;">
+          Send them your personal link — we&rsquo;ll credit the sign-up to you.
+        </p>
+        <p style="margin: 0 0 8px;">
+          <a href="[REFERRAL_URL]" style="font-size: 13px; color: #667eea; text-decoration: underline; word-break: break-all;">[REFERRAL_URL]</a>
+        </p>
+        <p style="margin: 0; font-size: 12px; color: #718096;">
+          Neighbors you&rsquo;ve brought in so far: <strong>[REFERRAL_COUNT]</strong>
+        </p>
+      </div>
+      
       <div style="margin-top: 40px; padding-top: 24px; border-top: 1px solid #e2e8f0; text-align: center;">
         <p style="margin: 0; font-size: 13px; color: #718096;">
-          You're receiving this because you subscribed to Lake Geneva Local.<br>
-          <a href="#" style="color: #667eea; text-decoration: none;">Unsubscribe</a>
+          You're receiving this because you subscribed to ${brand.siteName}.<br>
+          <a href="[UNSUBSCRIBE_URL]" style="color: #667eea; text-decoration: none;">Unsubscribe</a>
         </p>
       </div>
     </div>
@@ -1388,14 +1425,14 @@ ${jobs.map(job => {
   Apply: ${applyUrl}`;
 }).join("\n\n")}
 
-View all jobs: https://lakegeneva.news/jobs
+View all jobs: ${brand.origin}/jobs
 ` : "";
 
   const textBody = `
-LAKE GENEVA LOCAL
+${brand.siteName.toUpperCase()}
 ${dateLabel}
 
-Good morning, Lake Geneva! 👋
+Good morning, ${brand.cityName}! 👋
 Here's what's happening around town this week.
 
 == THIS WEEK AT A GLANCE ==
@@ -1406,8 +1443,13 @@ ${textSections}
 ${evergreenText}
 ${jobsText}
 ---
-You're receiving this because you subscribed to Lake Geneva Local.
-Unsubscribe: [link]
+Know a neighbor who should be reading this? Send them your personal link
+and we'll credit the sign-up to you: [REFERRAL_URL]
+Neighbors you've brought in so far: [REFERRAL_COUNT]
+
+---
+You're receiving this because you subscribed to ${brand.siteName}.
+Unsubscribe: [UNSUBSCRIBE_URL]
   `.trim();
 
   return { subject, preheader, htmlBody, textBody };
@@ -1416,6 +1458,7 @@ Unsubscribe: [link]
 // ============= V2 NEWSLETTER BUILDER (LIVE · LATEST · LATER) =============
 
 interface NewsletterV2Params {
+  brand: NewsletterBrand;
   latestStories: Story[];
   briefingStories: Story[]; // Pre-computed briefing stories (non-events, max 5)
   optimizedStories: { id: string; newsletter_voice: string }[];
@@ -1443,6 +1486,7 @@ interface NewsletterV2Params {
 
 function buildNewsletterV2(params: NewsletterV2Params) {
   const {
+    brand,
     latestStories,
     briefingStories, // Use pre-computed briefingStories passed from caller
     optimizedStories,
@@ -1473,8 +1517,8 @@ function buildNewsletterV2(params: NewsletterV2Params) {
     year: "numeric"
   });
 
-  const subject = `Lake Geneva Brief – ${dateLabel}`;
-  const preheader = latestStories[0]?.title || "Your daily Lake Geneva update";
+  const subject = `${brand.siteName} – ${dateLabel}`;
+  const preheader = latestStories[0]?.title || `Your daily ${brand.cityName} update`;
 
   // ========== LIVE SECTION (Conditional) ==========
   // Only include if there are active incidents
@@ -1490,7 +1534,7 @@ function buildNewsletterV2(params: NewsletterV2Params) {
           </p>
           <p style="margin: 4px 0 0 0; font-size: 12px; color: #b91c1c;">
             ${incident.incident_type ? toTitleCase(incident.incident_type) : 'Update'} · 
-            <a href="https://lakegeneva.news/v2/incidents/${incident.id}" style="color: #dc2626; text-decoration: none;">Details →</a>
+            <a href="${brand.origin}/incidents/${incident.id}" style="color: #dc2626; text-decoration: none;">Details →</a>
           </p>
         </div>
       `).join("")}
@@ -1643,9 +1687,9 @@ function buildNewsletterV2(params: NewsletterV2Params) {
       <p style="margin: 0; font-size: 14px; line-height: 1.55; color: #374151;">${escapeHtml(localLove.body)}</p>
       <p style="margin: 10px 0 0 0; font-size: 12px; color: #6b7280;">— ${escapeHtml(localLove.submitter_name || 'A neighbor')}</p>
       <p style="margin: 12px 0 0 0; font-size: 12px;">
-        <a href="https://lakegeneva.news/community/local-love" style="color: #be123c; text-decoration: none; font-weight: 600;">See more →</a>
+        <a href="${brand.origin}/community/local-love" style="color: #be123c; text-decoration: none; font-weight: 600;">See more →</a>
         <span style="color: #9ca3af;"> · </span>
-        <a href="https://lakegeneva.news/submit" style="color: #be123c; text-decoration: none; font-weight: 600;">Send your own</a>
+        <a href="${brand.origin}/submit" style="color: #be123c; text-decoration: none; font-weight: 600;">Send your own</a>
       </p>
     </div>
   ` : '';
@@ -1707,7 +1751,7 @@ function buildNewsletterV2(params: NewsletterV2Params) {
       <div style="margin-bottom: 24px; padding: 16px; background-color: #fef3c7; border-radius: 8px;">
         <p style="margin: 0; font-size: 13px; color: #92400e;">
           🌟 <strong>Community Advocates:</strong> ${advocateNames.join(", ")}
-          <a href="https://lakegeneva.news?ref=newsletter" style="color: #92400e; text-decoration: underline; margin-left: 8px;">Join them →</a>
+          <a href="[REFERRAL_URL]" style="color: #92400e; text-decoration: underline; margin-left: 8px;">Join them →</a>
         </p>
       </div>
     `;
@@ -1748,13 +1792,13 @@ function buildNewsletterV2(params: NewsletterV2Params) {
 <body style="margin: 0; padding: 0; background-color: #f7fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
   <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
     <div style="padding: 24px 20px; background: linear-gradient(135deg, #1e293b 0%, #334155 100%); color: white; text-align: center;">
-      <h1 style="margin: 0; font-size: 24px; font-weight: 700;">Lake Geneva Brief</h1>
+      <h1 style="margin: 0; font-size: 24px; font-weight: 700;">${brand.siteName}</h1>
       <p style="margin: 6px 0 0 0; font-size: 14px; opacity: 0.9;">${dateLabel}</p>
     </div>
     
     <div style="padding: 24px 20px;">
       <p style="margin: 0 0 20px 0; font-size: 15px; line-height: 1.5; color: #4a5568;">
-        Good morning, Lake Geneva! 👋
+        Good morning, ${brand.cityName}! 👋
       </p>
       ${dailyBriefBody ? `
       <div style="margin: 0 0 24px 0; padding: 18px 20px; border-left: 3px solid #1e293b; background: #f8fafc; border-radius: 4px;">
@@ -1780,9 +1824,24 @@ function buildNewsletterV2(params: NewsletterV2Params) {
       
       ${advocatesHtml}
       
+      <div style="margin-top: 28px; padding: 18px 20px; background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px; text-align: center;">
+        <p style="margin: 0 0 6px; font-size: 14px; color: #2d3748; font-weight: 600;">
+          Know a neighbor who should be reading this?
+        </p>
+        <p style="margin: 0 0 10px; font-size: 13px; color: #4a5568;">
+          Send them your personal link — we&rsquo;ll credit the sign-up to you.
+        </p>
+        <p style="margin: 0 0 8px;">
+          <a href="[REFERRAL_URL]" style="font-size: 13px; color: #667eea; text-decoration: underline; word-break: break-all;">[REFERRAL_URL]</a>
+        </p>
+        <p style="margin: 0; font-size: 12px; color: #718096;">
+          Neighbors you&rsquo;ve brought in so far: <strong>[REFERRAL_COUNT]</strong>
+        </p>
+      </div>
+      
       <div style="margin-top: 32px; padding-top: 20px; border-top: 1px solid #e2e8f0; text-align: center;">
         <p style="margin: 0; font-size: 12px; color: #718096;">
-          You subscribed to Lake Geneva Brief.<br>
+          You subscribed to ${brand.siteName}.<br>
           <a href="[UNSUBSCRIBE_URL]" style="color: #667eea; text-decoration: none;">Unsubscribe</a>
         </p>
       </div>
@@ -1794,7 +1853,7 @@ function buildNewsletterV2(params: NewsletterV2Params) {
 
   // ========== PLAIN TEXT VERSION ==========
   const liveText = liveIncidents.length > 0 
-    ? `== LIVE UPDATES ==\n\n${liveIncidents.map(i => `• ${i.title}\n  Details: https://lakegeneva.news/v2/incidents/${i.id}`).join("\n")}\n\n` 
+    ? `== LIVE UPDATES ==\n\n${liveIncidents.map(i => `• ${i.title}\n  Details: ${brand.origin}/incidents/${i.id}`).join("\n")}\n\n` 
     : '';
 
   const latestText = briefingStories.length > 0
@@ -1831,16 +1890,21 @@ function buildNewsletterV2(params: NewsletterV2Params) {
     : '';
 
   const localLoveText = localLove
-    ? `== LOCAL LOVE OF THE WEEK ==\n\n${localLove.subject_name ? localLove.subject_name + '\n' : ''}${localLove.body}\n— ${localLove.submitter_name || 'A neighbor'}\nMore: https://lakegeneva.news/community/local-love\n\n`
+    ? `== LOCAL LOVE OF THE WEEK ==\n\n${localLove.subject_name ? localLove.subject_name + '\n' : ''}${localLove.body}\n— ${localLove.submitter_name || 'A neighbor'}\nMore: ${brand.origin}/community/local-love\n\n`
     : '';
 
   const textBody = `
-LAKE GENEVA BRIEF
+${brand.siteName.toUpperCase()}
 ${dateLabel}
 
-Good morning, Lake Geneva! 👋
+Good morning, ${brand.cityName}! 👋
 
 ${liveText}${latestText}${laterText}${localLoveText}${jobsText}---
+Know a neighbor who should be reading this? Send them your personal link
+and we'll credit the sign-up to you: [REFERRAL_URL]
+Neighbors you've brought in so far: [REFERRAL_COUNT]
+
+---
 Unsubscribe: [UNSUBSCRIBE_URL]
   `.trim();
 
@@ -1921,7 +1985,8 @@ function rewriteLinksForTracking(htmlBody: string, newsletterId: string, subscri
 async function sendNewsletterEmail(
   supabase: any,
   newsletter: any,
-  baseUrl: string
+  baseUrl: string,
+  cityConfig: CityConfig
 ): Promise<{ sent: number; failed: number; errors: string[]; subscriberCount: number }> {
   const resendApiKey = Deno.env.get("RESEND_API_KEY");
   const errors: string[] = [];
@@ -1937,7 +2002,7 @@ async function sendNewsletterEmail(
   // Fetch active subscribers
   const { data: subscribers, error } = await supabase
     .from("subscribers")
-    .select("id, email, unsubscribe_token")
+    .select("id, email, unsubscribe_token, referral_code, referral_count")
     .eq("status", "active");
     // Future: .eq("city_id", newsletter.city_id) for multi-city
 
@@ -1953,6 +2018,8 @@ async function sendNewsletterEmail(
     return { sent: 0, failed: 0, errors, subscriberCount: 0 };
   }
 
+  const siteOrigin = resolveSiteOrigin(cityConfig);
+
   console.log(`📧 Sending to ${subscribers.length} subscribers...`);
 
   // Batch in chunks of 100 for Resend limits
@@ -1965,28 +2032,36 @@ async function sendNewsletterEmail(
     
     for (const subscriber of batch) {
       try {
-        const unsubscribeUrl = `${baseUrl}/functions/v1/unsubscribe?token=${subscriber.unsubscribe_token}`;
+        const unsubscribeUrl = buildUnsubscribeUrl(baseUrl, subscriber.unsubscribe_token);
+        // A subscriber's own link, so the credit trigger can fire. Every row gets
+        // a code from the BEFORE INSERT trigger; the bare origin is the fallback
+        // for any legacy row that somehow has none — still a working link, just
+        // uncredited, which beats shipping a raw placeholder.
+        const refUrl =
+          referralUrl(siteOrigin, subscriber.referral_code) || siteOrigin;
+        const refCount = String(subscriber.referral_count ?? 0);
         
-        // Replace unsubscribe placeholder
-        let htmlBody = newsletter.html_body.replace(
-          /\[UNSUBSCRIBE_URL\]/g,
-          unsubscribeUrl
-        );
-        const textBody = newsletter.text_body.replace(
-          /\[UNSUBSCRIBE_URL\]/g,
-          unsubscribeUrl
-        );
+        // Replace per-subscriber placeholders
+        let htmlBody = newsletter.html_body
+          .replace(/\[UNSUBSCRIBE_URL\]/g, unsubscribeUrl)
+          .replace(/\[REFERRAL_URL\]/g, refUrl)
+          .replace(/\[REFERRAL_COUNT\]/g, refCount);
+        const textBody = newsletter.text_body
+          .replace(/\[UNSUBSCRIBE_URL\]/g, unsubscribeUrl)
+          .replace(/\[REFERRAL_URL\]/g, refUrl)
+          .replace(/\[REFERRAL_COUNT\]/g, refCount);
 
         // Add tracking pixel and rewrite links
         htmlBody = rewriteLinksForTracking(htmlBody, newsletter.id, subscriber.id, baseUrl);
         htmlBody = addTrackingPixel(htmlBody, newsletter.id, subscriber.id, baseUrl);
 
         const { error: sendError } = await resend.emails.send({
-          from: "Lake Geneva Brief <newsletter@citybrief.info>",
+          from: fromAddress(cityConfig),
           to: subscriber.email,
           subject: newsletter.subject,
           html: htmlBody,
           text: textBody,
+          headers: bulkMailHeaders(unsubscribeUrl),
         });
 
         if (sendError) {

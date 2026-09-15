@@ -22,7 +22,7 @@ import { StickySubscribeBanner } from "@/components/StickySubscribeBanner";
 import { ReferralProgram } from "@/components/ReferralProgram";
 import { WelcomeModal } from "@/components/WelcomeModal";
 import { PresentedBySection } from "@/components/PresentedBySection";
-import { getSubscribeSource, getReferralSource } from "@/lib/referralTracking";
+import { getSubscribeSource, getReferralSource, getReferralCode } from "@/lib/referralTracking";
 
 type Story = {
   id: string;
@@ -478,6 +478,7 @@ const LakeGeneva = () => {
           email: subscriberEmail,
           status: "active",
           source,
+          referred_by_code: getReferralCode(),
         });
 
       if (error) throw error;

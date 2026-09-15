@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.84.0";
+import { getCityConfig } from "../_shared/cityConfig.ts";
 
 serve(async (req) => {
   const url = new URL(req.url);
@@ -58,8 +59,21 @@ serve(async (req) => {
 
   console.log(`✅ Unsubscribed: ${subscriber.email}`);
 
+  // Brand name from city_config: this page is the last thing an unsubscriber
+  // sees, and it should not name a publication different from the one they
+  // actually subscribed to.
+  let siteName = "the brief";
+  try {
+    siteName = (await getCityConfig(supabase)).site_name;
+  } catch (_e) {
+    // A config lookup must never turn a successful unsubscribe into an error.
+  }
+
   return new Response(
-    renderPage("Unsubscribed", "You have been successfully unsubscribed from Lake Geneva Local. We're sorry to see you go!"),
+    renderPage(
+      "Unsubscribed",
+      `You have been successfully unsubscribed from ${siteName}. We're sorry to see you go!`,
+    ),
     { status: 200, headers: { "Content-Type": "text/html" } }
   );
 });

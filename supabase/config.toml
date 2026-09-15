@@ -293,3 +293,6 @@ verify_jwt = false
 # Cron-invoked monthly; must run without a user JWT.
 [functions.refresh-real-estate-metrics]
 verify_jwt = false
+
+[functions.send-welcome-email]
+verify_jwt = false

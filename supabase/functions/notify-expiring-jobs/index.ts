@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { DEFAULT_SITE_ORIGIN } from "../_shared/emailIdentity.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
@@ -76,7 +77,7 @@ serve(async (req) => {
       );
     }
 
-    const appBaseUrl = Deno.env.get("APP_BASE_URL") || "https://lakegeneva.news";
+    const appBaseUrl = Deno.env.get("APP_BASE_URL") || DEFAULT_SITE_ORIGIN;
     let sentCount = 0;
     const errors: string[] = [];
 
@@ -122,7 +123,7 @@ serve(async (req) => {
             
             <p style="color: #999; font-size: 12px;">
               Lake Geneva Brief — Local news for the Lake Geneva area<br />
-              <a href="${appBaseUrl}" style="color: #2563eb;">lakegeneva.news</a>
+              <a href="${appBaseUrl}" style="color: #2563eb;">${appBaseUrl.replace(/^https?:\/\//, "")}</a>
             </p>
           </div>
         `;

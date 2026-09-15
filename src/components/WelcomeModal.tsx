@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Mail } from "lucide-react";
-import { getSubscribeSource } from "@/lib/referralTracking";
+import { getSubscribeSource, getReferralCode } from "@/lib/referralTracking";
 
 const STORAGE_KEY = "lgb_welcome_shown";
 
@@ -37,7 +37,11 @@ export const WelcomeModal = () => {
       const source = getSubscribeSource("welcome_modal");
       const { error } = await supabase
         .from("subscribers")
-        .insert({ email: email.trim(), source });
+        .insert({
+          email: email.trim(),
+          source,
+          referred_by_code: getReferralCode(),
+        });
 
       if (error) {
         if (error.code === "23505") {
