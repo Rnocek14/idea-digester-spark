@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { aiChat, aiConfigured } from "../_shared/ai.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -236,16 +237,9 @@ async function extractWithAI(
   sourceName: string,
   category: string
 ): Promise<{ posts: any[] }> {
-  const openaiKey = Deno.env.get('OPENAI_API_KEY');
-  const lovableKey = Deno.env.get('LOVABLE_API_KEY');
-  
-  const apiKey = openaiKey || lovableKey;
-  const apiUrl = openaiKey 
-    ? 'https://api.openai.com/v1/chat/completions'
-    : 'https://ai.gateway.lovable.dev/v1/chat/completions';
-  
-  if (!apiKey) {
-    throw new Error('No AI API key configured (OPENAI_API_KEY or LOVABLE_API_KEY)');
+  // Provider routing lives in _shared/ai.ts (Lovable gateway first, OpenAI fallback).
+  if (!aiConfigured()) {
+    throw new Error('No AI API key configured (LOVABLE_API_KEY or OPENAI_API_KEY)');
   }
 
   // Add category-specific context to the prompt
@@ -271,25 +265,18 @@ async function extractWithAI(
       break;
   }
 
-  const response = await fetch(apiUrl, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: openaiKey ? 'gpt-4o-mini' : 'google/gemini-2.5-flash',
-      messages: [
-        { role: 'system', content: FB_EXTRACTION_SCHEMA.system },
-        { 
-          role: 'user', 
-          content: `Extract posts from this ${sourceName} Facebook page content.\n\nCategory context: ${categoryContext}\n\nContent:\n${content.substring(0, 12000)}` 
-        },
-      ],
-      tools: [{ type: 'function', function: FB_EXTRACTION_SCHEMA.tool }],
-      tool_choice: { type: 'function', function: { name: 'extract_facebook_posts' } },
-      max_tokens: 2000,
-    }),
+  const response = await aiChat({
+    model: 'gpt-4o-mini',
+    messages: [
+      { role: 'system', content: FB_EXTRACTION_SCHEMA.system },
+      {
+        role: 'user',
+        content: `Extract posts from this ${sourceName} Facebook page content.\n\nCategory context: ${categoryContext}\n\nContent:\n${content.substring(0, 12000)}`
+      },
+    ],
+    tools: [{ type: 'function', function: FB_EXTRACTION_SCHEMA.tool }],
+    tool_choice: { type: 'function', function: { name: 'extract_facebook_posts' } },
+    max_tokens: 2000,
   });
 
   if (!response.ok) {

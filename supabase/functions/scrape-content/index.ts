@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { DOMParser } from "https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts";
+import { aiChat, aiConfigured } from "../_shared/ai.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -509,36 +510,24 @@ async function extractWithAI(
   extractType: keyof typeof EXTRACTION_SCHEMAS,
   url: string
 ): Promise<any> {
-  const openaiKey = Deno.env.get('OPENAI_API_KEY');
-  const lovableKey = Deno.env.get('LOVABLE_API_KEY');
-  
-  const apiKey = openaiKey || lovableKey;
-  const apiUrl = openaiKey 
-    ? 'https://api.openai.com/v1/chat/completions'
-    : 'https://ai.gateway.lovable.dev/v1/chat/completions';
-  
-  if (!apiKey) {
-    throw new Error('No AI API key configured (OPENAI_API_KEY or LOVABLE_API_KEY)');
+  // Routing (Lovable gateway first, OpenAI as fallback) lives in _shared/ai.ts.
+  // This scraper feeds the venue/event calendars, which died with ai_error when
+  // it called the out-of-credit OpenAI account directly.
+  if (!aiConfigured()) {
+    throw new Error('No AI API key configured (LOVABLE_API_KEY or OPENAI_API_KEY)');
   }
-  
+
   const schema = EXTRACTION_SCHEMAS[extractType];
-  
-  const response = await fetch(apiUrl, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: openaiKey ? 'gpt-4o-mini' : 'google/gemini-2.5-flash',
-      messages: [
-        { role: 'system', content: schema.system },
-        { role: 'user', content: `Extract ${extractType} data from this content. Source URL: ${url}\n\nContent:\n${content}` },
-      ],
-      tools: [{ type: 'function', function: schema.tool }],
-      tool_choice: { type: 'function', function: { name: schema.tool.name } },
-      max_tokens: 1500,
-    }),
+
+  const response = await aiChat({
+    model: 'gpt-4o-mini',
+    messages: [
+      { role: 'system', content: schema.system },
+      { role: 'user', content: `Extract ${extractType} data from this content. Source URL: ${url}\n\nContent:\n${content}` },
+    ],
+    tools: [{ type: 'function', function: schema.tool }],
+    tool_choice: { type: 'function', function: { name: schema.tool.name } },
+    max_tokens: 1500,
   });
   
   if (!response.ok) {

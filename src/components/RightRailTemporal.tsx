@@ -46,6 +46,35 @@ export default function RightRailTemporal({ fallback = null }: { fallback?: Reac
     staleTime: 5 * 60 * 1000,
   });
 
+  /**
+   * Nothing dated inside the 14-day window is common in shoulder season (and
+   * whenever an event source goes quiet). Rather than rendering nothing, fall
+   * back to the next events on the calendar however far out they sit.
+   */
+  const { data: upcoming = [] } = useQuery({
+    queryKey: ["right-rail-upcoming-fallback"],
+    enabled: !isLoading && events.length === 0,
+    queryFn: async () => {
+      const todayStr = localDateStr(new Date());
+      const { data, error } = await runCityScoped((scoped) =>
+        maybeCity(supabase
+        .from("content_queue")
+        .select(
+          "id, title, summary, category, event_date, event_time, performer, original_url, image_url, geo_tier, geo_label, metadata",
+        ), scoped)
+        .in("status", ["approved", "auto_published", "published"])
+        .in("safety_level", ["safe", "soft_sensitive"])
+        .gte("event_date", todayStr)
+        .order("event_date", { ascending: true })
+        .order("event_time", { ascending: true, nullsFirst: false })
+        .limit(6)
+      );
+      if (error) throw error;
+      return (data || []) as EventRow[];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   if (isLoading) return null;
 
   const today = new Date();
@@ -61,6 +90,9 @@ export default function RightRailTemporal({ fallback = null }: { fallback?: Reac
   const nextWeekStart = new Date(sunday);
   nextWeekStart.setDate(sunday.getDate() + 1);
   const nextWeekStartStr = localDateStr(nextWeekStart);
+  const horizonWeek = new Date(today);
+  horizonWeek.setDate(today.getDate() + 7);
+  const horizonWeekStr = localDateStr(horizonWeek);
 
   const tonight: EventRow[] = [];
   const weekend: EventRow[] = [];
@@ -69,8 +101,11 @@ export default function RightRailTemporal({ fallback = null }: { fallback?: Reac
     if (!e.event_date) continue;
     if (e.event_date === todayStr) tonight.push(e);
     else if (e.event_date >= fridayStr && e.event_date <= sundayStr) weekend.push(e);
-    else if (e.event_date >= nextWeekStartStr) nextWeek.push(e);
+    // Catch-all: a midweek date before this Friday belongs somewhere, otherwise
+    // it silently vanishes and the whole rail can look empty with events loaded.
+    else nextWeek.push(e);
   }
+  void nextWeekStartStr;
 
   const sections: { key: string; label: string; hint: string; items: EventRow[] }[] = [
     { key: "tonight", label: "Tonight", hint: "Happening today", items: tonight.slice(0, 4) },
@@ -85,6 +120,15 @@ export default function RightRailTemporal({ fallback = null }: { fallback?: Reac
     },
     { key: "next_week", label: "Next Week", hint: "Plan ahead", items: nextWeek.slice(0, 4) },
   ].filter((s) => s.items.length > 0);
+
+  if (sections.length === 0 && upcoming.length > 0) {
+    sections.push({
+      key: "coming_up",
+      label: "Coming Up",
+      hint: "Next on the calendar",
+      items: upcoming.slice(0, 5),
+    });
+  }
 
   if (sections.length === 0) return <>{fallback}</>;
 
@@ -106,9 +150,13 @@ export default function RightRailTemporal({ fallback = null }: { fallback?: Reac
               let dayLabel = "";
               if (e.event_date && s.key !== "tonight") {
                 const [y, m, d] = e.event_date.split("-").map(Number);
-                dayLabel = new Date(y, (m || 1) - 1, d || 1).toLocaleDateString([], {
-                  weekday: "short",
-                });
+                // A weekday name only reads as "soon". Anything further out than
+                // a week gets a calendar date instead.
+                const far = s.key === "coming_up" || e.event_date > horizonWeekStr;
+                dayLabel = new Date(y, (m || 1) - 1, d || 1).toLocaleDateString(
+                  [],
+                  far ? { month: "short", day: "numeric" } : { weekday: "short" },
+                );
               }
               return (
                 <li key={e.id}>

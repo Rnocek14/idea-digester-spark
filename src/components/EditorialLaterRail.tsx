@@ -18,11 +18,6 @@ type Pick = EventRow & {
  */
 export default function EditorialLaterRail() {
   const today = localDateStr(new Date());
-  const horizon = (() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 30);
-    return localDateStr(d);
-  })();
 
   const { data: featured = [], isLoading } = useQuery({
     queryKey: ["later-featured"],
@@ -65,8 +60,9 @@ export default function EditorialLaterRail() {
         .in("status", ["approved", "auto_published", "published"])
         .in("safety_level", ["safe", "soft_sensitive"])
         .gte("geo_tier", 1)
+        // No upper bound: an empty 30-day window used to render nothing at all.
+        // The next dated events are better than a blank rail.
         .gte("event_date", fallbackStart)
-        .lte("event_date", horizon)
         .order("geo_tier", { ascending: true })
         .order("event_date", { ascending: true })
         .limit(3)
