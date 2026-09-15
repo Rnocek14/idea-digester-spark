@@ -98,8 +98,11 @@ export default function RightRailTemporal({ fallback = null }: { fallback?: Reac
     if (!e.event_date) continue;
     if (e.event_date === todayStr) tonight.push(e);
     else if (e.event_date >= fridayStr && e.event_date <= sundayStr) weekend.push(e);
-    else if (e.event_date >= nextWeekStartStr) nextWeek.push(e);
+    // Catch-all: a midweek date before this Friday belongs somewhere, otherwise
+    // it silently vanishes and the whole rail can look empty with events loaded.
+    else nextWeek.push(e);
   }
+  void nextWeekStartStr;
 
   const sections: { key: string; label: string; hint: string; items: EventRow[] }[] = [
     { key: "tonight", label: "Tonight", hint: "Happening today", items: tonight.slice(0, 4) },
@@ -114,6 +117,15 @@ export default function RightRailTemporal({ fallback = null }: { fallback?: Reac
     },
     { key: "next_week", label: "Next Week", hint: "Plan ahead", items: nextWeek.slice(0, 4) },
   ].filter((s) => s.items.length > 0);
+
+  if (sections.length === 0 && upcoming.length > 0) {
+    sections.push({
+      key: "coming_up",
+      label: "Coming Up",
+      hint: "Next on the calendar",
+      items: upcoming.slice(0, 5),
+    });
+  }
 
   if (sections.length === 0) return <>{fallback}</>;
 
