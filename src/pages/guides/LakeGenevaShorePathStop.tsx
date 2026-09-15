@@ -20,17 +20,33 @@ function buildMeta(stop: {
   description: string | null;
   story_long: string | null;
   short_label: string | null;
+  is_public_landmark?: boolean | null;
 }) {
-  const title = `${stop.name} — Lake Geneva Shore Path Guide`;
-  // Description: first ~155 chars of story_long, or fall back to description.
+  // Public stops (beaches, parks, piers) are searched with visitor intent —
+  // "can I go there, where do I park" — so the snippet leads with access
+  // instead of history. URLs are untouched: only title/description change.
+  const publicStop = stop.is_public_landmark === true;
+  const title = publicStop
+    ? `${stop.name}${stop.community ? `, ${stop.community}` : ""} — Parking & Public Access`
+    : `${stop.name} — Lake Geneva Shore Path Guide`;
+
   const source = (stop.story_long || stop.description || "")
     .replace(/\s+/g, " ")
     .trim();
+  const lead = publicStop
+    ? `Public access, parking, and what to expect at ${stop.name}${
+        stop.community ? ` in ${stop.community}` : ""
+      } on the Geneva Lake Shore Path.`
+    : "";
+  const clamp = (s: string) => (s.length <= 158 ? s : `${s.slice(0, 155).trimEnd()}…`);
+
+  if (publicStop) {
+    const extra = source ? ` ${source}` : "";
+    return { title, description: clamp(`${lead}${extra}`) };
+  }
   const desc =
     source.length > 0
-      ? source.length <= 158
-        ? source
-        : `${source.slice(0, 155).trimEnd()}…`
+      ? clamp(source)
       : `${stop.name} on the Lake Geneva Shore Path${
           stop.community ? ` in ${stop.community}` : ""
         }. History, what to look for, and how to find it.`;

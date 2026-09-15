@@ -42,6 +42,13 @@ import { StoryDots } from "@/components/StoryDots";
 import { useActiveStoryIndex } from "@/hooks/useActiveStoryIndex";
 import { trackStoryEvent, pillarFromCategory } from "@/lib/trackStoryEvent";
 
+/**
+ * Homepage share card. Spaces are percent-encoded: several social crawlers
+ * drop an og:image URL containing raw spaces and render no preview at all.
+ */
+const HOME_SOCIAL_IMAGE =
+  "https://storage.googleapis.com/gpt-engineer-file-uploads/SvWZJGynpjYPoF316Lv9RVB7o2F2/social-images/social-1764815719524-ChatGPT%20Image%20Dec%203,%202025,%2007_21_23%20PM.png";
+
 
 // Category order for topic mode filtering
 const categoryOrder = ['news', 'civic', 'events', 'dining', 'community', 'schools', 'real_estate'];
@@ -506,6 +513,7 @@ const LakeGenevaV2 = () => {
         title="Lake Geneva Brief – Today's Local News & Things To Do"
         description="Today's local news, civic updates, events, dining, and nightlife in Lake Geneva, Wisconsin — curated daily."
         path="/"
+        ogImage={HOME_SOCIAL_IMAGE}
         keywords={LG_ALL_KEYWORDS}
         jsonLd={{
           "@context": "https://schema.org",
@@ -520,10 +528,15 @@ const LakeGenevaV2 = () => {
         }}
       />
       <StickySubscribeBanner />
-      {/* SEO: visible H1 (screen reader only — preserves editorial design) */}
-      <h1 className="sr-only">
-        Lake Geneva Brief — Today's local news, events, dining, and community guide for Lake Geneva, Wisconsin
-      </h1>
+      {/* Visible masthead H1 — describes the site for readers and crawlers alike. */}
+      <div className="w-full px-4 sm:px-6 lg:px-6 xl:px-8 pt-5">
+        <h1 className="font-display text-lg sm:text-xl text-slate-900 leading-snug">
+          Lake Geneva Brief
+          <span className="block text-sm sm:text-base font-normal text-slate-700 mt-0.5">
+            Today's local news, events, dining, and community guide for Lake Geneva, Wisconsin
+          </span>
+        </h1>
+      </div>
       {/* Three-Column Layout - Full width responsive with generous spacing */}
       <div className="w-full px-4 sm:px-6 lg:px-6 xl:px-8 py-6">
         <div className="grid grid-cols-1 xl:grid-cols-[260px_1fr_260px] 2xl:grid-cols-[300px_1fr_300px] gap-6">
