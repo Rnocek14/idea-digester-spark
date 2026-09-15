@@ -2101,6 +2101,14 @@ When in doubt between safe and soft_sensitive, choose safe. When in doubt betwee
             }
           }
 
+          // An "events" story with no parsable date is an article ABOUT something,
+          // not something a reader can put on a calendar. Filing it as news keeps
+          // the events category honest (and every schedule surface date-driven).
+          if (aiCategory === 'events' && !eventDate) {
+            console.log(`🗓️ Events story with no date → filing as news: "${title.substring(0, 50)}..."`);
+            aiCategory = 'news';
+          }
+
           // Now decide status with geoTier + eventDate for full gate logic
           const statusResult = decideStatusForStory(rules as AutoPublishRule[], source.id, aiCategory, safetyLevel, geoTier, eventDate, title);
           let status = statusResult.status;
