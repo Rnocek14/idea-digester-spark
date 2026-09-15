@@ -147,9 +147,13 @@ export default function RightRailTemporal({ fallback = null }: { fallback?: Reac
               let dayLabel = "";
               if (e.event_date && s.key !== "tonight") {
                 const [y, m, d] = e.event_date.split("-").map(Number);
-                dayLabel = new Date(y, (m || 1) - 1, d || 1).toLocaleDateString([], {
-                  weekday: "short",
-                });
+                // A weekday name only reads as "soon". Anything further out than
+                // a week gets a calendar date instead.
+                const far = s.key === "coming_up" || e.event_date > horizonWeekStr;
+                dayLabel = new Date(y, (m || 1) - 1, d || 1).toLocaleDateString(
+                  [],
+                  far ? { month: "short", day: "numeric" } : { weekday: "short" },
+                );
               }
               return (
                 <li key={e.id}>
