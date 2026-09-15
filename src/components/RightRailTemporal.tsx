@@ -90,6 +90,9 @@ export default function RightRailTemporal({ fallback = null }: { fallback?: Reac
   const nextWeekStart = new Date(sunday);
   nextWeekStart.setDate(sunday.getDate() + 1);
   const nextWeekStartStr = localDateStr(nextWeekStart);
+  const horizonWeek = new Date(today);
+  horizonWeek.setDate(today.getDate() + 7);
+  const horizonWeekStr = localDateStr(horizonWeek);
 
   const tonight: EventRow[] = [];
   const weekend: EventRow[] = [];
