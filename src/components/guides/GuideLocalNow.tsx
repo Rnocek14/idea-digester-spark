@@ -12,7 +12,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { runCityScoped } from "@/lib/cityId";
+import { runCityScoped, getCityId } from "@/lib/cityId";
 import { storyPath } from "@/lib/slug";
 
 type Row = {
@@ -45,7 +45,7 @@ export function GuideLocalNow() {
         let q = supabase
           .from("content_queue")
           .select("id, title, category, publish_date, created_at");
-        if (scoped) q = q.eq("city_id", getCity());
+        if (scoped) q = q.eq("city_id", getCityId());
         return q
           .in("status", ["published", "auto_published"])
           .in("safety_level", ["safe", "soft_sensitive"])
@@ -91,11 +91,4 @@ export function GuideLocalNow() {
       </ul>
     </section>
   );
-}
-
-// Kept local so the query function can read the resolved city without the
-// component threading it through props.
-import { getCityId } from "@/lib/cityId";
-function getCity() {
-  return getCityId();
 }
