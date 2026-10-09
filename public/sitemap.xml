@@ -256,8 +256,26 @@
     <priority>0.9</priority>
   </url>
   <url>
+    <loc>https://lakegenevabrief.com/events/6bad2cd5-84c3-4a4a-9a2c-80808ddb3ef8</loc>
+    <lastmod>2026-10-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/events/e17bbecb-220c-48a8-8b9c-8726139357aa</loc>
+    <lastmod>2026-10-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://lakegenevabrief.com/events/78a43b9e-3aa9-4f47-a560-6dfd6a4b6330</loc>
     <lastmod>2026-08-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/events/ee149420-ae2f-4fc7-b1bc-afe7d049e2db</loc>
+    <lastmod>2026-10-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -304,6 +322,30 @@
     <priority>0.6</priority>
   </url>
   <url>
+    <loc>https://lakegenevabrief.com/incidents/family-of-elkhorn-woman-killed-by-commuter-train-organizes-benefit-in-her-memory</loc>
+    <lastmod>2026-10-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/incidents/family-of-utility-worker-struck-and-killed-by-driver-near-east-troy-anxiously-wa</loc>
+    <lastmod>2026-10-08</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/incidents/lake-geneva-mourns-downtown-restaurant-owner-after-her-sudden-death</loc>
+    <lastmod>2026-10-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/incidents/three-lake-geneva-first-responders-receive-commendation-for-heroic-actions-durin</loc>
+    <lastmod>2026-10-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://lakegenevabrief.com/incidents/follow-up-office-of-emergency-management-answers-questions-on-failed-tornado-sir</loc>
     <lastmod>2026-08-22</lastmod>
     <changefreq>weekly</changefreq>
@@ -316,272 +358,782 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/incidents/fundraiser-launched-by-family-of-elkhorn-woman-struck-and-killed-by-commuter-tra</loc>
-    <lastmod>2026-08-02</lastmod>
+    <loc>https://lakegenevabrief.com/stories/night-sky-cruise-on-delavan-lake-c6d41327-1b4e-4066-bb74-f0947629cbb4</loc>
+    <lastmod>2026-10-08</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/incidents/elkhorn-mother-mourns-daughter-after-she-was-struck-and-killed-by-chicago-commut</loc>
-    <lastmod>2026-08-01</lastmod>
+    <loc>https://lakegenevabrief.com/stories/lake-geneva-neighbors-obituaries-for-october-8-0d5afc06-00ea-4bf3-908b-be13f45c9243</loc>
+    <lastmod>2026-10-08</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/incidents/one-dead-in-interstate-crash-near-delavan</loc>
-    <lastmod>2026-07-29</lastmod>
+    <loc>https://lakegenevabrief.com/stories/top-stories-for-oct-8-2026-33b2ce3c-145f-4039-81da-bb9d250705ec</loc>
+    <lastmod>2026-10-08</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/incidents/whitewater-suspected-lightning-strike-death-worker-killed</loc>
-    <lastmod>2026-07-28</lastmod>
+    <loc>https://lakegenevabrief.com/stories/annies-country-pantry-reopens-at-maltworks-annex-7c6c25aa-3a38-4178-927a-3c3949dddb29</loc>
+    <lastmod>2026-10-08</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/incidents/dense-fog-advisory-issued-july-27-at-5-09am-cdt-until-july-27-at-8-00am-cdt-by-n</loc>
-    <lastmod>2026-07-27</lastmod>
+    <loc>https://lakegenevabrief.com/stories/wwii-veteran-posthumously-honored-as-kenosha-hometown-hero-95dd9711-779b-4277-83b2-76dd8c32241c</loc>
+    <lastmod>2026-10-08</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/incidents/heat-advisory-issued-july-27-at-5-09am-cdt-until-july-27-at-9-00pm-cdt-by-nws-mi</loc>
-    <lastmod>2026-07-27</lastmod>
+    <loc>https://lakegenevabrief.com/stories/american-heart-association-recognizes-kenosha-student-ad6d19cf-e0b0-4284-ba99-c066a14dd226</loc>
+    <lastmod>2026-10-08</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/incidents/heat-advisory-issued-july-27-at-3-07am-cdt-until-july-27-at-9-00pm-cdt-by-nws-mi</loc>
-    <lastmod>2026-07-27</lastmod>
+    <loc>https://lakegenevabrief.com/stories/what-lake-geneva-country-meats-says-about-beef-recalls-and-s-56742613-420d-459c-ad08-0471ad89be77</loc>
+    <lastmod>2026-10-08</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/incidents/dense-fog-advisory-issued-july-27-at-3-07am-cdt-until-july-27-at-8-00am-cdt-by-n</loc>
-    <lastmod>2026-07-27</lastmod>
+    <loc>https://lakegenevabrief.com/stories/sea-smoke-wine-dinner-4a55b68e-ea21-418d-991a-34520c817117</loc>
+    <lastmod>2026-10-08</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/incidents/air-quality-alert-issued-july-20-at-12-14pm-cdt-by-nws-milwaukee-sullivan-wi</loc>
-    <lastmod>2026-07-21</lastmod>
+    <loc>https://lakegenevabrief.com/stories/city-of-kenosha-curbside-compostable-collection-begins-oct-1-dc76ac57-c523-424b-a19e-b6490215dfef</loc>
+    <lastmod>2026-10-07</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/incidents/air-quality-alert-issued-july-20-at-11-46am-cdt-by-nws-milwaukee-sullivan-wi</loc>
-    <lastmod>2026-07-20</lastmod>
+    <loc>https://lakegenevabrief.com/stories/lake-geneva-neighbors-obituaries-for-october-7-6e6366c6-e491-48cf-9d78-3d2d36da4494</loc>
+    <lastmod>2026-10-08</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/incidents/power-outage-in-darien-mrrnmli0</loc>
-    <lastmod>2026-07-20</lastmod>
+    <loc>https://lakegenevabrief.com/stories/kenosha-allocates-50-000-to-52nd-st-beautification-grants-4178b7f0-9079-4498-80fb-02e808511452</loc>
+    <lastmod>2026-10-07</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/incidents/air-quality-alert-issued-july-18-at-9-41am-cdt-by-nws-milwaukee-sullivan-wi</loc>
-    <lastmod>2026-07-18</lastmod>
+    <loc>https://lakegenevabrief.com/stories/carthage-college-partners-with-urban-learning-collaborative-dfb9b43f-7351-44c0-845d-6c622dc0c1f4</loc>
+    <lastmod>2026-10-08</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://lakegenevabrief.com/incidents/customer-injured-in-crash-at-sweet-corn-lady-produce-stand-in-delavan-inlet</loc>
-    <lastmod>2026-07-18</lastmod>
+    <loc>https://lakegenevabrief.com/stories/see-what-samantha-kerkman-proposed-in-her-2027-county-budget-4361ff40-2592-4622-b798-6a5d8e38218c</loc>
+    <lastmod>2026-10-08</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/lake-geneva-neighbors-obituaries-for-october-6-eca10a83-82f8-4e32-9e61-92010dcbd774</loc>
+    <lastmod>2026-10-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/hospice-alliance-support-group-for-children-restarts-oct-17-57bda575-c568-473c-b320-fc1dfc4a0875</loc>
+    <lastmod>2026-10-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/kenosha-county-courthouse-unveils-ceremonial-courtroom-d60afa70-e2e4-4273-a877-2410fbc25632</loc>
+    <lastmod>2026-10-06</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/thursday-event-to-explore-how-adults-can-assist-youth-ca5dcda6-5fc8-46a3-aa9a-0fee1f693150</loc>
+    <lastmod>2026-10-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/what-s-changing-at-downtown-shops-and-the-ymca-s-wellness-ce-f55006fe-a1e3-43d9-bf25-c49c478dbbcb</loc>
+    <lastmod>2026-10-06</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/lake-geneva-neighbors-obituaries-for-october-5-a22a8e64-6c5b-4248-a00a-f4bf52c4ce34</loc>
+    <lastmod>2026-10-06</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/kenosha-county-brace-for-inflation-in-planning-2027-budget-e2c67ebc-a41a-4bec-a1cc-da06a6e10f31</loc>
+    <lastmod>2026-10-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/lake-geneva-neighbors-obituaries-for-october-4-fae034b9-ccfd-4333-83a5-e76519de5e76</loc>
+    <lastmod>2026-10-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/racine-art-museum-seeks-photos-for-accidentally-wes-anderson-1e3ff2c8-7e74-4a77-9db1-c578e144f850</loc>
+    <lastmod>2026-10-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/lake-geneva-city-council-and-government-stories-d1c6d0f8-dc11-4217-b7fa-185c37465350</loc>
+    <lastmod>2026-10-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/recent-stories-about-the-lake-geneva-business-community-edf51ea3-329d-4c42-b2d6-328949ab5ad5</loc>
+    <lastmod>2026-10-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/recent-stories-from-around-the-city-of-lake-geneva-92447a27-5425-43e9-914a-f8ed33379466</loc>
+    <lastmod>2026-10-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/recent-stories-about-lake-geneva-area-schools-and-education-d92ff32c-ae1a-4d63-ae8a-6e9dbd7836ef</loc>
+    <lastmod>2026-10-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/ron-wanek-from-dairy-farm-to-furniture-empire-c653ded2-0016-48e6-a9ff-b5ceacb4f489</loc>
+    <lastmod>2026-10-06</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/charity-fashion-show-coming-to-downtown-kenosha-on-oct-17-10a469e1-7f50-4cc9-a8d7-332f5a553103</loc>
+    <lastmod>2026-10-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/sherri-jewel-psychic-medium-show-e17bbecb-220c-48a8-8b9c-8726139357aa</loc>
+    <lastmod>2026-10-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/dragon-days-fall-fantasy-festival-2026-7b9789a0-c8ba-49ce-9407-e8d56b2f48e7</loc>
+    <lastmod>2026-10-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/giant-postcards-available-for-bidding-edf94d18-15f2-4749-a9f0-9cb41000612f</loc>
+    <lastmod>2026-10-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/wiseye-morning-minute-marquette-poll-shows-close-governors-r-6947a4ed-6628-4b5b-b186-1d805c8604e7</loc>
+    <lastmod>2026-10-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/lake-geneva-neighbors-obituaries-for-october-3-5a094900-975c-459e-9fbf-a397169ca528</loc>
+    <lastmod>2026-10-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/from-pole-buildings-to-menards-john-menards-journey-d6bbb47f-999f-4bb6-8b12-8c1903c6f898</loc>
+    <lastmod>2026-10-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/kenosha-unified-unveils-irene-santos-learning-station-sign-9cc3d3e8-e931-4a58-9661-bfdc8e4ad5f9</loc>
+    <lastmod>2026-10-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/lake-geneva-magic-show-fridays-6bad2cd5-84c3-4a4a-9a2c-80808ddb3ef8</loc>
+    <lastmod>2026-10-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/live-music-dan-blitz-october-28-2026-ee149420-ae2f-4fc7-b1bc-afe7d049e2db</loc>
+    <lastmod>2026-10-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/lake-geneva-continues-to-discuss-options-for-parks-plan-14d0a054-0a42-4f56-97ab-35ff1dd47fb1</loc>
+    <lastmod>2026-10-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/applications-open-for-downtown-racine-s-holiday-parade-9ac44352-6476-4fa4-8e85-a0c14a9e01d8</loc>
+    <lastmod>2026-10-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/pink-flamingos-statue-of-liberty-boombox-parade-the-legacy-o-efdf81ad-a743-4433-b59a-31db8a6a6c14</loc>
+    <lastmod>2026-10-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/top-stories-for-oct-2-2026-a01df927-1320-44eb-a88a-b2f0660d24d6</loc>
+    <lastmod>2026-10-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/historic-eagles-club-is-set-to-be-demolished-see-why-94655797-352e-4641-82bd-e05069a89bf9</loc>
+    <lastmod>2026-10-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/three-lake-geneva-first-responders-receive-commendation-for-485b003e-e347-45db-9289-fb1e8c0bb69b</loc>
+    <lastmod>2026-10-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/live-music-mike-vandyke-october-8-2026-2307b4a7-4ddc-45a6-a047-2b98b7daae33</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/wiseye-morning-minute-2026-state-of-education-address-22333d4c-5d83-43e0-912e-d87b1612329d</loc>
+    <lastmod>2026-10-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/wiseye-morning-minute-tiffany-and-crowley-at-wca-annual-conf-1e50b0c5-cdeb-4202-8c13-db6201627857</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/lake-geneva-neighbors-obituaries-for-october-1-85fd3e69-ee13-449c-9e1d-e0b2424c57dd</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/downtown-racine-brings-oktoberfest-to-first-friday-a6c33cc8-dfe4-4489-bd92-fa84f8c958b6</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/wisconsin-veterans-soar-in-wwii-planes-with-dream-flights-98e0d5dd-8f5c-4535-b2ae-e923a892a12c</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/butchers-prove-theyre-a-cut-above-the-rest-during-kenosha-co-b234ba47-1575-4019-a9df-3bd375e704ca</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/fall-wheel-ride-brings-bicycle-riders-to-kenosha-county-road-270f1723-a078-4ad9-bacf-c64f3197f726</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/see-what-s-new-inside-lake-geneva-s-renovated-ymca-wellness-9645af6f-1506-4667-8e98-839ef60c20ad</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/in-person-absentee-voting-1348adb8-c39f-409b-8a04-061c4a70e97e</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/in-person-absentee-voting-bd8030b9-d41d-453d-a539-3e191fcc1ab6</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/in-person-absentee-voting-a1e53b37-13a4-4d9e-8ac3-e55f92f2a55c</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/in-person-absentee-voting-52a68484-2050-4d38-9304-76bcd2137815</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/in-person-absentee-voting-9458d128-e83f-48ba-a79d-569d4da71647</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/in-person-absentee-voting-dd619da4-ce77-45db-a064-b9449928dfea</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/in-person-absentee-voting-1e27f585-3541-41ba-8baf-5b35b850984c</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/in-person-absentee-voting-97856af0-a010-4cbd-928b-715fdbf3451c</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/lake-geneva-to-negotiate-land-buy-for-public-safety-facility-b24c2758-1ed3-47a0-ba06-698664222f0f</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/lake-geneva-neighbors-obituaries-for-september-30-ade6fdae-f2c2-46e4-8364-56fa9e2065a7</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/top-stories-for-sept-30-2026-8107759c-92b5-476e-abb8-7cf561d36dd7</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/sign-and-facade-improvements-approved-for-simple-cafe-9bfae2e6-e06b-46b1-a6f8-4f25527c3fd6</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/wiseye-morning-minute-alliant-energy-exec-on-data-centers-f64d245f-d093-46ca-8354-59430cf1ef0c</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/microsoft-to-redirect-annual-incentive-to-mt-pleasant-10b698b3-c589-499e-9ab4-b5027c844cd3</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/g10-fulfillment-grows-into-new-larger-facility-in-kenosha-50edec4b-3326-4ae4-ab98-211e2a0105fc</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/uw-parkside-group-to-host-forum-on-ai-data-centers-53104947-e84b-4ea3-8016-ea43182e61f6</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/anderson-art-center-in-kenosha-seeks-award-nominations-b6dd3fe0-7505-4ece-9844-afe6f1278162</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/75th-fall-wisconsin-antiques-dealers-assn-show-sale-and-10-m-ef39d3c4-1d06-44f8-aa52-699f511fb52a</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/wiseye-morning-minute-agency-budget-requests-d42a7290-b68f-4d40-86e3-5820fcd5f0d1</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/lake-geneva-neighbors-obituaries-for-september-29-83802179-7ea4-4079-8b50-6ba66abbfe31</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/recent-stories-from-around-racine-county-d0532bc0-fc93-4d98-8eca-ac3ad3613ff3</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/racine-safe-haven-baby-box-sees-surrender-3f6204a4-955d-4523-a730-f8a2a96f2328</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/time-to-fly-kite-fest-flies-high-in-kenoshas-lincoln-park-ba22f100-3c72-415e-be19-37a7ef5aff24</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/wiseye-morning-minute-2026-state-of-education-address-f70ce85a-f246-472f-a1c2-c4c1f691f50d</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/why-lake-geneva-s-mail-boat-jump-is-a-must-watch-in-person-2cceaf92-55ce-4e72-92dd-31f980c73bee</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/plan-a-full-fall-day-starting-on-a-trail-near-lake-geneva-256fd838-dde9-4456-a4a1-7f20b3f79e7c</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/wiseye-morning-minute-2026-race-for-the-legislature-38b0e7b7-6b48-4b0c-b4dc-4b656e48d1c1</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/st-francis-de-sales-school-cuts-ribbon-on-expansion-project-3b17975f-79e1-464c-8d27-776d15e21201</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/lake-geneva-neighbors-obituaries-for-september-28-56d615fb-7728-4459-900f-4ce89747395e</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/kids-climb-event-at-river-bend-nature-center-on-oct-4-9d5f5e80-2bfc-49f9-acba-c9a815a2639c</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/spectrum-gallery-hosting-annual-art-retreat-oct-23-25-845d0f59-956e-4beb-b10f-164b9f9a8c4c</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/initiative-to-fund-scholarships-for-kenosha-racine-students-2d388457-fb6c-4748-aa5c-f86989fbb6c1</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/hospice-alliance-to-host-annual-senior-expo-at-gateway-e04a4dd1-8c65-499d-93b3-8435ffba0195</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/suspect-arrested-after-victim-stabbed-multiple-times-in-dela-b30d5096-60c8-4a65-b6b7-ee3f8ad45edf</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/three-hospitalized-following-plane-crash-in-town-of-east-tro-24f5d8e8-4fb2-45e6-ae92-d0b47cda5242</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/black-point-unveils-three-events-to-explore-area-8217-s-haun-edcefe04-a4b3-4dcd-aa60-2d33598a9b8a</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/lake-geneva-neighbors-obituaries-for-september-16-37f1fcfd-cfa9-4ce4-a850-de2e45933570</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/williams-bay-middle-school-student-wins-regatta-title-197608d7-be53-4ff7-a13a-95d4a919a1b6</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/kenosha-sculpture-walks-new-exhibit-installations-underway-6d0398e7-f167-4c84-96d2-c37e10d86341</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/italian-fest-set-to-return-to-downtown-kenosha-sept-18-20-3f4c1e94-807f-4aa0-aa18-2926c12f9761</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/what-are-kenosha-s-trick-or-treat-hours-for-halloween-2026-637b8df8-7011-45b0-8cee-7842cce5c2c3</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/kenosha-county-honor-national-hispanic-heritage-month-2063d5d8-a286-422d-b477-c3d8c3152f14</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/september-14-recap-lake-geneva-news-you-may-have-missed-toda-96ee932c-1fc5-4460-9bd2-aa602f60d10d</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/our-top-omaha-staff-photos-videos-of-august-2026-c105722c-f295-41b1-b0fd-9a8ae001cd6e</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/lake-geneva-neighbors-obituaries-for-september-15-62270cfa-949e-4ad7-9539-c427f4f2fd62</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/former-msg-sports-executive-joins-conference-at-carthage-col-9e1f9bb5-8d45-4879-8190-ff76c0712407</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/oktoberfest-at-the-abbey-resort-and-10-more-events-3f261cf8-1d87-4dc3-bdcf-5a18a8a19e17</loc>
-    <lastmod>2026-09-15</lastmod>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/lake-geneva-neighbors-obituaries-for-september-14-7defed12-1402-4c11-8122-8e073a757c90</loc>
-    <lastmod>2026-09-15</lastmod>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/wisconsin-adding-ev-chargers-including-two-in-racine-county-02eaf947-7a51-45a6-a606-8daacdf3f758</loc>
-    <lastmod>2026-09-14</lastmod>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/wagner-family-fire-fund-to-host-event-in-paddock-lake-02ee6309-1de4-421e-b43b-ea3eb1a4a3db</loc>
-    <lastmod>2026-09-15</lastmod>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/wiseye-morning-minute-absentee-ballots-on-their-way-to-voter-379e1976-25d8-4bc9-9ff2-8d5dc09a5691</loc>
-    <lastmod>2026-09-15</lastmod>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/shoreland-lutheran-high-school-completes-7-3m-expansion-c6a4a2b0-f16c-4ae5-8a92-fb5a4b8c7408</loc>
-    <lastmod>2026-09-15</lastmod>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/52nd-street-to-close-nightly-starting-sept-14-here-s-why-7f07cf35-f320-40df-896c-cec73c3ac5bb</loc>
-    <lastmod>2026-09-14</lastmod>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/lake-geneva-neighbors-obituaries-for-september-13-d2af8437-ffdd-40a1-8d06-3aa28bd7a0cf</loc>
-    <lastmod>2026-09-13</lastmod>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/lake-geneva-neighbors-obituaries-for-september-12-9568115f-39cb-44e7-adea-e3f060fcb9da</loc>
-    <lastmod>2026-09-13</lastmod>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/union-grove-hs-did-broncos-give-back-event-thursday-d47b94e0-cf97-4796-a6d1-7a4efb878482</loc>
-    <lastmod>2026-09-13</lastmod>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/gov-evers-visits-tremper-high-school-on-back-to-school-tour-c091a04f-e846-4fd9-93d7-49858e6d84b7</loc>
-    <lastmod>2026-09-13</lastmod>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/kenosha-remembers-9-11-with-ceremony-at-pennoyer-park-bffdab63-4587-4896-9474-4e2871b2673a</loc>
-    <lastmod>2026-09-12</lastmod>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/kenosha-remembers-9-11-with-ceremony-at-pennoyer-park-1005d705-c400-4a08-9679-37e006a6d97f</loc>
-    <lastmod>2026-09-12</lastmod>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/lake-geneva-neighbors-obituaries-for-september-11-56981bf3-d761-4c89-a8a4-52e9862b18a2</loc>
-    <lastmod>2026-09-12</lastmod>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/carthage-college-in-kenosha-launches-biochemistry-major-c8990b4e-fd03-41ef-a9b5-581f60aa380d</loc>
-    <lastmod>2026-09-11</lastmod>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/gateway-honors-lives-lost-during-9-11-with-ceremony-a77913f3-843b-4c6d-aff8-081c25b8bc72</loc>
-    <lastmod>2026-09-12</lastmod>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/matthew-karner-6d43c3b9-373a-4f76-889f-fe6df08b5f7f</loc>
-    <lastmod>2026-09-12</lastmod>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/what-s-planned-for-lake-geneva-s-first-ever-humanities-festi-67d5ef12-972d-4040-a3ef-c4b3df3828d7</loc>
-    <lastmod>2026-09-12</lastmod>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/september-9-recap-lake-geneva-news-you-may-have-missed-today-b02b6917-1999-48ac-9de5-6ccc8b3d636b</loc>
-    <lastmod>2026-09-12</lastmod>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/lake-geneva-neighbors-obituaries-for-september-10-bfbdd8f2-ed4b-47ed-99b8-65eec81f119d</loc>
-    <lastmod>2026-09-13</lastmod>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/top-stories-for-sept-10-2026-db4a75b6-87f5-4112-bc3e-1c7261e132cf</loc>
-    <lastmod>2026-09-13</lastmod>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/hope-council-joins-kenosha-in-recognizing-recovery-month-dfbeb137-c461-4285-9bf7-f2c886da8ad7</loc>
-    <lastmod>2026-09-10</lastmod>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/westosha-central-aviation-program-fundraiser-ends-saturday-9ce73e37-b424-47dd-8de4-fe8bb4921d72</loc>
-    <lastmod>2026-09-10</lastmod>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/dr-destructions-haunted-manor-to-open-in-somers-sept-12-0bcf68a6-5850-4c78-8f04-91968fc10686</loc>
-    <lastmod>2026-09-10</lastmod>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/wiseye-morning-minute-state-agency-oversight-of-certain-cap-ae8a45dd-ff1a-44d0-8d43-91a1aca0b034</loc>
-    <lastmod>2026-09-10</lastmod>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/badger-high-school-culinary-instructor-to-be-recognized-b8f56f78-f76b-470a-a14a-8e6434371e27</loc>
-    <lastmod>2026-09-10</lastmod>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/lake-geneva-neighbors-obituaries-for-september-9-e99ab857-21c0-435a-84be-35dcec425852</loc>
-    <lastmod>2026-09-10</lastmod>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/new-pediatrician-joins-mercyhealth-hospital-in-lake-geneva-d49bdc80-113f-44d7-99b1-3e9546f08131</loc>
-    <lastmod>2026-09-10</lastmod>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/dave-moyer-to-receive-frank-lamping-community-service-award-4413347c-5359-467b-b669-8712caab9f92</loc>
-    <lastmod>2026-09-10</lastmod>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/fall-festivities-in-kenosha-and-racine-counties-get-underway-9196bb00-eeea-435d-b132-e44983a1b376</loc>
-    <lastmod>2026-09-09</lastmod>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/streetcar-day-2026-to-offer-free-rides-on-kenosha-streetcars-75219c7e-5216-4f98-936b-b102ef7e1444</loc>
-    <lastmod>2026-09-09</lastmod>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/racine-alders-override-mayors-veto-of-liquor-license-eab3e0ef-4100-48a6-ab8e-be265f6486b6</loc>
-    <lastmod>2026-09-09</lastmod>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -618,6 +1170,12 @@
   <url>
     <loc>https://lakegenevabrief.com/stories/packers-foundation-awards-grant-to-shalom-center-in-kenosha-9009318b-e9cf-4079-a1a0-ae0de90cadd7</loc>
     <lastmod>2026-09-08</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/annual-water-safety-patrol-8216-fly-by-8217-set-for-labor-da-6006eb01-f00e-4734-8dfb-343d43e9ad06</loc>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -666,6 +1224,12 @@
   <url>
     <loc>https://lakegenevabrief.com/stories/wilmot-union-high-selects-new-alumni-hall-of-fame-inductee-38a3ee33-bd29-4f06-8359-d7e4078de5e4</loc>
     <lastmod>2026-09-08</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/powerline-route-opposition-grows-among-walworth-county-publi-925a29ad-8f3e-4f72-bfd4-30095e1158e8</loc>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -748,6 +1312,12 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://lakegenevabrief.com/stories/after-investigating-no-weapon-or-threat-discovered-on-uw-whi-22bc3516-8676-45b3-93ba-f8bb8c91eaaa</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://lakegenevabrief.com/stories/lake-geneva-tourism-commission-pauses-grant-program-9bf76ba0-db73-4399-86ca-8bae41dba14d</loc>
     <lastmod>2026-09-08</lastmod>
     <changefreq>weekly</changefreq>
@@ -816,6 +1386,12 @@
   <url>
     <loc>https://lakegenevabrief.com/stories/kusd-welcomes-students-for-first-day-of-school-7345ffa0-23ee-41ac-b28a-39049343596a</loc>
     <lastmod>2026-09-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lakegenevabrief.com/stories/grandstands-will-be-packed-at-the-2026-walworth-county-fair-f0b5d511-7a9a-44f3-8f81-9874d2d53921</loc>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -1505,67 +2081,67 @@
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/august-6-recap-lake-geneva-news-you-may-have-missed-today-d96ee01a-1caa-49a9-bfe9-6af8f33973fb</loc>
-    <lastmod>2026-08-18</lastmod>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/salsa-and-tortilla-entrepreneur-eager-to-open-first-store-af-81004342-d741-4ab0-bae3-80a8d742f984</loc>
-    <lastmod>2026-08-09</lastmod>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/lakeside-literary-festival-and-10-more-events-65f72217-8ff4-4763-90c2-ca342cb84a22</loc>
-    <lastmod>2026-08-06</lastmod>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/the-corniest-festival-in-somers-is-kicking-off-august-8-268edaf4-1e31-44b1-a300-8d709c1db932</loc>
-    <lastmod>2026-08-18</lastmod>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/twin-lakes-fire-rescue-unveils-new-fire-suppression-vehicle-c09dc109-627e-4c56-90ee-c9fbf586ceb1</loc>
-    <lastmod>2026-08-18</lastmod>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/holy-rosary-church-festival-kicks-off-friday-af8a0da3-ef88-4383-ab3c-d87004f929ab</loc>
-    <lastmod>2026-08-18</lastmod>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/august-5-recap-lake-geneva-news-you-may-have-missed-today-ed741917-62f4-4c2e-be2c-e30cee77f1bd</loc>
-    <lastmod>2026-08-18</lastmod>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/how-new-ultrasound-tools-are-changing-lake-geneva-cardiac-em-a690363b-54c6-4b66-8a17-d551034c70c5</loc>
-    <lastmod>2026-08-06</lastmod>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/putting-competition-winnings-donated-to-july-3-storm-victims-21081add-46dc-47c2-8369-c301a6b2a4e7</loc>
-    <lastmod>2026-08-18</lastmod>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/tourism-commission-oks-grants-for-bike-ride-bridal-expo-33646b82-9aa6-4565-ad43-c38945c0dbbb</loc>
-    <lastmod>2026-08-18</lastmod>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lakegenevabrief.com/stories/august-4-recap-lake-geneva-news-you-may-have-missed-today-b2a396e7-5aef-49ad-b003-57e243f11dec</loc>
-    <lastmod>2026-08-18</lastmod>
+    <lastmod>2026-10-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -1704,186 +2280,6 @@
   <url>
     <loc>https://lakegenevabrief.com/stories/delavan-darien-senior-graduates-competitive-spirit-stands-ou-ed0cce62-0138-4e78-8ba9-a47c5fa6f204</loc>
     <lastmod>2026-08-02</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/stories/man-with-several-downed-trees-from-walworth-county-storm-bur-4fc1fbfd-9c1e-4ec1-9858-79ceb89b2b6d</loc>
-    <lastmod>2026-08-02</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/stories/medical-examiner-rules-geneva-lake-boating-deaths-accidental-4f6d9dae-0867-47c2-9ede-77de5aadc2d9</loc>
-    <lastmod>2026-08-01</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/stories/tennis-community-remembers-10-year-old-who-passed-in-geneva-d60e3ec9-9d7e-4dc7-843b-e9dcc224519c</loc>
-    <lastmod>2026-08-01</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/stories/first-responders-and-walworth-county-residents-affected-by-d-edc73edb-f28c-4558-885d-d542b9f657f7</loc>
-    <lastmod>2026-08-02</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/stories/walworth-county-storm-recovery-volunteers-help-with-cleanup-095be821-ebe6-446a-a965-7b2fe353b203</loc>
-    <lastmod>2026-08-02</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/stories/2-of-3-children-who-died-in-geneva-lake-boating-accident-ide-5efc68ea-3cbc-4a76-993b-1674e4596ef7</loc>
-    <lastmod>2026-08-01</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/stories/lake-geneva-boat-accident-2-children-identified-on-gofundme-408ccabc-77a7-414a-9acc-f5eec54a8818</loc>
-    <lastmod>2026-08-01</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/stories/lake-geneva-boat-accident-3-kids-drowned-illinois-school-dis-03524126-b516-4d3f-b69f-78a5b66cf5f5</loc>
-    <lastmod>2026-08-01</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/stories/most-of-lake-geneva-delavan-como-power-should-be-restored-by-122742d0-e8a3-4705-87b2-e56d9e2b6f51</loc>
-    <lastmod>2026-08-01</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/stories/authorities-release-ages-of-people-on-boat-where-three-child-1e0e8283-063d-48f1-b7ae-76e044dc8585</loc>
-    <lastmod>2026-08-01</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/stories/lake-geneva-boat-accident-3-kids-drowned-after-vessel-capsiz-64f7810f-2f5d-40c9-8b62-97b18a336e8c</loc>
-    <lastmod>2026-08-01</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/stories/american-legion-open-house-b24e255a-b4be-4386-adc8-6da789c62d85</loc>
-    <lastmod>2026-08-01</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/stories/how-lake-geneva-s-scorching-week-helped-push-tourism-past-1-a70d3256-4052-4a96-b960-45232cad0790</loc>
-    <lastmod>2026-08-01</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/stories/lake-geneva-kid-8217-s-4th-of-july-parade-2026-and-legion-po-e7586544-708b-43e5-ba07-700cabf6aac4</loc>
-    <lastmod>2026-07-02</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/stories/visitors-flock-to-lake-geneva-during-heatwave-and-add-to-1-b-7474d257-7bf0-433f-a6fd-e4f476729890</loc>
-    <lastmod>2026-07-01</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/stories/why-were-summer-house-stars-getting-so-cozy-at-gordy-s-127c7b59-0ebe-4b98-89d2-bd5e5232fbd4</loc>
-    <lastmod>2026-07-01</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/stories/before-pride-superior-s-main-club-offered-a-place-to-belong-a034aad4-39bc-46ba-ab7b-fe0b53fbc867</loc>
-    <lastmod>2026-08-01</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/stories/smaller-wisconsin-communities-hope-federal-cleanup-grants-ca-6c246f9a-85e4-4bd8-b757-073a26bf6393</loc>
-    <lastmod>2026-08-01</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/stories/wood-carver-creates-patriotic-tribute-inside-delavan-tree-wi-675f4ec0-ce6a-4fdb-8a6f-d2c7f5e88898</loc>
-    <lastmod>2026-08-02</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/stories/elkhorn-antique-flea-market-53fab433-f2af-40bf-82ef-0f8839e76e9a</loc>
-    <lastmod>2026-08-02</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/stories/big-foot-for-archers-50th-anniversary-and-12-more-events-f85fa09f-0fea-42d6-a8ba-57a054ec7da4</loc>
-    <lastmod>2026-07-02</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/stories/residents-of-walworth-county-owned-nursing-facility-excited-f3c8d17b-a817-47ff-9ca3-61c1b5b3ad6c</loc>
-    <lastmod>2026-08-02</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/stories/58th-annual-pork-chop-cookout-fd1b09bf-0b50-451c-87c2-57200fb22021</loc>
-    <lastmod>2026-08-02</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/stories/8216-precipitation-ping-pong-in-wisconsin-leads-to-summer-ou-e032cee2-c227-4013-bdfb-6d6e6d068d93</loc>
-    <lastmod>2026-08-01</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/stories/annual-state-of-the-county-d04f5ff4-2cea-4e63-b880-420816b447ee</loc>
-    <lastmod>2026-08-02</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/stories/wood-carver-bringing-civil-war-muster-tree-back-to-life-ea54cad9-8872-4c3a-aa0f-45f3f89eb29c</loc>
-    <lastmod>2026-07-02</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/stories/serviceberries-are-a-sweet-native-fruit-and-these-midwestern-7fa2b540-9653-47d9-8090-83b4b1d149a2</loc>
-    <lastmod>2026-07-02</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/stories/8216-drink-in-summer-sweetness-while-you-can-8217-reflection-d9af9f40-a1c9-48aa-8d23-2c055bce649c</loc>
-    <lastmod>2026-07-02</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/stories/third-generation-lake-geneva-firefighter-prepares-to-honor-l-499e9306-993d-4181-ae34-72091f36524f</loc>
-    <lastmod>2026-07-02</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://lakegenevabrief.com/stories/why-antique-hunters-see-lake-geneva-as-wisconsin-s-upscale-v-abfc0bd3-7509-4ac1-a03e-151c64b303ca</loc>
-    <lastmod>2026-07-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
