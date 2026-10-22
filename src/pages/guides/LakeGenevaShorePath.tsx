@@ -671,7 +671,7 @@ export default function LakeGenevaShorePath() {
                   <p className="text-sm text-slate-700 leading-relaxed mb-3">
                     {w.why}
                   </p>
-                  <dl className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
+                  <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-2 text-sm">
                     <dt className="text-slate-500 font-mono uppercase tracking-wider">Start</dt>
                     <dd className="text-slate-900">{w.from}</dd>
                     <dt className="text-slate-500 font-mono uppercase tracking-wider">End</dt>
@@ -695,10 +695,9 @@ export default function LakeGenevaShorePath() {
             <p className="text-slate-700 leading-relaxed mb-3">
               The Shore Path has no single trailhead. You join it wherever a
               public park, beach, or pier touches the water, which is why
-              planning a walk really means planning where to leave the car. The
-              six below are the practical ones — each has parking, each puts you
-              on the path within a minute or two of the lot, and most have a
-              restroom.
+              planning a walk really means planning where to leave the car.
+              These starting points offer different ways to join the shoreline.
+              Check local parking signs and seasonal restroom hours before leaving the car.
             </p>
             <div className="overflow-x-auto mb-4 border-y border-border">
               <table className="w-full text-left text-sm text-foreground">
@@ -817,12 +816,11 @@ export default function LakeGenevaShorePath() {
 
             <p className="text-slate-700 leading-relaxed mb-4">
               Sixteen stops, in walking order, beginning downtown at Library
-              Park and heading west along the south shore, around the west end
-              at Fontana, and back east through Williams Bay. Every one is a
-              public landmark — a park, a public beach, a public pier, or a
-              historic site open to visitors. The mile figures are approximate
-              positions along the 21-mile path, useful for judging how far apart
-              two stops are rather than for navigation.
+              Park, with places to explore around Lake Geneva, the south shore,
+              Fontana and Williams Bay. The illustrated stop sequence is not a
+              surveyed route: some places are nearby rather than directly on the
+              path. Use the official map for access and segment distances, not
+              the illustrative stop mile positions for navigation.
             </p>
 
             <ol className="rounded-md border border-slate-200 bg-white p-5 mb-8 grid sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
