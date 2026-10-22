@@ -1,3 +1,4 @@
+import { SHORE_PATH_MAP_MILES } from "@/lib/shorePathPlanning";
 import { useState, useEffect, useRef } from "react";
 import { getSiteOrigin } from "@/lib/cityId";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -566,7 +567,7 @@ const LakeGenevaV2 = () => {
                 >
                   <p className="text-[10px] font-mono uppercase tracking-widest text-lake-deep">Featured Guide</p>
                   <p className="mt-1 font-display text-base text-slate-900 leading-snug">Walk the Shore Path</p>
-                  <p className="mt-1 text-xs text-slate-600 leading-relaxed">26 miles around Geneva Lake — 16 narrated stops, maps, and a guided walk mode.</p>
+                  <p className="mt-1 text-xs text-slate-600 leading-relaxed">{SHORE_PATH_MAP_MILES} miles on the official map — parking, short walks, and 16 narrated stops.</p>
                   <span className="mt-2 inline-block text-xs font-medium text-blue-600">Open the guide →</span>
                 </Link>
 
@@ -589,7 +590,7 @@ const LakeGenevaV2 = () => {
               >
                 <p className="text-[10px] font-mono uppercase tracking-widest text-lake-deep">Featured Guide</p>
                 <p className="mt-1 font-display text-base text-slate-900 leading-snug">Walk the Shore Path</p>
-                <p className="mt-1 text-xs text-slate-600 leading-relaxed">26 miles around Geneva Lake — 16 narrated stops, maps, and a guided walk mode.</p>
+                <p className="mt-1 text-xs text-slate-600 leading-relaxed">{SHORE_PATH_MAP_MILES} miles on the official map — parking, short walks, and 16 narrated stops.</p>
                 <span className="mt-2 inline-block text-xs font-medium text-blue-600">Open the guide →</span>
               </Link>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
