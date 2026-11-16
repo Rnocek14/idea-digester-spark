@@ -2,7 +2,7 @@ import { SHORE_PATH_MAP_MILES } from "@/lib/shorePathPlanning";
 import { useState, useEffect, useRef } from "react";
 import { getSiteOrigin } from "@/lib/cityId";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useSearchParams, Link } from "react-router-dom";
+import { useSearchParams, Link } from "@/lib/router-compat";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

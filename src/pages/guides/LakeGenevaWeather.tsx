@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import { GuideShell } from "@/components/guides/GuideShell";
 import WeatherWidget from "@/components/WeatherWidget";
 import WeatherForecast from "@/components/WeatherForecast";

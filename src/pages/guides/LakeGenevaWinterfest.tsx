@@ -1,7 +1,7 @@
 import { GuideShell } from "@/components/guides/GuideShell";
 import { GuideNewsletterCTA } from "@/components/guides/GuideNewsletterCTA";
 import { SoftRealEstateCTA } from "@/components/guides/SoftRealEstateCTA";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 
 const LINK = "text-blue-700 hover:underline font-medium";
 

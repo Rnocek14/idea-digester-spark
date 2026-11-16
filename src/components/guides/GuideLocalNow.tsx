@@ -10,7 +10,7 @@
 // fresh local story — an empty or stale strip is worse than no strip.
 
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import { supabase } from "@/integrations/supabase/client";
 import { runCityScoped, getCityId } from "@/lib/cityId";
 import { storyPath } from "@/lib/slug";

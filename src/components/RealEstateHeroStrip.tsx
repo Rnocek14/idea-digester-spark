@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Home, TrendingUp, CheckCircle } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import { MarketAnalysisDialog } from "@/components/MarketAnalysisDialog";
 
 interface RealEstateHeroStripProps {

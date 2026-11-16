@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "@/lib/router-compat";
 import { Bookmark, BookmarkCheck, ChevronUp, X, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { PageMeta } from "@/components/PageMeta";

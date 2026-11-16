@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { getRecentPickVenues, recordPickedVenue } from "@/lib/recentVenuePersistence";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import { PartyPopper } from "lucide-react";
 import { getCityId, maybeCity, runCityScoped } from "@/lib/cityId";
 

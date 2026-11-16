@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Briefcase, Plus, Search, Settings } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import { PageMeta } from "@/components/PageMeta";
 import { useCityConfig } from "@/hooks/useCityConfig";
 import { getCityId, runCityScoped } from "@/lib/cityId";

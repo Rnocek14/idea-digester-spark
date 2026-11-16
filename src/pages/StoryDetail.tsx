@@ -1,7 +1,7 @@
 import { usePageView, pillarFromCategory } from "@/lib/trackStoryEvent";
 import { getSiteOrigin } from "@/lib/cityId";
 import { useEffect } from "react";
-import { useParams, Link, Navigate } from "react-router-dom";
+import { useParams, Link, Navigate } from "@/lib/router-compat";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ExternalLink, Calendar, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";

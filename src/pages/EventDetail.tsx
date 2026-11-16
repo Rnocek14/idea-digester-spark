@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getSiteOrigin } from "@/lib/cityId";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams } from "@/lib/router-compat";
 import {
   ArrowLeft,
   CalendarDays,

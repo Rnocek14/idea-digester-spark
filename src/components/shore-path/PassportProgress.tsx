@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import type { RegisterProgress, RegisterEntry, SeasonBucket, WalkerProfile } from "@/hooks/usePathRegister";
 
 const SEASON_LABELS: Record<SeasonBucket, string> = {

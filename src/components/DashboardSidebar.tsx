@@ -1,6 +1,6 @@
 import { FileText, Radio, Megaphone, LayoutDashboard, Mail, CalendarDays, Building2, BarChart3, Users, Image, Heart, Briefcase, Gift, Database, Activity, Store, BookOpen, TrendingUp, MessageSquare, Siren, Globe } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
-import { useLocation } from "react-router-dom";
+import { useLocation } from "@/lib/router-compat";
 import {
   Sidebar,
   SidebarContent,

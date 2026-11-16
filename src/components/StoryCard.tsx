@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { CheckCircle2, Newspaper } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import { storyPath } from "@/lib/slug";
 
 type TrustLabel = 'verified' | 'data_journalism' | 'sourced' | 'sponsored';

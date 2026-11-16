@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getSiteOrigin } from "@/lib/cityId";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import { format } from "date-fns";
 import { ArrowRight, Sunrise, Waves, Newspaper, Calendar } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";

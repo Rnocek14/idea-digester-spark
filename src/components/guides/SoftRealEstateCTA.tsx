@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 
 /**
  * Soft, editorial real-estate CTA. Never a lead-magnet form.

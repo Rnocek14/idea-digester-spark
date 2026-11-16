@@ -1,7 +1,7 @@
 import { SHORE_PATH_LEGS, SHORE_PATH_MAP_MILES, SHORE_PATH_MAP_URL } from "@/lib/shorePathPlanning";
 import { GuideNewsletterCTA } from "@/components/guides/GuideNewsletterCTA";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import { PublicHeader } from "@/components/PublicHeader";
 import { PageMeta } from "@/components/PageMeta";
 import { Button } from "@/components/ui/button";

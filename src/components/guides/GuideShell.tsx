@@ -2,7 +2,7 @@ import { GuideNewsletterCTA } from "@/components/guides/GuideNewsletterCTA";
 import { GuideLocalNow } from "@/components/guides/GuideLocalNow";
 import { usePageView } from "@/lib/trackStoryEvent";
 import { ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import { PublicHeader } from "@/components/PublicHeader";
 import { PageMeta } from "@/components/PageMeta";
 import { articleJsonLd, breadcrumbJsonLd, faqJsonLd } from "@/lib/seo/jsonLd";

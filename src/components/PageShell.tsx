@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink } from "@/lib/router-compat";
 import { format } from "date-fns";
 import { LakeLine } from "@/components/LakeLine";
 import { useCityConfig } from "@/hooks/useCityConfig";
