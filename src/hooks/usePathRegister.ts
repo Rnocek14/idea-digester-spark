@@ -170,7 +170,7 @@ export function usePathRegister() {
     if (result.newly_earned && result.newly_earned.length > 0) {
       // Announce the highest tier earned; four_seasons outranks loop.
       const best = result.newly_earned.find((e) => e.tier === "four_seasons") ?? result.newly_earned[0];
-      setNewlyEarned(best);
+      setNewlyEarned(best!);
     }
   }, []);
 

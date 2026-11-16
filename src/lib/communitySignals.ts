@@ -43,7 +43,7 @@ function aliasMatches(text: string | null | undefined, aliases: string[]): boole
     if (idx === -1) continue;
     const before = idx === 0 ? " " : hay[idx - 1];
     const after = idx + needle.length >= hay.length ? " " : hay[idx + needle.length];
-    if (/[a-z0-9]/.test(before) || /[a-z0-9]/.test(after)) continue;
+    if (/[a-z0-9]/.test(before!) || /[a-z0-9]/.test(after!)) continue;
     return true;
   }
   return false;

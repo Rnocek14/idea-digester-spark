@@ -297,7 +297,7 @@ const Newsletter = () => {
       if (groups[cat]) {
         groups[cat].push(story);
       } else {
-        groups["other"].push(story);
+        groups["other"]!.push(story);
       }
     });
 
@@ -350,12 +350,12 @@ const Newsletter = () => {
           setBatchProgress({ current: i + 1, total: storiesNeedingVoice.length });
           
           const { error } = await supabase.functions.invoke('transform-voice', {
-            body: { mode: 'single', id: story.id }
+            body: { mode: 'single', id: story!.id }
           });
           
           if (error) {
-            console.error(`Failed to generate voice for story ${story.id}:`, error);
-            toast.error(`Failed to generate voice for "${story.title}"`);
+            console.error(`Failed to generate voice for story ${story!.id}:`, error);
+            toast.error(`Failed to generate voice for "${story!.title}"`);
           }
           
           await new Promise(resolve => setTimeout(resolve, 1000));
@@ -412,13 +412,13 @@ const Newsletter = () => {
     
     for (let i = 0; i < storiesNeedingVoice.length; i++) {
       const story = storiesNeedingVoice[i];
-      setGeneratingStoryId(story.id);
+      setGeneratingStoryId(story!.id);
       setBatchProgress({ current: i + 1, total: storiesNeedingVoice.length });
       
       try {
-        await generateVoiceMutation.mutateAsync(story.id);
+        await generateVoiceMutation.mutateAsync(story!.id);
       } catch (error) {
-        console.error(`Failed to generate voice for story ${story.id}:`, error);
+        console.error(`Failed to generate voice for story ${story!.id}:`, error);
       }
     }
     
@@ -443,33 +443,33 @@ const Newsletter = () => {
     let text = "THIS WEEK IN LAKE GENEVA\n\n";
     text += "Your weekly guide to what's happening in our beautiful lakeside community.\n\n";
 
-    if (groupedStories["events"].length > 0) {
+    if (groupedStories["events"]!.length > 0) {
       text += "🌟 FEATURED EVENTS\n\n";
-      groupedStories["events"].forEach((story) => {
+      groupedStories["events"]!.forEach((story) => {
         text += `${story.title}\n`;
         text += `${story.content_newsletter || story.summary}\n\n`;
       });
     }
 
-    if (groupedStories["community"].length > 0) {
+    if (groupedStories["community"]!.length > 0) {
       text += "COMMUNITY & LOCAL LIFE\n\n";
-      groupedStories["community"].forEach((story) => {
+      groupedStories["community"]!.forEach((story) => {
         text += `${story.title}\n`;
         text += `${story.content_newsletter || story.summary}\n\n`;
       });
     }
 
-    if (groupedStories["dining"].length > 0) {
+    if (groupedStories["dining"]!.length > 0) {
       text += "FOOD & DRINK\n\n";
-      groupedStories["dining"].forEach((story) => {
+      groupedStories["dining"]!.forEach((story) => {
         text += `${story.title}\n`;
         text += `${story.content_newsletter || story.summary}\n\n`;
       });
     }
 
-    if (groupedStories["news"].length > 0) {
+    if (groupedStories["news"]!.length > 0) {
       text += "NEWS & UPDATES\n\n";
-      groupedStories["news"].forEach((story) => {
+      groupedStories["news"]!.forEach((story) => {
         text += `${story.title}\n`;
         text += `${story.content_newsletter || story.summary}\n\n`;
       });
@@ -483,33 +483,33 @@ const Newsletter = () => {
     html += `<h1 style="color: #1a1a1a; margin-bottom: 8px;">This Week in Lake Geneva</h1>`;
     html += `<p style="color: #666; margin-bottom: 32px;">Your weekly guide to what's happening in our beautiful lakeside community.</p>`;
 
-    if (groupedStories["events"].length > 0) {
+    if (groupedStories["events"]!.length > 0) {
       html += `<h2 style="color: #1a1a1a; margin-top: 32px; margin-bottom: 16px;">🌟 Featured Events</h2>`;
-      groupedStories["events"].forEach((story) => {
+      groupedStories["events"]!.forEach((story) => {
         html += `<h3 style="color: #333; margin-bottom: 8px;">${story.title}</h3>`;
         html += `<p style="color: #444; line-height: 1.6; margin-bottom: 24px;">${story.content_newsletter || story.summary}</p>`;
       });
     }
 
-    if (groupedStories["community"].length > 0) {
+    if (groupedStories["community"]!.length > 0) {
       html += `<h2 style="color: #1a1a1a; margin-top: 32px; margin-bottom: 16px;">Community & Local Life</h2>`;
-      groupedStories["community"].forEach((story) => {
+      groupedStories["community"]!.forEach((story) => {
         html += `<h3 style="color: #333; margin-bottom: 8px;">${story.title}</h3>`;
         html += `<p style="color: #444; line-height: 1.6; margin-bottom: 24px;">${story.content_newsletter || story.summary}</p>`;
       });
     }
 
-    if (groupedStories["dining"].length > 0) {
+    if (groupedStories["dining"]!.length > 0) {
       html += `<h2 style="color: #1a1a1a; margin-top: 32px; margin-bottom: 16px;">Food & Drink</h2>`;
-      groupedStories["dining"].forEach((story) => {
+      groupedStories["dining"]!.forEach((story) => {
         html += `<h3 style="color: #333; margin-bottom: 8px;">${story.title}</h3>`;
         html += `<p style="color: #444; line-height: 1.6; margin-bottom: 24px;">${story.content_newsletter || story.summary}</p>`;
       });
     }
 
-    if (groupedStories["news"].length > 0) {
+    if (groupedStories["news"]!.length > 0) {
       html += `<h2 style="color: #1a1a1a; margin-top: 32px; margin-bottom: 16px;">News & Updates</h2>`;
-      groupedStories["news"].forEach((story) => {
+      groupedStories["news"]!.forEach((story) => {
         html += `<h3 style="color: #333; margin-bottom: 8px;">${story.title}</h3>`;
         html += `<p style="color: #444; line-height: 1.6; margin-bottom: 24px;">${story.content_newsletter || story.summary}</p>`;
       });
@@ -964,10 +964,10 @@ const Newsletter = () => {
                   Your weekly guide to what's happening in our beautiful lakeside community.
                 </p>
 
-                {groupedStories["events"].length > 0 && (
+                {groupedStories["events"]!.length > 0 && (
                   <div className="mb-8">
                     <h2 className="text-xl font-semibold mb-4">🌟 Featured Events</h2>
-                    {groupedStories["events"].map((story) => (
+                    {groupedStories["events"]!.map((story) => (
                       <div key={story.id} className="mb-6">
                         <h3 className="font-semibold mb-2">{story.title}</h3>
                         <p className="text-sm leading-relaxed">
@@ -983,10 +983,10 @@ const Newsletter = () => {
                   </div>
                 )}
 
-                {groupedStories["community"].length > 0 && (
+                {groupedStories["community"]!.length > 0 && (
                   <div className="mb-8">
                     <h2 className="text-xl font-semibold mb-4">Community & Local Life</h2>
-                    {groupedStories["community"].map((story) => (
+                    {groupedStories["community"]!.map((story) => (
                       <div key={story.id} className="mb-6">
                         <h3 className="font-semibold mb-2">{story.title}</h3>
                         <p className="text-sm leading-relaxed">
@@ -1002,10 +1002,10 @@ const Newsletter = () => {
                   </div>
                 )}
 
-                {groupedStories["dining"].length > 0 && (
+                {groupedStories["dining"]!.length > 0 && (
                   <div className="mb-8">
                     <h2 className="text-xl font-semibold mb-4">Food & Drink</h2>
-                    {groupedStories["dining"].map((story) => (
+                    {groupedStories["dining"]!.map((story) => (
                       <div key={story.id} className="mb-6">
                         <h3 className="font-semibold mb-2">{story.title}</h3>
                         <p className="text-sm leading-relaxed">
@@ -1021,10 +1021,10 @@ const Newsletter = () => {
                   </div>
                 )}
 
-                {groupedStories["news"].length > 0 && (
+                {groupedStories["news"]!.length > 0 && (
                   <div className="mb-8">
                     <h2 className="text-xl font-semibold mb-4">News & Updates</h2>
-                    {groupedStories["news"].map((story) => (
+                    {groupedStories["news"]!.map((story) => (
                       <div key={story.id} className="mb-6">
                         <h3 className="font-semibold mb-2">{story.title}</h3>
                         <p className="text-sm leading-relaxed">

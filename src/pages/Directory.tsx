@@ -183,7 +183,7 @@ const Directory = () => {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline" className={getStatusColor(business.status)}>
+                    <Badge variant="outline" className={getStatusColor(business.status!)}>
                       {business.status}
                     </Badge>
                   </TableCell>

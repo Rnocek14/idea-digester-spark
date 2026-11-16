@@ -84,7 +84,7 @@ const extractRestaurant = (title: string): string | null => {
   }
   const atMatch = title.match(/at\s+([^,–-]+)/i);
   if (atMatch) {
-    return atMatch[1].trim();
+    return atMatch[1]!.trim();
   }
   return null;
 };

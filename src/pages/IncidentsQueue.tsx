@@ -110,7 +110,7 @@ function IncidentCard({ incident }: { incident: QueueIncident }) {
         <div className="flex items-start justify-between gap-3">
           <CardTitle className="text-base">{incident.title}</CardTitle>
           <div className="flex flex-wrap gap-1 shrink-0">
-            <Badge className={tierBadge.color}>T{tier} {tierBadge.label}</Badge>
+            <Badge className={tierBadge!.color}>T{tier} {tierBadge!.label}</Badge>
             <Badge variant="outline">conf {incident.confidence_score ?? "?"}</Badge>
           </div>
         </div>

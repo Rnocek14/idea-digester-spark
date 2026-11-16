@@ -1072,14 +1072,14 @@ const LakeGenevaV2 = () => {
                             sectionIdx < orderedKeys.length - 1 &&
                             headlineCounter >= 8 &&
                             headlineCounter < 16;
-                          headlineCounter += items.length;
+                          headlineCounter += items!.length;
                           // Up to 2 items per section get full image cards — but only
                           // stories with a real photo. Stock-fallback stories render as
                           // compact headline rows instead: repeated category stock art
                           // across unrelated stories reads as filler, not coverage.
-                          const cardItems = items.filter((s: Story & { _hasRealImage?: boolean }) => s._hasRealImage).slice(0, 2);
+                          const cardItems = items!.filter((s: Story & { _hasRealImage?: boolean }) => s._hasRealImage).slice(0, 2);
                           const cardIds = new Set(cardItems.map((s: Story) => s.id));
-                          const tailItems = items.filter((s: Story) => !cardIds.has(s.id));
+                          const tailItems = items!.filter((s: Story) => !cardIds.has(s.id));
                           return (
                             <div key={key} className="mb-7">
                               {insertCta && (

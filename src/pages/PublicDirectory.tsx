@@ -146,7 +146,7 @@ const PublicDirectory = () => {
                 <button
                   key={cat}
                   type="button"
-                  onClick={() => setActiveCategory(cat)}
+                  onClick={() => setActiveCategory(cat!)}
                   className={`rounded-full px-3 py-1.5 text-xs font-medium border transition-colors ${
                     activeCategory === cat
                       ? 'bg-blue-600 text-white border-blue-600'

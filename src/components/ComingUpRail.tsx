@@ -98,7 +98,7 @@ export default function ComingUpRail() {
     null;
 
   const activeFilter = FILTERS.find((f) => f.value === filter) || FILTERS[0];
-  const passesFilter = (e: EventRow) => activeFilter.match((e.category || "").toLowerCase());
+  const passesFilter = (e: EventRow) => activeFilter!.match((e.category || "").toLowerCase());
 
   const seen = new Set<string>();
   if (heroPick) seen.add(heroPick.id);
@@ -150,7 +150,7 @@ export default function ComingUpRail() {
   let heroDayLabel = "";
   if (heroPick && heroPick.event_date) {
     const [hy, hm, hd] = heroPick.event_date.split("-").map(Number);
-    heroDayLabel = new Date(hy, (hm || 1) - 1, hd || 1).toLocaleDateString([], {
+    heroDayLabel = new Date(hy!, (hm || 1) - 1, hd || 1).toLocaleDateString([], {
       weekday: "long",
       month: "short",
       day: "numeric",

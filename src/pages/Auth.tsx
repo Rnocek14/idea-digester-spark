@@ -56,7 +56,7 @@ const Auth = () => {
       passwordSchema.parse(password);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        toast.error(error.issues[0].message);
+        toast.error(error.issues[0]!.message);
         setLoading(false);
         return;
       }
@@ -95,7 +95,7 @@ const Auth = () => {
       passwordSchema.parse(password);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        toast.error(error.issues[0].message);
+        toast.error(error.issues[0]!.message);
         setLoading(false);
         return;
       }

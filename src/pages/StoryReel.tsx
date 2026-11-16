@@ -141,15 +141,15 @@ const StoryReel = () => {
   const touchStart = useRef<{ x: number; y: number } | null>(null);
   const onTouchStart = (e: React.TouchEvent) => {
     const t = e.touches[0];
-    touchStart.current = { x: t.clientX, y: t.clientY };
+    touchStart.current = { x: t!.clientX, y: t!.clientY };
   };
   const onTouchEnd = (e: React.TouchEvent, story: any) => {
     const start = touchStart.current;
     touchStart.current = null;
     if (!start) return;
     const t = e.changedTouches[0];
-    const dx = t.clientX - start.x;
-    const dy = t.clientY - start.y;
+    const dx = t!.clientX - start.x;
+    const dy = t!.clientY - start.y;
     if (dx > 70 && Math.abs(dx) > Math.abs(dy) * 1.5) handleSave(story);
   };
 

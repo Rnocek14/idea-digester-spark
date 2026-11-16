@@ -36,9 +36,9 @@ export const extractVenue = (event: Pick<EventRow, "title" | "metadata">): strin
 
   const title = event.title || "";
   const atMatch = title.match(/\s(?:at|@)\s+(.+?)(?:\s*[-–—]|$)/i);
-  if (atMatch) return atMatch[1].trim();
+  if (atMatch) return atMatch[1]!.trim();
   const colonMatch = title.match(/^([^:–—]+?)(?::|–|—)\s/);
-  if (colonMatch && colonMatch[1].length < 40) return colonMatch[1].trim();
+  if (colonMatch && colonMatch[1]!.length < 40) return colonMatch[1]!.trim();
   return "";
 };
 
@@ -55,7 +55,7 @@ export const formatEventTime = (timeStr: string | null | undefined): string => {
   if (timeStr.includes("AM") || timeStr.includes("PM")) return timeStr;
   const match = timeStr.match(/(\d{1,2}):?(\d{2})?\s*(am|pm)?/i);
   if (!match) return "";
-  let hours = parseInt(match[1], 10);
+  let hours = parseInt(match[1]!, 10);
   const minutes = match[2] || "00";
   let period = match[3]?.toUpperCase();
   if (!period) period = hours >= 12 ? "PM" : "AM";
@@ -94,7 +94,7 @@ export const localDateStr = (d: Date): string => {
 export const friendlyDayLabel = (dateStr: string): string => {
   // Parse as local date (treat YYYY-MM-DD as local, not UTC)
   const [y, m, d] = dateStr.split("-").map(Number);
-  const date = new Date(y, (m || 1) - 1, d || 1);
+  const date = new Date(y!, (m || 1) - 1, d || 1);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const diffDays = Math.round((date.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
@@ -108,7 +108,7 @@ export const friendlyDayLabel = (dateStr: string): string => {
 
 export const formatFullDate = (dateStr: string): string => {
   const [y, m, d] = dateStr.split("-").map(Number);
-  const date = new Date(y, (m || 1) - 1, d || 1);
+  const date = new Date(y!, (m || 1) - 1, d || 1);
   return date.toLocaleDateString([], {
     weekday: "long",
     month: "long",
@@ -122,7 +122,7 @@ const parseTo24h = (timeStr: string | null | undefined): { hh: string; mm: strin
   if (!timeStr) return { hh: "19", mm: "00" };
   const match = timeStr.match(/(\d{1,2}):?(\d{2})?\s*(am|pm)?/i);
   if (!match) return { hh: "19", mm: "00" };
-  let hours = parseInt(match[1], 10);
+  let hours = parseInt(match[1]!, 10);
   const minutes = match[2] || "00";
   const period = match[3]?.toLowerCase();
   if (period === "pm" && hours < 12) hours += 12;

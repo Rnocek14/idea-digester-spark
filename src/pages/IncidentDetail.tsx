@@ -196,8 +196,8 @@ export default function IncidentDetail() {
                 <Badge variant="outline" className="capitalize shrink-0">
                   {incident.incident_type}
                 </Badge>
-                <span className={`flex items-center gap-1.5 text-sm font-medium ${status.color}`}>
-                  {status.label}
+                <span className={`flex items-center gap-1.5 text-sm font-medium ${status!.color}`}>
+                  {status!.label}
                 </span>
               </div>
               

@@ -109,7 +109,7 @@ export default function ImageTest() {
       return;
     }
     const randomStory = categoryStories[Math.floor(Math.random() * categoryStories.length)];
-    generateMutation.mutate(randomStory.id);
+    generateMutation.mutate(randomStory!.id);
   };
 
   // Error state

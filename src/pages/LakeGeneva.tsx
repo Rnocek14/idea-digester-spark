@@ -187,7 +187,7 @@ const LakeGeneva = () => {
     const cat = category?.toLowerCase() || 'default';
     const images = CATEGORY_FALLBACK_IMAGES[cat] || CATEGORY_FALLBACK_IMAGES["default"];
     const hash = storyId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    return images[hash % images.length];
+    return images![hash % images!.length];
   };
 
   // Topic-specific civic image libraries for smart keyword mapping
@@ -379,7 +379,7 @@ const LakeGeneva = () => {
         seenIds.add(story.id);
         
         // CRITICAL: Filter out past events (event_date < today)
-        if (story.event_date && story.event_date < todayStr) {
+        if (story.event_date && story.event_date < todayStr!) {
           return false;
         }
         
@@ -636,7 +636,7 @@ const LakeGeneva = () => {
       
       // Show toast for new content
       const latestItem = newItems[0];
-      toast(`New update: ${latestItem.title.slice(0, 50)}${latestItem.title.length > 50 ? '...' : ''}`, {
+      toast(`New update: ${latestItem!.title.slice(0, 50)}${latestItem!.title.length > 50 ? '...' : ''}`, {
         description: `${newItems.length === 1 ? '1 new item' : `${newItems.length} new items`} in your feed`,
         action: {
           label: 'View',

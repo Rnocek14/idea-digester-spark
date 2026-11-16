@@ -253,7 +253,7 @@ export default function LakeGenevaShorePath() {
     const el = mapRef.current;
     if (!el || typeof IntersectionObserver === "undefined") return;
     const io = new IntersectionObserver(
-      ([entry]) => setMapInView(entry.isIntersecting),
+      ([entry]) => setMapInView(entry!.isIntersecting),
       { threshold: 0.05 },
     );
     io.observe(el);

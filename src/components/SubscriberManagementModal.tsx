@@ -296,7 +296,7 @@ export function SubscriberManagementModal({ open, onOpenChange }: SubscriberMana
       try {
         const csv = event.target?.result as string;
         const lines = csv.split("\n").filter(Boolean);
-        const headers = lines[0].split(",").map(h => h.trim().toLowerCase());
+        const headers = lines[0]!.split(",").map(h => h.trim().toLowerCase());
         
         const emailIndex = headers.indexOf("email");
         if (emailIndex === -1) {

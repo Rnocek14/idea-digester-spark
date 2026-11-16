@@ -453,7 +453,7 @@ const SellingLakeGeneva = () => {
               <BarChart3 className="w-5 h-5 text-blue-600" />
               <h2 className="text-xl font-semibold text-slate-900">Lake Geneva Market Snapshot</h2>
               <span className="text-xs text-slate-500 ml-auto">
-                Updated {formatDate(metrics.fetched_at)} · Zillow ZHVI
+                Updated {formatDate(metrics.fetched_at!)} · Zillow ZHVI
               </span>
             </div>
 

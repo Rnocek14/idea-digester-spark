@@ -80,7 +80,7 @@ const FISH_TYPES = ["Cod", "Perch", "Walleye", "Bluegill", "Haddock", "Pollock"]
 const extractPrice = (price: string | null): number => {
   if (!price) return 999;
   const match = price.match(/\$?(\d+(?:\.\d{2})?)/);
-  return match ? parseFloat(match[1]) : 999;
+  return match ? parseFloat(match[1]!) : 999;
 };
 
 // Calculate "value score" for sorting

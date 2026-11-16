@@ -41,7 +41,7 @@ export const ReferralProgram = ({ subscriberEmail }: ReferralProgramProps) => {
 
   // Generate a display code if we don't have a real one yet
   const displayCode = referralCode || (subscriberEmail 
-    ? subscriberEmail.split('@')[0].slice(0, 6).toUpperCase()
+    ? subscriberEmail.split('@')[0]!.slice(0, 6).toUpperCase()
     : Math.random().toString(36).substring(2, 8).toUpperCase());
   
   const referralLink = `${window.location.origin}/?ref=${displayCode}`;

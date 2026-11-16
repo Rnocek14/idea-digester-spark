@@ -57,7 +57,7 @@ const extractVenue = (title: string): string | null => {
   // Try to extract from "at [Venue]" pattern
   const atMatch = title.match(/at\s+([^,–-]+)/i);
   if (atMatch) {
-    return atMatch[1].trim();
+    return atMatch[1]!.trim();
   }
   return null;
 };

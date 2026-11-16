@@ -139,7 +139,7 @@ function extractVenue(title: string): string {
   // Pattern: "LIVE MUSIC AT THE LOOKOUT: PERFORMER" -> "The Lookout Bar"
   const atVenueMatch = title.match(/(?:@|at\s+(?:the\s+)?)([\w\s']+?)(?:\s*[:\-–]|$)/i);
   if (atVenueMatch) {
-    const venue = atVenueMatch[1].trim();
+    const venue = atVenueMatch[1]!.trim();
     // Normalize and verify it's a known venue
     const normalized = normalizeVenueName(venue);
     if (normalized !== venue) return normalized;
@@ -163,7 +163,7 @@ function extractVenue(title: string): string {
   // Handle "At [Venue] - Description" pattern
   const atDashMatch = title.match(/^At\s+([\w\s']+?)\s*[-–]/i);
   if (atDashMatch) {
-    const venue = atDashMatch[1].trim();
+    const venue = atDashMatch[1]!.trim();
     const normalized = normalizeVenueName(venue);
     if (normalized !== venue) return normalized;
     return venue;
@@ -172,7 +172,7 @@ function extractVenue(title: string): string {
   // Handle show-style titles like "Christmas Show: Performer Name"
   // If no venue found but title has colon, return the show name part
   if (title.includes(':') && !title.toLowerCase().includes('live music')) {
-    const showPart = title.split(':')[0].trim();
+    const showPart = title.split(':')[0]!.trim();
     if (showPart.length > 3 && showPart.length < 50) {
       return showPart;
     }
@@ -187,19 +187,19 @@ function extractPerformerFromTitle(title: string): string | null {
   // Pattern: "VENUE: PERFORMER" or "LIVE MUSIC AT VENUE: PERFORMER"
   const colonMatch = title.match(/:\s*([^:]+?)\s*$/i);
   if (colonMatch) {
-    let performer = colonMatch[1].trim();
+    let performer = colonMatch[1]!.trim();
     
     // Handle "Frankie Seta LIVE as Dean Martin" -> "Frankie Seta"
     const liveAsMatch = performer.match(/^(.+?)\s+LIVE\s+(?:as|performing|plays)/i);
     if (liveAsMatch) {
-      performer = liveAsMatch[1].trim();
+      performer = liveAsMatch[1]!.trim();
     }
     
     // Handle "Jeff Trudell" from "At Topsy Turvy - Live Music - Jeff Trudell"
     // If performer contains " - ", take the last part
     if (performer.includes(' - ')) {
       const parts = performer.split(' - ');
-      performer = parts[parts.length - 1].trim();
+      performer = parts[parts.length - 1]!.trim();
     }
     
     if (isCleanPerformer(performer, title)) {
@@ -210,7 +210,7 @@ function extractPerformerFromTitle(title: string): string | null {
   // Pattern: "At Venue - Live Music - Performer Name"
   const dashMatch = title.match(/[-–]\s*(?:Live Music\s*[-–]\s*)?([^-–]+?)\s*$/i);
   if (dashMatch) {
-    const performer = dashMatch[1].trim();
+    const performer = dashMatch[1]!.trim();
     // Only use if it looks like a name (2-4 words, not venue-like)
     const wordCount = performer.split(/\s+/).length;
     if (wordCount >= 2 && wordCount <= 4 && isCleanPerformer(performer, title)) {
@@ -283,7 +283,7 @@ function shouldShowPerformer(displayedVenue: string, performer: string | null): 
   
   // Also check for partial matches (first name only)
   const performerFirst = performerLower.split(' ')[0];
-  if (performerFirst.length > 3 && venueLower.includes(performerFirst)) return false;
+  if (performerFirst!.length > 3 && venueLower.includes(performerFirst!)) return false;
   
   // Don't show if performer looks like a venue name
   if (KNOWN_VENUES.some(v => v.toLowerCase() === performerLower)) return false;

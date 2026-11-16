@@ -22,7 +22,7 @@ const DOT_COLOR: Record<number, string> = {
 };
 
 export const geoTierKey = (tier?: number | null) => (tier === 1 || tier === 2 ? tier : 0);
-export const geoTierLabel = (tier?: number | null) => GEO_PILL[geoTierKey(tier)].label;
+export const geoTierLabel = (tier?: number | null) => GEO_PILL[geoTierKey(tier)]!.label;
 
 const HOLD_MS = 350;
 

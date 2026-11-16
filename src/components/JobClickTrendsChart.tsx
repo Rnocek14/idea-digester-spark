@@ -65,7 +65,7 @@ export default function JobClickTrendsChart({ jobIds, jobTitles }: JobClickTrend
       const dateKey = format(day, "yyyy-MM-dd");
       clicksByDay[dateKey] = {};
       jobIds.forEach(id => {
-        clicksByDay[dateKey][id] = 0;
+        clicksByDay[dateKey]![id] = 0;
       });
     });
 
@@ -73,7 +73,7 @@ export default function JobClickTrendsChart({ jobIds, jobTitles }: JobClickTrend
     clicks.forEach(click => {
       const dateKey = format(parseISO(click.clicked_at), "yyyy-MM-dd");
       if (clicksByDay[dateKey] && clicksByDay[dateKey][click.job_id] !== undefined) {
-        clicksByDay[dateKey][click.job_id]++;
+        clicksByDay[dateKey][click.job_id]!++;
       }
     });
 
@@ -86,7 +86,7 @@ export default function JobClickTrendsChart({ jobIds, jobTitles }: JobClickTrend
       };
       
       jobIds.forEach(id => {
-        entry[id] = clicksByDay[dateKey][id] || 0;
+        entry[id] = clicksByDay[dateKey]![id] || 0;
       });
       
       return entry;

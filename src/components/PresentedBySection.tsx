@@ -79,7 +79,7 @@ export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionPr
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
+        if (entry!.isIntersecting) {
           // Add small delay so animation is visible even on initial load
           setTimeout(() => setIsVisible(true), 200);
           observer.disconnect();

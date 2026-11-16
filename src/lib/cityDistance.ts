@@ -50,8 +50,8 @@ export function parseZippopotam(json: unknown): ZipLookup {
   const places = (json as { places?: Array<Record<string, string>> })?.places;
   const place = places?.[0];
   if (!place) return null;
-  const lat = parseFloat(place["latitude"]);
-  const lon = parseFloat(place["longitude"]);
+  const lat = parseFloat(place["latitude"]!);
+  const lon = parseFloat(place["longitude"]!);
   if (Number.isNaN(lat) || Number.isNaN(lon)) return null;
   const label = [place["place name"], place["state abbreviation"]].filter(Boolean).join(", ");
   return { lat, lon, label };
