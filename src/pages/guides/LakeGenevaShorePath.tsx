@@ -1354,7 +1354,7 @@ function RelatedCard({ to, title, blurb }: { to: string; title: string; blurb: s
   return (
     <Link
       to={to}
-      className="block rounded-md border border-slate-200 bg-white p-4 hover:border-blue-500 hover:shadow-sm transition-all"
+      className="block rounded-md border border-slate-200 bg-white p-4 hover:border-blue-500 hover:shadow-xs transition-all"
     >
       <p className="font-display text-lg text-slate-900">{title}</p>
       <p className="text-sm text-slate-600 mt-1 leading-relaxed">{blurb}</p>

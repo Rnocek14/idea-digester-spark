@@ -216,7 +216,7 @@ export default function LiveIncidentsSidebar({ onHide, showCloseButton = false }
           {showCloseButton && onHide && (
             <button
               onClick={onHide}
-              className="text-muted-foreground hover:text-foreground text-xs px-1.5 py-0.5 rounded hover:bg-accent transition-colors"
+              className="text-muted-foreground hover:text-foreground text-xs px-1.5 py-0.5 rounded-sm hover:bg-accent transition-colors"
               aria-label="Hide incidents sidebar"
             >
               ×

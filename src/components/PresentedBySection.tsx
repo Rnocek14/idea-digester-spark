@@ -147,7 +147,7 @@ export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionPr
               className="flex items-center gap-3 group cursor-pointer"
             >
               {/* Photo */}
-              <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm transition-transform duration-200 group-hover:scale-105">
+              <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden border-2 border-white shadow-xs transition-transform duration-200 group-hover:scale-105">
                 {sponsor.logo_url ? (
                   <img
                     src={sponsor.logo_url}

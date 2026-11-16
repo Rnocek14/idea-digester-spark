@@ -255,7 +255,7 @@ export const BusinessDialog = ({ businessId, open, onOpenChange }: BusinessDialo
               onChange={handleLogoUpload}
             />
             {logoUrl && (
-              <img src={logoUrl} alt="Logo preview" className="w-24 h-24 object-cover rounded border" />
+              <img src={logoUrl} alt="Logo preview" className="w-24 h-24 object-cover rounded-sm border" />
             )}
           </div>
 

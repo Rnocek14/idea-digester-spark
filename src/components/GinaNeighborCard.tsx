@@ -76,7 +76,7 @@ export default function GinaNeighborCard() {
         onClick={fireClick}
         className="flex items-center gap-3 group"
       >
-        <div className="w-14 h-14 rounded-full bg-slate-100 overflow-hidden border-2 border-white shadow-sm flex-shrink-0 transition-transform group-hover:scale-105">
+        <div className="w-14 h-14 rounded-full bg-slate-100 overflow-hidden border-2 border-white shadow-xs flex-shrink-0 transition-transform group-hover:scale-105">
           {gina.logo_url ? (
             <img
               src={gina.logo_url}

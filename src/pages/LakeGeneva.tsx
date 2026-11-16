@@ -736,7 +736,7 @@ const LakeGeneva = () => {
             {/* Hero Section - wrapped in card */}
             {featured && (
               <section className="py-8">
-                <div className="bg-white rounded-3xl border border-slate-100 shadow-sm px-6 py-6 lg:px-8 lg:py-7">
+                <div className="bg-white rounded-3xl border border-slate-100 shadow-xs px-6 py-6 lg:px-8 lg:py-7">
                   {/* Two column grid: main content + Also Today */}
                   <div className="grid gap-6 lg:grid-cols-[minmax(0,1.7fr)_minmax(240px,1fr)] items-start">
                     {/* LEFT COLUMN: greeting, headline, weather, pills, featured story */}
@@ -787,7 +787,7 @@ const LakeGeneva = () => {
                       </div>
 
                       {/* Featured story card */}
-                      <article className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100">
+                      <article className="overflow-hidden rounded-2xl bg-white shadow-xs ring-1 ring-slate-100">
                         <div className="relative aspect-[3/2]">
                           <img
                             src={featured.image_url || getCategoryFallbackImage(featured.id, featured.category)}
@@ -878,7 +878,7 @@ const LakeGeneva = () => {
                         onClick={() => setViewMode('all')}
                         className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                           viewMode === 'all'
-                            ? "bg-white text-slate-900 shadow-sm"
+                            ? "bg-white text-slate-900 shadow-xs"
                             : "text-slate-500 hover:text-slate-700"
                         }`}
                       >
@@ -888,7 +888,7 @@ const LakeGeneva = () => {
                         onClick={() => setViewMode('topic')}
                         className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                           viewMode === 'topic'
-                            ? "bg-white text-slate-900 shadow-sm"
+                            ? "bg-white text-slate-900 shadow-xs"
                             : "text-slate-500 hover:text-slate-700"
                         }`}
                       >
@@ -901,7 +901,7 @@ const LakeGeneva = () => {
                         }}
                         className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors flex items-center gap-1.5 ${
                           viewMode === 'recent'
-                            ? "bg-white text-slate-900 shadow-sm"
+                            ? "bg-white text-slate-900 shadow-xs"
                             : "text-slate-500 hover:text-slate-700"
                         }`}
                       >
@@ -1053,7 +1053,7 @@ const LakeGeneva = () => {
                                       {getPreciseRelativeTime(item.timestamp)}
                                     </span>
                                     {hasRecentActivity && isLiveItem(item.timestamp) && (
-                                      <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-red-100 text-red-700 animate-pulse">
+                                      <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded-sm text-[9px] font-bold bg-red-100 text-red-700 animate-pulse">
                                         LIVE
                                       </span>
                                     )}
@@ -1196,7 +1196,7 @@ const LakeGeneva = () => {
                   <Button
                     type="submit"
                     disabled={isSubscribing}
-                    className="rounded-full bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow hover:bg-blue-700 transition-colors"
+                    className="rounded-full bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors"
                   >
                     {isSubscribing ? 'Subscribing…' : 'Subscribe'}
                   </Button>
@@ -1245,7 +1245,7 @@ const LakeGeneva = () => {
         ) : hasActiveIncidents ? (
           <button
             onClick={() => setIsSidebarVisible(true)}
-            className="hidden xl:flex fixed top-28 right-4 items-center gap-2 rounded-full px-3 py-1.5 text-xs border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 transition-colors shadow-sm"
+            className="hidden xl:flex fixed top-28 right-4 items-center gap-2 rounded-full px-3 py-1.5 text-xs border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 transition-colors shadow-xs"
             aria-label="Show live incidents"
           >
             <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />

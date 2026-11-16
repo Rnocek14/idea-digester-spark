@@ -167,7 +167,7 @@ const AdminDeals = () => {
                       </TableCell>
                       <TableCell>
                         {deal.discount_code ? (
-                          <code className="bg-muted px-2 py-1 rounded text-sm">
+                          <code className="bg-muted px-2 py-1 rounded-sm text-sm">
                             {deal.discount_code}
                           </code>
                         ) : (

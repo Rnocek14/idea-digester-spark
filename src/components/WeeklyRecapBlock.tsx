@@ -81,7 +81,7 @@ export default function WeeklyRecapBlock({ sponsorSlot }: { sponsorSlot?: React.
   return (
     <section
       aria-labelledby="weekly-recap"
-      className="mb-8 rounded-sm border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-5"
+      className="mb-8 rounded-xs border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-5"
     >
       <div className="flex items-baseline justify-between gap-3 mb-2">
         <p

@@ -21,13 +21,15 @@
   --font-display: "Playfair Display", Georgia, serif;
   --font-sans: Inter, system-ui, sans-serif;
 
-  --radius-sm: calc(var(--radius) - 4px);
+  /* Classic v3 radius scale: v3 rounded-sm is v4 rounded-xs, v3 bare rounded is v4 rounded-sm. */
+  --radius-xs: calc(var(--radius) - 4px);
+  --radius-sm: 0.25rem;
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
-  --radius-3xl: calc(var(--radius) + 12px);
-  --radius-4xl: calc(var(--radius) + 16px);
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.5rem;
+  --radius-4xl: 2rem;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);

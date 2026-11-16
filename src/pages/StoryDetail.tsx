@@ -138,10 +138,10 @@ export default function StoryDetail() {
       <div className="min-h-screen bg-stone-50">
         <PublicHeader />
         <main className="mx-auto max-w-3xl px-4 py-12">
-          <div className="h-6 w-24 bg-slate-200 rounded animate-pulse mb-6" />
-          <div className="h-10 w-3/4 bg-slate-200 rounded animate-pulse mb-4" />
-          <div className="h-4 w-full bg-slate-200 rounded animate-pulse mb-2" />
-          <div className="h-4 w-5/6 bg-slate-200 rounded animate-pulse" />
+          <div className="h-6 w-24 bg-slate-200 rounded-sm animate-pulse mb-6" />
+          <div className="h-10 w-3/4 bg-slate-200 rounded-sm animate-pulse mb-4" />
+          <div className="h-4 w-full bg-slate-200 rounded-sm animate-pulse mb-2" />
+          <div className="h-4 w-5/6 bg-slate-200 rounded-sm animate-pulse" />
         </main>
       </div>
     );

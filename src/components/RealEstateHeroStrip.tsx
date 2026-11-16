@@ -14,7 +14,7 @@ export const RealEstateHeroStrip = ({ sponsorId, sponsorEmail }: RealEstateHeroS
 
   return (
     <section className="py-6">
-      <div className="rounded-sm bg-gradient-to-r from-blue-50 via-white to-slate-50 border border-slate-200 p-6 lg:p-8">
+      <div className="rounded-xs bg-gradient-to-r from-blue-50 via-white to-slate-50 border border-slate-200 p-6 lg:p-8">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
           {/* Left: Headline + Benefits */}
           <div className="flex-1">

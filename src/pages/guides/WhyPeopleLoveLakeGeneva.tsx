@@ -92,7 +92,7 @@ export default function WhyPeopleLoveLakeGeneva() {
         </>
       }
       introExtra={
-        <div className="rounded-sm border border-slate-200 bg-white p-5">
+        <div className="rounded-xs border border-slate-200 bg-white p-5">
           <p className="text-[10px] font-mono uppercase tracking-widest text-slate-500 mb-3">
             The four threads, and where each one is covered properly
           </p>
@@ -708,7 +708,7 @@ export default function WhyPeopleLoveLakeGeneva() {
         {
           title: "Lake Geneva Neighborhoods",
           path: "/guides/lake-geneva-neighborhoods",
-          blurb: "Which town on the ring is which, and what each is like to live in.",
+          blurb: "Which town on the ring-3 is which, and what each is like to live in.",
         },
         {
           title: "Lake Geneva in Winter",

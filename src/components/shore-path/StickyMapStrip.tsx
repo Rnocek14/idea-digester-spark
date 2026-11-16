@@ -16,7 +16,7 @@ export function StickyMapStrip({ stop, totalStops, visible, onBackToMap }: Props
     <div
       aria-hidden={!visible}
       className={[
-        "hidden lg:block fixed top-0 inset-x-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm",
+        "hidden lg:block fixed top-0 inset-x-0 z-40 bg-white/95 backdrop-blur-sm border-b border-slate-200 shadow-xs",
         "transition-transform duration-200",
         visible ? "translate-y-0" : "-translate-y-full",
       ].join(" ")}

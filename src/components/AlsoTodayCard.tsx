@@ -56,7 +56,7 @@ export default function AlsoTodayCard({ stories }: AlsoTodayCardProps) {
   const freshCount = sortedStories.filter(s => isFreshContent(s.created_at)).length;
 
   return (
-    <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
+    <div className="rounded-2xl bg-white p-4 shadow-xs ring-1 ring-slate-100">
       <div className="flex items-center justify-between">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
           Latest Updates

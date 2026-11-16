@@ -247,7 +247,7 @@ export default function BusinessStories() {
             )}
 
             {s.ai_draft && (
-              <div className="rounded border border-slate-200 bg-slate-50 p-3">
+              <div className="rounded-sm border border-slate-200 bg-slate-50 p-3">
                 <div className="text-xs uppercase tracking-wider text-slate-500 mb-2">AI draft</div>
                 <Textarea
                   defaultValue={s.final_body ?? s.ai_draft}

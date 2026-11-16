@@ -15,18 +15,18 @@ const META_DESC =
 function SourcePill({ source }: { source: VenueSignals["recent"][number]["source"] }) {
   if (source === "local_love")
     return (
-      <span className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider text-rose-700 bg-rose-50 px-2 py-0.5 rounded">
+      <span className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider text-rose-700 bg-rose-50 px-2 py-0.5 rounded-sm">
         <Heart className="h-3 w-3" /> Local Love
       </span>
     );
   if (source === "voices")
     return (
-      <span className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider text-slate-700 bg-slate-50 px-2 py-0.5 rounded">
+      <span className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider text-slate-700 bg-slate-50 px-2 py-0.5 rounded-sm">
         <Mic className="h-3 w-3" /> Voices
       </span>
     );
   return (
-    <span className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider text-slate-700 bg-slate-100 px-2 py-0.5 rounded">
+    <span className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider text-slate-700 bg-slate-100 px-2 py-0.5 rounded-sm">
       <Newspaper className="h-3 w-3" /> The Brief
     </span>
   );
@@ -258,7 +258,7 @@ export default function RestaurantsLakeGeneva() {
               <Link
                 key={r.path}
                 to={r.path}
-                className="block rounded-md border border-slate-200 bg-white p-4 hover:border-blue-500 hover:shadow-sm transition-all"
+                className="block rounded-md border border-slate-200 bg-white p-4 hover:border-blue-500 hover:shadow-xs transition-all"
               >
                 <p className="font-display text-lg text-slate-900">{r.title}</p>
                 <p className="text-sm text-slate-600 mt-1 leading-relaxed">{r.blurb}</p>

@@ -124,7 +124,7 @@ export default function WeekendSidebarWidget() {
   })}`;
 
   return (
-    <aside className="rounded-2xl bg-card p-4 shadow-sm ring-1 ring-border">
+    <aside className="rounded-2xl bg-card p-4 shadow-xs ring-1 ring-border">
       <div className="flex items-center gap-2 mb-1">
         <CalendarDays className="h-4 w-4 text-primary" />
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">

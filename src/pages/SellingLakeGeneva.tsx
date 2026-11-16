@@ -235,7 +235,7 @@ const SellingLakeGeneva = () => {
         
         <div className="relative max-w-5xl mx-auto">
           <div className="text-center mb-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 text-white text-xs font-semibold mb-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-xs border border-white/30 text-white text-xs font-semibold mb-4">
               <Home className="w-3.5 h-3.5" />
               Lake Geneva Real Estate
             </div>
@@ -258,7 +258,7 @@ const SellingLakeGeneva = () => {
           </div>
 
           {/* Credibility Stats */}
-          <div className="flex flex-wrap justify-center gap-6 mb-8 py-4 px-4 bg-white/10 backdrop-blur-sm rounded-sm border border-white/20">
+          <div className="flex flex-wrap justify-center gap-6 mb-8 py-4 px-4 bg-white/10 backdrop-blur-xs rounded-xs border border-white/20">
             <div className="flex items-center gap-2">
               <Award className="w-5 h-5 text-blue-300" />
               <span className="text-sm font-medium text-white">15+ Years Experience</span>
@@ -337,7 +337,7 @@ const SellingLakeGeneva = () => {
               {/* Agent Card */}
               <Card className="p-6 bg-gradient-to-br from-slate-50 to-white">
                 <div className="flex items-start gap-4">
-                  <div className="w-20 h-20 rounded-sm bg-slate-200 overflow-hidden flex-shrink-0">
+                  <div className="w-20 h-20 rounded-xs bg-slate-200 overflow-hidden flex-shrink-0">
                     {sponsor?.logo_url ? (
                       <img
                         src={sponsor.logo_url}

@@ -339,7 +339,7 @@ const SponsorAnalytics = () => {
                                 <img
                                   src={stat.logo_url}
                                   alt={stat.business_name}
-                                  className="h-8 w-8 object-contain rounded"
+                                  className="h-8 w-8 object-contain rounded-sm"
                                 />
                               )}
                               <span className="font-medium">{stat.business_name}</span>

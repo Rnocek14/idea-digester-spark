@@ -243,7 +243,7 @@ export const StoryCard = ({
           <p className="mt-2 text-[12px] text-slate-500 flex items-center gap-x-1.5 flex-wrap">
             {/* Only show geo chip when it's an EXCEPTION (Walworth/Wisconsin), never default Lake Geneva */}
             {geoInfo && geoTier !== 1 && (
-              <span className={`inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider rounded border ${geoInfo.className}`}>
+              <span className={`inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider rounded-sm border ${geoInfo.className}`}>
                 {geoInfo.customLabel || geoInfo.label}
               </span>
             )}

@@ -118,7 +118,7 @@ export function PassportProgress({
       </p>
 
       {pendingCount > 0 && (
-        <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+        <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-sm px-2 py-1">
           <CloudOff className="h-3.5 w-3.5" />
           {pendingCount} stop{pendingCount === 1 ? "" : "s"} saved on this device — they'll
           send when you have signal again.

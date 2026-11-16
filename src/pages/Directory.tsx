@@ -163,7 +163,7 @@ const Directory = () => {
                         <img 
                           src={business.logo_url} 
                           alt={business.name}
-                          className="w-8 h-8 rounded object-cover"
+                          className="w-8 h-8 rounded-sm object-cover"
                         />
                       )}
                       {business.name}

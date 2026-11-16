@@ -276,7 +276,7 @@ export default function ComingUpRail() {
                     <Link
                       key={e.id}
                       to={`/events/${e.id}`}
-                      className="group flex gap-3 rounded-xl bg-white p-3 ring-1 ring-slate-100 hover:ring-slate-300 hover:shadow-sm transition-all"
+                      className="group flex gap-3 rounded-xl bg-white p-3 ring-1 ring-slate-100 hover:ring-slate-300 hover:shadow-xs transition-all"
                     >
                       {e.image_url ? (
                         <div className="h-16 w-16 shrink-0 rounded-lg overflow-hidden bg-slate-100">

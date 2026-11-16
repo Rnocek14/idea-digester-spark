@@ -162,7 +162,7 @@ export default function RightRailTemporal({ fallback = null }: { fallback?: Reac
                 <li key={e.id}>
                   <Link
                     to={`/events/${e.id}`}
-                    className="group flex gap-2 items-start hover:bg-slate-50 -mx-2 px-2 py-1 rounded transition-colors"
+                    className="group flex gap-2 items-start hover:bg-slate-50 -mx-2 px-2 py-1 rounded-sm transition-colors"
                   >
                     <span className="mt-0.5 text-sm leading-none">
                       {categoryEmoji(e.category)}

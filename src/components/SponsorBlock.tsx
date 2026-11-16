@@ -85,7 +85,7 @@ export const SponsorBlock = ({ sponsor }: SponsorBlockProps) => {
   const isRealEstate = isRealEstateSponsor(sponsor);
 
   return (
-    <Card className="overflow-hidden border border-slate-200 shadow-sm bg-white">
+    <Card className="overflow-hidden border border-slate-200 shadow-xs bg-white">
       {/* Compact Header */}
       <div className="px-4 py-2.5 border-b border-slate-100 bg-slate-50/50">
         <span className="text-[10px] font-medium uppercase tracking-[0.15em] text-slate-500">

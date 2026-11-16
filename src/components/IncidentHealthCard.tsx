@@ -70,8 +70,8 @@ export const IncidentHealthCard = () => {
         </CardHeader>
         <CardContent>
           <div className="animate-pulse space-y-3">
-            <div className="h-4 bg-muted rounded w-3/4" />
-            <div className="h-4 bg-muted rounded w-1/2" />
+            <div className="h-4 bg-muted rounded-sm w-3/4" />
+            <div className="h-4 bg-muted rounded-sm w-1/2" />
           </div>
         </CardContent>
       </Card>

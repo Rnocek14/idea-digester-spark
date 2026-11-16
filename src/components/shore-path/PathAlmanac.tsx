@@ -133,7 +133,7 @@ export function PathAlmanac() {
         </span>
         <span className="flex gap-1">
           {["bg-emerald-100", "bg-lime-100", "bg-amber-100", "bg-orange-200"].map((c) => (
-            <span key={c} className={`inline-block h-3 w-6 rounded-sm ${c}`} />
+            <span key={c} className={`inline-block h-3 w-6 rounded-xs ${c}`} />
           ))}
         </span>
         <span className="text-[10px] font-mono uppercase tracking-widest text-slate-500">
@@ -167,7 +167,7 @@ export function PathAlmanac() {
       {/* Callouts: when to go, and where the sun is worst. */}
       <div className="mt-5 grid sm:grid-cols-2 gap-3">
         {data.quietest && (
-          <div className="rounded border border-emerald-200 bg-emerald-50 px-3 py-2.5">
+          <div className="rounded-sm border border-emerald-200 bg-emerald-50 px-3 py-2.5">
             <p className="text-[10px] font-mono uppercase tracking-widest text-emerald-700">
               Quietest logged
             </p>
@@ -182,7 +182,7 @@ export function PathAlmanac() {
           </div>
         )}
         {data.warmest?.temp_median != null && (
-          <div className="rounded border border-orange-200 bg-orange-50 px-3 py-2.5">
+          <div className="rounded-sm border border-orange-200 bg-orange-50 px-3 py-2.5">
             <p className="text-[10px] font-mono uppercase tracking-widest text-orange-700 flex items-center gap-1">
               <Thermometer className="h-3 w-3" /> Warmest logged
             </p>
@@ -239,7 +239,7 @@ function AlmanacCell({
   if (!cell) {
     return (
       <td
-        className="rounded border border-slate-200 bg-stone-50 text-center py-2 text-slate-300 text-sm"
+        className="rounded-sm border border-slate-200 bg-stone-50 text-center py-2 text-slate-300 text-sm"
         aria-label={`${label}: not enough walks logged`}
       >
         —
@@ -248,7 +248,7 @@ function AlmanacCell({
   }
   return (
     <td
-      className={`rounded border text-center py-1.5 ${crowdShade(cell.crowd_mean)}`}
+      className={`rounded-sm border text-center py-1.5 ${crowdShade(cell.crowd_mean)}`}
       aria-label={`${label}: ${crowdWord(cell.crowd_mean)}, ${cell.samples} walks`}
     >
       <span className="block text-xs font-medium leading-tight">

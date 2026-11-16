@@ -584,7 +584,7 @@ const BusinessCoverage = () => {
                     id="import-dry-run"
                     checked={importDryRun}
                     onChange={(e) => setImportDryRun(e.target.checked)}
-                    className="rounded"
+                    className="rounded-sm"
                   />
                   <label htmlFor="import-dry-run" className="text-sm">
                     Dry run (preview only)
@@ -620,7 +620,7 @@ const BusinessCoverage = () => {
                     id="merge-dry-run"
                     checked={mergeDryRun}
                     onChange={(e) => setMergeDryRun(e.target.checked)}
-                    className="rounded"
+                    className="rounded-sm"
                   />
                   <label htmlFor="merge-dry-run" className="text-sm">
                     Dry run (preview only)

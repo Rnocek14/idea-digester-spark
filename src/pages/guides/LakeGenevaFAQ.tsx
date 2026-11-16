@@ -49,7 +49,7 @@ export default function LakeGenevaFAQ() {
         </>
       }
       introExtra={
-        <div className="rounded-sm border border-slate-200 bg-white p-5">
+        <div className="rounded-xs border border-slate-200 bg-white p-5">
           <p className="text-[10px] font-mono uppercase tracking-widest text-slate-500 mb-3">
             The short version, up top
           </p>

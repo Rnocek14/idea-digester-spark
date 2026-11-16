@@ -26,7 +26,7 @@ export const PublicHeader = () => {
   };
 
   return (
-    <header className="border-b border-gray-200 bg-white/80 backdrop-blur-sm sticky top-0 z-30">
+    <header className="border-b border-gray-200 bg-white/80 backdrop-blur-xs sticky top-0 z-30">
       <div className="mx-auto max-w-5xl px-4 sm:px-6">
         {/* Top line: date + tagline */}
         <div className="flex items-center justify-between py-2 text-xs text-gray-500">
@@ -63,7 +63,7 @@ export const PublicHeader = () => {
             <Button
               size="sm"
               onClick={scrollToSubscribe}
-              className="rounded-full bg-brand-accent px-4 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700 transition-colors"
+              className="rounded-full bg-brand-accent px-4 py-1.5 text-sm font-medium text-white shadow-xs hover:bg-blue-700 transition-colors"
             >
               Get the Brief
             </Button>
@@ -84,7 +84,7 @@ export const PublicHeader = () => {
             <Button
               size="sm"
               onClick={scrollToSubscribe}
-              className="rounded-full bg-brand-accent px-3 py-1 text-xs font-medium text-white shadow-sm hover:bg-blue-700 transition-colors"
+              className="rounded-full bg-brand-accent px-3 py-1 text-xs font-medium text-white shadow-xs hover:bg-blue-700 transition-colors"
             >
               Subscribe
             </Button>

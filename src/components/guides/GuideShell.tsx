@@ -253,7 +253,7 @@ export function GuideShell({
                     <Link
                       key={r.path}
                       to={r.path}
-                      className="block rounded-md border border-slate-200 bg-white p-4 hover:border-blue-500 hover:shadow-sm transition-all"
+                      className="block rounded-md border border-slate-200 bg-white p-4 hover:border-blue-500 hover:shadow-xs transition-all"
                     >
                       <p className="font-display text-lg text-slate-900">{r.title}</p>
                       <p className="text-sm text-slate-600 mt-1 leading-relaxed">{r.blurb}</p>

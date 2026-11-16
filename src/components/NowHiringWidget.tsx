@@ -42,7 +42,7 @@ const NowHiringWidget = () => {
   }
 
   return (
-    <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="rounded-xs border border-slate-200 bg-white p-4 shadow-xs">
       <div className="flex items-center gap-2 mb-3">
         <Briefcase className="h-4 w-4 text-green-600" />
         <h3 className="text-sm font-semibold text-slate-900">Now Hiring</h3>
@@ -68,7 +68,7 @@ const NowHiringWidget = () => {
                   </p>
                 </div>
                 {job.is_featured && (
-                  <span className="flex-shrink-0 text-[9px] font-semibold uppercase tracking-wide text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
+                  <span className="flex-shrink-0 text-[9px] font-semibold uppercase tracking-wide text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-sm">
                     Featured
                   </span>
                 )}

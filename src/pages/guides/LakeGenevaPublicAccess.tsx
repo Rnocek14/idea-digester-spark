@@ -114,7 +114,7 @@ export default function LakeGenevaPublicAccess() {
         </>
       }
       introExtra={
-        <div className="rounded-sm border border-slate-200 bg-white p-5">
+        <div className="rounded-xs border border-slate-200 bg-white p-5">
           <p className="text-[10px] font-mono uppercase tracking-widest text-slate-500 mb-3">
             The short version, up top
           </p>
@@ -153,7 +153,7 @@ export default function LakeGenevaPublicAccess() {
                 than deliberate rule-breaking.
               </p>
               <div
-                className="overflow-x-auto scroll-x-hint rounded-sm border border-slate-200 bg-white"
+                className="overflow-x-auto scroll-x-hint rounded-xs border border-slate-200 bg-white"
                 role="region"
                 aria-label="Comparison table, scrollable"
                 tabIndex={0}
@@ -230,7 +230,7 @@ export default function LakeGenevaPublicAccess() {
                 {SCENARIOS.map((s) => (
                   <div
                     key={s.plan}
-                    className="rounded-sm border border-slate-200 bg-white p-4"
+                    className="rounded-xs border border-slate-200 bg-white p-4"
                   >
                     <p className="text-[10px] font-mono uppercase tracking-widest text-slate-500 mb-1.5">
                       If you're planning

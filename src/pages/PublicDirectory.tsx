@@ -138,7 +138,7 @@ const PublicDirectory = () => {
         </header>
 
         {/* Filters */}
-        <section className="mb-6 rounded-sm border border-slate-100 bg-white/80 px-4 py-3 shadow-sm backdrop-blur-sm">
+        <section className="mb-6 rounded-xs border border-slate-100 bg-white/80 px-4 py-3 shadow-xs backdrop-blur-xs">
           <div className="flex flex-wrap items-center justify-between gap-3">
             {/* Category pills */}
             <div className="flex flex-wrap gap-2">
@@ -168,13 +168,13 @@ const PublicDirectory = () => {
 
         {/* Loading / Empty */}
         {isLoading && (
-          <div className="rounded-sm border border-slate-100 bg-white p-6 text-sm text-slate-500 shadow-sm">
+          <div className="rounded-xs border border-slate-100 bg-white p-6 text-sm text-slate-500 shadow-xs">
             Loading directory...
           </div>
         )}
 
         {!isLoading && sortedBusinesses.length === 0 && (
-          <div className="rounded-sm border border-dashed border-slate-200 bg-white/60 p-6 text-sm text-slate-500 shadow-sm">
+          <div className="rounded-xs border border-dashed border-slate-200 bg-white/60 p-6 text-sm text-slate-500 shadow-xs">
             No businesses found in this category yet. Check back soon or{' '}
             <button
               type="button"
@@ -211,7 +211,7 @@ const PublicDirectory = () => {
                   <div className="flex gap-4">
                     {/* Logo */}
                     {business.logo_url && (
-                      <div className="mt-1 h-12 w-12 flex-shrink-0 overflow-hidden rounded-sm bg-slate-100">
+                      <div className="mt-1 h-12 w-12 flex-shrink-0 overflow-hidden rounded-xs bg-slate-100">
                         <img
                           src={business.logo_url}
                           alt={`${business.name} logo`}
@@ -292,7 +292,7 @@ const PublicDirectory = () => {
         )}
 
         {/* CTA */}
-        <section className="mt-10 rounded-sm border border-slate-100 bg-white/80 px-5 py-4 text-sm text-slate-700 shadow-sm">
+        <section className="mt-10 rounded-xs border border-slate-100 bg-white/80 px-5 py-4 text-sm text-slate-700 shadow-xs">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="font-medium text-slate-900">
@@ -306,7 +306,7 @@ const PublicDirectory = () => {
             <button
               type="button"
               onClick={() => navigate('/advertise')}
-              className="inline-flex items-center rounded-full bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700"
+              className="inline-flex items-center rounded-full bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-blue-700"
             >
               Learn about advertising
             </button>

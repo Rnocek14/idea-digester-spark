@@ -236,7 +236,7 @@ const PostJob = () => {
               </ul>
               {formData.pricing_tier === tier.value && (
                 <div className="mt-3 flex items-center justify-center">
-                  <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded">
+                  <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-sm">
                     Selected
                   </span>
                 </div>

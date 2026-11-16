@@ -180,7 +180,7 @@ export function ShorePathMap({
                 <button
                   type="button"
                   aria-label={`Stop ${stop.order_index}: ${stop.name}. Preview and jump.`}
-                  className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 hover:bg-amber-400/20 transition-colors"
+                  className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full focus:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 hover:bg-amber-400/20 transition-colors"
                   style={{
                     left: `${leftPct}%`,
                     top: `${topPct}%`,
