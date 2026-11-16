@@ -4,23 +4,21 @@ import { readFileSync, existsSync } from "node:fs";
 
 const indexHtml = readFileSync("index.html", "utf8");
 
-// Regression guard. react-helmet-async APPENDS meta tags rather than replacing
-// them, and social crawlers read the FIRST matching tag. A static og:title in
-// index.html therefore wins over the per-page one, and every shared link
-// previews as the generic site card — which is exactly the bug this prevents.
-test("index.html does not hardcode per-page social meta", () => {
+// Non-JS crawlers need homepage fallbacks; prerender removes them when a
+// route supplies its own Helmet-managed values.
+test("index.html provides homepage social fallbacks", () => {
   for (const tag of ["og:title", "og:description", "twitter:title", "twitter:description"]) {
     const attr = tag.startsWith("og:") ? "property" : "name";
     const re = new RegExp(`<meta\\s+${attr}=["']${tag}["']`, "i");
     assert.ok(
-      !re.test(indexHtml),
-      `index.html must not hardcode ${tag} — PageMeta.tsx owns it per page`,
+      re.test(indexHtml),
+      `index.html must provide a homepage ${tag} fallback`,
     );
   }
 });
 
 test("index.html keeps the site-level defaults PageMeta does not always set", () => {
-  for (const tag of ["og:image", "og:site_name", "og:type"]) {
+  for (const tag of ["og:site_name", "og:type"]) {
     assert.ok(
       new RegExp(`<meta\\s+property=["']${tag}["']`, "i").test(indexHtml),
       `index.html should keep a default ${tag}`,

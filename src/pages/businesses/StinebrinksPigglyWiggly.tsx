@@ -7,10 +7,10 @@ export default function StinebrinksPigglyWiggly() {
   return (
     <GuideShell
       title="Stinebrink's Piggly Wiggly, Lake Geneva"
-      metaTitle="Piggly Wiggly Lake Geneva WI — Hours, Address & DMV Kiosk"
-      metaDescription="Stinebrink's Piggly Wiggly at Geneva Square in Lake Geneva: grocery hours, the meat counter, the in-store Wisconsin DMV EZ-TAB kiosk, address and phone."
+      metaTitle="Stinebrink's Piggly Wiggly Lake Geneva — Address & DMV Kiosk"
+      metaDescription="Find Stinebrink's Piggly Wiggly at 100 E Geneva Square, Lake Geneva. Call (262) 248-8798 to confirm hours; renew plate registration at the EZ-TAB kiosk."
       path="/businesses/stinebrinks-piggly-wiggly"
-      dateModified={new Date().toISOString().slice(0, 10)}
+      dateModified="2026-11-16"
       extraJsonLd={[
         localBusinessJsonLd({
           type: "GroceryStore",
@@ -74,6 +74,7 @@ export default function StinebrinksPigglyWiggly() {
           id: "dmv-kiosk",
           heading: "The DMV kiosk (the part visitors don't know)",
           body: (
+            <>
             <p>
               This location hosts an authorized Wisconsin DMV EZ-TAB kiosk. You
               can renew your license plate registration inside the store and
@@ -81,6 +82,12 @@ export default function StinebrinksPigglyWiggly() {
               service center. For residents that alone makes it the most useful
               building in town on the wrong day of the month.
             </p>
+            <p>
+              The <a href="https://ez-tab.com/location/lake-geneva-piggly-wiggly/" target="_blank" rel="noopener noreferrer" className="text-blue-700 hover:underline">official EZ-TAB location listing</a> confirms
+              the store address, phone number and authorized kiosk. Call the store
+              to confirm current hours before visiting, especially around holidays.
+            </p>
+            </>
           ),
         },
         {

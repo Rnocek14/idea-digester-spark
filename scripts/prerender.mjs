@@ -66,6 +66,10 @@ const STATIC_ROUTES = [
   '/market-report',
   '/selling-lake-geneva',
   '/advertise',
+  '/businesses',
+  '/businesses/stinebrinks-piggly-wiggly',
+  '/businesses/brunos-liquors',
+  '/businesses/yogeeze-frozen-yogurt',
 ]
 
 // Data-backed routes. Prerendering these still bakes correct <title>/OG/JSON-LD
