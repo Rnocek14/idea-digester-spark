@@ -4,12 +4,15 @@ import { readFileSync, readdirSync } from "node:fs";
 
 const rootRoute = readFileSync("src/routes/__root.tsx", "utf8");
 
-// Pages are server-rendered, so crawlers that skip JavaScript read the head the
-// root route and each page's PageMeta produce. The root supplies the homepage
-// defaults that a page without its own PageMeta falls back to.
-test("root route provides homepage social defaults", () => {
-  for (const tag of ["og:title", "og:description", "twitter:title", "twitter:description", "og:site_name", "og:type"]) {
-    assert.ok(rootRoute.includes(tag), `__root.tsx must provide a default ${tag}`);
+// Pages are server-rendered and every tag a page renders ships in the HTML, so
+// the root must not also emit a title or og:title/description: crawlers would
+// see two and usually keep the first (the generic one). Pages own those via PageMeta.
+test("root route keeps only sitewide tags and leaves titles to each page", () => {
+  for (const tag of ["og:site_name", "twitter:card"]) {
+    assert.ok(rootRoute.includes(tag), `__root.tsx must provide sitewide ${tag}`);
+  }
+  for (const tag of ['"og:title"', '"og:description"', "<title>"]) {
+    assert.ok(!rootRoute.includes(tag), `__root.tsx must not emit a duplicate ${tag}`);
   }
 });
 
