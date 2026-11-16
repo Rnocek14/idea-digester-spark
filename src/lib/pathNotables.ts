@@ -10,12 +10,12 @@ export type NotableWalk = {
   on_date: string | null;
   season: string | null;
   stops: number;
-  temp_f?: number | null;
-  crowd_mean?: number | null;
-  group_size_band?: string | null;
-  minutes?: number | null;
-  start_hour?: number | null;
-  end_hour?: number | null;
+  temp_f?: number | null | undefined;
+  crowd_mean?: number | null | undefined;
+  group_size_band?: string | null | undefined;
+  minutes?: number | null | undefined;
+  start_hour?: number | null | undefined;
+  end_hour?: number | null | undefined;
 };
 
 export type LingerRow = {

@@ -56,7 +56,7 @@ interface Invoice {
   placement_id: string | null;
   business?: {
     name: string;
-  };
+  } | undefined;
 }
 
 interface BusinessProfile {

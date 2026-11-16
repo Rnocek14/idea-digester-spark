@@ -231,7 +231,7 @@ function AlmanacCell({
   season,
   hour,
 }: {
-  cell?: { crowd_mean: number | null; samples: number };
+  cell?: { crowd_mean: number | null; samples: number } | undefined;
   season: SeasonBucket;
   hour: HourBucket;
 }) {

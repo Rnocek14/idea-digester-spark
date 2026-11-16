@@ -13,7 +13,7 @@ interface MarketAnalysisDialogProps {
   onOpenChange: (open: boolean) => void;
   sponsorName: string;
   sponsorId: string;
-  sponsorEmail?: string;
+  sponsorEmail?: string | undefined;
 }
 
 export function MarketAnalysisDialog({ 

@@ -13,7 +13,7 @@ import { format } from "date-fns";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Deal = Tables<"ambassador_deals"> & {
-  business_profiles?: { name: string } | null;
+  business_profiles?: { name: string } | null | undefined;
 };
 
 const AdminDeals = () => {

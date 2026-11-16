@@ -27,7 +27,7 @@ export type ShorePathStopRow = {
   local_love_prompt: string | null;
   leg_order_index: number | null;
   /** Array of {url, publisher, supports}. Empty means unsourced, and the page says so. */
-  sources: Array<{ url?: string | null; publisher?: string | null; supports?: string | null }> | null;
+  sources: Array<{ url?: string | null | undefined; publisher?: string | null | undefined; supports?: string | null | undefined }> | null;
   history_confidence: "documented" | "traditional" | "thin" | null;
   historical_image_url: string | null;
   historical_image_year: string | null;

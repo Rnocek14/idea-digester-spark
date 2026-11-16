@@ -15,7 +15,7 @@ type RecapStory = { id: string; title: string };
  * summarizes stories we already published, and links back to them so a reader
  * can verify every claim.
  */
-export default function WeeklyRecapBlock({ sponsorSlot }: { sponsorSlot?: React.ReactNode }) {
+export default function WeeklyRecapBlock({ sponsorSlot }: { sponsorSlot?: React.ReactNode | undefined }) {
   const city = useCityConfig();
 
   const { data: recap } = useQuery({

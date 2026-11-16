@@ -22,7 +22,7 @@ type Business = {
 
 type BusinessWithSponsor = Business & {
   is_sponsor: boolean;
-  placementId?: string;
+  placementId?: string | undefined;
 };
 
 const PublicDirectory = () => {

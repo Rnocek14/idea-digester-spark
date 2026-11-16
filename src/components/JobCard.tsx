@@ -25,7 +25,7 @@ type JobListing = {
 
 type JobCardProps = {
   job: JobListing;
-  onApply?: (job: JobListing) => void;
+  onApply?: ((job: JobListing) => void) | undefined;
 };
 
 const getRelativeTime = (dateString: string) => {

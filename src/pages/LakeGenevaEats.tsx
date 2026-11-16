@@ -18,15 +18,15 @@ type EatsContent = {
   id: string;
   title: string;
   summary: string | null;
-  content_website?: string | null;
+  content_website?: string | null | undefined;
   content: string;
   event_date: string | null;
   original_url: string | null;
   image_url: string | null;
   category: string | null;
   metadata: {
-    verticals?: string[];
-    content_tags?: string[];
+    verticals?: string[] | undefined;
+    content_tags?: string[] | undefined;
   } | null;
 };
 
@@ -38,17 +38,17 @@ type Restaurant = {
   phone: string | null;
   hours: Record<string, string> | null;
   fish_fry: {
-    available?: boolean;
-    day?: string;
-    price?: string;
-    description?: string;
+    available?: boolean | undefined;
+    day?: string | undefined;
+    price?: string | undefined;
+    description?: string | undefined;
   } | null;
   happy_hour: {
-    days?: string[];
-    times?: string;
-    deals?: string[];
+    days?: string[] | undefined;
+    times?: string | undefined;
+    deals?: string[] | undefined;
   } | null;
-  weekly_specials: Array<{ day: string; name: string; description?: string }> | null;
+  weekly_specials: Array<{ day: string; name: string; description?: string | undefined }> | null;
   tags: string[] | null;
   categories: string[] | null;
   last_scraped_at: string | null;
@@ -620,7 +620,7 @@ const EatsCard = ({
   compact = false,
 }: { 
   item: EatsContent; 
-  compact?: boolean;
+  compact?: boolean | undefined;
 }) => {
   const restaurant = extractRestaurant(item.title);
   const [open, setOpen] = useState(false);

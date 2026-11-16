@@ -124,7 +124,7 @@ const mentionsWrongWeekday = (title: string, todayDow: number): boolean => {
 };
 
 interface HappeningTodayWidgetProps {
-  enabled?: boolean;
+  enabled?: boolean | undefined;
 }
 
 export default function HappeningTodayWidget({ enabled = true }: HappeningTodayWidgetProps) {

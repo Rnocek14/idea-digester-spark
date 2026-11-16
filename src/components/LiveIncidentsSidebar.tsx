@@ -99,8 +99,8 @@ const statusDotColors: Record<string, string> = {
 };
 
 type LiveIncidentsSidebarProps = {
-  onHide?: () => void;
-  showCloseButton?: boolean;
+  onHide?: (() => void) | undefined;
+  showCloseButton?: boolean | undefined;
 };
 
 export default function LiveIncidentsSidebar({ onHide, showCloseButton = false }: LiveIncidentsSidebarProps) {

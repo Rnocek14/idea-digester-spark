@@ -31,19 +31,19 @@ export type GuideShellProps = {
   path: string;
   intro: ReactNode;
   sections: GuideSection[];
-  related?: RelatedGuide[];
-  faqs?: GuideFAQ[];
-  datePublished?: string;
-  dateModified?: string;
-  heroImage?: string;
-  heroAlt?: string;
-  heroCaption?: string;
+  related?: RelatedGuide[] | undefined;
+  faqs?: GuideFAQ[] | undefined;
+  datePublished?: string | undefined;
+  dateModified?: string | undefined;
+  heroImage?: string | undefined;
+  heroAlt?: string | undefined;
+  heroCaption?: string | undefined;
   /** Slot rendered between the intro and the first section (e.g. live data widgets). */
-  introExtra?: ReactNode;
+  introExtra?: ReactNode | undefined;
   /** Slot rendered after all sections, before related guides. */
-  bottomExtra?: ReactNode;
+  bottomExtra?: ReactNode | undefined;
   /** Additional JSON-LD nodes (e.g. LocalBusiness for a business page). */
-  extraJsonLd?: Record<string, unknown>[];
+  extraJsonLd?: Record<string, unknown>[] | undefined;
 };
 
 /**

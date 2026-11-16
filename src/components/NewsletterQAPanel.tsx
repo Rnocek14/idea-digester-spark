@@ -13,7 +13,7 @@ interface DailyPreview {
   stories: Array<{ id: string; title: string; category: string | null }>;
   incidentCount: number;
   willSend: boolean;
-  skipReason?: string;
+  skipReason?: string | undefined;
 }
 
 interface WeekendPreview {
@@ -23,7 +23,7 @@ interface WeekendPreview {
   stories: Array<{ id: string; title: string }>;
   sponsor: { business_name: string; id: string } | null;
   willSend: boolean;
-  skipReason?: string;
+  skipReason?: string | undefined;
   weekendRange: string;
 }
 

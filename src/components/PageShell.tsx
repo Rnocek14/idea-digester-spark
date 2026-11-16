@@ -16,10 +16,10 @@ const navItems = [
 ];
 
 type PageShellProps = {
-  title?: string;
-  description?: string;
+  title?: string | undefined;
+  description?: string | undefined;
   children: React.ReactNode;
-  fullWidth?: boolean;
+  fullWidth?: boolean | undefined;
 };
 
 const PageShell: React.FC<PageShellProps> = ({

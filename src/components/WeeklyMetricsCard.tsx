@@ -101,7 +101,7 @@ export const WeeklyMetricsCard = () => {
         .gte("created_at", fourteenDaysAgo);
 
       // Bucket into 14-day arrays
-      function bucketDailyCounts(dates: { created_at?: string; started_at?: string }[]) {
+      function bucketDailyCounts(dates: { created_at?: string | undefined; started_at?: string | undefined }[]) {
         const buckets = new Array(14).fill(0);
         for (const row of dates) {
           const dt = new Date(row.created_at || row.started_at!);

@@ -15,8 +15,8 @@ import { toast } from "sonner";
 import { getSessionId } from "@/lib/sessionId";
 
 interface FormProps {
-  onDone?: () => void;
-  compact?: boolean;
+  onDone?: (() => void) | undefined;
+  compact?: boolean | undefined;
 }
 
 function SuggestionForm({ onDone, compact }: FormProps) {

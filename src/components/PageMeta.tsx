@@ -6,12 +6,12 @@ interface PageMetaProps {
   title: string;
   description: string;
   path: string;
-  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
-  ogType?: "website" | "article";
-  ogImage?: string;
-  keywords?: string[];
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[] | undefined;
+  ogType?: "website" | "article" | undefined;
+  ogImage?: string | undefined;
+  keywords?: string[] | undefined;
   /** App surfaces (reel, saved list) that should stay out of the index. */
-  noindex?: boolean;
+  noindex?: boolean | undefined;
 }
 
 /**

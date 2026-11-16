@@ -322,7 +322,7 @@ function TierRow({
   label: string;
   detail: string;
   earned: boolean;
-  entry?: RegisterEntry;
+  entry?: RegisterEntry | undefined;
 }) {
   return (
     <div

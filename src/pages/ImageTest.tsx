@@ -13,8 +13,8 @@ interface TestResult {
   title: string;
   category: string;
   imageUrl: string | null;
-  prompt?: string;
-  error?: string;
+  prompt?: string | undefined;
+  error?: string | undefined;
   timestamp: Date;
 }
 

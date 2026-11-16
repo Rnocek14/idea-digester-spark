@@ -6,23 +6,23 @@ import { storyPath } from "@/lib/slug";
 type TrustLabel = 'verified' | 'data_journalism' | 'sourced' | 'sponsored';
 
 type StoryCardProps = {
-  id?: string;
+  id?: string | undefined;
   title: string;
   summary: string | null;
   imageUrl: string | null;
   category: string | null;
   url: string | null;
-  sponsored?: boolean;
-  featured?: boolean; // New: for lead story styling
-  priority?: boolean; // Hint that this is the LCP candidate
-  geoTier?: number | null;
-  geoLabel?: string | null;
-  sourceType?: 'sourced' | 'data_journalism' | 'original_reporting' | 'sponsored' | 'user_submitted' | null;
-  trustLabels?: TrustLabel[] | null;
+  sponsored?: boolean | undefined;
+  featured?: boolean | undefined; // New: for lead story styling
+  priority?: boolean | undefined; // Hint that this is the LCP candidate
+  geoTier?: number | null | undefined;
+  geoLabel?: string | null | undefined;
+  sourceType?: 'sourced' | 'data_journalism' | 'original_reporting' | 'sponsored' | 'user_submitted' | null | undefined;
+  trustLabels?: TrustLabel[] | null | undefined;
   meta?: {
-    time?: string | null;
-    source?: string | null;
-  };
+    time?: string | null | undefined;
+    source?: string | null | undefined;
+  } | undefined;
 };
 
 // Geo-tier label configuration - styled pills for visual clarity

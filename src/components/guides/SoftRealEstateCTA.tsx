@@ -27,7 +27,7 @@ const COPY: Record<Variant, { headline: string; body: string; cta: string; to: s
   },
 };
 
-export function SoftRealEstateCTA({ variant = "neighborhoods" }: { variant?: Variant }) {
+export function SoftRealEstateCTA({ variant = "neighborhoods" }: { variant?: Variant | undefined }) {
   const { headline, body, cta, to } = COPY[variant];
   return (
     <aside className="mt-12 rounded-md border border-slate-200 bg-stone-50 p-6 sm:p-8">

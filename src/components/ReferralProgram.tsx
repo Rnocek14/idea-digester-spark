@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getCurrentTier, getNextTier, REFERRAL_TIERS } from "@/lib/referralTracking";
 
 interface ReferralProgramProps {
-  subscriberEmail?: string;
+  subscriberEmail?: string | undefined;
 }
 
 export const ReferralProgram = ({ subscriberEmail }: ReferralProgramProps) => {

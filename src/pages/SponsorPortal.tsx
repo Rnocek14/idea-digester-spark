@@ -59,7 +59,7 @@ interface TokenData {
     id: string;
     name: string;
     email: string | null;
-  };
+  } | undefined;
 }
 
 interface Invoice {
@@ -85,7 +85,7 @@ interface Placement {
   slot?: {
     name: string;
     channel: string;
-  };
+  } | undefined;
 }
 
 const getStatusBadge = (status: string) => {

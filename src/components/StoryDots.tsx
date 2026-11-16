@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 export type DotStory = {
   id: string;
   title: string;
-  geo_tier?: number | null;
+  geo_tier?: number | null | undefined;
 };
 
 // Locality palette. Shared by the reel and the homepage so the two surfaces
@@ -32,8 +32,8 @@ type Props = {
   readIds: Set<string>;
   onJump: (index: number) => void;
   /** Dark chrome (the reel) vs light chrome (the homepage). */
-  tone?: "dark" | "light";
-  className?: string;
+  tone?: "dark" | "light" | undefined;
+  className?: string | undefined;
 };
 
 /**

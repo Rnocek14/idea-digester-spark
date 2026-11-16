@@ -148,7 +148,7 @@ const AdminJobs = () => {
 
   // Update job status
   const updateJobMutation = useMutation({
-    mutationFn: async (updates: { id: string; status?: string; is_featured?: boolean; payment_status?: string }) => {
+    mutationFn: async (updates: { id: string; status?: string | undefined; is_featured?: boolean | undefined; payment_status?: string | undefined }) => {
       const { id, ...data } = updates;
       const { error } = await supabase
         .from("job_listings")

@@ -147,7 +147,7 @@ function EventForm() {
 function LocalLoveForm({
   initialSubject,
   initialBodyPrefix,
-}: { initialSubject?: string; initialBodyPrefix?: string } = {}) {
+}: { initialSubject?: string | undefined; initialBodyPrefix?: string | undefined } = {}) {
   const [v, setV] = useState<Record<string, string>>({
     category: "places",
     subject_name: initialSubject || "",

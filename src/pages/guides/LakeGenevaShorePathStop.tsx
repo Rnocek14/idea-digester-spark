@@ -20,7 +20,7 @@ function buildMeta(stop: {
   description: string | null;
   story_long: string | null;
   short_label: string | null;
-  is_public_landmark?: boolean | null;
+  is_public_landmark?: boolean | null | undefined;
 }) {
   // Public stops (beaches, parks, piers) are searched with visitor intent —
   // "can I go there, where do I park" — so the snippet leads with access

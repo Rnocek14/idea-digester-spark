@@ -35,24 +35,24 @@ type Story = {
   original_url: string | null;
   image_url: string | null;
   created_at: string;
-  geo_tier?: number | null;
-  geo_label?: string | null;
+  geo_tier?: number | null | undefined;
+  geo_label?: string | null | undefined;
 };
 
 type Sponsor = {
   name: string;
   logo_url: string | null;
   website: string | null;
-  placementId?: string;
-  businessId?: string;
-  category?: string | null;
-  phone?: string | null;
-  description?: string | null;
-  email?: string | null;
-  zillow_url?: string | null;
-  zillow_rating?: number | null;
-  zillow_review_count?: number | null;
-  testimonial_quote?: string | null;
+  placementId?: string | undefined;
+  businessId?: string | undefined;
+  category?: string | null | undefined;
+  phone?: string | null | undefined;
+  description?: string | null | undefined;
+  email?: string | null | undefined;
+  zillow_url?: string | null | undefined;
+  zillow_rating?: number | null | undefined;
+  zillow_review_count?: number | null | undefined;
+  testimonial_quote?: string | null | undefined;
 };
 
 const categoryOrder = ["news", "civic", "schools", "events", "dining", "real_estate", "community"];
@@ -91,8 +91,8 @@ type FeedItem = {
   timestamp: string;
   url: string | null;
   image_url: string | null;
-  incident_type?: string;
-  status?: string;
+  incident_type?: string | undefined;
+  status?: string | undefined;
 };
 
 const LakeGeneva = () => {

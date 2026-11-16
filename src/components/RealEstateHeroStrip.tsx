@@ -5,8 +5,8 @@ import { Link } from "@/lib/router-compat";
 import { MarketAnalysisDialog } from "@/components/MarketAnalysisDialog";
 
 interface RealEstateHeroStripProps {
-  sponsorId?: string;
-  sponsorEmail?: string;
+  sponsorId?: string | undefined;
+  sponsorEmail?: string | undefined;
 }
 
 export const RealEstateHeroStrip = ({ sponsorId, sponsorEmail }: RealEstateHeroStripProps) => {

@@ -26,7 +26,7 @@ type Props = {
    * triggered it. The server re-checks these coordinates before it will record a
    * stop as verified, so this is a report rather than an assertion.
    */
-  onArrival?: (arrival: ArrivalRecord) => void;
+  onArrival?: ((arrival: ArrivalRecord) => void) | undefined;
 };
 
 type Phase = "preamble" | "active";

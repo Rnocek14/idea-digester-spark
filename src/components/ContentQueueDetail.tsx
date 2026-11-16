@@ -164,7 +164,7 @@ export function ContentQueueDetail({
   }, [existingTargets]);
 
   const updateStoryMutation = useMutation({
-    mutationFn: async (updates: { title?: string; summary?: string; category?: string; is_sponsored?: boolean }) => {
+    mutationFn: async (updates: { title?: string | undefined; summary?: string | undefined; category?: string | undefined; is_sponsored?: boolean | undefined }) => {
       console.log("📝 Updating story:", storyId, updates);
       
       const { data: updated, error } = await supabase

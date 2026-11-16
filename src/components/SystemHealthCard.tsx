@@ -14,9 +14,9 @@ interface AutomationSettings {
   newsletter_enabled: boolean;
   social_enabled: boolean;
   publish_enabled: boolean;
-  x_enabled?: boolean;
-  facebook_enabled?: boolean;
-  instagram_enabled?: boolean;
+  x_enabled?: boolean | undefined;
+  facebook_enabled?: boolean | undefined;
+  instagram_enabled?: boolean | undefined;
 }
 
 export function SystemHealthCard() {

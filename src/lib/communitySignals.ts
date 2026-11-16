@@ -19,7 +19,7 @@ export type Mention = {
   snippet: string;
   url: string | null;
   at: string; // ISO date
-  byline?: string | null;
+  byline?: string | null | undefined;
 };
 
 export type VenueSignals = {
@@ -74,7 +74,7 @@ export async function loadCollection(collection: string): Promise<Venue[]> {
  */
 export async function loadSignals(
   venues: Venue[],
-  opts: { windowDays?: number; recentPerVenue?: number } = {}
+  opts: { windowDays?: number | undefined; recentPerVenue?: number | undefined } = {}
 ): Promise<VenueSignals[]> {
   const windowDays = opts.windowDays ?? 365;
   const cap = opts.recentPerVenue ?? 3;

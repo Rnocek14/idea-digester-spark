@@ -3,18 +3,18 @@ import type { Json } from "@/integrations/supabase/types";
 export type EventRow = {
   id: string;
   title: string;
-  summary?: string | null;
-  content_website?: string | null;
-  content_lg_base?: string | null;
+  summary?: string | null | undefined;
+  content_website?: string | null | undefined;
+  content_lg_base?: string | null | undefined;
   category: string | null;
   event_date: string | null;
   event_time: string | null;
-  performer?: string | null;
+  performer?: string | null | undefined;
   original_url: string | null;
-  image_url?: string | null;
-  geo_tier?: number | null;
-  geo_label?: string | null;
-  metadata?: Json | null;
+  image_url?: string | null | undefined;
+  geo_tier?: number | null | undefined;
+  geo_label?: string | null | undefined;
+  metadata?: Json | null | undefined;
 };
 
 export const getMetaField = (

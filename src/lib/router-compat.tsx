@@ -17,7 +17,7 @@ import { useMemo, useCallback, forwardRef, type ComponentProps, type ReactNode }
 
 // ---------- shared URL parsing ----------
 
-function parseTo(to: string): { pathname: string; search?: Record<string, string>; hash?: string } {
+function parseTo(to: string): { pathname: string; search?: Record<string, string> | undefined; hash?: string | undefined } {
   const [beforeHash, hashStr] = (to ?? "").split("#");
   const [pathname, searchStr] = beforeHash!.split("?");
   return {
@@ -31,7 +31,7 @@ function parseTo(to: string): { pathname: string; search?: Record<string, string
 
 // ---------- useNavigate ----------
 
-type NavigateOptions = { replace?: boolean; state?: unknown };
+type NavigateOptions = { replace?: boolean | undefined; state?: unknown };
 
 type NavigateFn = {
   (to: string | number, options?: NavigateOptions): void;
@@ -82,7 +82,7 @@ export function useParams<T extends Record<string, string | undefined> = Record<
 
 // ---------- useSearchParams (@/lib/router-compat compat) ----------
 
-export function useSearchParams(): [URLSearchParams, (init: URLSearchParams | Record<string, string> | ((prev: URLSearchParams) => URLSearchParams), opts?: { replace?: boolean }) => void] {
+export function useSearchParams(): [URLSearchParams, (init: URLSearchParams | Record<string, string> | ((prev: URLSearchParams) => URLSearchParams), opts?: { replace?: boolean | undefined }) => void] {
   const loc = tsLocation();
   const nav = tsNavigate();
   const router = useRouter();
@@ -90,7 +90,7 @@ export function useSearchParams(): [URLSearchParams, (init: URLSearchParams | Re
   const setParams = useCallback(
     (
       init: URLSearchParams | Record<string, string> | ((prev: URLSearchParams) => URLSearchParams),
-      opts?: { replace?: boolean },
+      opts?: { replace?: boolean | undefined },
     ) => {
       // Functional updaters read the router's live location, not the render
       // snapshot — react-router passes call-time params, and chained updates
@@ -116,9 +116,9 @@ export function useSearchParams(): [URLSearchParams, (init: URLSearchParams | Re
 
 type LinkProps = Omit<ComponentProps<typeof TSLink>, "to"> & {
   to: string;
-  replace?: boolean;
+  replace?: boolean | undefined;
   state?: unknown;
-  children?: ReactNode;
+  children?: ReactNode | undefined;
 };
 
 export const Link = forwardRef<HTMLAnchorElement, LinkProps>(function Link(
@@ -144,7 +144,7 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>(function Link(
 
 // ---------- Navigate ----------
 
-export function Navigate({ to, replace, state }: { to: string; replace?: boolean; state?: unknown }) {
+export function Navigate({ to, replace, state }: { to: string; replace?: boolean | undefined; state?: unknown }) {
   const { pathname, search, hash } = parseTo(to);
   return <TSNavigate to={pathname as never} search={search as never} hash={hash} state={state as never} replace={replace} />;
 }

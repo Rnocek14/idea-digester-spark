@@ -13,7 +13,7 @@ type Props = {
   onOpenChange: (open: boolean) => void;
   stops: ShorePathStopRow[];
   /** When provided, jumps Walking Mode to this index when opened. */
-  initialIndex?: number | null;
+  initialIndex?: number | null | undefined;
 };
 
 export function ShorePathWalkingMode({ open, onOpenChange, stops, initialIndex }: Props) {

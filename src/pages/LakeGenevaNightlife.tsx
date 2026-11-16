@@ -24,9 +24,9 @@ type NightlifeEvent = {
   original_url: string | null;
   image_url: string | null;
   metadata: {
-    verticals?: string[];
-    content_tags?: string[];
-    recurring_days?: string[];
+    verticals?: string[] | undefined;
+    content_tags?: string[] | undefined;
+    recurring_days?: string[] | undefined;
   } | null;
 };
 
@@ -378,9 +378,9 @@ const EventCard = ({
   showRecurring = false
 }: { 
   event: NightlifeEvent; 
-  showDate?: boolean;
-  compact?: boolean;
-  showRecurring?: boolean;
+  showDate?: boolean | undefined;
+  compact?: boolean | undefined;
+  showRecurring?: boolean | undefined;
 }) => {
   const venue = extractVenue(event.title);
   const performer = event.performer || event.title.split(" at ")[0]?.trim();

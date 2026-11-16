@@ -25,11 +25,11 @@ export function articleJsonLd(opts: {
   title: string;
   description: string;
   path: string;
-  datePublished?: string;
-  dateModified?: string;
-  image?: string;
+  datePublished?: string | undefined;
+  dateModified?: string | undefined;
+  image?: string | undefined;
   /** The resolved city's site_name, when the caller has it. */
-  siteName?: string | null;
+  siteName?: string | null | undefined;
 }) {
   return {
     "@context": "https://schema.org",
@@ -96,10 +96,10 @@ export function stopsItemListJsonLd(opts: {
   stops: Array<{
     slug: string;
     name: string;
-    description?: string | null;
-    latitude?: number | null;
-    longitude?: number | null;
-    image?: string | null;
+    description?: string | null | undefined;
+    latitude?: number | null | undefined;
+    longitude?: number | null | undefined;
+    image?: string | null | undefined;
   }>;
 }) {
   return {
@@ -153,20 +153,20 @@ export type JobPostingSource = {
   title: string;
   description: string;
   business_name: string;
-  created_at?: string | null;
-  expires_at?: string | null;
-  job_type?: string | null;
-  location_text?: string | null;
-  pay_min?: number | null;
-  pay_max?: number | null;
-  pay_type?: string | null;
+  created_at?: string | null | undefined;
+  expires_at?: string | null | undefined;
+  job_type?: string | null | undefined;
+  location_text?: string | null | undefined;
+  pay_min?: number | null | undefined;
+  pay_max?: number | null | undefined;
+  pay_type?: string | null | undefined;
 };
 
 /** The resolved city, as city_config describes it. */
 export type JobPostingPlace = {
-  city_name?: string | null;
-  state_code?: string | null;
-  site_domain?: string | null;
+  city_name?: string | null | undefined;
+  state_code?: string | null | undefined;
+  site_domain?: string | null | undefined;
 };
 
 /**
@@ -333,20 +333,20 @@ export function jobPostingsJsonLd(
 
 export type LocalBusinessSource = {
   /** schema.org type — e.g. "GroceryStore", "LiquorStore", "IceCreamShop". */
-  type?: string;
+  type?: string | undefined;
   name: string;
-  description?: string;
+  description?: string | undefined;
   streetAddress: string;
-  addressLocality?: string;
-  addressRegion?: string;
-  postalCode?: string;
-  telephone?: string;
+  addressLocality?: string | undefined;
+  addressRegion?: string | undefined;
+  postalCode?: string | undefined;
+  telephone?: string | undefined;
   /** The business's own website, not this site's page. */
-  url?: string;
+  url?: string | undefined;
   /** Our page about the business. */
-  path?: string;
+  path?: string | undefined;
   /** Human-readable hours, e.g. "Mo-Su 09:00-21:00". Only pass verified values. */
-  openingHours?: string[];
+  openingHours?: string[] | undefined;
 };
 
 /**

@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 const GINA_ID = "db06b0ce-2fe3-4a01-a870-7f2aef1913a6";
 
-type Testimonial = { quote: string; attribution?: string; tag?: string };
+type Testimonial = { quote: string; attribution?: string | undefined; tag?: string | undefined };
 
 function dayIndex(): number {
   const d = new Intl.DateTimeFormat("en-CA", {

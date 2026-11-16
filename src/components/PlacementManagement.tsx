@@ -44,7 +44,7 @@ interface Placement {
   business?: {
     name: string;
     logo_url: string | null;
-  };
+  } | undefined;
 }
 
 interface AdSlot {

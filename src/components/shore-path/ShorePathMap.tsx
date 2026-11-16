@@ -5,16 +5,16 @@ import type { ShorePathStopRow } from "@/hooks/useShorePathStops";
 type Props = {
   stops: ShorePathStopRow[];
   /** Highlighted stop (Walking Mode current position, or last-jumped). */
-  activeStopId?: string | null;
+  activeStopId?: string | null | undefined;
   /** Walking Mode legacy click handler (no peek — direct select). */
-  onStopClick?: (stop: ShorePathStopRow) => void;
+  onStopClick?: ((stop: ShorePathStopRow) => void) | undefined;
   /** Called when the user clicks "Jump to this stop" in the peek card. */
-  onJumpToStop?: (stop: ShorePathStopRow) => void;
+  onJumpToStop?: ((stop: ShorePathStopRow) => void) | undefined;
   /** Called when the user clicks "Start walk from here" in the peek card. */
-  onStartWalkFromStop?: (stop: ShorePathStopRow) => void;
+  onStartWalkFromStop?: ((stop: ShorePathStopRow) => void) | undefined;
   /** Visual size variant. */
-  size?: "hero" | "mini";
-  className?: string;
+  size?: "hero" | "mini" | undefined;
+  className?: string | undefined;
 };
 
 /**

@@ -16,7 +16,7 @@ import {
  * Compact headline-only list (no images, no filter chips, no hero) —
  * pairs with EditorialLaterRail ("Worth a look") shown directly below.
  */
-export default function RightRailTemporal({ fallback = null }: { fallback?: React.ReactNode }) {
+export default function RightRailTemporal({ fallback = null }: { fallback?: React.ReactNode | undefined }) {
   const { data: events = [], isLoading } = useQuery({
     queryKey: ["right-rail-temporal"],
     queryFn: async () => {

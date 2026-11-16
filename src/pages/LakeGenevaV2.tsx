@@ -200,24 +200,24 @@ type Story = {
   original_url: string | null;
   image_url: string | null;
   created_at: string;
-  geo_tier?: number | null;
-  geo_label?: string | null;
+  geo_tier?: number | null | undefined;
+  geo_label?: string | null | undefined;
 };
 
 type Sponsor = {
   name: string;
   logo_url: string | null;
   website: string | null;
-  placementId?: string;
-  businessId?: string;
-  category?: string | null;
-  phone?: string | null;
-  description?: string | null;
-  email?: string | null;
-  zillow_url?: string | null;
-  zillow_rating?: number | null;
-  zillow_review_count?: number | null;
-  testimonial_quote?: string | null;
+  placementId?: string | undefined;
+  businessId?: string | undefined;
+  category?: string | null | undefined;
+  phone?: string | null | undefined;
+  description?: string | null | undefined;
+  email?: string | null | undefined;
+  zillow_url?: string | null | undefined;
+  zillow_rating?: number | null | undefined;
+  zillow_review_count?: number | null | undefined;
+  testimonial_quote?: string | null | undefined;
 };
 
 const getRelativeTime = (dateString?: string | null) => {
@@ -1077,7 +1077,7 @@ const LakeGenevaV2 = () => {
                           // stories with a real photo. Stock-fallback stories render as
                           // compact headline rows instead: repeated category stock art
                           // across unrelated stories reads as filler, not coverage.
-                          const cardItems = items!.filter((s: Story & { _hasRealImage?: boolean }) => s._hasRealImage).slice(0, 2);
+                          const cardItems = items!.filter((s: Story & { _hasRealImage?: boolean | undefined }) => s._hasRealImage).slice(0, 2);
                           const cardIds = new Set(cardItems.map((s: Story) => s.id));
                           const tailItems = items!.filter((s: Story) => !cardIds.has(s.id));
                           return (

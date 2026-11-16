@@ -12,12 +12,12 @@ type NightlifeEvent = {
   publish_date: string | null;
   original_url: string | null;
   metadata: {
-    verticals?: string[];
-    content_tags?: string[]; 
-    event_date?: string;
-    recurring_days?: string[] | null; // e.g., ["friday", "saturday"]
-    venue?: string; // Venue name from scraper metadata
-    location_detail?: string; // Specific room/area within venue
+    verticals?: string[] | undefined;
+    content_tags?: string[] | undefined; 
+    event_date?: string | undefined;
+    recurring_days?: string[] | null | undefined; // e.g., ["friday", "saturday"]
+    venue?: string | undefined; // Venue name from scraper metadata
+    location_detail?: string | undefined; // Specific room/area within venue
   } | null;
   event_date: string | null;
   event_time: string | null;
@@ -522,10 +522,10 @@ function deduplicateByVenue(events: NightlifeEvent[], limit: number, maxPerVenue
 }
 
 interface NightlifeWidgetProps {
-  tonightOnly?: boolean;
-  showTonightsPick?: boolean;
-  showLaterPick?: boolean; // Show "Pick of the Next 72 Hours" for TONIGHT column
-  showModeToggle?: boolean; // Show Tonight | Weekend toggle
+  tonightOnly?: boolean | undefined;
+  showTonightsPick?: boolean | undefined;
+  showLaterPick?: boolean | undefined; // Show "Pick of the Next 72 Hours" for TONIGHT column
+  showModeToggle?: boolean | undefined; // Show Tonight | Weekend toggle
 }
 
 // Helper to format event date for display

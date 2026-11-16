@@ -62,7 +62,7 @@ export function getSiteOrigin(siteDomain?: string | null): string {
 
   if (typeof window === "undefined") return DEFAULT_SITE_ORIGIN;
 
-  const override = (window as unknown as { __SITE_ORIGIN__?: string }).__SITE_ORIGIN__;
+  const override = (window as unknown as { __SITE_ORIGIN__?: string | undefined }).__SITE_ORIGIN__;
   if (override) return override.replace(/\/+$/, "");
 
   const { hostname, protocol, host } = window.location;
@@ -86,7 +86,7 @@ export function isCityScopingEnabled(): boolean {
 
 /** True when an error means the content tables aren't city-scoped yet. */
 export function isMissingCityColumn(error: unknown): boolean {
-  const err = error as { message?: string; code?: string } | null;
+  const err = error as { message?: string | undefined; code?: string | undefined } | null;
   const msg = String(err?.message ?? "");
   if (!/city_id/i.test(msg)) return false;
   return /does not exist|schema cache|column|unknown/i.test(msg) || err?.code === "42703";

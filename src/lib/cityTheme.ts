@@ -48,7 +48,7 @@ export const DEFAULT_IDENTITY: CityIdentity = {
   theme: DEFAULT_THEME,
 };
 
-export function mergeIdentity(row: Partial<CityIdentity> & { theme?: Partial<CityTheme> } | null | undefined): CityIdentity {
+export function mergeIdentity(row: Partial<CityIdentity> & { theme?: Partial<CityTheme> | undefined } | null | undefined): CityIdentity {
   if (!row) return DEFAULT_IDENTITY;
   return {
     ...DEFAULT_IDENTITY,

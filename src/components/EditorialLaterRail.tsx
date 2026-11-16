@@ -6,9 +6,9 @@ import { formatEventTime, localDateStr, type EventRow } from "@/lib/eventUtils";
 import { getCityId, maybeCity, runCityScoped } from "@/lib/cityId";
 
 type Pick = EventRow & {
-  featured_in_later?: boolean;
-  featured_rank?: number | null;
-  editorial_pick_reason?: string | null;
+  featured_in_later?: boolean | undefined;
+  featured_rank?: number | null | undefined;
+  editorial_pick_reason?: string | null | undefined;
 };
 
 /**

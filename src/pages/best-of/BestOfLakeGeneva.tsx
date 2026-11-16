@@ -14,8 +14,8 @@ type Category = {
   key: string;
   label: string;
   blurb: string;
-  icon: React.ComponentType<{ className?: string }>;
-  href?: string;
+  icon: React.ComponentType<{ className?: string | undefined }>;
+  href?: string | undefined;
   status: "live" | "voting";
 };
 
