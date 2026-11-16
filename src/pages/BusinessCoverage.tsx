@@ -497,7 +497,7 @@ const BusinessCoverage = () => {
                     >
                       <span className="text-muted-foreground line-through">{item.name}</span>
                       <span className="text-xs text-muted-foreground">
-                        {format(new Date(item.updated_at), "MMM d, yyyy")}
+                        {format(new Date(item.updated_at ?? Date.now()), "MMM d, yyyy")}
                       </span>
                     </div>
                   ))}

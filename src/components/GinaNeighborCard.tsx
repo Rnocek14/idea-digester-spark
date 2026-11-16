@@ -57,7 +57,7 @@ export default function GinaNeighborCard() {
     : [];
   const t: Testimonial | null =
     testimonials.length > 0
-      ? testimonials[dayIndex() % testimonials.length]
+      ? testimonials[dayIndex() % testimonials.length] ?? null
       : gina.testimonial_quote
       ? { quote: gina.testimonial_quote }
       : null;
