@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import { CalendarDays, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import PageShell from "@/components/PageShell";
@@ -159,7 +159,7 @@ export default function Events() {
           <div className="space-y-8">
             {grouped.map(([date, items]) => (
               <section key={date}>
-                <div className="sticky top-[120px] z-10 bg-stone-50/95 backdrop-blur-sm py-2 mb-2 border-b border-slate-200">
+                <div className="sticky top-[120px] z-10 bg-stone-50/95 backdrop-blur-xs py-2 mb-2 border-b border-slate-200">
                   <p className="text-[10px] font-mono uppercase tracking-[0.18em] text-slate-500">
                     {friendlyDayLabel(date)}
                   </p>

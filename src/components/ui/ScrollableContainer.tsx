@@ -3,8 +3,8 @@ import { cn } from '@/lib/utils';
 
 type ScrollableContainerProps = {
   children: React.ReactNode;
-  className?: string;
-  fadeHeight?: string;
+  className?: string | undefined;
+  fadeHeight?: string | undefined;
 };
 
 export function ScrollableContainer({ 

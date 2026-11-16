@@ -2,7 +2,7 @@
  * Inline newsletter CTA used mid-guide. Scrolls to the homepage subscribe
  * section since that's where the form is already wired up.
  */
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 
 export function GuideNewsletterCTA() {
   return (

@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Utensils, MapPin, Clock, ArrowRight, Star, Calendar, ExternalLink, Heart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import PageShell from "@/components/PageShell";
 import { PageMeta } from "@/components/PageMeta";
 import { LG_CORE_KEYWORDS, LG_GEO_KEYWORDS } from "@/lib/seoKeywords";
@@ -18,15 +18,15 @@ type EatsContent = {
   id: string;
   title: string;
   summary: string | null;
-  content_website?: string | null;
+  content_website?: string | null | undefined;
   content: string;
   event_date: string | null;
   original_url: string | null;
   image_url: string | null;
   category: string | null;
   metadata: {
-    verticals?: string[];
-    content_tags?: string[];
+    verticals?: string[] | undefined;
+    content_tags?: string[] | undefined;
   } | null;
 };
 
@@ -38,17 +38,17 @@ type Restaurant = {
   phone: string | null;
   hours: Record<string, string> | null;
   fish_fry: {
-    available?: boolean;
-    day?: string;
-    price?: string;
-    description?: string;
+    available?: boolean | undefined;
+    day?: string | undefined;
+    price?: string | undefined;
+    description?: string | undefined;
   } | null;
   happy_hour: {
-    days?: string[];
-    times?: string;
-    deals?: string[];
+    days?: string[] | undefined;
+    times?: string | undefined;
+    deals?: string[] | undefined;
   } | null;
-  weekly_specials: Array<{ day: string; name: string; description?: string }> | null;
+  weekly_specials: Array<{ day: string; name: string; description?: string | undefined }> | null;
   tags: string[] | null;
   categories: string[] | null;
   last_scraped_at: string | null;
@@ -84,7 +84,7 @@ const extractRestaurant = (title: string): string | null => {
   }
   const atMatch = title.match(/at\s+([^,–-]+)/i);
   if (atMatch) {
-    return atMatch[1].trim();
+    return atMatch[1]!.trim();
   }
   return null;
 };
@@ -121,7 +121,7 @@ const isThirdPartyImage = (imageUrl: string | null, sourceUrl: string | null): b
 const pickFallbackImage = (seed: string): string => {
   let hash = 5381;
   for (let i = 0; i < seed.length; i++) hash = ((hash << 5) + hash) ^ seed.charCodeAt(i);
-  return DINING_FALLBACK_IMAGES[Math.abs(hash) % DINING_FALLBACK_IMAGES.length];
+  return DINING_FALLBACK_IMAGES[Math.abs(hash) % DINING_FALLBACK_IMAGES.length]!;
 };
 
 const truncate = (text: string, max = 400): string => {
@@ -245,7 +245,7 @@ const LakeGenevaEats = () => {
         ]}
       />
       {/* Hero Section */}
-      <div className="relative -mx-4 sm:-mx-6 lg:-mx-8 mb-8 overflow-hidden rounded-b-sm bg-gradient-to-br from-amber-900 via-orange-800 to-red-900 px-6 py-12 text-white">
+      <div className="relative -mx-4 sm:-mx-6 lg:-mx-8 mb-8 overflow-hidden rounded-b-xs bg-gradient-to-br from-amber-900 via-orange-800 to-red-900 px-6 py-12 text-white">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-50"></div>
         <div className="relative max-w-2xl">
           <div className="flex items-center gap-2 mb-3">
@@ -269,7 +269,7 @@ const LakeGenevaEats = () => {
           <div className="mt-4">
             <Link
               to="/best-of/restaurants-lake-geneva"
-              className="inline-flex items-center gap-2 rounded-full bg-white/15 hover:bg-white/25 px-4 py-2 text-sm font-medium text-white transition-colors backdrop-blur-sm"
+              className="inline-flex items-center gap-2 rounded-full bg-white/15 hover:bg-white/25 px-4 py-2 text-sm font-medium text-white transition-colors backdrop-blur-xs"
             >
               <Heart className="h-4 w-4 text-rose-300" />
               See what locals are talking about →
@@ -282,7 +282,7 @@ const LakeGenevaEats = () => {
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-8">
           {/* Friday Fish Fry - Lake Geneva staple! */}
-          <section className={isFriday ? "bg-blue-50 -mx-4 px-4 py-6 rounded-sm border-2 border-blue-200" : ""}>
+          <section className={isFriday ? "bg-blue-50 -mx-4 px-4 py-6 rounded-xs border-2 border-blue-200" : ""}>
             <div className="flex items-center gap-2 mb-4">
               <span className="text-2xl">🐟</span>
               <h2 className="text-xl font-bold text-slate-900">
@@ -620,7 +620,7 @@ const EatsCard = ({
   compact = false,
 }: { 
   item: EatsContent; 
-  compact?: boolean;
+  compact?: boolean | undefined;
 }) => {
   const restaurant = extractRestaurant(item.title);
   const [open, setOpen] = useState(false);

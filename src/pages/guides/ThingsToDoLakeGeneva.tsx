@@ -1,6 +1,6 @@
 import { GuideShell } from "@/components/guides/GuideShell";
 import { SoftRealEstateCTA } from "@/components/guides/SoftRealEstateCTA";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 
 const TODAY = "2026-06-05";
 const UPDATED = "2026-07-29";
@@ -112,7 +112,7 @@ export default function ThingsToDoLakeGeneva() {
       }
       introExtra={
         <div className="space-y-4">
-          <div className="rounded-sm border border-slate-200 bg-white p-5">
+          <div className="rounded-xs border border-slate-200 bg-white p-5">
             <p className="text-[10px] font-mono uppercase tracking-widest text-slate-500 mb-3">
               The short version, up top
             </p>
@@ -140,7 +140,7 @@ export default function ThingsToDoLakeGeneva() {
             </ul>
           </div>
 
-          <div className="rounded-sm border border-slate-200 bg-white p-5">
+          <div className="rounded-xs border border-slate-200 bg-white p-5">
             <p className="text-[10px] font-mono uppercase tracking-widest text-slate-500 mb-2">
               Looking for what's on this week?
             </p>
@@ -169,7 +169,7 @@ export default function ThingsToDoLakeGeneva() {
                 family day trip use almost none of the same plan. Find your row.
               </p>
               <div
-                className="overflow-x-auto scroll-x-hint rounded-sm border border-slate-200 bg-white"
+                className="overflow-x-auto scroll-x-hint rounded-xs border border-slate-200 bg-white"
                 role="region"
                 aria-label="Comparison table, scrollable"
                 tabIndex={0}
@@ -835,7 +835,7 @@ export default function ThingsToDoLakeGeneva() {
         {
           question: "How do you plan a day in Lake Geneva without driving back and forth?",
           answer:
-            "Pick one end of the lake and stay there. The towns sit on a ring around the water, so travelling between any two means going around the rim rather than across. A day built around the City of Lake Geneva, or around Williams Bay and Fontana, uses the drive once. On a weekend, give each day its own end.",
+            "Pick one end of the lake and stay there. The towns sit on a ring-3 around the water, so travelling between any two means going around the rim rather than across. A day built around the City of Lake Geneva, or around Williams Bay and Fontana, uses the drive once. On a weekend, give each day its own end.",
         },
         {
           question: "What is there to do in Lake Geneva if you don't have a boat?",

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import { PublicHeader } from "@/components/PublicHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { Heart } from "lucide-react";
@@ -100,10 +100,10 @@ export default function CommunityLocalLove() {
             {data.map((e) => (
               <article
                 key={e.id}
-                className="rounded-md border border-slate-200 bg-white p-4 shadow-sm"
+                className="rounded-md border border-slate-200 bg-white p-4 shadow-xs"
               >
                 {e.category && (
-                  <span className="inline-block text-[10px] font-mono uppercase tracking-wider text-rose-700 bg-rose-50 px-2 py-0.5 rounded">
+                  <span className="inline-block text-[10px] font-mono uppercase tracking-wider text-rose-700 bg-rose-50 px-2 py-0.5 rounded-sm">
                     {e.category}
                   </span>
                 )}

@@ -1,9 +1,9 @@
 import { BookOpen, CircleHelp, FileText } from "lucide-react";
 
 export type StopSource = {
-  url?: string | null;
-  publisher?: string | null;
-  supports?: string | null;
+  url?: string | null | undefined;
+  publisher?: string | null | undefined;
+  supports?: string | null | undefined;
 };
 
 export type HistoryConfidence = "documented" | "traditional" | "thin";

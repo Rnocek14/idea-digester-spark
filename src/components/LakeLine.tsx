@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import boatImg from "@/assets/streblow-boat.png";
 
 /**
@@ -11,7 +11,7 @@ type LakeIcon = {
   src: string;
   label: string;   // short name shown in tooltip
   tooltip: string; // full tooltip text
-  href?: string;   // optional — when set, icon becomes a link
+  href?: string | undefined;   // optional — when set, icon becomes a link
   width: number;
   height: number;
 };

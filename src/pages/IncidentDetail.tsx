@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getSiteOrigin } from "@/lib/cityId";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link } from "@/lib/router-compat";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
@@ -128,7 +128,7 @@ export default function IncidentDetail() {
   };
 
   const isLoading = incidentLoading || updatesLoading;
-  const status = incident ? statusConfig[incident.status] : statusConfig.active;
+  const status = incident ? statusConfig[incident.status] : statusConfig["active"];
 
   const metaTitle = incident
     ? `${incident.title.slice(0, 70)} — Lake Geneva Incidents`
@@ -196,8 +196,8 @@ export default function IncidentDetail() {
                 <Badge variant="outline" className="capitalize shrink-0">
                   {incident.incident_type}
                 </Badge>
-                <span className={`flex items-center gap-1.5 text-sm font-medium ${status.color}`}>
-                  {status.label}
+                <span className={`flex items-center gap-1.5 text-sm font-medium ${status!.color}`}>
+                  {status!.label}
                 </span>
               </div>
               

@@ -21,10 +21,10 @@ type Props = {
   story: {
     id: string;
     title: string;
-    featured_in_later?: boolean | null;
-    editorial_pick_reason?: string | null;
-    featured_rank?: number | null;
-    pick_tag?: string[] | null;
+    featured_in_later?: boolean | null | undefined;
+    editorial_pick_reason?: string | null | undefined;
+    featured_rank?: number | null | undefined;
+    pick_tag?: string[] | null | undefined;
   };
 };
 
@@ -115,7 +115,7 @@ export default function FeatureInLaterButton({ story }: Props) {
                       key={n}
                       type="button"
                       onClick={() => setRank(rank === n ? "" : n)}
-                      className={`w-8 h-8 rounded border text-sm ${
+                      className={`w-8 h-8 rounded-sm border text-sm ${
                         rank === n
                           ? "bg-amber-500 text-white border-amber-500"
                           : "bg-white border-slate-300"

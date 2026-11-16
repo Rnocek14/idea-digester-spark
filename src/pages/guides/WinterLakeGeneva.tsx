@@ -1,6 +1,6 @@
 import { GuideShell } from "@/components/guides/GuideShell";
 import { SoftRealEstateCTA } from "@/components/guides/SoftRealEstateCTA";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 
 const TODAY = "2026-06-05";
 const UPDATED = "2026-07-29";
@@ -122,7 +122,7 @@ export default function WinterLakeGeneva() {
         </>
       }
       introExtra={
-        <div className="rounded-sm border border-slate-200 bg-white p-5">
+        <div className="rounded-xs border border-slate-200 bg-white p-5">
           <p className="text-[10px] font-mono uppercase tracking-widest text-slate-500 mb-3">
             The short version, up top
           </p>
@@ -162,7 +162,7 @@ export default function WinterLakeGeneva() {
                 Settle which one you're on before you book anything.
               </p>
               <div
-                className="overflow-x-auto scroll-x-hint rounded-sm border border-slate-200 bg-white"
+                className="overflow-x-auto scroll-x-hint rounded-xs border border-slate-200 bg-white"
                 role="region"
                 aria-label="Comparison table, scrollable"
                 tabIndex={0}
@@ -296,7 +296,7 @@ export default function WinterLakeGeneva() {
                 Six sources, in rough order of how much they're worth:
               </p>
               <div
-                className="mt-4 overflow-x-auto scroll-x-hint rounded-sm border border-slate-200 bg-white"
+                className="mt-4 overflow-x-auto scroll-x-hint rounded-xs border border-slate-200 bg-white"
                 role="region"
                 aria-label="Comparison table, scrollable"
                 tabIndex={0}
@@ -374,7 +374,7 @@ export default function WinterLakeGeneva() {
                 shops are the honest source. Never assume; the lake changes
                 week to week.
               </p>
-              <div className="my-5 rounded-sm border border-amber-300 bg-amber-50 p-5">
+              <div className="my-5 rounded-xs border border-amber-300 bg-amber-50 p-5">
                 <p className="text-[10px] font-mono uppercase tracking-widest text-amber-800 mb-2">
                   Read this before you step onto anything
                 </p>

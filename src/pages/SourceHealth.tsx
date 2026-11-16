@@ -20,7 +20,7 @@ interface SourceStats {
   breaking_24h: number;
   firecrawl_used: number;
   health_status: 'healthy' | 'warning' | 'critical' | 'dormant';
-  last_error?: { message: string; at: string };
+  last_error?: { message: string; at: string } | undefined;
 }
 
 const SourceHealth = () => {

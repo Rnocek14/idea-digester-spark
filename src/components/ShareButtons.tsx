@@ -3,7 +3,7 @@ import { Twitter, Facebook } from "lucide-react";
 type ShareButtonsProps = {
   title: string;
   url: string;
-  className?: string;
+  className?: string | undefined;
 };
 
 export const ShareButtons = ({ title, url, className = "" }: ShareButtonsProps) => {

@@ -16,7 +16,7 @@ type Business = Pick<Tables<"business_profiles">, "id" | "name">;
 interface DealDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  deal?: Deal | null;
+  deal?: Deal | null | undefined;
   onSuccess: () => void;
 }
 

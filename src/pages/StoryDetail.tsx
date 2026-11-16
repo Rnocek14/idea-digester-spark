@@ -1,7 +1,7 @@
 import { usePageView, pillarFromCategory } from "@/lib/trackStoryEvent";
 import { getSiteOrigin } from "@/lib/cityId";
 import { useEffect } from "react";
-import { useParams, Link, Navigate } from "react-router-dom";
+import { useParams, Link, Navigate } from "@/lib/router-compat";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ExternalLink, Calendar, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -138,10 +138,10 @@ export default function StoryDetail() {
       <div className="min-h-screen bg-stone-50">
         <PublicHeader />
         <main className="mx-auto max-w-3xl px-4 py-12">
-          <div className="h-6 w-24 bg-slate-200 rounded animate-pulse mb-6" />
-          <div className="h-10 w-3/4 bg-slate-200 rounded animate-pulse mb-4" />
-          <div className="h-4 w-full bg-slate-200 rounded animate-pulse mb-2" />
-          <div className="h-4 w-5/6 bg-slate-200 rounded animate-pulse" />
+          <div className="h-6 w-24 bg-slate-200 rounded-sm animate-pulse mb-6" />
+          <div className="h-10 w-3/4 bg-slate-200 rounded-sm animate-pulse mb-4" />
+          <div className="h-4 w-full bg-slate-200 rounded-sm animate-pulse mb-2" />
+          <div className="h-4 w-5/6 bg-slate-200 rounded-sm animate-pulse" />
         </main>
       </div>
     );

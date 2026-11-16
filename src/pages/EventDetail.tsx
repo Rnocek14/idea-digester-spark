@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getSiteOrigin } from "@/lib/cityId";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams } from "@/lib/router-compat";
 import {
   ArrowLeft,
   CalendarDays,
@@ -267,7 +267,7 @@ export default function EventDetail() {
                 <li key={r.id}>
                   <Link
                     to={`/events/${r.id}`}
-                    className="flex items-baseline gap-3 py-2 hover:bg-slate-50 -mx-2 px-2 rounded transition-colors"
+                    className="flex items-baseline gap-3 py-2 hover:bg-slate-50 -mx-2 px-2 rounded-sm transition-colors"
                   >
                     <span className="text-xs font-mono text-slate-500 w-20 shrink-0">
                       {friendlyDayLabel(r.event_date as string)}

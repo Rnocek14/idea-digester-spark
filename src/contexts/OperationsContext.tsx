@@ -8,8 +8,8 @@ interface Operation {
   status: 'running' | 'completed' | 'failed';
   message: string;
   startedAt: number;
-  estimatedMinutes?: number;
-  toastId?: string | number;
+  estimatedMinutes?: number | undefined;
+  toastId?: string | number | undefined;
 }
 
 interface OperationsContextType {

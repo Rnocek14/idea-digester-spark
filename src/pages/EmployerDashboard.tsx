@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate } from "@/lib/router-compat";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import PageShell from "@/components/PageShell";
@@ -120,14 +120,14 @@ export default function EmployerDashboard() {
         if (!byJob[click.job_id]) {
           byJob[click.job_id] = { total: 0, website: 0, newsletter: 0 };
         }
-        byJob[click.job_id].total++;
+        byJob[click.job_id]!.total++;
         totals.total++;
         
         if (click.source === "newsletter") {
-          byJob[click.job_id].newsletter++;
+          byJob[click.job_id]!.newsletter++;
           totals.newsletter++;
         } else {
-          byJob[click.job_id].website++;
+          byJob[click.job_id]!.website++;
           totals.website++;
         }
       });
@@ -376,8 +376,8 @@ export default function EmployerDashboard() {
         ) : jobs && jobs.length > 0 ? (
           <div className="space-y-4">
             {jobs.map((job) => {
-              const config = statusConfig[job.status] || statusConfig.pending;
-              const StatusIcon = config.icon;
+              const config = statusConfig[job.status] || statusConfig["pending"];
+              const StatusIcon = config!.icon;
               const daysLeft = getDaysUntilExpiry(job.expires_at);
               const isExpired = daysLeft <= 0;
 
@@ -404,19 +404,19 @@ export default function EmployerDashboard() {
                         </div>
                       </div>
                       <div className="flex flex-col items-end gap-2">
-                        <Badge className={config.color}>
+                        <Badge className={config!.color}>
                           <StatusIcon className="h-3 w-3 mr-1" />
-                          {isExpired ? "Expired" : config.label}
+                          {isExpired ? "Expired" : config!.label}
                         </Badge>
                         <div className="flex items-center gap-2 text-xs">
                           <span className="text-purple-600 font-medium flex items-center gap-1">
                             <MousePointerClick className="h-3 w-3" />
                             {clickData?.byJob[job.id]?.total || 0}
                           </span>
-                          {clickData?.byJob[job.id]?.total > 0 && (
+                          {clickData?.byJob[job.id]?.total! > 0 && (
                             <span className="text-muted-foreground">
-                              (<Globe className="h-3 w-3 inline" /> {clickData.byJob[job.id].website} · 
-                              <Newspaper className="h-3 w-3 inline ml-1" /> {clickData.byJob[job.id].newsletter})
+                              (<Globe className="h-3 w-3 inline" /> {clickData!.byJob[job.id]!.website} · 
+                              <Newspaper className="h-3 w-3 inline ml-1" /> {clickData!.byJob[job.id]!.newsletter})
                             </span>
                           )}
                         </div>

@@ -1,4 +1,4 @@
-import { Navigate } from "react-router-dom";
+import { Navigate } from "@/lib/router-compat";
 
 // Redirect to the main employer dashboard page
 export default function EmployerLogin() {

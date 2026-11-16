@@ -81,7 +81,7 @@ const SponsorAnalytics = () => {
           .select("click_source, newsletter_id")
           .eq("business_id", business.id);
 
-        const newsletterIds = [...new Set(clicks?.map((c) => c.newsletter_id).filter(Boolean) || [])];
+        const newsletterIds = [...new Set(clicks?.map((c) => c.newsletter_id).filter((id): id is string => Boolean(id)) || [])];
 
         let totalOpens = 0;
         if (newsletterIds.length > 0) {
@@ -339,7 +339,7 @@ const SponsorAnalytics = () => {
                                 <img
                                   src={stat.logo_url}
                                   alt={stat.business_name}
-                                  className="h-8 w-8 object-contain rounded"
+                                  className="h-8 w-8 object-contain rounded-sm"
                                 />
                               )}
                               <span className="font-medium">{stat.business_name}</span>

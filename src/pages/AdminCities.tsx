@@ -96,7 +96,7 @@ export default function AdminCities() {
       queryClient.invalidateQueries({ queryKey: ["admin-cities-sources"] });
       toast({
         title: `Bootstrapped ${cityName}`,
-        description: `${report.sources_inserted ?? 0} sources discovered — trial validation grades them over the next 2-3 days.`,
+        description: `${report["sources_inserted"] ?? 0} sources discovered — trial validation grades them over the next 2-3 days.`,
       });
     },
     onError: (e: Error) => toast({ title: "Bootstrap failed", description: e.message, variant: "destructive" }),

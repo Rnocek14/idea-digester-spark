@@ -16,7 +16,7 @@ const GROUP_OPTIONS: { value: GroupSizeBand; label: string }[] = [
 ];
 
 type Props = {
-  onAnswer: (answer: { crowd_level?: CrowdLevel; group_size_band?: GroupSizeBand }) => void;
+  onAnswer: (answer: { crowd_level?: CrowdLevel | undefined; group_size_band?: GroupSizeBand | undefined }) => void;
   onDismiss: () => void;
 };
 

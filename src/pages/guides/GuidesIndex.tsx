@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import { PublicHeader } from "@/components/PublicHeader";
 import { PageMeta } from "@/components/PageMeta";
 import { breadcrumbJsonLd } from "@/lib/seo/jsonLd";
@@ -229,7 +229,7 @@ export default function GuidesIndex() {
                   <Link
                     key={guide.path}
                     to={guide.path}
-                    className="block rounded-md border border-slate-200 bg-white p-5 hover:border-blue-500 hover:shadow-sm transition-all"
+                    className="block rounded-md border border-slate-200 bg-white p-5 hover:border-blue-500 hover:shadow-xs transition-all"
                   >
                     <p className="font-display text-lg text-slate-900">
                       {guide.title}

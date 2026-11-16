@@ -80,7 +80,7 @@ const FISH_TYPES = ["Cod", "Perch", "Walleye", "Bluegill", "Haddock", "Pollock"]
 const extractPrice = (price: string | null): number => {
   if (!price) return 999;
   const match = price.match(/\$?(\d+(?:\.\d{2})?)/);
-  return match ? parseFloat(match[1]) : 999;
+  return match ? parseFloat(match[1]!) : 999;
 };
 
 // Calculate "value score" for sorting
@@ -268,7 +268,7 @@ const FishFryGuide = () => {
         ]}
       />
       {/* Hero Section */}
-      <div className="relative -mx-4 sm:-mx-6 lg:-mx-8 mb-8 overflow-hidden rounded-b-sm bg-gradient-to-br from-blue-900 via-blue-800 to-sky-900 px-6 py-12 text-white">
+      <div className="relative -mx-4 sm:-mx-6 lg:-mx-8 mb-8 overflow-hidden rounded-b-xs bg-gradient-to-br from-blue-900 via-blue-800 to-sky-900 px-6 py-12 text-white">
         <div className="absolute inset-0 opacity-20">
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTAgNTBjMjAtMTAgMzAtMjAgNTAtMjBzMzAgMTAgNTAgMjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2Utb3BhY2l0eT0iMC4zIi8+PC9zdmc+')] bg-repeat"></div>
         </div>

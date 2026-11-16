@@ -1,6 +1,6 @@
 import { GuideShell } from "@/components/guides/GuideShell";
 import { SoftRealEstateCTA } from "@/components/guides/SoftRealEstateCTA";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 
 const TODAY = "2026-06-05";
 const UPDATED = "2026-07-29";
@@ -133,7 +133,7 @@ export default function LakeGenevaVsWilliamsBay() {
                 move your decision.
               </p>
               <div
-                className="not-prose overflow-x-auto scroll-x-hint rounded-sm border border-slate-200 bg-white"
+                className="not-prose overflow-x-auto scroll-x-hint rounded-xs border border-slate-200 bg-white"
                 role="region"
                 aria-label="Comparison table, scrollable"
                 tabIndex={0}
@@ -495,7 +495,7 @@ export default function LakeGenevaVsWilliamsBay() {
                 {DECISION_ORDER.map((item, i) => (
                   <li
                     key={item.question}
-                    className="flex gap-3 rounded-sm border border-slate-200 bg-white p-4"
+                    className="flex gap-3 rounded-xs border border-slate-200 bg-white p-4"
                   >
                     <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-white">
                       {i + 1}
@@ -534,17 +534,17 @@ export default function LakeGenevaVsWilliamsBay() {
                 The pattern we see most often:
               </p>
               <ul className="not-prose space-y-2 mb-4">
-                <li className="rounded-sm border border-slate-200 bg-white p-3 text-sm leading-relaxed text-slate-700">
+                <li className="rounded-xs border border-slate-200 bg-white p-3 text-sm leading-relaxed text-slate-700">
                   <strong className="text-slate-900">Choose Lake Geneva</strong> if you want
                   walkable nightlife, a busier downtown, and the
                   Badger High School pipeline.
                 </li>
-                <li className="rounded-sm border border-slate-200 bg-white p-3 text-sm leading-relaxed text-slate-700">
+                <li className="rounded-xs border border-slate-200 bg-white p-3 text-sm leading-relaxed text-slate-700">
                   <strong className="text-slate-900">Choose Williams Bay</strong> if you want
                   the small K-12 district, less foot traffic, and a
                   quieter year-round shoreline.
                 </li>
-                <li className="rounded-sm border border-slate-200 bg-white p-3 text-sm leading-relaxed text-slate-700">
+                <li className="rounded-xs border border-slate-200 bg-white p-3 text-sm leading-relaxed text-slate-700">
                   <strong className="text-slate-900">It can also be both</strong> — many
                   families end up living in one and spending plenty
                   of weekends in the other.

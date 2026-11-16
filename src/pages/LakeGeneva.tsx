@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams } from "@/lib/router-compat";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -35,24 +35,24 @@ type Story = {
   original_url: string | null;
   image_url: string | null;
   created_at: string;
-  geo_tier?: number | null;
-  geo_label?: string | null;
+  geo_tier?: number | null | undefined;
+  geo_label?: string | null | undefined;
 };
 
 type Sponsor = {
   name: string;
   logo_url: string | null;
   website: string | null;
-  placementId?: string;
-  businessId?: string;
-  category?: string | null;
-  phone?: string | null;
-  description?: string | null;
-  email?: string | null;
-  zillow_url?: string | null;
-  zillow_rating?: number | null;
-  zillow_review_count?: number | null;
-  testimonial_quote?: string | null;
+  placementId?: string | undefined;
+  businessId?: string | undefined;
+  category?: string | null | undefined;
+  phone?: string | null | undefined;
+  description?: string | null | undefined;
+  email?: string | null | undefined;
+  zillow_url?: string | null | undefined;
+  zillow_rating?: number | null | undefined;
+  zillow_review_count?: number | null | undefined;
+  testimonial_quote?: string | null | undefined;
 };
 
 const categoryOrder = ["news", "civic", "schools", "events", "dining", "real_estate", "community"];
@@ -91,8 +91,8 @@ type FeedItem = {
   timestamp: string;
   url: string | null;
   image_url: string | null;
-  incident_type?: string;
-  status?: string;
+  incident_type?: string | undefined;
+  status?: string | undefined;
 };
 
 const LakeGeneva = () => {
@@ -185,9 +185,9 @@ const LakeGeneva = () => {
   // Get deterministic fallback image based on story ID and category
   const getCategoryFallbackImage = (storyId: string, category: string | null): string => {
     const cat = category?.toLowerCase() || 'default';
-    const images = CATEGORY_FALLBACK_IMAGES[cat] || CATEGORY_FALLBACK_IMAGES.default;
+    const images = CATEGORY_FALLBACK_IMAGES[cat] || CATEGORY_FALLBACK_IMAGES["default"];
     const hash = storyId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    return images[hash % images.length];
+    return images![hash % images!.length]!;
   };
 
   // Topic-specific civic image libraries for smart keyword mapping
@@ -370,7 +370,7 @@ const LakeGeneva = () => {
         .limit(OTHER_TARGET);
       
       // Combine and dedupe
-      const combined = [...newsCivic, ...events, ...other];
+      const combined = [...(newsCivic ?? []), ...(events ?? []), ...(other ?? [])];
       const seenIds = new Set<string>();
       const todayStr = new Date().toISOString().split('T')[0];
       
@@ -379,7 +379,7 @@ const LakeGeneva = () => {
         seenIds.add(story.id);
         
         // CRITICAL: Filter out past events (event_date < today)
-        if (story.event_date && story.event_date < todayStr) {
+        if (story.event_date && story.event_date < todayStr!) {
           return false;
         }
         
@@ -636,7 +636,7 @@ const LakeGeneva = () => {
       
       // Show toast for new content
       const latestItem = newItems[0];
-      toast(`New update: ${latestItem.title.slice(0, 50)}${latestItem.title.length > 50 ? '...' : ''}`, {
+      toast(`New update: ${latestItem!.title.slice(0, 50)}${latestItem!.title.length > 50 ? '...' : ''}`, {
         description: `${newItems.length === 1 ? '1 new item' : `${newItems.length} new items`} in your feed`,
         action: {
           label: 'View',
@@ -736,7 +736,7 @@ const LakeGeneva = () => {
             {/* Hero Section - wrapped in card */}
             {featured && (
               <section className="py-8">
-                <div className="bg-white rounded-3xl border border-slate-100 shadow-sm px-6 py-6 lg:px-8 lg:py-7">
+                <div className="bg-white rounded-3xl border border-slate-100 shadow-xs px-6 py-6 lg:px-8 lg:py-7">
                   {/* Two column grid: main content + Also Today */}
                   <div className="grid gap-6 lg:grid-cols-[minmax(0,1.7fr)_minmax(240px,1fr)] items-start">
                     {/* LEFT COLUMN: greeting, headline, weather, pills, featured story */}
@@ -787,7 +787,7 @@ const LakeGeneva = () => {
                       </div>
 
                       {/* Featured story card */}
-                      <article className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100">
+                      <article className="overflow-hidden rounded-2xl bg-white shadow-xs ring-1 ring-slate-100">
                         <div className="relative aspect-[3/2]">
                           <img
                             src={featured.image_url || getCategoryFallbackImage(featured.id, featured.category)}
@@ -878,7 +878,7 @@ const LakeGeneva = () => {
                         onClick={() => setViewMode('all')}
                         className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                           viewMode === 'all'
-                            ? "bg-white text-slate-900 shadow-sm"
+                            ? "bg-white text-slate-900 shadow-xs"
                             : "text-slate-500 hover:text-slate-700"
                         }`}
                       >
@@ -888,7 +888,7 @@ const LakeGeneva = () => {
                         onClick={() => setViewMode('topic')}
                         className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                           viewMode === 'topic'
-                            ? "bg-white text-slate-900 shadow-sm"
+                            ? "bg-white text-slate-900 shadow-xs"
                             : "text-slate-500 hover:text-slate-700"
                         }`}
                       >
@@ -901,7 +901,7 @@ const LakeGeneva = () => {
                         }}
                         className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors flex items-center gap-1.5 ${
                           viewMode === 'recent'
-                            ? "bg-white text-slate-900 shadow-sm"
+                            ? "bg-white text-slate-900 shadow-xs"
                             : "text-slate-500 hover:text-slate-700"
                         }`}
                       >
@@ -1040,7 +1040,7 @@ const LakeGeneva = () => {
                                 rel={item.type === 'story' ? 'noopener noreferrer' : undefined}
                                 className="block group"
                               >
-                                <div className={`flex items-start gap-3 p-3 rounded-xl border transition-all hover:shadow-sm ${
+                                <div className={`flex items-start gap-3 p-3 rounded-xl border transition-all hover:shadow-xs ${
                                   item.type === 'incident' && item.status === 'active'
                                     ? 'bg-red-50/50 border-red-200 hover:border-red-300'
                                     : 'bg-white border-slate-200 hover:border-slate-300'
@@ -1053,7 +1053,7 @@ const LakeGeneva = () => {
                                       {getPreciseRelativeTime(item.timestamp)}
                                     </span>
                                     {hasRecentActivity && isLiveItem(item.timestamp) && (
-                                      <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-red-100 text-red-700 animate-pulse">
+                                      <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded-sm text-[9px] font-bold bg-red-100 text-red-700 animate-pulse">
                                         LIVE
                                       </span>
                                     )}
@@ -1127,7 +1127,7 @@ const LakeGeneva = () => {
                         </div>
 
                         <div className="grid gap-4 sm:gap-5 sm:grid-cols-2">
-                          {storiesByCategory[category].map((story) => {
+                          {storiesByCategory[category]!.map((story: Story) => {
                             const time = getRelativeTime(story.publish_date || story.created_at);
                             let source: string | null = (story as any).source?.name || null;
 
@@ -1196,7 +1196,7 @@ const LakeGeneva = () => {
                   <Button
                     type="submit"
                     disabled={isSubscribing}
-                    className="rounded-full bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow hover:bg-blue-700 transition-colors"
+                    className="rounded-full bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors"
                   >
                     {isSubscribing ? 'Subscribing…' : 'Subscribe'}
                   </Button>
@@ -1245,7 +1245,7 @@ const LakeGeneva = () => {
         ) : hasActiveIncidents ? (
           <button
             onClick={() => setIsSidebarVisible(true)}
-            className="hidden xl:flex fixed top-28 right-4 items-center gap-2 rounded-full px-3 py-1.5 text-xs border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 transition-colors shadow-sm"
+            className="hidden xl:flex fixed top-28 right-4 items-center gap-2 rounded-full px-3 py-1.5 text-xs border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 transition-colors shadow-xs"
             aria-label="Show live incidents"
           >
             <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />

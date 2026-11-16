@@ -2,7 +2,7 @@ import { SHORE_PATH_MAP_MILES } from "@/lib/shorePathPlanning";
 import { useState, useEffect, useRef } from "react";
 import { getSiteOrigin } from "@/lib/cityId";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useSearchParams, Link } from "react-router-dom";
+import { useSearchParams, Link } from "@/lib/router-compat";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -102,7 +102,7 @@ const LiveColumnHeader = () => {
   return (
       <div className="mb-4">
       {/* Bold dark header - warmer than pure black */}
-      <div className="bg-slate-800 text-white px-3 py-2.5 mb-3 rounded-sm">
+      <div className="bg-slate-800 text-white px-3 py-2.5 mb-3 rounded-xs">
         <div className="flex items-center gap-2">
           <span className="text-[10px] font-mono uppercase tracking-widest">[RIGHT NOW]</span>
           {isActive ? (
@@ -132,14 +132,14 @@ const PresentedBySectionCompact = ({ sponsor, marketData }: { sponsor: any; mark
     : null;
 
   return (
-    <div className="rounded-sm bg-gradient-to-r from-muted/30 via-background to-primary/5 border border-border px-4 py-3">
+    <div className="rounded-xs bg-gradient-to-r from-muted/30 via-background to-primary/5 border border-border px-4 py-3">
       <div className="flex items-center justify-between gap-4">
         {/* Left: Photo + Name */}
         <Link 
           to="/selling-lake-geneva"
           className="flex items-center gap-3 group"
         >
-          <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center overflow-hidden border-2 border-background shadow-sm">
+          <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center overflow-hidden border-2 border-background shadow-xs">
             {sponsor.logo_url ? (
               <img src={sponsor.logo_url} alt={`${sponsor.name} — Lake Geneva real estate sponsor logo`} width={40} height={40} className="w-full h-full object-cover" />
             ) : (
@@ -200,24 +200,24 @@ type Story = {
   original_url: string | null;
   image_url: string | null;
   created_at: string;
-  geo_tier?: number | null;
-  geo_label?: string | null;
+  geo_tier?: number | null | undefined;
+  geo_label?: string | null | undefined;
 };
 
 type Sponsor = {
   name: string;
   logo_url: string | null;
   website: string | null;
-  placementId?: string;
-  businessId?: string;
-  category?: string | null;
-  phone?: string | null;
-  description?: string | null;
-  email?: string | null;
-  zillow_url?: string | null;
-  zillow_rating?: number | null;
-  zillow_review_count?: number | null;
-  testimonial_quote?: string | null;
+  placementId?: string | undefined;
+  businessId?: string | undefined;
+  category?: string | null | undefined;
+  phone?: string | null | undefined;
+  description?: string | null | undefined;
+  email?: string | null | undefined;
+  zillow_url?: string | null | undefined;
+  zillow_rating?: number | null | undefined;
+  zillow_review_count?: number | null | undefined;
+  testimonial_quote?: string | null | undefined;
 };
 
 const getRelativeTime = (dateString?: string | null) => {
@@ -594,7 +594,7 @@ const LakeGenevaV2 = () => {
                 <span className="mt-2 inline-block text-xs font-medium text-blue-600">Open the guide →</span>
               </Link>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-                <div className="bg-white rounded-sm border border-slate-200 p-3">
+                <div className="bg-white rounded-xs border border-slate-200 p-3">
                   <WeatherWidget />
                 </div>
                 <LiveIncidentsSidebar />
@@ -665,7 +665,7 @@ const LakeGenevaV2 = () => {
               const deduped = sorted.filter((s) => !shownElsewhere.has(s.id));
               const newsFirst = deduped.length >= 3 ? deduped : sorted;
               return (
-              <div className="mb-6 p-4 bg-slate-50 border border-slate-200 rounded-sm">
+              <div className="mb-6 p-4 bg-slate-50 border border-slate-200 rounded-xs">
                 <p className="text-[10px] font-mono uppercase tracking-wider text-slate-500 mb-3">
                   AT A GLANCE
                 </p>
@@ -713,12 +713,12 @@ const LakeGenevaV2 = () => {
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 {/* Desktop: Toggle Pills */}
                 {!isMobile ? (
-                  <div className="flex items-center gap-1 bg-slate-100 rounded-sm p-1">
+                  <div className="flex items-center gap-1 bg-slate-100 rounded-xs p-1">
                     <button
                       onClick={() => setViewMode('all')}
-                      className={`rounded-sm px-3 py-1.5 text-xs font-mono uppercase tracking-wider transition-colors ${
+                      className={`rounded-xs px-3 py-1.5 text-xs font-mono uppercase tracking-wider transition-colors ${
                         viewMode === 'all'
-                          ? "bg-white text-slate-900 shadow-sm"
+                          ? "bg-white text-slate-900 shadow-xs"
                           : "text-slate-500 hover:text-slate-700"
                       }`}
                     >
@@ -726,9 +726,9 @@ const LakeGenevaV2 = () => {
                     </button>
                     <button
                       onClick={() => setViewMode('topic')}
-                      className={`rounded-sm px-3 py-1.5 text-xs font-mono uppercase tracking-wider transition-colors ${
+                      className={`rounded-xs px-3 py-1.5 text-xs font-mono uppercase tracking-wider transition-colors ${
                         viewMode === 'topic'
-                          ? "bg-white text-slate-900 shadow-sm"
+                          ? "bg-white text-slate-900 shadow-xs"
                           : "text-slate-500 hover:text-slate-700"
                       }`}
                     >
@@ -739,9 +739,9 @@ const LakeGenevaV2 = () => {
                         setViewMode('recent');
                         setNewUpdatesCount(0);
                       }}
-                      className={`rounded-sm px-3 py-1.5 text-xs font-mono uppercase tracking-wider transition-colors flex items-center gap-1.5 ${
+                      className={`rounded-xs px-3 py-1.5 text-xs font-mono uppercase tracking-wider transition-colors flex items-center gap-1.5 ${
                         viewMode === 'recent'
-                          ? "bg-white text-slate-900 shadow-sm"
+                          ? "bg-white text-slate-900 shadow-xs"
                           : "text-slate-500 hover:text-slate-700"
                       }`}
                     >
@@ -758,7 +758,7 @@ const LakeGenevaV2 = () => {
                   <div className="relative">
                     <button
                       onClick={() => setMobileViewDropdownOpen(!mobileViewDropdownOpen)}
-                      className="flex items-center gap-2 bg-slate-100 rounded-sm px-3 py-2 text-xs font-mono uppercase tracking-wider text-slate-700"
+                      className="flex items-center gap-2 bg-slate-100 rounded-xs px-3 py-2 text-xs font-mono uppercase tracking-wider text-slate-700"
                     >
                       {viewMode === 'all' ? 'All Stories' : viewMode === 'topic' ? 'By Topic' : 'Most Recent'}
                       {newUpdatesCount > 0 && viewMode !== 'recent' && (
@@ -769,7 +769,7 @@ const LakeGenevaV2 = () => {
                       <ChevronDown className="w-3.5 h-3.5" />
                     </button>
                     {mobileViewDropdownOpen && (
-                      <div className="absolute top-full left-0 mt-1 bg-white border border-slate-200 rounded-sm shadow-lg z-30">
+                      <div className="absolute top-full left-0 mt-1 bg-white border border-slate-200 rounded-xs shadow-lg z-30">
                         {(['all', 'topic', 'recent'] as const).map((mode) => (
                           <button
                             key={mode}
@@ -797,7 +797,7 @@ const LakeGenevaV2 = () => {
                       <button
                         key={cat}
                         onClick={() => setActiveCategory(cat)}
-                        className={`rounded-sm px-2.5 py-1 text-[11px] font-mono uppercase border transition-colors ${
+                        className={`rounded-xs px-2.5 py-1 text-[11px] font-mono uppercase border transition-colors ${
                           activeCategory === cat
                             ? "bg-blue-600 text-white border-blue-600"
                             : "bg-white text-slate-600 border-slate-200 hover:border-blue-500"
@@ -1020,9 +1020,9 @@ const LakeGenevaV2 = () => {
                         href={story.original_url || '#'}
                         target={story.original_url ? '_blank' : undefined}
                         rel={story.original_url ? 'noopener noreferrer' : undefined}
-                        className="group flex items-start gap-3 py-3 hover:bg-slate-50/60 -mx-2 px-2 rounded-sm transition-colors"
+                        className="group flex items-start gap-3 py-3 hover:bg-slate-50/60 -mx-2 px-2 rounded-xs transition-colors"
                       >
-                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-slate-300 group-hover:bg-[hsl(var(--shore-terracotta))] transition-colors" />
+                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-slate-300 group-hover:bg-[var(--shore-terracotta)] transition-colors" />
                          <div className="flex-1 min-w-0">
                           <h3
                             className="text-[15px] sm:text-base text-slate-900 leading-snug group-hover:text-slate-600 transition-colors"
@@ -1032,7 +1032,7 @@ const LakeGenevaV2 = () => {
                           </h3>
                           <p className="mt-0.5 text-[12px] text-slate-500 flex items-center gap-x-1.5 flex-wrap">
                             {isException && exceptionLabel && (
-                              <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider rounded border bg-amber-50 text-amber-700 border-amber-200">
+                              <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider rounded-sm border bg-amber-50 text-amber-700 border-amber-200">
                                 {exceptionLabel}
                               </span>
                             )}
@@ -1072,14 +1072,14 @@ const LakeGenevaV2 = () => {
                             sectionIdx < orderedKeys.length - 1 &&
                             headlineCounter >= 8 &&
                             headlineCounter < 16;
-                          headlineCounter += items.length;
+                          headlineCounter += items!.length;
                           // Up to 2 items per section get full image cards — but only
                           // stories with a real photo. Stock-fallback stories render as
                           // compact headline rows instead: repeated category stock art
                           // across unrelated stories reads as filler, not coverage.
-                          const cardItems = items.filter((s: Story & { _hasRealImage?: boolean }) => s._hasRealImage).slice(0, 2);
+                          const cardItems = items!.filter((s: Story & { _hasRealImage?: boolean | undefined }) => s._hasRealImage).slice(0, 2);
                           const cardIds = new Set(cardItems.map((s: Story) => s.id));
-                          const tailItems = items.filter((s: Story) => !cardIds.has(s.id));
+                          const tailItems = items!.filter((s: Story) => !cardIds.has(s.id));
                           return (
                             <div key={key} className="mb-7">
                               {insertCta && (
@@ -1153,7 +1153,7 @@ const LakeGenevaV2 = () => {
                                   href={story.original_url || '#'}
                                   target={story.original_url ? '_blank' : undefined}
                                   rel={story.original_url ? 'noopener noreferrer' : undefined}
-                                  className="group flex items-baseline gap-2 py-2 hover:bg-slate-50/60 -mx-2 px-2 rounded-sm transition-colors"
+                                  className="group flex items-baseline gap-2 py-2 hover:bg-slate-50/60 -mx-2 px-2 rounded-xs transition-colors"
                                 >
                                   <span className="flex-1 min-w-0 text-[13.5px] text-slate-600 group-hover:text-slate-900 leading-snug truncate">
                                     {story.title}

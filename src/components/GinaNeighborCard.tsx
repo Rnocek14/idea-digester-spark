@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import { Star, Home } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 const GINA_ID = "db06b0ce-2fe3-4a01-a870-7f2aef1913a6";
 
-type Testimonial = { quote: string; attribution?: string; tag?: string };
+type Testimonial = { quote: string; attribution?: string | undefined; tag?: string | undefined };
 
 function dayIndex(): number {
   const d = new Intl.DateTimeFormat("en-CA", {
@@ -57,7 +57,7 @@ export default function GinaNeighborCard() {
     : [];
   const t: Testimonial | null =
     testimonials.length > 0
-      ? testimonials[dayIndex() % testimonials.length]
+      ? testimonials[dayIndex() % testimonials.length] ?? null
       : gina.testimonial_quote
       ? { quote: gina.testimonial_quote }
       : null;
@@ -76,7 +76,7 @@ export default function GinaNeighborCard() {
         onClick={fireClick}
         className="flex items-center gap-3 group"
       >
-        <div className="w-14 h-14 rounded-full bg-slate-100 overflow-hidden border-2 border-white shadow-sm flex-shrink-0 transition-transform group-hover:scale-105">
+        <div className="w-14 h-14 rounded-full bg-slate-100 overflow-hidden border-2 border-white shadow-xs flex-shrink-0 transition-transform group-hover:scale-105">
           {gina.logo_url ? (
             <img
               src={gina.logo_url}

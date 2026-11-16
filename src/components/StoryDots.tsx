@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 export type DotStory = {
   id: string;
   title: string;
-  geo_tier?: number | null;
+  geo_tier?: number | null | undefined;
 };
 
 // Locality palette. Shared by the reel and the homepage so the two surfaces
@@ -22,7 +22,7 @@ const DOT_COLOR: Record<number, string> = {
 };
 
 export const geoTierKey = (tier?: number | null) => (tier === 1 || tier === 2 ? tier : 0);
-export const geoTierLabel = (tier?: number | null) => GEO_PILL[geoTierKey(tier)].label;
+export const geoTierLabel = (tier?: number | null) => GEO_PILL[geoTierKey(tier)]!.label;
 
 const HOLD_MS = 350;
 
@@ -32,8 +32,8 @@ type Props = {
   readIds: Set<string>;
   onJump: (index: number) => void;
   /** Dark chrome (the reel) vs light chrome (the homepage). */
-  tone?: "dark" | "light";
-  className?: string;
+  tone?: "dark" | "light" | undefined;
+  className?: string | undefined;
 };
 
 /**
@@ -139,7 +139,7 @@ export const StoryDots = ({
           return (
             <button
               key={story.id}
-              ref={(el) => (dotRefs.current[index] = el)}
+              ref={(el) => { dotRefs.current[index] = el; }}
               type="button"
               role="tab"
               aria-selected={isActive}

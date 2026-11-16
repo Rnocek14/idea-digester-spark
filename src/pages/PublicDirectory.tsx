@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@/lib/router-compat";
 import PageShell from "@/components/PageShell";
 import { PageMeta } from "@/components/PageMeta";
 import { LG_CORE_KEYWORDS, LG_GEO_KEYWORDS } from "@/lib/seoKeywords";
@@ -22,7 +22,7 @@ type Business = {
 
 type BusinessWithSponsor = Business & {
   is_sponsor: boolean;
-  placementId?: string;
+  placementId?: string | undefined;
 };
 
 const PublicDirectory = () => {
@@ -138,7 +138,7 @@ const PublicDirectory = () => {
         </header>
 
         {/* Filters */}
-        <section className="mb-6 rounded-sm border border-slate-100 bg-white/80 px-4 py-3 shadow-sm backdrop-blur-sm">
+        <section className="mb-6 rounded-xs border border-slate-100 bg-white/80 px-4 py-3 shadow-xs backdrop-blur-xs">
           <div className="flex flex-wrap items-center justify-between gap-3">
             {/* Category pills */}
             <div className="flex flex-wrap gap-2">
@@ -146,7 +146,7 @@ const PublicDirectory = () => {
                 <button
                   key={cat}
                   type="button"
-                  onClick={() => setActiveCategory(cat)}
+                  onClick={() => setActiveCategory(cat!)}
                   className={`rounded-full px-3 py-1.5 text-xs font-medium border transition-colors ${
                     activeCategory === cat
                       ? 'bg-blue-600 text-white border-blue-600'
@@ -168,13 +168,13 @@ const PublicDirectory = () => {
 
         {/* Loading / Empty */}
         {isLoading && (
-          <div className="rounded-sm border border-slate-100 bg-white p-6 text-sm text-slate-500 shadow-sm">
+          <div className="rounded-xs border border-slate-100 bg-white p-6 text-sm text-slate-500 shadow-xs">
             Loading directory...
           </div>
         )}
 
         {!isLoading && sortedBusinesses.length === 0 && (
-          <div className="rounded-sm border border-dashed border-slate-200 bg-white/60 p-6 text-sm text-slate-500 shadow-sm">
+          <div className="rounded-xs border border-dashed border-slate-200 bg-white/60 p-6 text-sm text-slate-500 shadow-xs">
             No businesses found in this category yet. Check back soon or{' '}
             <button
               type="button"
@@ -195,7 +195,7 @@ const PublicDirectory = () => {
               return (
                 <article
                   key={business.id}
-                  className={`group relative flex flex-col rounded-sm border bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+                  className={`group relative flex flex-col rounded-xs border bg-white p-4 shadow-xs transition hover:-translate-y-0.5 hover:shadow-md ${
                     isSponsor
                       ? 'border-amber-200 ring-1 ring-amber-100/60'
                       : 'border-slate-100'
@@ -211,7 +211,7 @@ const PublicDirectory = () => {
                   <div className="flex gap-4">
                     {/* Logo */}
                     {business.logo_url && (
-                      <div className="mt-1 h-12 w-12 flex-shrink-0 overflow-hidden rounded-sm bg-slate-100">
+                      <div className="mt-1 h-12 w-12 flex-shrink-0 overflow-hidden rounded-xs bg-slate-100">
                         <img
                           src={business.logo_url}
                           alt={`${business.name} logo`}
@@ -292,7 +292,7 @@ const PublicDirectory = () => {
         )}
 
         {/* CTA */}
-        <section className="mt-10 rounded-sm border border-slate-100 bg-white/80 px-5 py-4 text-sm text-slate-700 shadow-sm">
+        <section className="mt-10 rounded-xs border border-slate-100 bg-white/80 px-5 py-4 text-sm text-slate-700 shadow-xs">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="font-medium text-slate-900">
@@ -306,7 +306,7 @@ const PublicDirectory = () => {
             <button
               type="button"
               onClick={() => navigate('/advertise')}
-              className="inline-flex items-center rounded-full bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700"
+              className="inline-flex items-center rounded-full bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-blue-700"
             >
               Learn about advertising
             </button>

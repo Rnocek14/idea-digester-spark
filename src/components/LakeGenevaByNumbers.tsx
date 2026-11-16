@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -33,7 +33,7 @@ export default function LakeGenevaByNumbers() {
       : null;
   const yoyPositive = (data.yoy_change ?? 0) > 0;
 
-  const rows: { label: string; value: string; tone?: "up" | "down" }[] = [];
+  const rows: { label: string; value: string; tone?: "up" | "down" | undefined }[] = [];
   if (median) rows.push({ label: "Median price", value: median });
   if (yoy)
     rows.push({

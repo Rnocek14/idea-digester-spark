@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import { GuideShell } from "@/components/guides/GuideShell";
 import { SoftRealEstateCTA } from "@/components/guides/SoftRealEstateCTA";
 
@@ -105,7 +105,7 @@ export default function StreblowBoats() {
                 Four moments, in order — the distance between "a man building boats in Wisconsin"
                 and "a boat you can name from a bench on the Shore Path."
               </p>
-              <ol className="not-prose mt-4 rounded-sm border border-slate-200 bg-white divide-y divide-slate-100">
+              <ol className="not-prose mt-4 rounded-xs border border-slate-200 bg-white divide-y divide-slate-100">
                 {TIMELINE.map((t) => (
                   <li key={t.when} className="p-4 sm:p-5">
                     <p className="text-[10px] font-mono uppercase tracking-widest text-slate-500">
@@ -363,7 +363,7 @@ export default function StreblowBoats() {
 
               {/* Series footer — the framing already existed in the copy; this
                   makes it navigable. */}
-              <div className="not-prose mt-8 rounded-sm border border-slate-200 bg-white p-5">
+              <div className="not-prose mt-8 rounded-xs border border-slate-200 bg-white p-5">
                 <p className="text-[10px] font-mono uppercase tracking-widest text-slate-500">
                   Lake Geneva Icons
                 </p>
@@ -398,7 +398,7 @@ export default function StreblowBoats() {
                 </ul>
               </div>
 
-              <div className="not-prose mt-6 rounded-sm border-l-2 border-slate-300 pl-4">
+              <div className="not-prose mt-6 rounded-xs border-l-2 border-slate-300 pl-4">
                 <p className="text-[10px] font-mono uppercase tracking-widest text-slate-500">
                   How this page was put together
                 </p>

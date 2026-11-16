@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getCurrentTier, getNextTier, REFERRAL_TIERS } from "@/lib/referralTracking";
 
 interface ReferralProgramProps {
-  subscriberEmail?: string;
+  subscriberEmail?: string | undefined;
 }
 
 export const ReferralProgram = ({ subscriberEmail }: ReferralProgramProps) => {
@@ -41,7 +41,7 @@ export const ReferralProgram = ({ subscriberEmail }: ReferralProgramProps) => {
 
   // Generate a display code if we don't have a real one yet
   const displayCode = referralCode || (subscriberEmail 
-    ? subscriberEmail.split('@')[0].slice(0, 6).toUpperCase()
+    ? subscriberEmail.split('@')[0]!.slice(0, 6).toUpperCase()
     : Math.random().toString(36).substring(2, 8).toUpperCase());
   
   const referralLink = `${window.location.origin}/?ref=${displayCode}`;
@@ -80,10 +80,10 @@ export const ReferralProgram = ({ subscriberEmail }: ReferralProgramProps) => {
     return (
       <Card className="border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 animate-pulse">
         <CardHeader className="pb-3">
-          <div className="h-5 bg-amber-200 rounded w-32" />
+          <div className="h-5 bg-amber-200 rounded-sm w-32" />
         </CardHeader>
         <CardContent>
-          <div className="h-20 bg-amber-100 rounded" />
+          <div className="h-20 bg-amber-100 rounded-sm" />
         </CardContent>
       </Card>
     );
@@ -128,7 +128,7 @@ export const ReferralProgram = ({ subscriberEmail }: ReferralProgramProps) => {
             </p>
             <div className="grid grid-cols-2 gap-2">
               {REFERRAL_TIERS.slice(0, 2).map((tier) => (
-                <div key={tier.name} className="bg-white/60 rounded p-2 text-center">
+                <div key={tier.name} className="bg-white/60 rounded-sm p-2 text-center">
                   <span className="text-lg">{tier.badge}</span>
                   <div className="text-xs font-medium text-slate-700">{tier.count}+ = {tier.name}</div>
                 </div>

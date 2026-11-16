@@ -13,7 +13,7 @@ import { format } from "date-fns";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Deal = Tables<"ambassador_deals"> & {
-  business_profiles?: { name: string } | null;
+  business_profiles?: { name: string } | null | undefined;
 };
 
 const AdminDeals = () => {
@@ -167,7 +167,7 @@ const AdminDeals = () => {
                       </TableCell>
                       <TableCell>
                         {deal.discount_code ? (
-                          <code className="bg-muted px-2 py-1 rounded text-sm">
+                          <code className="bg-muted px-2 py-1 rounded-sm text-sm">
                             {deal.discount_code}
                           </code>
                         ) : (
@@ -202,7 +202,7 @@ const AdminDeals = () => {
                           <Switch
                             checked={deal.is_active ?? false}
                             onCheckedChange={() => handleToggleActive(deal)}
-                            disabled={isExpired}
+                            disabled={Boolean(isExpired)}
                           />
                           <Button
                             variant="ghost"

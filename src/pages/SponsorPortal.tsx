@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams } from "@/lib/router-compat";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import PageShell from "@/components/PageShell";
@@ -59,7 +59,7 @@ interface TokenData {
     id: string;
     name: string;
     email: string | null;
-  };
+  } | undefined;
 }
 
 interface Invoice {
@@ -85,7 +85,7 @@ interface Placement {
   slot?: {
     name: string;
     channel: string;
-  };
+  } | undefined;
 }
 
 const getStatusBadge = (status: string) => {
@@ -158,16 +158,16 @@ export default function SponsorPortal() {
       if (error || !data || data.length === 0) return null;
       const row = data[0];
 
-      if (!row.used_at) {
+      if (!row!.used_at) {
         await supabase.rpc("mark_sponsor_token_used", { _token: token });
       }
 
       return {
-        email: row.email,
-        business_id: row.business_id,
-        expires_at: row.expires_at,
-        used_at: row.used_at,
-        business: { id: row.business_id, name: row.business_name, email: row.email },
+        email: row!.email,
+        business_id: row!.business_id,
+        expires_at: row!.expires_at,
+        used_at: row!.used_at,
+        business: { id: row!.business_id, name: row!.business_name, email: row!.email },
       } as TokenData;
     },
     enabled: !!token,

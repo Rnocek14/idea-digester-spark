@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import { Trash2, Bookmark } from "lucide-react";
 import PageShell from "@/components/PageShell";
 import { PageMeta } from "@/components/PageMeta";

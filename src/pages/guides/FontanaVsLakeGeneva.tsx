@@ -1,6 +1,6 @@
 import { GuideShell } from "@/components/guides/GuideShell";
 import { SoftRealEstateCTA } from "@/components/guides/SoftRealEstateCTA";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 
 const TODAY = "2026-06-05";
 const UPDATED = "2026-07-29";
@@ -109,7 +109,7 @@ export default function FontanaVsLakeGeneva() {
                 decision.
               </p>
               <div
-                className="not-prose overflow-x-auto scroll-x-hint rounded-sm border border-slate-200 bg-white"
+                className="not-prose overflow-x-auto scroll-x-hint rounded-xs border border-slate-200 bg-white"
                 role="region"
                 aria-label="Comparison table, scrollable"
                 tabIndex={0}

@@ -26,7 +26,7 @@ type Props = {
    * triggered it. The server re-checks these coordinates before it will record a
    * stop as verified, so this is a report rather than an assertion.
    */
-  onArrival?: (arrival: ArrivalRecord) => void;
+  onArrival?: ((arrival: ArrivalRecord) => void) | undefined;
 };
 
 type Phase = "preamble" | "active";
@@ -106,7 +106,7 @@ export function GuidedWalkController({ open, onClose, stops, onJumpToStop, onArr
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm">
+    <div className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-xs">
       <div className="absolute inset-x-0 bottom-0 sm:inset-0 sm:flex sm:items-center sm:justify-center">
         <div className="mx-auto max-w-md w-full bg-white rounded-t-2xl sm:rounded-2xl border border-slate-200 shadow-xl">
           <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">

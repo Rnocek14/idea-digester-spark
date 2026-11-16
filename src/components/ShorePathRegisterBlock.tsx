@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import { Award, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 

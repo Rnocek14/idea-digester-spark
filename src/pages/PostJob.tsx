@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@/lib/router-compat";
 import { supabase } from "@/integrations/supabase/client";
 import PageShell from "@/components/PageShell";
 import { PageMeta } from "@/components/PageMeta";
@@ -236,7 +236,7 @@ const PostJob = () => {
               </ul>
               {formData.pricing_tier === tier.value && (
                 <div className="mt-3 flex items-center justify-center">
-                  <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded">
+                  <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-sm">
                     Selected
                   </span>
                 </div>
@@ -259,10 +259,10 @@ const PostJob = () => {
                   value={formData.business_name || ""}
                   onChange={(e) => updateField("business_name", e.target.value)}
                   placeholder="Your business name"
-                  className={errors.business_name ? "border-destructive" : ""}
+                  className={errors["business_name"] ? "border-destructive" : ""}
                 />
-                {errors.business_name && (
-                  <p className="text-xs text-destructive mt-1">{errors.business_name}</p>
+                {errors["business_name"] && (
+                  <p className="text-xs text-destructive mt-1">{errors["business_name"]}</p>
                 )}
               </div>
 
@@ -288,10 +288,10 @@ const PostJob = () => {
                   value={formData.title || ""}
                   onChange={(e) => updateField("title", e.target.value)}
                   placeholder="e.g., Line Cook, Server, Sales Associate"
-                  className={errors.title ? "border-destructive" : ""}
+                  className={errors["title"] ? "border-destructive" : ""}
                 />
-                {errors.title && (
-                  <p className="text-xs text-destructive mt-1">{errors.title}</p>
+                {errors["title"] && (
+                  <p className="text-xs text-destructive mt-1">{errors["title"]}</p>
                 )}
               </div>
 
@@ -302,7 +302,7 @@ const PostJob = () => {
                     value={formData.category || ""}
                     onValueChange={(v) => updateField("category", v)}
                   >
-                    <SelectTrigger className={errors.category ? "border-destructive" : ""}>
+                    <SelectTrigger className={errors["category"] ? "border-destructive" : ""}>
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
@@ -313,8 +313,8 @@ const PostJob = () => {
                       ))}
                     </SelectContent>
                   </Select>
-                  {errors.category && (
-                    <p className="text-xs text-destructive mt-1">{errors.category}</p>
+                  {errors["category"] && (
+                    <p className="text-xs text-destructive mt-1">{errors["category"]}</p>
                   )}
                 </div>
 
@@ -324,7 +324,7 @@ const PostJob = () => {
                     value={formData.job_type || ""}
                     onValueChange={(v) => updateField("job_type", v)}
                   >
-                    <SelectTrigger className={errors.job_type ? "border-destructive" : ""}>
+                    <SelectTrigger className={errors["job_type"] ? "border-destructive" : ""}>
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -335,8 +335,8 @@ const PostJob = () => {
                       ))}
                     </SelectContent>
                   </Select>
-                  {errors.job_type && (
-                    <p className="text-xs text-destructive mt-1">{errors.job_type}</p>
+                  {errors["job_type"] && (
+                    <p className="text-xs text-destructive mt-1">{errors["job_type"]}</p>
                   )}
                 </div>
               </div>
@@ -349,10 +349,10 @@ const PostJob = () => {
                   onChange={(e) => updateField("description", e.target.value)}
                   placeholder="Describe the position, responsibilities, and requirements..."
                   rows={5}
-                  className={errors.description ? "border-destructive" : ""}
+                  className={errors["description"] ? "border-destructive" : ""}
                 />
-                {errors.description && (
-                  <p className="text-xs text-destructive mt-1">{errors.description}</p>
+                {errors["description"] && (
+                  <p className="text-xs text-destructive mt-1">{errors["description"]}</p>
                 )}
               </div>
 
@@ -386,10 +386,10 @@ const PostJob = () => {
                   value={formData.contact_email || ""}
                   onChange={(e) => updateField("contact_email", e.target.value)}
                   placeholder="hiring@yourbusiness.com"
-                  className={errors.contact_email ? "border-destructive" : ""}
+                  className={errors["contact_email"] ? "border-destructive" : ""}
                 />
-                {errors.contact_email && (
-                  <p className="text-xs text-destructive mt-1">{errors.contact_email}</p>
+                {errors["contact_email"] && (
+                  <p className="text-xs text-destructive mt-1">{errors["contact_email"]}</p>
                 )}
                 <p className="text-xs text-muted-foreground mt-1">
                   Used for applications and payment confirmation
@@ -415,10 +415,10 @@ const PostJob = () => {
                   value={formData.apply_url || ""}
                   onChange={(e) => updateField("apply_url", e.target.value)}
                   placeholder="https://yourbusiness.com/careers"
-                  className={errors.apply_url ? "border-destructive" : ""}
+                  className={errors["apply_url"] ? "border-destructive" : ""}
                 />
-                {errors.apply_url && (
-                  <p className="text-xs text-destructive mt-1">{errors.apply_url}</p>
+                {errors["apply_url"] && (
+                  <p className="text-xs text-destructive mt-1">{errors["apply_url"]}</p>
                 )}
                 <p className="text-xs text-muted-foreground mt-1">
                   If blank, applicants will email you directly

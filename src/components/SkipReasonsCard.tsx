@@ -86,7 +86,7 @@ export const SkipReasonsCard = () => {
         <CardContent>
           <div className="animate-pulse space-y-2">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-8 bg-muted rounded" />
+              <div key={i} className="h-8 bg-muted rounded-sm" />
             ))}
           </div>
         </CardContent>
@@ -98,16 +98,16 @@ export const SkipReasonsCard = () => {
   const hasSkips = sortedReasons24h.length > 0;
 
   // Determine if duplicates dominate (diagnostic insight)
-  const duplicateCount = (skipData.by24h.duplicate_url || 0) + 
-                         (skipData.by24h.duplicate_title || 0) + 
-                         (skipData.by24h.duplicate_event || 0) +
-                         (skipData.by24h.duplicate_source_date || 0);
-  const nonlocalCount = (skipData.by24h.nonlocal_destination || 0) + 
-                        (skipData.by24h.regional_nonlocal || 0);
-  const junkCount = (skipData.by24h.junk_url || 0) + (skipData.by24h.blocked_title || 0);
+  const duplicateCount = (skipData.by24h["duplicate_url"] || 0) + 
+                         (skipData.by24h["duplicate_title"] || 0) + 
+                         (skipData.by24h["duplicate_event"] || 0) +
+                         (skipData.by24h["duplicate_source_date"] || 0);
+  const nonlocalCount = (skipData.by24h["nonlocal_destination"] || 0) + 
+                        (skipData.by24h["regional_nonlocal"] || 0);
+  const junkCount = (skipData.by24h["junk_url"] || 0) + (skipData.by24h["blocked_title"] || 0);
 
-  const eventCapCount = skipData.by24h.daily_event_cap_reached || 0;
-  const aiFailedCount = skipData.by24h.ai_failed || 0;
+  const eventCapCount = skipData.by24h["daily_event_cap_reached"] || 0;
+  const aiFailedCount = skipData.by24h["ai_failed"] || 0;
 
   let dominantIssue = "";
   if (skipData.total24h > 0) {

@@ -23,7 +23,7 @@ export type RegisterEntry = {
   completed_at: string;
   days_elapsed: number | null;
   verification: Verification;
-  certificate_code?: string;
+  certificate_code?: string | undefined;
 };
 
 export type WalkerProfile = {
@@ -57,7 +57,7 @@ type PendingVisit = {
   longitude: number;
   accuracy_m: number | null;
   /** Groups the stops of one outing so a single crowd answer covers them all. */
-  session_id?: string | null;
+  session_id?: string | null | undefined;
 };
 
 function readToken(): string | null {
@@ -114,22 +114,22 @@ function writePending(list: PendingVisit[]) {
 }
 
 type InvokeResult = {
-  success?: boolean;
-  claim_token?: string;
-  walker?: WalkerProfile;
-  progress?: RegisterProgress;
-  entries?: RegisterEntry[];
-  newly_earned?: RegisterEntry[];
-  error?: string;
-  reason?: string;
-  distance_m?: number | null;
+  success?: boolean | undefined;
+  claim_token?: string | undefined;
+  walker?: WalkerProfile | undefined;
+  progress?: RegisterProgress | undefined;
+  entries?: RegisterEntry[] | undefined;
+  newly_earned?: RegisterEntry[] | undefined;
+  error?: string | undefined;
+  reason?: string | undefined;
+  distance_m?: number | null | undefined;
 };
 
 async function invoke(body: Record<string, unknown>): Promise<InvokeResult> {
   const { data, error } = await supabase.functions.invoke("path-register", { body });
   if (error) {
     // A non-2xx carries the useful message in the response body, not in error.
-    const ctx = (error as { context?: Response }).context;
+    const ctx = (error as { context?: Response | undefined }).context;
     if (ctx && typeof ctx.json === "function") {
       const parsed = await ctx.json().catch(() => null);
       if (parsed?.error) return parsed as InvokeResult;
@@ -170,7 +170,7 @@ export function usePathRegister() {
     if (result.newly_earned && result.newly_earned.length > 0) {
       // Announce the highest tier earned; four_seasons outranks loop.
       const best = result.newly_earned.find((e) => e.tier === "four_seasons") ?? result.newly_earned[0];
-      setNewlyEarned(best);
+      setNewlyEarned(best!);
     }
   }, []);
 
@@ -271,7 +271,7 @@ export function usePathRegister() {
    * on failure: this is a nice-to-have on top of a walk, not the walk.
    */
   const recordConditions = useCallback(
-    async (answer: { crowd_level?: CrowdLevel; group_size_band?: GroupSizeBand }): Promise<void> => {
+    async (answer: { crowd_level?: CrowdLevel | undefined; group_size_band?: GroupSizeBand | undefined }): Promise<void> => {
       const t = readToken();
       const sessionId = conditionsPrompt ?? currentSessionId();
       if (!t || !sessionId) return;

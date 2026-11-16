@@ -6,7 +6,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import { storyPath } from "@/lib/slug";
 
 interface Suggestion {

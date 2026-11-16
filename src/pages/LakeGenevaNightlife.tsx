@@ -24,9 +24,9 @@ type NightlifeEvent = {
   original_url: string | null;
   image_url: string | null;
   metadata: {
-    verticals?: string[];
-    content_tags?: string[];
-    recurring_days?: string[];
+    verticals?: string[] | undefined;
+    content_tags?: string[] | undefined;
+    recurring_days?: string[] | undefined;
   } | null;
 };
 
@@ -57,7 +57,7 @@ const extractVenue = (title: string): string | null => {
   // Try to extract from "at [Venue]" pattern
   const atMatch = title.match(/at\s+([^,–-]+)/i);
   if (atMatch) {
-    return atMatch[1].trim();
+    return atMatch[1]!.trim();
   }
   return null;
 };
@@ -181,7 +181,7 @@ const LakeGenevaNightlife = () => {
         ]}
       />
       {/* Hero Section */}
-      <div className="relative -mx-4 sm:-mx-6 lg:-mx-8 mb-8 overflow-hidden rounded-b-sm bg-[hsl(var(--lake-navy))] px-6 py-12 text-white">
+      <div className="relative -mx-4 sm:-mx-6 lg:-mx-8 mb-8 overflow-hidden rounded-b-xs bg-[var(--lake-navy)] px-6 py-12 text-white">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-50"></div>
         <div className="relative max-w-2xl">
           <div className="flex items-center gap-2 mb-3">
@@ -378,9 +378,9 @@ const EventCard = ({
   showRecurring = false
 }: { 
   event: NightlifeEvent; 
-  showDate?: boolean;
-  compact?: boolean;
-  showRecurring?: boolean;
+  showDate?: boolean | undefined;
+  compact?: boolean | undefined;
+  showRecurring?: boolean | undefined;
 }) => {
   const venue = extractVenue(event.title);
   const performer = event.performer || event.title.split(" at ")[0]?.trim();

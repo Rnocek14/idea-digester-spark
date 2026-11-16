@@ -1,6 +1,6 @@
 import { GuideShell } from "@/components/guides/GuideShell";
 import { SoftRealEstateCTA } from "@/components/guides/SoftRealEstateCTA";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 
 const PUBLISHED = "2026-06-05";
 const UPDATED = "2026-07-29";
@@ -141,7 +141,7 @@ export default function LakeGenevaSchools() {
                 where its students go to high school.
               </p>
               <div
-                className="not-prose overflow-x-auto scroll-x-hint rounded-sm border border-slate-200 bg-white"
+                className="not-prose overflow-x-auto scroll-x-hint rounded-xs border border-slate-200 bg-white"
                 role="region"
                 aria-label="Comparison table, scrollable"
                 tabIndex={0}
@@ -527,7 +527,7 @@ export default function LakeGenevaSchools() {
                 deadlines, and report-card data shift year to year. These
                 are the primary sources, not aggregators:
               </p>
-              <div className="not-prose rounded-sm border border-slate-200 bg-white divide-y divide-slate-100">
+              <div className="not-prose rounded-xs border border-slate-200 bg-white divide-y divide-slate-100">
                 {OFFICIAL_SOURCES.map((s) => (
                   <div key={s.url} className="p-4">
                     <a

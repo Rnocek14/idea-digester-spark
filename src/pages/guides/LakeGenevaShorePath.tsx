@@ -1,7 +1,7 @@
 import { SHORE_PATH_LEGS, SHORE_PATH_MAP_MILES, SHORE_PATH_MAP_URL } from "@/lib/shorePathPlanning";
 import { GuideNewsletterCTA } from "@/components/guides/GuideNewsletterCTA";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import { PublicHeader } from "@/components/PublicHeader";
 import { PageMeta } from "@/components/PageMeta";
 import { Button } from "@/components/ui/button";
@@ -253,7 +253,7 @@ export default function LakeGenevaShorePath() {
     const el = mapRef.current;
     if (!el || typeof IntersectionObserver === "undefined") return;
     const io = new IntersectionObserver(
-      ([entry]) => setMapInView(entry.isIntersecting),
+      ([entry]) => setMapInView(entry!.isIntersecting),
       { threshold: 0.05 },
     );
     io.observe(el);
@@ -1354,7 +1354,7 @@ function RelatedCard({ to, title, blurb }: { to: string; title: string; blurb: s
   return (
     <Link
       to={to}
-      className="block rounded-md border border-slate-200 bg-white p-4 hover:border-blue-500 hover:shadow-sm transition-all"
+      className="block rounded-md border border-slate-200 bg-white p-4 hover:border-blue-500 hover:shadow-xs transition-all"
     >
       <p className="font-display text-lg text-slate-900">{title}</p>
       <p className="text-sm text-slate-600 mt-1 leading-relaxed">{blurb}</p>

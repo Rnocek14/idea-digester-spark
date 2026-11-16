@@ -1,6 +1,6 @@
 import { GuideShell } from "@/components/guides/GuideShell";
 import { SoftRealEstateCTA } from "@/components/guides/SoftRealEstateCTA";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 
 const TODAY = "2026-06-05";
 const UPDATED = "2026-07-29";
@@ -86,7 +86,7 @@ export default function ThisWeekendLakeGeneva() {
         </>
       }
       introExtra={
-        <div className="not-prose rounded-sm border border-slate-200 bg-white p-5">
+        <div className="not-prose rounded-xs border border-slate-200 bg-white p-5">
           <p className="text-[10px] font-mono uppercase tracking-widest text-slate-500 mb-2">
             What's on right now
           </p>
@@ -145,7 +145,7 @@ export default function ThisWeekendLakeGeneva() {
                 variations on one itinerary — they're different problems.
               </p>
               <div
-                className="overflow-x-auto scroll-x-hint rounded-sm border border-slate-200 bg-white"
+                className="overflow-x-auto scroll-x-hint rounded-xs border border-slate-200 bg-white"
                 role="region"
                 aria-label="Comparison table, scrollable"
                 tabIndex={0}

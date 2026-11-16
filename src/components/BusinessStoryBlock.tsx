@@ -87,7 +87,7 @@ export default function BusinessStoryBlock() {
           src={story.photo_url}
           alt={story.headline}
           loading="lazy"
-          className="w-full h-48 sm:h-56 object-cover rounded mb-3"
+          className="w-full h-48 sm:h-56 object-cover rounded-sm mb-3"
         />
       )}
 

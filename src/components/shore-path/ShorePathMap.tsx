@@ -5,16 +5,16 @@ import type { ShorePathStopRow } from "@/hooks/useShorePathStops";
 type Props = {
   stops: ShorePathStopRow[];
   /** Highlighted stop (Walking Mode current position, or last-jumped). */
-  activeStopId?: string | null;
+  activeStopId?: string | null | undefined;
   /** Walking Mode legacy click handler (no peek — direct select). */
-  onStopClick?: (stop: ShorePathStopRow) => void;
+  onStopClick?: ((stop: ShorePathStopRow) => void) | undefined;
   /** Called when the user clicks "Jump to this stop" in the peek card. */
-  onJumpToStop?: (stop: ShorePathStopRow) => void;
+  onJumpToStop?: ((stop: ShorePathStopRow) => void) | undefined;
   /** Called when the user clicks "Start walk from here" in the peek card. */
-  onStartWalkFromStop?: (stop: ShorePathStopRow) => void;
+  onStartWalkFromStop?: ((stop: ShorePathStopRow) => void) | undefined;
   /** Visual size variant. */
-  size?: "hero" | "mini";
-  className?: string;
+  size?: "hero" | "mini" | undefined;
+  className?: string | undefined;
 };
 
 /**
@@ -180,7 +180,7 @@ export function ShorePathMap({
                 <button
                   type="button"
                   aria-label={`Stop ${stop.order_index}: ${stop.name}. Preview and jump.`}
-                  className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 hover:bg-amber-400/20 transition-colors"
+                  className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full focus:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 hover:bg-amber-400/20 transition-colors"
                   style={{
                     left: `${leftPct}%`,
                     top: `${topPct}%`,

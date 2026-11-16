@@ -296,7 +296,7 @@ export function SubscriberManagementModal({ open, onOpenChange }: SubscriberMana
       try {
         const csv = event.target?.result as string;
         const lines = csv.split("\n").filter(Boolean);
-        const headers = lines[0].split(",").map(h => h.trim().toLowerCase());
+        const headers = lines[0]!.split(",").map(h => h.trim().toLowerCase());
         
         const emailIndex = headers.indexOf("email");
         if (emailIndex === -1) {
@@ -315,7 +315,7 @@ export function SubscriberManagementModal({ open, onOpenChange }: SubscriberMana
             source: sourceIndex >= 0 ? (cols[sourceIndex]?.trim() || "csv_import") : "csv_import",
             status: "active",
           };
-        }).filter(s => s.email && s.email.includes("@"));
+        }).filter((s): s is typeof s & { email: string } => Boolean(s.email && s.email.includes("@")));
 
         if (toImport.length === 0) {
           toast.error("No valid emails found in CSV");

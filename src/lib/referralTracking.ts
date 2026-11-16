@@ -57,7 +57,7 @@ export const REFERRAL_TIERS = [
 export const getCurrentTier = (referralCount: number) => {
   // Find the highest tier the user qualifies for
   for (let i = REFERRAL_TIERS.length - 1; i >= 0; i--) {
-    if (referralCount >= REFERRAL_TIERS[i].count) {
+    if (referralCount >= REFERRAL_TIERS[i]!.count) {
       return REFERRAL_TIERS[i];
     }
   }

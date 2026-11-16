@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink } from "@/lib/router-compat";
 import { format } from "date-fns";
 import { LakeLine } from "@/components/LakeLine";
 import { useCityConfig } from "@/hooks/useCityConfig";
@@ -16,10 +16,10 @@ const navItems = [
 ];
 
 type PageShellProps = {
-  title?: string;
-  description?: string;
+  title?: string | undefined;
+  description?: string | undefined;
   children: React.ReactNode;
-  fullWidth?: boolean;
+  fullWidth?: boolean | undefined;
 };
 
 const PageShell: React.FC<PageShellProps> = ({
@@ -40,7 +40,7 @@ const PageShell: React.FC<PageShellProps> = ({
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       {/* Top header */}
-      <header className="sticky top-0 z-30 relative bg-white/80 backdrop-blur-sm">
+      <header className="sticky top-0 z-30 relative bg-white/80 backdrop-blur-xs">
         {/* Top strip: date + tagline */}
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-2 text-xs text-slate-500">
           <span className="flex items-baseline gap-2">
@@ -48,7 +48,7 @@ const PageShell: React.FC<PageShellProps> = ({
             <span className="sm:hidden">{shortDate}</span>
             <span className="hidden md:inline text-slate-400">·</span>
             <span
-              className="hidden md:inline text-[11px] uppercase tracking-[0.18em] text-[hsl(var(--shore-terracotta))]/80"
+              className="hidden md:inline text-[11px] uppercase tracking-[0.18em] text-[var(--shore-terracotta)]/80"
               style={{ fontFamily: "'Playfair Display', serif", letterSpacing: "0.14em" }}
             >
               {issueLine}
@@ -67,7 +67,7 @@ const PageShell: React.FC<PageShellProps> = ({
           {/* Logo / brand */}
           <Link to="/" className="flex items-baseline gap-2 group">
             <span
-              className="text-2xl tracking-tight text-slate-900 group-hover:text-[hsl(var(--lake-deep))] transition-colors leading-none"
+              className="text-2xl tracking-tight text-slate-900 group-hover:text-[var(--lake-deep)] transition-colors leading-none"
               style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700 }}
             >
               {city.site_name}
@@ -83,7 +83,7 @@ const PageShell: React.FC<PageShellProps> = ({
               <NavLink
                 key={item.to}
                 to={item.to}
-                className={({ isActive }) =>
+                className={({ isActive }: { isActive: boolean }) =>
                   [
                     "rounded-full px-3 py-1 transition-colors",
                     isActive
@@ -113,7 +113,7 @@ const PageShell: React.FC<PageShellProps> = ({
               <NavLink
                 key={item.to}
                 to={item.to}
-                className={({ isActive }) =>
+                className={({ isActive }: { isActive: boolean }) =>
                   [
                     "whitespace-nowrap rounded-full px-2 py-1",
                     isActive
@@ -150,11 +150,11 @@ const PageShell: React.FC<PageShellProps> = ({
               {city.site_name}
             </span>
             <div className="flex items-center gap-3">
-              <span className="h-px w-8 bg-[hsl(var(--shore-terracotta))]/40" />
-              <span className="text-[11px] uppercase tracking-[0.22em] text-[hsl(var(--shore-terracotta))]/80">
+              <span className="h-px w-8 bg-[var(--shore-terracotta)]/40" />
+              <span className="text-[11px] uppercase tracking-[0.22em] text-[var(--shore-terracotta)]/80">
                 {city.theme.footer_kicker}
               </span>
-              <span className="h-px w-8 bg-[hsl(var(--shore-terracotta))]/40" />
+              <span className="h-px w-8 bg-[var(--shore-terracotta)]/40" />
             </div>
             <p
               className="max-w-md text-sm italic text-slate-600 leading-relaxed"

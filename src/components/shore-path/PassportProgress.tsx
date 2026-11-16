@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import type { RegisterProgress, RegisterEntry, SeasonBucket, WalkerProfile } from "@/hooks/usePathRegister";
 
 const SEASON_LABELS: Record<SeasonBucket, string> = {
@@ -118,7 +118,7 @@ export function PassportProgress({
       </p>
 
       {pendingCount > 0 && (
-        <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+        <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-sm px-2 py-1">
           <CloudOff className="h-3.5 w-3.5" />
           {pendingCount} stop{pendingCount === 1 ? "" : "s"} saved on this device — they'll
           send when you have signal again.
@@ -204,7 +204,7 @@ export function PassportProgress({
               return (
                 <div
                   key={s}
-                  className={`rounded border px-2 py-1.5 text-center ${
+                  className={`rounded-sm border px-2 py-1.5 text-center ${
                     done
                       ? "border-emerald-300 bg-emerald-50"
                       : "border-slate-200 bg-stone-50"
@@ -322,11 +322,11 @@ function TierRow({
   label: string;
   detail: string;
   earned: boolean;
-  entry?: RegisterEntry;
+  entry?: RegisterEntry | undefined;
 }) {
   return (
     <div
-      className={`flex items-center gap-3 rounded border px-3 py-2 ${
+      className={`flex items-center gap-3 rounded-sm border px-3 py-2 ${
         earned ? "border-amber-300 bg-amber-50" : "border-slate-200 bg-stone-50"
       }`}
     >

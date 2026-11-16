@@ -18,8 +18,8 @@ export function usePathNotables(season: string | null, community: string | null)
     queryFn: async (): Promise<Notables | null> => {
       const { data, error } = await supabase.rpc("get_shore_path_notables", {
         p_city_id: "default",
-        p_season: season,
-        p_community: community,
+        ...(season ? { p_season: season } : {}),
+        ...(community ? { p_community: community } : {}),
         p_min_stops: 2,
       });
       if (error) throw error;

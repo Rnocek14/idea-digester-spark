@@ -2,7 +2,7 @@ import { GuideNewsletterCTA } from "@/components/guides/GuideNewsletterCTA";
 import { GuideLocalNow } from "@/components/guides/GuideLocalNow";
 import { usePageView } from "@/lib/trackStoryEvent";
 import { ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import { PublicHeader } from "@/components/PublicHeader";
 import { PageMeta } from "@/components/PageMeta";
 import { articleJsonLd, breadcrumbJsonLd, faqJsonLd } from "@/lib/seo/jsonLd";
@@ -31,19 +31,19 @@ export type GuideShellProps = {
   path: string;
   intro: ReactNode;
   sections: GuideSection[];
-  related?: RelatedGuide[];
-  faqs?: GuideFAQ[];
-  datePublished?: string;
-  dateModified?: string;
-  heroImage?: string;
-  heroAlt?: string;
-  heroCaption?: string;
+  related?: RelatedGuide[] | undefined;
+  faqs?: GuideFAQ[] | undefined;
+  datePublished?: string | undefined;
+  dateModified?: string | undefined;
+  heroImage?: string | undefined;
+  heroAlt?: string | undefined;
+  heroCaption?: string | undefined;
   /** Slot rendered between the intro and the first section (e.g. live data widgets). */
-  introExtra?: ReactNode;
+  introExtra?: ReactNode | undefined;
   /** Slot rendered after all sections, before related guides. */
-  bottomExtra?: ReactNode;
+  bottomExtra?: ReactNode | undefined;
   /** Additional JSON-LD nodes (e.g. LocalBusiness for a business page). */
-  extraJsonLd?: Record<string, unknown>[];
+  extraJsonLd?: Record<string, unknown>[] | undefined;
 };
 
 /**
@@ -253,7 +253,7 @@ export function GuideShell({
                     <Link
                       key={r.path}
                       to={r.path}
-                      className="block rounded-md border border-slate-200 bg-white p-4 hover:border-blue-500 hover:shadow-sm transition-all"
+                      className="block rounded-md border border-slate-200 bg-white p-4 hover:border-blue-500 hover:shadow-xs transition-all"
                     >
                       <p className="font-display text-lg text-slate-900">{r.title}</p>
                       <p className="text-sm text-slate-600 mt-1 leading-relaxed">{r.blurb}</p>

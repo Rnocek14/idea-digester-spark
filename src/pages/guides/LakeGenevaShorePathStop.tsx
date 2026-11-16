@@ -1,4 +1,4 @@
-import { Link, useParams, Navigate } from "react-router-dom";
+import { Link, useParams, Navigate } from "@/lib/router-compat";
 import { getSiteOrigin } from "@/lib/cityId";
 import { ArrowLeft, ArrowRight, MapPin, Heart } from "lucide-react";
 import { PublicHeader } from "@/components/PublicHeader";
@@ -20,7 +20,7 @@ function buildMeta(stop: {
   description: string | null;
   story_long: string | null;
   short_label: string | null;
-  is_public_landmark?: boolean | null;
+  is_public_landmark?: boolean | null | undefined;
 }) {
   // Public stops (beaches, parks, piers) are searched with visitor intent —
   // "can I go there, where do I park" — so the snippet leads with access
@@ -90,13 +90,13 @@ export default function LakeGenevaShorePathStop() {
     },
   };
   if (typeof stop.latitude === "number" && typeof stop.longitude === "number") {
-    attraction.geo = {
+    attraction["geo"] = {
       "@type": "GeoCoordinates",
       latitude: stop.latitude,
       longitude: stop.longitude,
     };
   }
-  if (stop.hero_image_url) attraction.image = stop.hero_image_url;
+  if (stop.hero_image_url) attraction["image"] = stop.hero_image_url;
 
   const jsonLd = [
     attraction,
@@ -318,7 +318,7 @@ export default function LakeGenevaShorePathStop() {
               <Link
                 key={r.to}
                 to={r.to}
-                className="block rounded-md border border-slate-200 bg-white p-4 hover:border-blue-500 hover:shadow-sm transition-all"
+                className="block rounded-md border border-slate-200 bg-white p-4 hover:border-blue-500 hover:shadow-xs transition-all"
               >
                 <p className="font-display text-lg text-slate-900">{r.title}</p>
                 <p className="text-sm text-slate-600 mt-1 leading-relaxed">{r.blurb}</p>
@@ -338,7 +338,7 @@ export default function LakeGenevaShorePathStop() {
       {/* Sticky "next stop" bar — lets a walker chain through the 16 stops
           without scrolling to the bottom of every page. */}
       {next && (
-        <div className="fixed bottom-0 inset-x-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur">
+        <div className="fixed bottom-0 inset-x-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur-sm">
           <div className="mx-auto max-w-3xl px-4 py-2 flex items-center gap-3">
             {prev && (
               <Link

@@ -235,7 +235,7 @@ export function ContentHealthPanel() {
               {hyperlocalPct7d}% 7d
             </Badge>
           </div>
-          <div className="flex gap-1 h-3 rounded overflow-hidden">
+          <div className="flex gap-1 h-3 rounded-sm overflow-hidden">
             <div className="bg-primary" style={{ width: `${data.tiers7d.t1}%` }} title={`Tier 1: ${data.tiers7d.t1}%`} />
             <div className="bg-primary/60" style={{ width: `${data.tiers7d.t2}%` }} title={`Tier 2: ${data.tiers7d.t2}%`} />
             <div className="bg-muted" style={{ width: `${data.tiers7d.t0}%` }} title={`Tier 0: ${data.tiers7d.t0}%`} />
@@ -322,7 +322,7 @@ export function ContentHealthPanel() {
 
           {/* Canary SLO Alert — only red when stuck > 10 min */}
           {data.canaryCount > 0 && (
-            <div className={`flex items-center justify-between text-sm p-2 rounded ${data.canaryStale ? 'bg-destructive/10' : 'bg-muted'}`}>
+            <div className={`flex items-center justify-between text-sm p-2 rounded-sm ${data.canaryStale ? 'bg-destructive/10' : 'bg-muted'}`}>
               <div className="flex items-center gap-2">
                 <AlertTriangle className={`h-4 w-4 ${data.canaryStale ? 'text-destructive' : 'text-muted-foreground'}`} />
                 <span className={`font-medium ${data.canaryStale ? 'text-destructive' : 'text-muted-foreground'}`}>

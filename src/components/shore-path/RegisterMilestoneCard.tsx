@@ -1,5 +1,5 @@
 import { Award, X } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import { Button } from "@/components/ui/button";
 import type { RegisterEntry } from "@/hooks/usePathRegister";
 
@@ -31,7 +31,7 @@ export function RegisterMilestoneCard({ entry, onDismiss }: Props) {
   const copy = TIER_COPY[entry.tier];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/50 backdrop-blur-sm px-3 pb-3 sm:pb-0">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/50 backdrop-blur-xs px-3 pb-3 sm:pb-0">
       <div className="w-full max-w-md rounded-xl border-2 border-amber-400 bg-white shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
         <div className="bg-amber-400 text-amber-950 px-4 py-2 flex items-center justify-between">
           <div className="flex items-center gap-2">

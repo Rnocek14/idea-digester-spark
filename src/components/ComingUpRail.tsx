@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import { CalendarDays, ArrowRight, Sparkles, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -98,7 +98,7 @@ export default function ComingUpRail() {
     null;
 
   const activeFilter = FILTERS.find((f) => f.value === filter) || FILTERS[0];
-  const passesFilter = (e: EventRow) => activeFilter.match((e.category || "").toLowerCase());
+  const passesFilter = (e: EventRow) => activeFilter!.match((e.category || "").toLowerCase());
 
   const seen = new Set<string>();
   if (heroPick) seen.add(heroPick.id);
@@ -150,7 +150,7 @@ export default function ComingUpRail() {
   let heroDayLabel = "";
   if (heroPick && heroPick.event_date) {
     const [hy, hm, hd] = heroPick.event_date.split("-").map(Number);
-    heroDayLabel = new Date(hy, (hm || 1) - 1, hd || 1).toLocaleDateString([], {
+    heroDayLabel = new Date(hy!, (hm || 1) - 1, hd || 1).toLocaleDateString([], {
       weekday: "long",
       month: "short",
       day: "numeric",
@@ -276,7 +276,7 @@ export default function ComingUpRail() {
                     <Link
                       key={e.id}
                       to={`/events/${e.id}`}
-                      className="group flex gap-3 rounded-xl bg-white p-3 ring-1 ring-slate-100 hover:ring-slate-300 hover:shadow-sm transition-all"
+                      className="group flex gap-3 rounded-xl bg-white p-3 ring-1 ring-slate-100 hover:ring-slate-300 hover:shadow-xs transition-all"
                     >
                       {e.image_url ? (
                         <div className="h-16 w-16 shrink-0 rounded-lg overflow-hidden bg-slate-100">

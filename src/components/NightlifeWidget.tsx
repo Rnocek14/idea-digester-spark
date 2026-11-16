@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { getRecentPickVenues, recordPickedVenue } from "@/lib/recentVenuePersistence";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import { PartyPopper } from "lucide-react";
 import { getCityId, maybeCity, runCityScoped } from "@/lib/cityId";
 
@@ -12,12 +12,12 @@ type NightlifeEvent = {
   publish_date: string | null;
   original_url: string | null;
   metadata: {
-    verticals?: string[];
-    content_tags?: string[]; 
-    event_date?: string;
-    recurring_days?: string[] | null; // e.g., ["friday", "saturday"]
-    venue?: string; // Venue name from scraper metadata
-    location_detail?: string; // Specific room/area within venue
+    verticals?: string[] | undefined;
+    content_tags?: string[] | undefined; 
+    event_date?: string | undefined;
+    recurring_days?: string[] | null | undefined; // e.g., ["friday", "saturday"]
+    venue?: string | undefined; // Venue name from scraper metadata
+    location_detail?: string | undefined; // Specific room/area within venue
   } | null;
   event_date: string | null;
   event_time: string | null;
@@ -139,7 +139,7 @@ function extractVenue(title: string): string {
   // Pattern: "LIVE MUSIC AT THE LOOKOUT: PERFORMER" -> "The Lookout Bar"
   const atVenueMatch = title.match(/(?:@|at\s+(?:the\s+)?)([\w\s']+?)(?:\s*[:\-–]|$)/i);
   if (atVenueMatch) {
-    const venue = atVenueMatch[1].trim();
+    const venue = atVenueMatch[1]!.trim();
     // Normalize and verify it's a known venue
     const normalized = normalizeVenueName(venue);
     if (normalized !== venue) return normalized;
@@ -163,7 +163,7 @@ function extractVenue(title: string): string {
   // Handle "At [Venue] - Description" pattern
   const atDashMatch = title.match(/^At\s+([\w\s']+?)\s*[-–]/i);
   if (atDashMatch) {
-    const venue = atDashMatch[1].trim();
+    const venue = atDashMatch[1]!.trim();
     const normalized = normalizeVenueName(venue);
     if (normalized !== venue) return normalized;
     return venue;
@@ -172,7 +172,7 @@ function extractVenue(title: string): string {
   // Handle show-style titles like "Christmas Show: Performer Name"
   // If no venue found but title has colon, return the show name part
   if (title.includes(':') && !title.toLowerCase().includes('live music')) {
-    const showPart = title.split(':')[0].trim();
+    const showPart = title.split(':')[0]!.trim();
     if (showPart.length > 3 && showPart.length < 50) {
       return showPart;
     }
@@ -187,19 +187,19 @@ function extractPerformerFromTitle(title: string): string | null {
   // Pattern: "VENUE: PERFORMER" or "LIVE MUSIC AT VENUE: PERFORMER"
   const colonMatch = title.match(/:\s*([^:]+?)\s*$/i);
   if (colonMatch) {
-    let performer = colonMatch[1].trim();
+    let performer = colonMatch[1]!.trim();
     
     // Handle "Frankie Seta LIVE as Dean Martin" -> "Frankie Seta"
     const liveAsMatch = performer.match(/^(.+?)\s+LIVE\s+(?:as|performing|plays)/i);
     if (liveAsMatch) {
-      performer = liveAsMatch[1].trim();
+      performer = liveAsMatch[1]!.trim();
     }
     
     // Handle "Jeff Trudell" from "At Topsy Turvy - Live Music - Jeff Trudell"
     // If performer contains " - ", take the last part
     if (performer.includes(' - ')) {
       const parts = performer.split(' - ');
-      performer = parts[parts.length - 1].trim();
+      performer = parts[parts.length - 1]!.trim();
     }
     
     if (isCleanPerformer(performer, title)) {
@@ -210,7 +210,7 @@ function extractPerformerFromTitle(title: string): string | null {
   // Pattern: "At Venue - Live Music - Performer Name"
   const dashMatch = title.match(/[-–]\s*(?:Live Music\s*[-–]\s*)?([^-–]+?)\s*$/i);
   if (dashMatch) {
-    const performer = dashMatch[1].trim();
+    const performer = dashMatch[1]!.trim();
     // Only use if it looks like a name (2-4 words, not venue-like)
     const wordCount = performer.split(/\s+/).length;
     if (wordCount >= 2 && wordCount <= 4 && isCleanPerformer(performer, title)) {
@@ -283,7 +283,7 @@ function shouldShowPerformer(displayedVenue: string, performer: string | null): 
   
   // Also check for partial matches (first name only)
   const performerFirst = performerLower.split(' ')[0];
-  if (performerFirst.length > 3 && venueLower.includes(performerFirst)) return false;
+  if (performerFirst!.length > 3 && venueLower.includes(performerFirst!)) return false;
   
   // Don't show if performer looks like a venue name
   if (KNOWN_VENUES.some(v => v.toLowerCase() === performerLower)) return false;
@@ -456,7 +456,7 @@ function getUpcomingWeekdays(): { dayOfWeek: number; dayName: string; dateStr: s
     const futureDate = new Date(now);
     futureDate.setDate(now.getDate() + daysAhead);
     const dateStr = `${futureDate.getFullYear()}-${String(futureDate.getMonth() + 1).padStart(2, '0')}-${String(futureDate.getDate()).padStart(2, '0')}`;
-    weekdays.push({ dayOfWeek: i, dayName: dayNames[i], dateStr });
+    weekdays.push({ dayOfWeek: i, dayName: dayNames[i]!, dateStr });
   }
   
   return weekdays;
@@ -522,10 +522,10 @@ function deduplicateByVenue(events: NightlifeEvent[], limit: number, maxPerVenue
 }
 
 interface NightlifeWidgetProps {
-  tonightOnly?: boolean;
-  showTonightsPick?: boolean;
-  showLaterPick?: boolean; // Show "Pick of the Next 72 Hours" for TONIGHT column
-  showModeToggle?: boolean; // Show Tonight | Weekend toggle
+  tonightOnly?: boolean | undefined;
+  showTonightsPick?: boolean | undefined;
+  showLaterPick?: boolean | undefined; // Show "Pick of the Next 72 Hours" for TONIGHT column
+  showModeToggle?: boolean | undefined; // Show Tonight | Weekend toggle
 }
 
 // Helper to format event date for display
@@ -1006,7 +1006,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
         <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-200">
           <button
             onClick={() => setViewMode('tonight')}
-            className={`px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider transition-colors rounded-sm ${
+            className={`px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider transition-colors rounded-xs ${
               viewMode === 'tonight' 
                 ? 'bg-slate-900 text-white' 
                 : 'text-slate-500 hover:text-slate-900'
@@ -1016,7 +1016,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
           </button>
           <button
             onClick={() => setViewMode('weekend')}
-            className={`px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider transition-colors rounded-sm ${
+            className={`px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider transition-colors rounded-xs ${
               viewMode === 'weekend' 
                 ? 'bg-slate-900 text-white' 
                 : 'text-slate-500 hover:text-slate-900'

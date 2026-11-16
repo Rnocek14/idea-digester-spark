@@ -84,7 +84,7 @@ export default function BusinessStories() {
       photo_url: photoUrl.trim() || null,
       source_citation: sourceCitation.trim() || null,
       submitted_by: user.id,
-      submitter_email: user.email,
+      submitter_email: user.email ?? null,
       submitter_role: "editor",
       status: "pending",
     });
@@ -247,7 +247,7 @@ export default function BusinessStories() {
             )}
 
             {s.ai_draft && (
-              <div className="rounded border border-slate-200 bg-slate-50 p-3">
+              <div className="rounded-sm border border-slate-200 bg-slate-50 p-3">
                 <div className="text-xs uppercase tracking-wider text-slate-500 mb-2">AI draft</div>
                 <Textarea
                   defaultValue={s.final_body ?? s.ai_draft}

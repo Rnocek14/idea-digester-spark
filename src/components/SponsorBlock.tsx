@@ -6,29 +6,29 @@ import { MarketAnalysisDialog } from "@/components/MarketAnalysisDialog";
 
 type Testimonial = {
   quote: string;
-  attribution?: string;
-  tag?: string;
+  attribution?: string | undefined;
+  tag?: string | undefined;
 };
 
 type SponsorMetadata = {
-  testimonials?: Testimonial[];
+  testimonials?: Testimonial[] | undefined;
 };
 
 type Sponsor = {
   name: string;
   logo_url: string | null;
   website: string | null;
-  placementId?: string;
-  businessId?: string;
-  category?: string | null;
-  phone?: string | null;
-  description?: string | null;
-  email?: string | null;
-  zillow_url?: string | null;
-  zillow_rating?: number | null;
-  zillow_review_count?: number | null;
-  testimonial_quote?: string | null;
-  metadata?: SponsorMetadata;
+  placementId?: string | undefined;
+  businessId?: string | undefined;
+  category?: string | null | undefined;
+  phone?: string | null | undefined;
+  description?: string | null | undefined;
+  email?: string | null | undefined;
+  zillow_url?: string | null | undefined;
+  zillow_rating?: number | null | undefined;
+  zillow_review_count?: number | null | undefined;
+  testimonial_quote?: string | null | undefined;
+  metadata?: SponsorMetadata | undefined;
 };
 
 // Get daily rotating testimonial (same quote all day, changes at midnight)
@@ -36,7 +36,7 @@ const getDailyTestimonial = (testimonials: Testimonial[]): Testimonial | null =>
   if (!testimonials?.length) return null;
   const today = new Date();
   const dayIndex = Math.floor(today.getTime() / (1000 * 60 * 60 * 24));
-  return testimonials[dayIndex % testimonials.length];
+  return testimonials[dayIndex % testimonials.length] ?? null;
 };
 
 const isRealEstateSponsor = (sponsor: Sponsor | null) => {
@@ -85,7 +85,7 @@ export const SponsorBlock = ({ sponsor }: SponsorBlockProps) => {
   const isRealEstate = isRealEstateSponsor(sponsor);
 
   return (
-    <Card className="overflow-hidden border border-slate-200 shadow-sm bg-white">
+    <Card className="overflow-hidden border border-slate-200 shadow-xs bg-white">
       {/* Compact Header */}
       <div className="px-4 py-2.5 border-b border-slate-100 bg-slate-50/50">
         <span className="text-[10px] font-medium uppercase tracking-[0.15em] text-slate-500">

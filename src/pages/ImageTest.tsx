@@ -13,8 +13,8 @@ interface TestResult {
   title: string;
   category: string;
   imageUrl: string | null;
-  prompt?: string;
-  error?: string;
+  prompt?: string | undefined;
+  error?: string | undefined;
   timestamp: Date;
 }
 
@@ -109,7 +109,7 @@ export default function ImageTest() {
       return;
     }
     const randomStory = categoryStories[Math.floor(Math.random() * categoryStories.length)];
-    generateMutation.mutate(randomStory.id);
+    generateMutation.mutate(randomStory!.id);
   };
 
   // Error state

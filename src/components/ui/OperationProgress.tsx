@@ -4,8 +4,8 @@ import { Loader2 } from "lucide-react";
 interface OperationProgressProps {
   current: number;
   total: number;
-  message?: string;
-  className?: string;
+  message?: string | undefined;
+  className?: string | undefined;
 }
 
 export function OperationProgress({ current, total, message, className }: OperationProgressProps) {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams } from "@/lib/router-compat";
 import { PublicHeader } from "@/components/PublicHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,7 +35,7 @@ function SharedFields({
         <Label htmlFor="submitter_name" className="text-xs">Your name (optional)</Label>
         <Input
           id="submitter_name"
-          value={values.submitter_name || ""}
+          value={values["submitter_name"] || ""}
           onChange={(e) => set("submitter_name", e.target.value)}
           placeholder="So we can credit you"
         />
@@ -45,7 +45,7 @@ function SharedFields({
         <Input
           id="submitter_email"
           type="email"
-          value={values.submitter_email || ""}
+          value={values["submitter_email"] || ""}
           onChange={(e) => set("submitter_email", e.target.value)}
           placeholder="If we have questions"
         />
@@ -77,7 +77,7 @@ function EventForm() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!v.title || !v.summary || !v.event_date) {
+    if (!v["title"] || !v["summary"] || !v["event_date"]) {
       toast.error("Title, description, and date are required.");
       return;
     }
@@ -86,15 +86,15 @@ function EventForm() {
       await submit({
         kind: "event",
         honeypot: hp,
-        title: v.title,
-        summary: v.summary,
-        event_date: v.event_date,
-        event_time: v.event_time || undefined,
-        venue: v.venue || undefined,
-        original_url: v.original_url || undefined,
-        category: v.category || "community",
-        submitter_name: v.submitter_name || undefined,
-        submitter_email: v.submitter_email || undefined,
+        title: v["title"],
+        summary: v["summary"],
+        event_date: v["event_date"],
+        event_time: v["event_time"] || undefined,
+        venue: v["venue"] || undefined,
+        original_url: v["original_url"] || undefined,
+        category: v["category"] || "community",
+        submitter_name: v["submitter_name"] || undefined,
+        submitter_email: v["submitter_email"] || undefined,
       });
       toast.success("Event submitted. We'll review it soon.");
       setV({ category: "community" });
@@ -110,30 +110,30 @@ function EventForm() {
       <HoneyPot value={hp} onChange={setHp} />
       <div>
         <Label htmlFor="title">Event name</Label>
-        <Input id="title" value={v.title || ""} onChange={(e) => set("title", e.target.value)} required />
+        <Input id="title" value={v["title"] || ""} onChange={(e) => set("title", e.target.value)} required />
       </div>
       <div>
         <Label htmlFor="summary">What is it? (1–3 sentences)</Label>
-        <Textarea id="summary" rows={3} value={v.summary || ""} onChange={(e) => set("summary", e.target.value)} required />
+        <Textarea id="summary" rows={3} value={v["summary"] || ""} onChange={(e) => set("summary", e.target.value)} required />
       </div>
       <div className="grid sm:grid-cols-2 gap-3">
         <div>
           <Label htmlFor="event_date">Date</Label>
-          <Input id="event_date" type="date" value={v.event_date || ""} onChange={(e) => set("event_date", e.target.value)} required />
+          <Input id="event_date" type="date" value={v["event_date"] || ""} onChange={(e) => set("event_date", e.target.value)} required />
         </div>
         <div>
           <Label htmlFor="event_time">Time (optional)</Label>
-          <Input id="event_time" type="time" value={v.event_time || ""} onChange={(e) => set("event_time", e.target.value)} />
+          <Input id="event_time" type="time" value={v["event_time"] || ""} onChange={(e) => set("event_time", e.target.value)} />
         </div>
       </div>
       <div className="grid sm:grid-cols-2 gap-3">
         <div>
           <Label htmlFor="venue">Venue</Label>
-          <Input id="venue" value={v.venue || ""} onChange={(e) => set("venue", e.target.value)} placeholder="Where in Lake Geneva" />
+          <Input id="venue" value={v["venue"] || ""} onChange={(e) => set("venue", e.target.value)} placeholder="Where in Lake Geneva" />
         </div>
         <div>
           <Label htmlFor="original_url">Link (optional)</Label>
-          <Input id="original_url" type="url" value={v.original_url || ""} onChange={(e) => set("original_url", e.target.value)} placeholder="https://" />
+          <Input id="original_url" type="url" value={v["original_url"] || ""} onChange={(e) => set("original_url", e.target.value)} placeholder="https://" />
         </div>
       </div>
       <SharedFields values={v} set={set} />
@@ -147,7 +147,7 @@ function EventForm() {
 function LocalLoveForm({
   initialSubject,
   initialBodyPrefix,
-}: { initialSubject?: string; initialBodyPrefix?: string } = {}) {
+}: { initialSubject?: string | undefined; initialBodyPrefix?: string | undefined } = {}) {
   const [v, setV] = useState<Record<string, string>>({
     category: "places",
     subject_name: initialSubject || "",
@@ -159,7 +159,7 @@ function LocalLoveForm({
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!v.body || v.body.length < 4) {
+    if (!v["body"] || v["body"].length < 4) {
       toast.error("Tell us a little more.");
       return;
     }
@@ -168,12 +168,12 @@ function LocalLoveForm({
       await submit({
         kind: "local_love",
         honeypot: hp,
-        category: v.category as "people" | "places" | "moments",
-        body: v.body,
-        subject_name: v.subject_name || undefined,
-        submitter_name: v.submitter_name || undefined,
-        submitter_email: v.submitter_email || undefined,
-        submitter_town: v.submitter_town || undefined,
+        category: v["category"] as "people" | "places" | "moments",
+        body: v["body"],
+        subject_name: v["subject_name"] || undefined,
+        submitter_name: v["submitter_name"] || undefined,
+        submitter_email: v["submitter_email"] || undefined,
+        submitter_town: v["submitter_town"] || undefined,
       });
       toast.success("Thanks — we'll review and post it on the Local Love wall.");
       setV({ category: "people" });
@@ -184,7 +184,7 @@ function LocalLoveForm({
     }
   }
 
-  const len = (v.body || "").length;
+  const len = (v["body"] || "").length;
 
   return (
     <form onSubmit={onSubmit} className="space-y-3">
@@ -198,7 +198,7 @@ function LocalLoveForm({
               key={c}
               onClick={() => set("category", c)}
               className={`px-3 py-1.5 rounded-full text-sm border capitalize ${
-                v.category === c
+                v["category"] === c
                   ? "bg-rose-600 text-white border-rose-600"
                   : "bg-white text-slate-700 border-slate-300"
               }`}
@@ -210,16 +210,16 @@ function LocalLoveForm({
       </div>
       <div>
         <Label htmlFor="subject_name">Who or what are you celebrating?</Label>
-        <Input id="subject_name" value={v.subject_name || ""} onChange={(e) => set("subject_name", e.target.value)} placeholder="A person, business, or moment" />
+        <Input id="subject_name" value={v["subject_name"] || ""} onChange={(e) => set("subject_name", e.target.value)} placeholder="A person, business, or moment" />
       </div>
       <div>
         <Label htmlFor="body">In 280 characters or less</Label>
-        <Textarea id="body" rows={4} maxLength={280} value={v.body || ""} onChange={(e) => set("body", e.target.value)} required />
+        <Textarea id="body" rows={4} maxLength={280} value={v["body"] || ""} onChange={(e) => set("body", e.target.value)} required />
         <p className="text-[11px] text-slate-500 mt-1">{len}/280</p>
       </div>
       <div>
         <Label htmlFor="submitter_town" className="text-xs">Your town (optional)</Label>
-        <Input id="submitter_town" value={v.submitter_town || ""} onChange={(e) => set("submitter_town", e.target.value)} placeholder="Lake Geneva, Fontana, etc." />
+        <Input id="submitter_town" value={v["submitter_town"] || ""} onChange={(e) => set("submitter_town", e.target.value)} placeholder="Lake Geneva, Fontana, etc." />
       </div>
       <SharedFields values={v} set={set} />
       <Button type="submit" disabled={submitting} className="w-full sm:w-auto bg-rose-600 hover:bg-rose-700">
@@ -237,7 +237,7 @@ function TipForm() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!v.body || v.body.length < 4) {
+    if (!v["body"] || v["body"].length < 4) {
       toast.error("Tell us a little more.");
       return;
     }
@@ -246,9 +246,9 @@ function TipForm() {
       await submit({
         kind: "tip",
         honeypot: hp,
-        body: v.body,
-        submitter_name: v.submitter_name || undefined,
-        submitter_email: v.submitter_email || undefined,
+        body: v["body"],
+        submitter_name: v["submitter_name"] || undefined,
+        submitter_email: v["submitter_email"] || undefined,
       });
       toast.success("Got it. Thanks for the tip.");
       setV({});
@@ -267,7 +267,7 @@ function TipForm() {
         <Textarea
           id="tip-body"
           rows={5}
-          value={v.body || ""}
+          value={v["body"] || ""}
           onChange={(e) => set("body", e.target.value)}
           placeholder="A story idea, a memory, a heads-up. Links welcome."
           required

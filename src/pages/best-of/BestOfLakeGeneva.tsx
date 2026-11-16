@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import { PublicHeader } from "@/components/PublicHeader";
 import { PublicFooter } from "@/components/PublicFooter";
 import { PageMeta } from "@/components/PageMeta";
@@ -14,8 +14,8 @@ type Category = {
   key: string;
   label: string;
   blurb: string;
-  icon: React.ComponentType<{ className?: string }>;
-  href?: string;
+  icon: React.ComponentType<{ className?: string | undefined }>;
+  href?: string | undefined;
   status: "live" | "voting";
 };
 
@@ -105,7 +105,7 @@ export default function BestOfLakeGeneva() {
         </nav>
 
         <header className="mb-10">
-          <div className="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-wider text-rose-700 bg-rose-50 px-2 py-1 rounded mb-3">
+          <div className="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-wider text-rose-700 bg-rose-50 px-2 py-1 rounded-sm mb-3">
             <Sparkles className="h-3 w-3" /> Community picks · 2025
           </div>
           <h1 className="font-display text-3xl sm:text-4xl text-slate-900 tracking-tight mb-3">

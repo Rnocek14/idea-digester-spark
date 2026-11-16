@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import { supabase } from "@/integrations/supabase/client";
 import { Star } from "lucide-react";
 import { getCityId, maybeCity, runCityScoped } from "@/lib/cityId";
@@ -19,7 +19,7 @@ function GinaSponsorLine({ gina }: { gina: GinaInfo | null }) {
       to="/selling-lake-geneva"
       className="mt-3 flex items-center gap-3 group rounded-md hover:bg-slate-50 -mx-2 px-2 py-2 transition-colors"
     >
-      <div className="w-9 h-9 rounded-full overflow-hidden bg-slate-100 border-2 border-white shadow-sm flex-shrink-0">
+      <div className="w-9 h-9 rounded-full overflow-hidden bg-slate-100 border-2 border-white shadow-xs flex-shrink-0">
         {gina?.logo_url ? (
           <img
             src={gina.logo_url}
@@ -109,7 +109,7 @@ export default function TodaysBriefBlock({ stories }: { stories: BriefStory[] })
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data } = await runCityScoped((scoped) =>
+      const { data } = await runCityScoped<{ body: string | null }>((scoped) =>
         maybeCity(supabase
         .from("daily_briefs")
         .select("body"), scoped)

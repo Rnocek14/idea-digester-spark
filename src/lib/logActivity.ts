@@ -4,10 +4,10 @@ type ActivityEntityType = "content" | "source" | "sponsor" | "system";
 
 interface LogActivityOptions {
   entityType: ActivityEntityType;
-  entityId?: string | null;
+  entityId?: string | null | undefined;
   action: string;
   message: string;
-  details?: Record<string, any>;
+  details?: Record<string, any> | undefined;
 }
 
 export async function logActivity(opts: LogActivityOptions) {

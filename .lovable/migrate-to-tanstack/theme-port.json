@@ -1,0 +1,16 @@
+{
+  "customizations": [
+    { "token": "classic HSL shadcn color variables", "source": "src/index.css", "reappliedIn": "src/styles.css" },
+    { "token": "--brand-accent", "source": "src/index.css", "reappliedIn": "src/styles.css" },
+    { "token": "lake/shore palette variables", "source": "src/index.css", "reappliedIn": "src/styles.css" },
+    { "token": "--gradient-lake", "source": "src/index.css", "reappliedIn": "src/styles.css" },
+    { "token": "--radius 0.125rem", "source": "src/index.css", "reappliedIn": "src/styles.css" },
+    { "token": "brand color utilities", "source": "tailwind.config.ts", "reappliedIn": "src/styles.css" },
+    { "token": "lake and shore color utilities", "source": "tailwind.config.ts", "reappliedIn": "src/styles.css" },
+    { "token": "font-serif/font-display/font-sans", "source": "tailwind.config.ts", "reappliedIn": "src/styles.css" },
+    { "token": "container centered 2rem 1400px", "source": "tailwind.config.ts", "reappliedIn": "src/styles.css" },
+    { "token": "accordion/spin-slow/shimmer-sweep animations", "source": "tailwind.config.ts", "reappliedIn": "src/styles.css" },
+    { "token": ".guide-prose", "source": "src/index.css", "reappliedIn": "src/styles.css" },
+    { "token": ".scroll-x-hint", "source": "src/index.css", "reappliedIn": "src/styles.css" }
+  ]
+}

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import { Button } from "@/components/ui/button";
 import { Home, Star, Phone } from "lucide-react";
 import { MarketAnalysisDialog } from "@/components/MarketAnalysisDialog";
@@ -17,46 +17,46 @@ const fireTrackClick = (source: string, businessId?: string, placementId?: strin
 
 type Testimonial = {
   quote: string;
-  attribution?: string;
+  attribution?: string | undefined;
 };
 
 type SponsorMetadata = {
-  testimonials?: Testimonial[];
-  tagline?: string;
+  testimonials?: Testimonial[] | undefined;
+  tagline?: string | undefined;
 };
 
 interface MarketData {
   yoy_change: number;
   zip_code: string;
-  median_price?: number;
+  median_price?: number | undefined;
 }
 
 interface Sponsor {
   name: string;
   logo_url: string | null;
   website: string | null;
-  placementId?: string;
-  businessId?: string;
-  category?: string | null;
-  phone?: string | null;
-  email?: string | null;
-  zillow_url?: string | null;
-  zillow_rating?: number | null;
-  zillow_review_count?: number | null;
-  testimonial_quote?: string | null;
-  metadata?: SponsorMetadata;
+  placementId?: string | undefined;
+  businessId?: string | undefined;
+  category?: string | null | undefined;
+  phone?: string | null | undefined;
+  email?: string | null | undefined;
+  zillow_url?: string | null | undefined;
+  zillow_rating?: number | null | undefined;
+  zillow_review_count?: number | null | undefined;
+  testimonial_quote?: string | null | undefined;
+  metadata?: SponsorMetadata | undefined;
 }
 
 interface PresentedBySectionProps {
   sponsor: Sponsor;
-  marketData?: MarketData | null;
+  marketData?: MarketData | null | undefined;
 }
 
 const getDailyTestimonial = (testimonials: Testimonial[]): Testimonial | null => {
   if (!testimonials?.length) return null;
   const today = new Date();
   const dayIndex = Math.floor(today.getTime() / (1000 * 60 * 60 * 24));
-  return testimonials[dayIndex % testimonials.length];
+  return testimonials[dayIndex % testimonials.length] ?? null;
 };
 
 const trackClickUrl = (url: string, source: string, businessId?: string, placementId?: string) => {
@@ -79,7 +79,7 @@ export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionPr
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
+        if (entry!.isIntersecting) {
           // Add small delay so animation is visible even on initial load
           setTimeout(() => setIsVisible(true), 200);
           observer.disconnect();
@@ -101,6 +101,7 @@ export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionPr
       const timer = setTimeout(() => setStarsAnimated(true), 600);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [isVisible]);
 
 
@@ -147,7 +148,7 @@ export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionPr
               className="flex items-center gap-3 group cursor-pointer"
             >
               {/* Photo */}
-              <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm transition-transform duration-200 group-hover:scale-105">
+              <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden border-2 border-white shadow-xs transition-transform duration-200 group-hover:scale-105">
                 {sponsor.logo_url ? (
                   <img
                     src={sponsor.logo_url}

@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import { Printer } from "lucide-react";
 import { PublicHeader } from "@/components/PublicHeader";
 import { PageMeta } from "@/components/PageMeta";
@@ -123,7 +123,7 @@ export default function LakeGenevaShorePathPassport() {
             <Field label="Finished" />
           </div>
 
-          <div className="mt-8 rounded border border-slate-300 p-5">
+          <div className="mt-8 rounded-sm border border-slate-300 p-5">
             <p className="text-[10px] font-mono uppercase tracking-widest text-slate-500 mb-2.5">
               How to walk the path well
             </p>
@@ -164,7 +164,7 @@ export default function LakeGenevaShorePathPassport() {
               {stops.map((s) => (
                 <div
                   key={s.id}
-                  className="border border-slate-300 rounded p-3 bg-white print-avoid-break"
+                  className="border border-slate-300 rounded-sm p-3 bg-white print-avoid-break"
                 >
                   <div className="flex items-baseline gap-1.5">
                     <span className="font-mono text-[11px] text-slate-500">
@@ -180,7 +180,7 @@ export default function LakeGenevaShorePathPassport() {
                   </p>
                   {/* Deliberately generous: a stamp needs room, and so does a
                       date scrawled with cold hands in October. */}
-                  <div className="mt-2 h-16 border border-dashed border-slate-300 rounded" />
+                  <div className="mt-2 h-16 border border-dashed border-slate-300 rounded-sm" />
                   <div className="mt-1.5 flex gap-2">
                     <span className="flex-1 border-b border-slate-300 text-[9px] font-mono uppercase tracking-wide text-slate-400">
                       date
@@ -194,7 +194,7 @@ export default function LakeGenevaShorePathPassport() {
             </div>
           )}
 
-          <div className="mt-6 rounded border border-slate-300 p-4 bg-white print-avoid-break">
+          <div className="mt-6 rounded-sm border border-slate-300 p-4 bg-white print-avoid-break">
             <p className="text-[10px] font-mono uppercase tracking-widest text-slate-500 mb-1.5">
               When you've collected all sixteen
             </p>

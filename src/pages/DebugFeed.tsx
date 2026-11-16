@@ -14,12 +14,12 @@ import { useCityConfig } from "@/hooks/useCityConfig";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Any = any;
 
-type Step = { label: string; count: number | null; error?: string; note?: string };
+type Step = { label: string; count: number | null; error?: string | undefined; note?: string | undefined };
 
 async function countWith(
   build: (q: Any) => Any,
   table = "content_queue",
-): Promise<{ count: number | null; error?: string }> {
+): Promise<{ count: number | null; error?: string | undefined }> {
   try {
     const base = (supabase as Any).from(table).select("id", { count: "exact", head: true });
     const { count, error } = await build(base);

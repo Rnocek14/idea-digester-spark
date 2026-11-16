@@ -1,0 +1,670 @@
+{
+ "functions": [
+  {
+   "name": "alert-source-health",
+   "classification": "cron target",
+   "signal": "referenced in supabase SQL / scheduled-name pattern; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "audit-business-coverage",
+   "classification": "Deno-only dependency",
+   "signal": "imports deno.land/jsr specifiers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "auto-expire-content",
+   "classification": "cron target",
+   "signal": "referenced in supabase SQL / scheduled-name pattern; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "auto-maintain-sources",
+   "classification": "cron target",
+   "signal": "referenced in supabase SQL / scheduled-name pattern; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "auto-resolve-incidents",
+   "classification": "cron target",
+   "signal": "referenced in supabase SQL / scheduled-name pattern; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "autopilot-newsletter",
+   "classification": "cron target",
+   "signal": "referenced in supabase SQL / scheduled-name pattern; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "autopilot-weekend-newsletter",
+   "classification": "cron target",
+   "signal": "referenced in supabase SQL / scheduled-name pattern; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "backfill-civic-category",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "backfill-event-dates",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "backfill-event-times-ai",
+   "classification": "Deno-only dependency",
+   "signal": "imports deno.land/jsr specifiers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "backfill-events-firecrawl",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "backfill-geo-tiers",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "backfill-incident-details",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "backfill-incidents",
+   "classification": "cron target",
+   "signal": "referenced in supabase SQL / scheduled-name pattern; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "backfill-normalized-url",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "backfill-performer-times",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "backfill-recurring-days",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "backfill-restaurant-profiles",
+   "classification": "Deno-only dependency",
+   "signal": "imports deno.land/jsr specifiers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "backfill-safety",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "backfill-verticals",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "backfill-voice-variants",
+   "classification": "cron target",
+   "signal": "referenced in supabase SQL / scheduled-name pattern; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "bootstrap-city",
+   "classification": "cron target",
+   "signal": "referenced in supabase SQL / scheduled-name pattern; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "bulk-approve-content",
+   "classification": "cron target",
+   "signal": "referenced in supabase SQL / scheduled-name pattern; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "bulk-generate-images",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "cleanup-bad-schedules",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "cleanup-stale-posts",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "cleanup-system",
+   "classification": "unknown",
+   "signal": "no internal call sites found; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "create-sponsor-checkout",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "daily-restaurant-scrape",
+   "classification": "cron target",
+   "signal": "referenced in supabase SQL / scheduled-name pattern; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "employer-unsubscribe",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "full-queue-prep",
+   "classification": "cron target",
+   "signal": "referenced in supabase SQL / scheduled-name pattern; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "generate-business-story",
+   "classification": "Deno-only dependency",
+   "signal": "imports deno.land/jsr specifiers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "generate-daily-brief",
+   "classification": "cron target",
+   "signal": "referenced in supabase SQL / scheduled-name pattern; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "generate-editorial-content",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "generate-lake-beat",
+   "classification": "cron target",
+   "signal": "referenced in supabase SQL / scheduled-name pattern; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "generate-local-context-feature",
+   "classification": "webhook receiver",
+   "signal": "signature/webhook signal in handler or name; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "generate-post-image",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "generate-shore-path-audio",
+   "classification": "unknown",
+   "signal": "no internal call sites found; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "generate-weekend-roundup",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "generate-weekly-recap",
+   "classification": "cron target",
+   "signal": "referenced in supabase SQL / scheduled-name pattern; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "import-google-places-businesses",
+   "classification": "Deno-only dependency",
+   "signal": "imports deno.land/jsr specifiers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "ingest-civic",
+   "classification": "cron target",
+   "signal": "referenced in supabase SQL / scheduled-name pattern; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "ingest-email",
+   "classification": "cron target",
+   "signal": "referenced in supabase SQL / scheduled-name pattern; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "ingest-incident",
+   "classification": "cron target",
+   "signal": "referenced in supabase SQL / scheduled-name pattern; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "ingest-incident-test",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "ingest-news",
+   "classification": "cron target",
+   "signal": "referenced in supabase SQL / scheduled-name pattern; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "kick-source-fetch",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "manual-approve-stories",
+   "classification": "Deno-only dependency",
+   "signal": "imports deno.land/jsr specifiers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "merge-business-profile-duplicates",
+   "classification": "Deno-only dependency",
+   "signal": "imports deno.land/jsr specifiers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "monitor-x-engagement",
+   "classification": "cron target",
+   "signal": "referenced in supabase SQL / scheduled-name pattern; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "notify-expiring-jobs",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "notify-job-approved",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "notify-job-rejected",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "notify-on-job",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "notify-on-lead",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "notify-tier-up",
+   "classification": "cron target",
+   "signal": "referenced in supabase SQL / scheduled-name pattern; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "optimize-newsletter-flow",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "path-register",
+   "classification": "cron target",
+   "signal": "referenced in supabase SQL / scheduled-name pattern; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "prepare-posts",
+   "classification": "cron target",
+   "signal": "referenced in supabase SQL / scheduled-name pattern; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "process-post-queue",
+   "classification": "webhook receiver",
+   "signal": "signature/webhook signal in handler or name; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "process-scrape-queue",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "queue-restaurant-scrapes",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "refresh-real-estate-metrics",
+   "classification": "cron target",
+   "signal": "referenced in supabase SQL / scheduled-name pattern; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "renew-job-listing",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "report-incident",
+   "classification": "cron target",
+   "signal": "referenced in supabase SQL / scheduled-name pattern; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "retag-nonlocal",
+   "classification": "internal-only",
+   "signal": "called from src/ (1 reference(s)); left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "rewrite-vlg-backlog",
+   "classification": "unknown",
+   "signal": "no internal call sites found; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "scrape-content",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "scrape-event-details",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "scrape-incident-details",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "scrape-lakegenevanews",
+   "classification": "cron target",
+   "signal": "referenced in supabase SQL / scheduled-name pattern; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "scrape-restaurant-details",
+   "classification": "unknown",
+   "signal": "no internal call sites found; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "scrape-restaurant-diy",
+   "classification": "webhook receiver",
+   "signal": "signature/webhook signal in handler or name; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "send-breaking-alert",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "send-employer-magic-link",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "send-invoice-reminders",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "send-newsletter",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "send-sponsor-magic-link",
+   "classification": "Deno-only dependency",
+   "signal": "imports deno.land/jsr specifiers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "serve-data",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "serve-feed",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "serve-llms",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "serve-page",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "serve-robots",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "serve-sitemap",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "submit-community",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "submit-indexnow",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "sync-511-traffic",
+   "classification": "cron target",
+   "signal": "referenced in supabase SQL / scheduled-name pattern; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "sync-city-calendar",
+   "classification": "cron target",
+   "signal": "referenced in supabase SQL / scheduled-name pattern; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "sync-dining-content",
+   "classification": "cron target",
+   "signal": "referenced in supabase SQL / scheduled-name pattern; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "sync-dining-content-v2",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "sync-downtown-events",
+   "classification": "cron target",
+   "signal": "referenced in supabase SQL / scheduled-name pattern; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "sync-facebook-local",
+   "classification": "cron target",
+   "signal": "referenced in supabase SQL / scheduled-name pattern; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "sync-geneva-lake-west-chamber",
+   "classification": "cron target",
+   "signal": "referenced in supabase SQL / scheduled-name pattern; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "sync-ical-feeds",
+   "classification": "cron target",
+   "signal": "referenced in supabase SQL / scheduled-name pattern; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "sync-library-events",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "sync-nws-alerts",
+   "classification": "cron target",
+   "signal": "referenced in supabase SQL / scheduled-name pattern; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "sync-patch",
+   "classification": "cron target",
+   "signal": "referenced in supabase SQL / scheduled-name pattern; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "sync-power-outages",
+   "classification": "cron target",
+   "signal": "referenced in supabase SQL / scheduled-name pattern; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "sync-rss",
+   "classification": "cron target",
+   "signal": "referenced in supabase SQL / scheduled-name pattern; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "sync-sheriff-releases",
+   "classification": "cron target",
+   "signal": "referenced in supabase SQL / scheduled-name pattern; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "sync-spotcrime-incidents",
+   "classification": "cron target",
+   "signal": "referenced in supabase SQL / scheduled-name pattern; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "sync-venue-calendars",
+   "classification": "cron target",
+   "signal": "referenced in supabase SQL / scheduled-name pattern; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "track-click",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "track-job-click",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "track-open",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "transform-voice",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "unsubscribe",
+   "classification": "cron target",
+   "signal": "referenced in supabase SQL / scheduled-name pattern; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "update-engagement-scores",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "validate-trial-sources",
+   "classification": "cron target",
+   "signal": "referenced in supabase SQL / scheduled-name pattern; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "verify-sponsor-payment",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  },
+  {
+   "name": "weekly-employer-digest",
+   "classification": "unknown",
+   "signal": "public/crawler or ingestion endpoint with external callers; left on Supabase per project rule that all backend work stays on Supabase",
+   "outcome": "left"
+  }
+ ]
+}

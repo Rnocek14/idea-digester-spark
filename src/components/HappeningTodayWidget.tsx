@@ -35,11 +35,11 @@ const extractVenue = (event: HappeningEvent): string => {
   
   // Common patterns: "Event at Venue" or "Event @ Venue"
   const atMatch = title.match(/\s(?:at|@)\s+(.+?)(?:\s*[-–—]|$)/i);
-  if (atMatch) return atMatch[1].trim();
+  if (atMatch) return atMatch[1]!.trim();
   
   // Pattern: "Venue: Event" or "Venue - Event"
   const colonMatch = title.match(/^([^:–—]+?)(?::|–|—)\s/);
-  if (colonMatch && colonMatch[1].length < 40) return colonMatch[1].trim();
+  if (colonMatch && colonMatch[1]!.length < 40) return colonMatch[1]!.trim();
   
   return "";
 };
@@ -70,7 +70,7 @@ const formatTime = (timeStr: string | null): string => {
   const match = timeStr.match(/(\d{1,2}):?(\d{2})?\s*(am|pm)?/i);
   if (!match) return "";
   
-  let hours = parseInt(match[1]);
+  let hours = parseInt(match[1]!);
   const minutes = match[2] || "00";
   const period = match[3]?.toLowerCase();
   
@@ -98,11 +98,11 @@ const formatTime = (timeStr: string | null): string => {
 // still surface here.
 const isNightlifeOnly = (metadata: Json): boolean => {
   if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return false;
-  const v = (metadata as Record<string, unknown>).verticals;
+  const v = (metadata as Record<string, unknown>)["verticals"];
   const arr: string[] = Array.isArray(v)
     ? (v as unknown[]).filter((x): x is string => typeof x === 'string')
-    : (typeof (metadata as Record<string, unknown>).vertical === 'string'
-        ? [(metadata as Record<string, unknown>).vertical as string]
+    : (typeof (metadata as Record<string, unknown>)["vertical"] === 'string'
+        ? [(metadata as Record<string, unknown>)["vertical"] as string]
         : []);
   if (arr.length === 0) return false;
   return arr.every((x) => x.toLowerCase() === 'nightlife');
@@ -124,7 +124,7 @@ const mentionsWrongWeekday = (title: string, todayDow: number): boolean => {
 };
 
 interface HappeningTodayWidgetProps {
-  enabled?: boolean;
+  enabled?: boolean | undefined;
 }
 
 export default function HappeningTodayWidget({ enabled = true }: HappeningTodayWidgetProps) {
@@ -140,7 +140,7 @@ export default function HappeningTodayWidget({ enabled = true }: HappeningTodayW
         .select("id, title, event_date, event_time, category, original_url, metadata"), scoped)
         .in("status", ["published", "auto_published"])
         .in("safety_level", ["safe", "soft_sensitive"])
-        .eq("event_date", todayStr)
+        .eq("event_date", todayStr!)
         .gte("geo_tier", 1)
         .lte("geo_tier", 2)
         .order("event_time", { ascending: true, nullsFirst: false })

@@ -163,7 +163,7 @@ const Directory = () => {
                         <img 
                           src={business.logo_url} 
                           alt={business.name}
-                          className="w-8 h-8 rounded object-cover"
+                          className="w-8 h-8 rounded-sm object-cover"
                         />
                       )}
                       {business.name}
@@ -183,7 +183,7 @@ const Directory = () => {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline" className={getStatusColor(business.status)}>
+                    <Badge variant="outline" className={getStatusColor(business.status!)}>
                       {business.status}
                     </Badge>
                   </TableCell>
@@ -210,7 +210,7 @@ const Directory = () => {
                         onClick={() =>
                           toggleStatusMutation.mutate({
                             id: business.id,
-                            currentStatus: business.status,
+                            currentStatus: business.status ?? "",
                           })
                         }
                         disabled={toggleStatusMutation.isPending}

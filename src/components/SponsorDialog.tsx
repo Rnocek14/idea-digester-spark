@@ -324,7 +324,7 @@ export function SponsorDialog({ sponsorId, open, onOpenChange }: SponsorDialogPr
                 className="flex-1"
               />
               {logoUrl && (
-                <img src={logoUrl} alt="Logo preview" className="h-12 w-12 object-cover rounded" />
+                <img src={logoUrl} alt="Logo preview" className="h-12 w-12 object-cover rounded-sm" />
               )}
             </div>
             {uploading && <p className="text-sm text-muted-foreground">Uploading...</p>}

@@ -4,8 +4,8 @@ import { useEffect } from "react";
 // and unsupported on some of the browsers walkers actually use, so it is typed
 // structurally here rather than with `any` — narrow enough that a typo in
 // `request` or `release` is still a compile error.
-type WakeLockSentinelLike = { release?: () => Promise<void> | void };
-type WakeLockLike = { request?: (type: "screen") => Promise<WakeLockSentinelLike> };
+type WakeLockSentinelLike = { release?: (() => Promise<void> | void) | undefined };
+type WakeLockLike = { request?: ((type: "screen") => Promise<WakeLockSentinelLike>) | undefined };
 
 /** Keeps the screen awake while active. Silently no-ops on unsupported browsers. */
 export function useWakeLock(active: boolean) {
@@ -16,7 +16,7 @@ export function useWakeLock(active: boolean) {
 
     const request = async () => {
       try {
-        const wl = (navigator as Navigator & { wakeLock?: WakeLockLike }).wakeLock;
+        const wl = (navigator as Navigator & { wakeLock?: WakeLockLike | undefined }).wakeLock;
         if (wl?.request) {
           sentinel = await wl.request("screen");
         }

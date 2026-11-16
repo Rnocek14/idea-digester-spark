@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "@/lib/router-compat";
 import { Bookmark, BookmarkCheck, ChevronUp, X, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { PageMeta } from "@/components/PageMeta";
@@ -61,7 +61,7 @@ const StoryReel = () => {
       (entries) => {
         entries.forEach((entry) => {
           if (!entry.isIntersecting || entry.intersectionRatio < 0.6) return;
-          const idx = Number((entry.target as HTMLElement).dataset.index);
+          const idx = Number((entry.target as HTMLElement).dataset["index"]);
           if (!Number.isNaN(idx)) setActiveIndex(idx);
           const story = reelStories[idx];
           if (story && !seenRef.current.has(story.id)) {
@@ -141,15 +141,15 @@ const StoryReel = () => {
   const touchStart = useRef<{ x: number; y: number } | null>(null);
   const onTouchStart = (e: React.TouchEvent) => {
     const t = e.touches[0];
-    touchStart.current = { x: t.clientX, y: t.clientY };
+    touchStart.current = { x: t!.clientX, y: t!.clientY };
   };
   const onTouchEnd = (e: React.TouchEvent, story: any) => {
     const start = touchStart.current;
     touchStart.current = null;
     if (!start) return;
     const t = e.changedTouches[0];
-    const dx = t.clientX - start.x;
-    const dy = t.clientY - start.y;
+    const dx = t!.clientX - start.x;
+    const dy = t!.clientY - start.y;
     if (dx > 70 && Math.abs(dx) > Math.abs(dy) * 1.5) handleSave(story);
   };
 

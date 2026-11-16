@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import { supabase } from "@/integrations/supabase/client";
 import { getCityId, maybeCity, runCityScoped } from "@/lib/cityId";
 import { useCityConfig } from "@/hooks/useCityConfig";
@@ -15,7 +15,7 @@ type RecapStory = { id: string; title: string };
  * summarizes stories we already published, and links back to them so a reader
  * can verify every claim.
  */
-export default function WeeklyRecapBlock({ sponsorSlot }: { sponsorSlot?: React.ReactNode }) {
+export default function WeeklyRecapBlock({ sponsorSlot }: { sponsorSlot?: React.ReactNode | undefined }) {
   const city = useCityConfig();
 
   const { data: recap } = useQuery({
@@ -81,7 +81,7 @@ export default function WeeklyRecapBlock({ sponsorSlot }: { sponsorSlot?: React.
   return (
     <section
       aria-labelledby="weekly-recap"
-      className="mb-8 rounded-sm border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-5"
+      className="mb-8 rounded-xs border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-5"
     >
       <div className="flex items-baseline justify-between gap-3 mb-2">
         <p

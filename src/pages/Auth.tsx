@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@/lib/router-compat";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -56,7 +56,7 @@ const Auth = () => {
       passwordSchema.parse(password);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        toast.error(error.issues[0].message);
+        toast.error(error.issues[0]!.message);
         setLoading(false);
         return;
       }
@@ -95,7 +95,7 @@ const Auth = () => {
       passwordSchema.parse(password);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        toast.error(error.issues[0].message);
+        toast.error(error.issues[0]!.message);
         setLoading(false);
         return;
       }

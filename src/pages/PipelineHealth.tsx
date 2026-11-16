@@ -67,7 +67,7 @@ interface PipelineMetrics {
   };
   sourceHealth: {
     topProducers: Array<{ name: string; count: number; id: string }>;
-    failingSources: Array<{ name: string; failures: number; lastError?: string }>;
+    failingSources: Array<{ name: string; failures: number; lastError?: string | undefined }>;
     staleSources: Array<{ name: string; lastContent: string | null }>;
     starvingSourcesTop: StarvingSource[]; // Top 10 for display
     starvingTotal: number; // Total count before slice
@@ -254,7 +254,7 @@ const PipelineHealth = () => {
       if (approvals.length > 0) {
         const totalLag = approvals.reduce((sum, item) => {
           const created = new Date(item.created_at).getTime();
-          const reviewed = new Date(item.reviewed_at).getTime();
+          const reviewed = new Date(item.reviewed_at ?? item.created_at).getTime();
           return sum + (reviewed - created);
         }, 0);
         avgLag = Math.round(totalLag / approvals.length / 60000); // Convert to minutes
@@ -305,7 +305,7 @@ const PipelineHealth = () => {
         name: string; 
         last_fetched_at: string | null; 
         status: string;
-        type?: string;
+        type?: string | undefined;
       }>;
       
       // Find stale sources (no content in 3+ days)
@@ -355,15 +355,15 @@ const PipelineHealth = () => {
 
       // Process skip data from RPC (single source of truth)
       const skipStats = (skipStatsResult.data || {}) as {
-        total24h?: number;
-        total7d?: number;
-        byReason24h?: Record<string, number>;
-        byReason7d?: Record<string, number>;
-        topSources24h?: Array<{ source_name: string; count: number }>;
+        total24h?: number | undefined;
+        total7d?: number | undefined;
+        byReason24h?: Record<string, number> | undefined;
+        byReason7d?: Record<string, number> | undefined;
+        topSources24h?: Array<{ source_name: string; count: number }> | undefined;
       };
       const skipTotal24h = skipStats.total24h ?? 0;
-      const aiFailedCount = skipStats.byReason24h?.ai_failed ?? 0;
-      const eventCapCount = skipStats.byReason24h?.daily_event_cap_reached ?? 0;
+      const aiFailedCount = skipStats.byReason24h?.["ai_failed"] ?? 0;
+      const eventCapCount = skipStats.byReason24h?.["daily_event_cap_reached"] ?? 0;
       const aiFailedPct = safePct(aiFailedCount, skipTotal24h);
       const eventCapPct = safePct(eventCapCount, skipTotal24h);
 

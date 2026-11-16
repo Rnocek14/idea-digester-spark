@@ -1,0 +1,300 @@
+/*
+ * Tailwind v4 entry: config lives here, with no tailwind.config.js or PostCSS plugin.
+ * - Keep every @import in this top block, above @theme and the rest of the file. Install an
+ *   npm package before @importing its CSS. Never @import a remote URL (web fonts, CDN CSS): the
+ *   build resolves @import from the filesystem. Load those with a <link> in the head() of
+ *   src/routes/__root.tsx and name the family in a --font-* token in @theme inline below.
+ */
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Design system definition — ported from the Classic src/index.css and tailwind.config.ts.
+ * Values stay in the site's original HSL palette so the visual design is unchanged.
+ */
+
+@theme inline {
+  --font-serif: "Playfair Display", Georgia, serif;
+  --font-display: "Playfair Display", Georgia, serif;
+  --font-sans: Inter, system-ui, sans-serif;
+
+  /* Classic v3 radius scale: v3 rounded-sm is v4 rounded-xs, v3 bare rounded is v4 rounded-sm. */
+  --radius-xs: calc(var(--radius) - 4px);
+  --radius-sm: 0.25rem;
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.5rem;
+  --radius-4xl: 2rem;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+  --color-sidebar: var(--sidebar-background);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --color-brand: hsl(222.2 47.4% 11.2%);
+  --color-brand-navy: hsl(221 47% 9%);
+  --color-brand-lake: hsl(221 83% 35%);
+  --color-brand-sky: hsl(214 100% 95%);
+  --color-brand-sand: hsl(36 29% 95%);
+  --color-brand-accent: hsl(221 83% 53%);
+
+  --color-lake-light: var(--lake-light);
+  --color-lake: var(--lake-blue);
+  --color-lake-deep: var(--lake-deep);
+  --color-lake-navy: var(--lake-navy);
+  --color-lake-sand: var(--lake-sand);
+  --color-shore-terracotta: var(--shore-terracotta);
+
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+  --animate-spin-slow: spin-slow 3s linear infinite;
+  --animate-shimmer-sweep: shimmer-sweep 1.5s ease-in-out;
+
+  @keyframes accordion-down {
+    from { height: 0; }
+    to { height: var(--radix-accordion-content-height); }
+  }
+  @keyframes accordion-up {
+    from { height: var(--radix-accordion-content-height); }
+    to { height: 0; }
+  }
+  @keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  @keyframes shimmer-sweep {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+}
+
+:root {
+  --background: hsl(210 20% 98%);
+  --foreground: hsl(222.2 47.4% 11.2%);
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(222.2 47.4% 11.2%);
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(222.2 47.4% 11.2%);
+  --primary: hsl(222.2 47.4% 11.2%);
+  --primary-foreground: hsl(210 40% 98%);
+  --brand-accent: hsl(221 83% 53%);
+  --brand-accent-foreground: hsl(0 0% 100%);
+
+  /* Lake palette — sampled from the Shore Path map. Accents only. */
+  --lake-light: hsl(200 80% 82%);
+  --lake-blue: hsl(205 65% 68%);
+  --lake-deep: hsl(205 55% 38%);
+  --lake-navy: hsl(215 70% 35%);
+  --shore-terracotta: hsl(25 75% 42%);
+  --lake-sand: hsl(45 30% 96%);
+  --gradient-lake: linear-gradient(135deg, var(--lake-light) 0%, var(--lake-blue) 100%);
+
+  --secondary: hsl(210 40% 96.1%);
+  --secondary-foreground: hsl(222.2 47.4% 11.2%);
+  --muted: hsl(210 40% 96.1%);
+  --muted-foreground: hsl(215.4 16.3% 46.9%);
+  --accent: hsl(210 40% 96.1%);
+  --accent-foreground: hsl(222.2 47.4% 11.2%);
+  --destructive: hsl(0 84.2% 60.2%);
+  --destructive-foreground: hsl(210 40% 98%);
+  --border: hsl(214.3 31.8% 91.4%);
+  --input: hsl(214.3 31.8% 91.4%);
+  --ring: hsl(222.2 84% 4.9%);
+  --radius: 0.125rem;
+
+  --sidebar-background: hsl(0 0% 98%);
+  --sidebar-foreground: hsl(240 5.3% 26.1%);
+  --sidebar-primary: hsl(240 5.9% 10%);
+  --sidebar-primary-foreground: hsl(0 0% 98%);
+  --sidebar-accent: hsl(240 4.8% 95.9%);
+  --sidebar-accent-foreground: hsl(240 5.9% 10%);
+  --sidebar-border: hsl(220 13% 91%);
+  --sidebar-ring: hsl(217.2 91.2% 59.8%);
+}
+
+.dark {
+  --background: hsl(222.2 84% 4.9%);
+  --foreground: hsl(210 40% 98%);
+  --card: hsl(222.2 84% 4.9%);
+  --card-foreground: hsl(210 40% 98%);
+  --popover: hsl(222.2 84% 4.9%);
+  --popover-foreground: hsl(210 40% 98%);
+  --primary: hsl(210 40% 98%);
+  --primary-foreground: hsl(222.2 47.4% 11.2%);
+  --secondary: hsl(217.2 32.6% 17.5%);
+  --secondary-foreground: hsl(210 40% 98%);
+  --muted: hsl(217.2 32.6% 17.5%);
+  --muted-foreground: hsl(215 20.2% 65.1%);
+  --accent: hsl(217.2 32.6% 17.5%);
+  --accent-foreground: hsl(210 40% 98%);
+  --destructive: hsl(0 62.8% 30.6%);
+  --destructive-foreground: hsl(210 40% 98%);
+  --border: hsl(217.2 32.6% 17.5%);
+  --input: hsl(217.2 32.6% 17.5%);
+  --ring: hsl(212.7 26.8% 83.9%);
+  --sidebar-background: hsl(240 5.9% 10%);
+  --sidebar-foreground: hsl(240 4.8% 95.9%);
+  --sidebar-primary: hsl(224.3 76.3% 48%);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(240 3.7% 15.9%);
+  --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
+  --sidebar-border: hsl(240 3.7% 15.9%);
+  --sidebar-ring: hsl(217.2 91.2% 59.8%);
+}
+
+/* Classic container: centered, 2rem gutters, 1400px cap at the widest breakpoint. */
+@utility container {
+  margin-inline: auto;
+  padding-inline: 2rem;
+  @media (width >= 96rem) {
+    max-width: 1400px;
+  }
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+  }
+
+  /* Tailwind v4 buttons default to cursor: default; Classic v3 showed a pointer. */
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+/*
+  Guide article typography. @tailwindcss/typography is intentionally not registered;
+  guide containers use .guide-prose and get exactly these rules.
+  .not-prose is honored, matching the typography plugin's contract.
+*/
+@layer components {
+  .guide-prose p,
+  .guide-prose ul,
+  .guide-prose ol,
+  .guide-prose dl,
+  .guide-prose blockquote {
+    margin-block: 1.15em;
+  }
+
+  .guide-prose > :first-child {
+    margin-top: 0;
+  }
+
+  .guide-prose > :last-child {
+    margin-bottom: 0;
+  }
+
+  .guide-prose ul,
+  .guide-prose ol {
+    padding-left: 1.5rem;
+  }
+
+  .guide-prose ul {
+    list-style: disc;
+  }
+
+  .guide-prose ol {
+    list-style: decimal;
+  }
+
+  .guide-prose li {
+    margin-block: 0.4em;
+    padding-left: 0.25rem;
+  }
+
+  .guide-prose li > ul,
+  .guide-prose li > ol {
+    margin-block: 0.4em;
+  }
+
+  .guide-prose h3 {
+    font-family: "Playfair Display", Georgia, serif;
+    font-size: 1.25rem;
+    line-height: 1.3;
+    color: var(--color-slate-900);
+    margin-top: 1.75em;
+    margin-bottom: 0.5em;
+  }
+
+  .guide-prose h4 {
+    font-weight: 600;
+    color: var(--color-slate-900);
+    margin-top: 1.5em;
+    margin-bottom: 0.4em;
+  }
+
+  .guide-prose strong {
+    font-weight: 600;
+    color: var(--color-slate-900);
+  }
+
+  .guide-prose em {
+    font-style: italic;
+  }
+
+  /* Opt-out: cards, tables and grids inside a guide body manage their own spacing. */
+  .guide-prose .not-prose p,
+  .guide-prose .not-prose ul,
+  .guide-prose .not-prose ol,
+  .guide-prose .not-prose dl,
+  .guide-prose .not-prose li {
+    margin-block: 0;
+    padding-left: 0;
+  }
+
+  .guide-prose .not-prose ul,
+  .guide-prose .not-prose ol {
+    list-style: none;
+  }
+}
+
+/*
+  Horizontal-scroll affordance: pure-CSS scroll shadows for wide tables on phones.
+*/
+@layer components {
+  .scroll-x-hint {
+    background:
+      linear-gradient(to right, #fff 30%, rgba(255, 255, 255, 0)) left / 32px 100%,
+      linear-gradient(to left, #fff 30%, rgba(255, 255, 255, 0)) right / 32px 100%,
+      radial-gradient(farthest-side at 0 50%, rgba(15, 23, 42, 0.16), transparent) left / 14px 100%,
+      radial-gradient(farthest-side at 100% 50%, rgba(15, 23, 42, 0.16), transparent) right / 14px 100%;
+    background-color: #fff;
+    background-repeat: no-repeat;
+    background-attachment: local, local, scroll, scroll;
+  }
+}

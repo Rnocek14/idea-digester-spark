@@ -63,7 +63,7 @@ export default function HistoryTodayBlock() {
 
       const list = (all.data as Entry[] | null) ?? [];
       const chosen: Entry | null = list.length
-        ? list[doy % list.length]
+        ? list[doy % list.length] ?? null
         : null;
 
       if (!cancelled) {

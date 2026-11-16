@@ -19,7 +19,7 @@ export type Mention = {
   snippet: string;
   url: string | null;
   at: string; // ISO date
-  byline?: string | null;
+  byline?: string | null | undefined;
 };
 
 export type VenueSignals = {
@@ -43,7 +43,7 @@ function aliasMatches(text: string | null | undefined, aliases: string[]): boole
     if (idx === -1) continue;
     const before = idx === 0 ? " " : hay[idx - 1];
     const after = idx + needle.length >= hay.length ? " " : hay[idx + needle.length];
-    if (/[a-z0-9]/.test(before) || /[a-z0-9]/.test(after)) continue;
+    if (/[a-z0-9]/.test(before!) || /[a-z0-9]/.test(after!)) continue;
     return true;
   }
   return false;
@@ -74,7 +74,7 @@ export async function loadCollection(collection: string): Promise<Venue[]> {
  */
 export async function loadSignals(
   venues: Venue[],
-  opts: { windowDays?: number; recentPerVenue?: number } = {}
+  opts: { windowDays?: number | undefined; recentPerVenue?: number | undefined } = {}
 ): Promise<VenueSignals[]> {
   const windowDays = opts.windowDays ?? 365;
   const cap = opts.recentPerVenue ?? 3;

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import { CalendarDays } from "lucide-react";
 import { getCityId, maybeCity, runCityScoped } from "@/lib/cityId";
 
@@ -28,7 +28,7 @@ function formatTime(timeStr: string | null): string {
   // Handle 24h format like "19:00"
   const match = timeStr.match(/(\d{1,2}):?(\d{2})?/);
   if (!match) return timeStr;
-  let hours = parseInt(match[1]);
+  let hours = parseInt(match[1]!);
   const minutes = match[2] || "00";
   const period = hours >= 12 ? "PM" : "AM";
   if (hours > 12) hours -= 12;
@@ -124,7 +124,7 @@ export default function WeekendSidebarWidget() {
   })}`;
 
   return (
-    <aside className="rounded-2xl bg-card p-4 shadow-sm ring-1 ring-border">
+    <aside className="rounded-2xl bg-card p-4 shadow-xs ring-1 ring-border">
       <div className="flex items-center gap-2 mb-1">
         <CalendarDays className="h-4 w-4 text-primary" />
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">

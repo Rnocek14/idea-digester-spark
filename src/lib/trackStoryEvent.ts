@@ -55,9 +55,9 @@ type TrackArgs = {
   pillar: ContentPillar;
   eventType: StoryEventType;
   entityType: "content_queue" | "business_story" | "history_entry" | "event" | "incident" | "guide";
-  entityId?: string | null;
-  slug?: string | null;
-  metadata?: Record<string, unknown>;
+  entityId?: string | null | undefined;
+  slug?: string | null | undefined;
+  metadata?: Record<string, unknown> | undefined;
 };
 
 /**
@@ -72,11 +72,11 @@ export async function trackStoryEvent(args: TrackArgs): Promise<void> {
         pillar: args.pillar,
         event_type: args.eventType,
         entity_type: args.entityType,
-        entity_id: args.entityId ?? undefined,
-        slug: args.slug ?? undefined,
+        entity_id: args.entityId ?? null,
+        slug: args.slug ?? null,
         session_id: getSessionId(),
-        path: path ?? undefined,
-        referrer: referrer ?? undefined,
+        path,
+        referrer,
         metadata: JSON.parse(JSON.stringify(args.metadata ?? {})),
       },
     ]);
@@ -106,7 +106,7 @@ function isNonReader(): boolean {
   if (!ua) return true;
   if (/Prerender|HeadlessChrome|Playwright|Puppeteer/i.test(ua)) return true;
   if (/bot|crawler|spider|slurp|facebookexternalhit|embedly|curl|wget|python-requests|node-fetch/i.test(ua)) return true;
-  if ((navigator as Navigator & { webdriver?: boolean }).webdriver) return true;
+  if ((navigator as Navigator & { webdriver?: boolean | undefined }).webdriver) return true;
   return false;
 }
 
@@ -131,9 +131,9 @@ const READ_SCROLL_RATIO = 0.5;
 export function usePageView(args: {
   pillar: ContentPillar;
   entityType: TrackArgs["entityType"];
-  entityId?: string | null;
-  slug?: string | null;
-  enabled?: boolean;
+  entityId?: string | null | undefined;
+  slug?: string | null | undefined;
+  enabled?: boolean | undefined;
 }): void {
   const { pillar, entityType, entityId, slug, enabled = true } = args;
   const seen = useRef<string | null>(null);

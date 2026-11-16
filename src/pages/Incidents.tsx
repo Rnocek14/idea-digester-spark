@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -222,7 +222,7 @@ function IncidentCard({
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-start gap-3 min-w-0 flex-1">
               <div className="mt-1 text-muted-foreground">
-                {typeIcons[incident.incident_type] || typeIcons.other}
+                {typeIcons[incident.incident_type] || typeIcons["other"]}
               </div>
               <div className="min-w-0">
                 <h3 className="font-medium text-foreground leading-tight break-words">

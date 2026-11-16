@@ -161,7 +161,7 @@ const Advertise = () => {
             </div>
           </div>
 
-          <div className="rounded-sm border border-slate-100 bg-white p-4 shadow-sm text-xs text-slate-600">
+          <div className="rounded-xs border border-slate-100 bg-white p-4 shadow-xs text-xs text-slate-600">
             <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
               Snapshot (pilot targets)
             </p>
@@ -202,7 +202,7 @@ const Advertise = () => {
         </h2>
         <div className="grid gap-4 md:grid-cols-2">
           {/* Primary package */}
-          <article className="relative flex flex-col rounded-sm border border-amber-200 bg-white p-5 shadow-sm ring-1 ring-amber-100">
+          <article className="relative flex flex-col rounded-xs border border-amber-200 bg-white p-5 shadow-xs ring-1 ring-amber-100">
             <div className="absolute right-4 top-4 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-800">
               Most popular
             </div>
@@ -227,7 +227,7 @@ const Advertise = () => {
           </article>
 
           {/* Secondary package */}
-          <article className="flex flex-col rounded-sm border border-slate-100 bg-white p-5 shadow-sm">
+          <article className="flex flex-col rounded-xs border border-slate-100 bg-white p-5 shadow-xs">
             <h3 className="text-base font-semibold text-slate-900">
               Directory Sponsor
             </h3>
@@ -250,7 +250,7 @@ const Advertise = () => {
       </section>
 
       {/* Lead form */}
-      <section className="rounded-sm border border-slate-100 bg-white p-6 shadow-sm">
+      <section className="rounded-xs border border-slate-100 bg-white p-6 shadow-xs">
         <div className="mb-4">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
             Get a custom proposal
@@ -271,13 +271,13 @@ const Advertise = () => {
                 id="businessName"
                 value={formData.businessName}
                 onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
-                className={`w-full rounded-sm border bg-slate-50 px-3 py-2 text-sm
-                           focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 ${
-                  errors.businessName ? "border-red-500" : "border-slate-200"
+                className={`w-full rounded-xs border bg-slate-50 px-3 py-2 text-sm
+                           focus:border-blue-500 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-100 ${
+                  errors["businessName"] ? "border-red-500" : "border-slate-200"
                 }`}
               />
-              {errors.businessName && (
-                <p className="mt-1 text-xs text-red-600">{errors.businessName}</p>
+              {errors["businessName"] && (
+                <p className="mt-1 text-xs text-red-600">{errors["businessName"]}</p>
               )}
             </div>
 
@@ -289,13 +289,13 @@ const Advertise = () => {
                 id="contactName"
                 value={formData.contactName}
                 onChange={(e) => setFormData({ ...formData, contactName: e.target.value })}
-                className={`w-full rounded-sm border bg-slate-50 px-3 py-2 text-sm
-                           focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 ${
-                  errors.contactName ? "border-red-500" : "border-slate-200"
+                className={`w-full rounded-xs border bg-slate-50 px-3 py-2 text-sm
+                           focus:border-blue-500 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-100 ${
+                  errors["contactName"] ? "border-red-500" : "border-slate-200"
                 }`}
               />
-              {errors.contactName && (
-                <p className="mt-1 text-xs text-red-600">{errors.contactName}</p>
+              {errors["contactName"] && (
+                <p className="mt-1 text-xs text-red-600">{errors["contactName"]}</p>
               )}
             </div>
           </div>
@@ -310,13 +310,13 @@ const Advertise = () => {
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className={`w-full rounded-sm border bg-slate-50 px-3 py-2 text-sm
-                           focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 ${
-                  errors.email ? "border-red-500" : "border-slate-200"
+                className={`w-full rounded-xs border bg-slate-50 px-3 py-2 text-sm
+                           focus:border-blue-500 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-100 ${
+                  errors["email"] ? "border-red-500" : "border-slate-200"
                 }`}
               />
-              {errors.email && (
-                <p className="mt-1 text-xs text-red-600">{errors.email}</p>
+              {errors["email"] && (
+                <p className="mt-1 text-xs text-red-600">{errors["email"]}</p>
               )}
             </div>
 
@@ -330,7 +330,7 @@ const Advertise = () => {
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 className="w-full rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-sm
-                           focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100"
+                           focus:border-blue-500 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-100"
               />
             </div>
           </div>
@@ -345,7 +345,7 @@ const Advertise = () => {
               value={formData.website}
               onChange={(e) => setFormData({ ...formData, website: e.target.value })}
               className="w-full rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-sm
-                         focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100"
+                         focus:border-blue-500 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-100"
             />
           </div>
 
@@ -359,20 +359,20 @@ const Advertise = () => {
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               rows={4}
               placeholder="Tell us about your advertising goals..."
-              className={`w-full rounded-sm border bg-slate-50 px-3 py-2 text-sm
-                         focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 ${
-                errors.notes ? "border-red-500" : "border-slate-200"
+              className={`w-full rounded-xs border bg-slate-50 px-3 py-2 text-sm
+                         focus:border-blue-500 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-100 ${
+                errors["notes"] ? "border-red-500" : "border-slate-200"
               }`}
             />
-            {errors.notes && (
-              <p className="mt-1 text-xs text-red-600">{errors.notes}</p>
+            {errors["notes"] && (
+              <p className="mt-1 text-xs text-red-600">{errors["notes"]}</p>
             )}
           </div>
 
           <button
             type="submit"
             disabled={submitLeadMutation.isPending}
-            className="w-full rounded-full bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow transition hover:bg-blue-700 disabled:opacity-50"
+            className="w-full rounded-full bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-50"
           >
             {submitLeadMutation.isPending ? "Submitting..." : "Submit Inquiry"}
           </button>

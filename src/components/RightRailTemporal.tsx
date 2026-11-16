@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import { supabase } from "@/integrations/supabase/client";
 import { getCityId, maybeCity, runCityScoped } from "@/lib/cityId";
 import {
@@ -16,7 +16,7 @@ import {
  * Compact headline-only list (no images, no filter chips, no hero) —
  * pairs with EditorialLaterRail ("Worth a look") shown directly below.
  */
-export default function RightRailTemporal({ fallback = null }: { fallback?: React.ReactNode }) {
+export default function RightRailTemporal({ fallback = null }: { fallback?: React.ReactNode | undefined }) {
   const { data: events = [], isLoading } = useQuery({
     queryKey: ["right-rail-temporal"],
     queryFn: async () => {
@@ -153,7 +153,7 @@ export default function RightRailTemporal({ fallback = null }: { fallback?: Reac
                 // A weekday name only reads as "soon". Anything further out than
                 // a week gets a calendar date instead.
                 const far = s.key === "coming_up" || e.event_date > horizonWeekStr;
-                dayLabel = new Date(y, (m || 1) - 1, d || 1).toLocaleDateString(
+                dayLabel = new Date(y!, (m || 1) - 1, d || 1).toLocaleDateString(
                   [],
                   far ? { month: "short", day: "numeric" } : { weekday: "short" },
                 );
@@ -162,7 +162,7 @@ export default function RightRailTemporal({ fallback = null }: { fallback?: Reac
                 <li key={e.id}>
                   <Link
                     to={`/events/${e.id}`}
-                    className="group flex gap-2 items-start hover:bg-slate-50 -mx-2 px-2 py-1 rounded transition-colors"
+                    className="group flex gap-2 items-start hover:bg-slate-50 -mx-2 px-2 py-1 rounded-sm transition-colors"
                   >
                     <span className="mt-0.5 text-sm leading-none">
                       {categoryEmoji(e.category)}

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle, Flame, Car, CloudLightning, Shield, Zap, ChevronRight, Construction, TrafficCone, Cone } from "lucide-react";
 import QuickReportIncident from "./QuickReportIncident";
@@ -99,8 +99,8 @@ const statusDotColors: Record<string, string> = {
 };
 
 type LiveIncidentsSidebarProps = {
-  onHide?: () => void;
-  showCloseButton?: boolean;
+  onHide?: (() => void) | undefined;
+  showCloseButton?: boolean | undefined;
 };
 
 export default function LiveIncidentsSidebar({ onHide, showCloseButton = false }: LiveIncidentsSidebarProps) {
@@ -216,7 +216,7 @@ export default function LiveIncidentsSidebar({ onHide, showCloseButton = false }
           {showCloseButton && onHide && (
             <button
               onClick={onHide}
-              className="text-muted-foreground hover:text-foreground text-xs px-1.5 py-0.5 rounded hover:bg-accent transition-colors"
+              className="text-muted-foreground hover:text-foreground text-xs px-1.5 py-0.5 rounded-sm hover:bg-accent transition-colors"
               aria-label="Hide incidents sidebar"
             >
               ×
@@ -267,7 +267,7 @@ export default function LiveIncidentsSidebar({ onHide, showCloseButton = false }
               >
                 <div className="flex items-start gap-2">
                   <span className="text-muted-foreground mt-0.5">
-                    {typeIcons[incident.incident_type] || typeIcons.other}
+                    {typeIcons[incident.incident_type] || typeIcons["other"]}
                   </span>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium leading-tight line-clamp-2">

@@ -4,9 +4,9 @@ import { Button } from "@/components/ui/button";
 
 type Props = {
   audioUrl: string;
-  transcript?: string | null;
-  durationSec?: number | null;
-  autoPlay?: boolean;
+  transcript?: string | null | undefined;
+  durationSec?: number | null | undefined;
+  autoPlay?: boolean | undefined;
 };
 
 function fmt(sec: number) {
