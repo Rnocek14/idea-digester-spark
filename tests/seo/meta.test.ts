@@ -1,28 +1,15 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 
-const indexHtml = readFileSync("index.html", "utf8");
+const rootRoute = readFileSync("src/routes/__root.tsx", "utf8");
 
-// Non-JS crawlers need homepage fallbacks; prerender removes them when a
-// route supplies its own Helmet-managed values.
-test("index.html provides homepage social fallbacks", () => {
-  for (const tag of ["og:title", "og:description", "twitter:title", "twitter:description"]) {
-    const attr = tag.startsWith("og:") ? "property" : "name";
-    const re = new RegExp(`<meta\\s+${attr}=["']${tag}["']`, "i");
-    assert.ok(
-      re.test(indexHtml),
-      `index.html must provide a homepage ${tag} fallback`,
-    );
-  }
-});
-
-test("index.html keeps the site-level defaults PageMeta does not always set", () => {
-  for (const tag of ["og:site_name", "og:type"]) {
-    assert.ok(
-      new RegExp(`<meta\\s+property=["']${tag}["']`, "i").test(indexHtml),
-      `index.html should keep a default ${tag}`,
-    );
+// Pages are server-rendered, so crawlers that skip JavaScript read the head the
+// root route and each page's PageMeta produce. The root supplies the homepage
+// defaults that a page without its own PageMeta falls back to.
+test("root route provides homepage social defaults", () => {
+  for (const tag of ["og:title", "og:description", "twitter:title", "twitter:description", "og:site_name", "og:type"]) {
+    assert.ok(rootRoute.includes(tag), `__root.tsx must provide a default ${tag}`);
   }
 });
 
@@ -33,33 +20,16 @@ test("PageMeta sets canonical, title, and social tags per page", () => {
   }
 });
 
-// Only asserted when a build has been prerendered locally; skipped in a clean checkout.
-test("prerendered output carries real content and one og:title", { skip: !existsSync("dist/guides/yerkes-observatory/index.html") }, () => {
-  const html = readFileSync("dist/guides/yerkes-observatory/index.html", "utf8");
-  const ogTitles = html.match(/<meta property="og:title"/g) ?? [];
-  assert.equal(ogTitles.length, 1, "prerendered page must have exactly one og:title");
-  assert.ok(html.includes('"@type":"FAQPage"'), "FAQ schema should be baked in");
-  assert.ok(html.length > 10000, "prerendered page should contain real rendered content");
-});
-
-// Two hardcoded route lists have to agree: scripts/prerender.mjs decides what gets
-// crawlable HTML, scripts/generate-sitemap.ts decides what Google is told exists.
-// They drifted once already — streblow-boats was prerendered and in llms.txt but absent
-// from the sitemap, so the page existed and nothing advertised it. At fleet scale this
-// rots silently, so it's asserted rather than remembered.
-test("every prerendered guide route is also in the sitemap", () => {
-  const prerender = readFileSync("scripts/prerender.mjs", "utf8");
+// Every guide page file must be advertised in the sitemap; a guide that exists but
+// is missing from the sitemap was a real drift once (streblow-boats).
+test("every guide route is also in the sitemap", () => {
   const sitemap = readFileSync("scripts/generate-sitemap.ts", "utf8");
-
-  const prerendered = [...prerender.matchAll(/'(\/guides\/[a-z0-9-]+)'/g)].map((m) => m[1]);
-  assert.ok(prerendered.length > 15, "expected to find the guide route list in prerender.mjs");
-
-  const missing = prerendered.filter((p) => !sitemap.includes(`"${p}"`));
-  assert.deepEqual(
-    missing,
-    [],
-    `prerendered but missing from the sitemap: ${missing.join(", ")}`,
-  );
+  const guides = readdirSync("src/routes/guides")
+    .filter((f) => f !== "index.tsx")
+    .map((f) => `/guides/${f.replace(/\.tsx$/, "")}`);
+  assert.ok(guides.length > 15, "expected to find the guide route files");
+  const missing = guides.filter((p) => !sitemap.includes(`"${p}"`));
+  assert.deepEqual(missing, [], `guide routes missing from the sitemap: ${missing.join(", ")}`);
 });
 
 // The guide typography regression: @tailwindcss/typography is a dependency but was never
@@ -68,7 +38,7 @@ test("every prerendered guide route is also in the sitemap", () => {
 // through .guide-prose with explicit rules instead — if those rules go missing, articles
 // silently collapse into one wall of text again.
 test("guide typography rules exist and restore paragraph and list styling", () => {
-  const css = readFileSync("src/index.css", "utf8");
+  const css = readFileSync("src/styles.css", "utf8");
   assert.ok(css.includes(".guide-prose p"), "guide paragraph spacing rule is missing");
   assert.ok(/\.guide-prose ul\s*\{[^}]*list-style:\s*disc/.test(css), "guide list bullets are missing");
   assert.ok(css.includes(".guide-prose .not-prose"), "the .not-prose opt-out must be honored");
@@ -94,19 +64,4 @@ test("canonical origin is resolved, not hardcoded, in meta and schema builders",
     );
     assert.ok(src.includes("getSiteOrigin"), `${f} must resolve the origin via getSiteOrigin`);
   }
-});
-
-// Prerendering runs a real browser against 127.0.0.1. Without the injected override,
-// every prerendered file would ship a canonical pointing at localhost.
-test("prerender injects a production canonical origin before app boot", () => {
-  const src = readFileSync("scripts/prerender.mjs", "utf8");
-  assert.ok(src.includes("__SITE_ORIGIN__"), "prerender must set the canonical origin");
-  assert.ok(src.includes("addInitScript"), "the override must be set before app code runs");
-});
-
-test("prerendered output never contains a localhost canonical", { skip: !existsSync("dist/guides/yerkes-observatory/index.html") }, () => {
-  const html = readFileSync("dist/guides/yerkes-observatory/index.html", "utf8");
-  const canonical = html.match(/<link rel="canonical" href="([^"]+)"/)?.[1] ?? "";
-  assert.ok(canonical.startsWith("https://"), `canonical should be absolute https, got: ${canonical}`);
-  assert.ok(!/127\.0\.0\.1|localhost/.test(canonical), `canonical leaked a local host: ${canonical}`);
 });
