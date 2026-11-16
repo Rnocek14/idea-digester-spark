@@ -73,7 +73,7 @@
     "tw-animate-css": "^1.3.4",
     "vaul": "^1.1.2",
     "vite-tsconfig-paths": "^6.0.2",
-    "zod": "^3.25.76",
+    "zod": "^4.1.13",
     "@playwright/test": "1.57.0",
     "@radix-ui/react-toast": "^1.2.14",
     "@supabase/supabase-js": "^2.84.0",
