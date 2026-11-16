@@ -254,7 +254,7 @@ const PipelineHealth = () => {
       if (approvals.length > 0) {
         const totalLag = approvals.reduce((sum, item) => {
           const created = new Date(item.created_at).getTime();
-          const reviewed = new Date(item.reviewed_at).getTime();
+          const reviewed = new Date(item.reviewed_at ?? item.created_at).getTime();
           return sum + (reviewed - created);
         }, 0);
         avgLag = Math.round(totalLag / approvals.length / 60000); // Convert to minutes

@@ -187,7 +187,7 @@ const LakeGeneva = () => {
     const cat = category?.toLowerCase() || 'default';
     const images = CATEGORY_FALLBACK_IMAGES[cat] || CATEGORY_FALLBACK_IMAGES["default"];
     const hash = storyId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    return images![hash % images!.length];
+    return images![hash % images!.length]!;
   };
 
   // Topic-specific civic image libraries for smart keyword mapping
@@ -370,7 +370,7 @@ const LakeGeneva = () => {
         .limit(OTHER_TARGET);
       
       // Combine and dedupe
-      const combined = [...newsCivic, ...events, ...other];
+      const combined = [...(newsCivic ?? []), ...(events ?? []), ...(other ?? [])];
       const seenIds = new Set<string>();
       const todayStr = new Date().toISOString().split('T')[0];
       
@@ -1127,7 +1127,7 @@ const LakeGeneva = () => {
                         </div>
 
                         <div className="grid gap-4 sm:gap-5 sm:grid-cols-2">
-                          {storiesByCategory[category].map((story) => {
+                          {storiesByCategory[category]!.map((story) => {
                             const time = getRelativeTime(story.publish_date || story.created_at);
                             let source: string | null = (story as any).source?.name || null;
 

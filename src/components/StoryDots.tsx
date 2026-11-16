@@ -139,7 +139,7 @@ export const StoryDots = ({
           return (
             <button
               key={story.id}
-              ref={(el) => (dotRefs.current[index] = el)}
+              ref={(el) => { dotRefs.current[index] = el; }}
               type="button"
               role="tab"
               aria-selected={isActive}

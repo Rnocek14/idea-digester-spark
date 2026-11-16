@@ -36,7 +36,7 @@ const getDailyTestimonial = (testimonials: Testimonial[]): Testimonial | null =>
   if (!testimonials?.length) return null;
   const today = new Date();
   const dayIndex = Math.floor(today.getTime() / (1000 * 60 * 60 * 24));
-  return testimonials[dayIndex % testimonials.length];
+  return testimonials[dayIndex % testimonials.length] ?? null;
 };
 
 const isRealEstateSponsor = (sponsor: Sponsor | null) => {

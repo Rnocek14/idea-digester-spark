@@ -81,7 +81,7 @@ const SponsorAnalytics = () => {
           .select("click_source, newsletter_id")
           .eq("business_id", business.id);
 
-        const newsletterIds = [...new Set(clicks?.map((c) => c.newsletter_id).filter(Boolean) || [])];
+        const newsletterIds = [...new Set(clicks?.map((c) => c.newsletter_id).filter((id): id is string => Boolean(id)) || [])];
 
         let totalOpens = 0;
         if (newsletterIds.length > 0) {

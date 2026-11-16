@@ -62,8 +62,8 @@ function parseTweetUrl(url: string): ParsedTweet | null {
   const match = trimmed.match(/(?:twitter\.com|x\.com)\/([^\/]+)\/status\/(\d+)/i);
   if (match) {
     return {
-      username: match[1],
-      tweetId: match[2],
+      username: match[1]!,
+      tweetId: match[2]!,
       url: trimmed
     };
   }

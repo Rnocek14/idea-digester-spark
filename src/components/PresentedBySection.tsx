@@ -56,7 +56,7 @@ const getDailyTestimonial = (testimonials: Testimonial[]): Testimonial | null =>
   if (!testimonials?.length) return null;
   const today = new Date();
   const dayIndex = Math.floor(today.getTime() / (1000 * 60 * 60 * 24));
-  return testimonials[dayIndex % testimonials.length];
+  return testimonials[dayIndex % testimonials.length] ?? null;
 };
 
 const trackClickUrl = (url: string, source: string, businessId?: string, placementId?: string) => {
@@ -101,6 +101,7 @@ export const PresentedBySection = ({ sponsor, marketData }: PresentedBySectionPr
       const timer = setTimeout(() => setStarsAnimated(true), 600);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [isVisible]);
 
 

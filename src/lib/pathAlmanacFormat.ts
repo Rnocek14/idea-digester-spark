@@ -36,7 +36,7 @@ export function crowdWord(mean: number | null | undefined): string {
   if (mean == null || !isFinite(mean)) return "—";
   const clamped = Math.min(2, Math.max(0, mean));
   const i = Math.round((clamped / 2) * (CROWD_WORDS.length - 1));
-  return CROWD_WORDS[i];
+  return CROWD_WORDS[i]!;
 }
 
 /**

@@ -210,7 +210,7 @@ const Directory = () => {
                         onClick={() =>
                           toggleStatusMutation.mutate({
                             id: business.id,
-                            currentStatus: business.status,
+                            currentStatus: business.status ?? "",
                           })
                         }
                         disabled={toggleStatusMutation.isPending}

@@ -120,7 +120,7 @@ const getFallbackImage = (category: string | null, title: string, id?: string): 
   // Use ID if available (more unique), otherwise fall back to title
   const hashInput = id || title;
   const hash = hashString(hashInput);
-  return images![hash % images!.length];
+  return images![hash % images!.length]!;
 };
 
 export const StoryCard = ({

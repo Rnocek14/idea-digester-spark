@@ -456,7 +456,7 @@ function getUpcomingWeekdays(): { dayOfWeek: number; dayName: string; dateStr: s
     const futureDate = new Date(now);
     futureDate.setDate(now.getDate() + daysAhead);
     const dateStr = `${futureDate.getFullYear()}-${String(futureDate.getMonth() + 1).padStart(2, '0')}-${String(futureDate.getDate()).padStart(2, '0')}`;
-    weekdays.push({ dayOfWeek: i, dayName: dayNames[i], dateStr });
+    weekdays.push({ dayOfWeek: i, dayName: dayNames[i]!, dateStr });
   }
   
   return weekdays;

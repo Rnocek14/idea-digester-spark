@@ -203,7 +203,7 @@ export const PlacementDialog = ({ businessId, open, onOpenChange }: PlacementDia
                   <SelectContent>
                     {slots?.map((slot) => (
                       <SelectItem key={slot.id} value={slot.id}>
-                        {slot.name} - ${(slot.price_monthly / 100).toFixed(0)}/mo
+                        {slot.name} - ${((slot.price_monthly ?? 0) / 100).toFixed(0)}/mo
                       </SelectItem>
                     ))}
                   </SelectContent>

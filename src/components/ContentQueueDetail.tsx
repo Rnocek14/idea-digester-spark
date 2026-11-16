@@ -164,7 +164,7 @@ export function ContentQueueDetail({
   }, [existingTargets]);
 
   const updateStoryMutation = useMutation({
-    mutationFn: async (updates: { title?: string | undefined; summary?: string | undefined; category?: string | undefined; is_sponsored?: boolean | undefined }) => {
+    mutationFn: async (updates: { title?: string; summary?: string; category?: string; is_sponsored?: boolean }) => {
       console.log("📝 Updating story:", storyId, updates);
       
       const { data: updated, error } = await supabase
@@ -507,7 +507,7 @@ export function ContentQueueDetail({
                     <div className="flex items-start gap-2">
                       <span className="text-sm text-muted-foreground min-w-fit">Tags:</span>
                       <div className="flex flex-wrap gap-1">
-                        {story.safety_tags.map((tag: string, idx: number) => (
+                        {(story.safety_tags as string[]).map((tag: string, idx: number) => (
                           <Badge key={idx} variant="secondary" className="text-xs">
                             {tag}
                           </Badge>

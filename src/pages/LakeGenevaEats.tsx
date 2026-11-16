@@ -121,7 +121,7 @@ const isThirdPartyImage = (imageUrl: string | null, sourceUrl: string | null): b
 const pickFallbackImage = (seed: string): string => {
   let hash = 5381;
   for (let i = 0; i < seed.length; i++) hash = ((hash << 5) + hash) ^ seed.charCodeAt(i);
-  return DINING_FALLBACK_IMAGES[Math.abs(hash) % DINING_FALLBACK_IMAGES.length];
+  return DINING_FALLBACK_IMAGES[Math.abs(hash) % DINING_FALLBACK_IMAGES.length]!;
 };
 
 const truncate = (text: string, max = 400): string => {
