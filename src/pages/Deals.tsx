@@ -189,7 +189,7 @@ export default function Deals() {
           <>
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
-                <Badge className="bg-[hsl(var(--shore-terracotta))] text-white">
+                <Badge className="bg-[var(--shore-terracotta)] text-white">
                   💫 Ambassador
                 </Badge>
                 <span className="text-sm text-muted-foreground">
@@ -267,7 +267,7 @@ export default function Deals() {
 
         {/* Become an Ambassador CTA */}
         {!verified && (
-          <Card className="mt-12 bg-[hsl(var(--lake-sand))] dark:bg-slate-950/30 border-slate-200 dark:border-slate-800">
+          <Card className="mt-12 bg-[var(--lake-sand)] dark:bg-slate-950/30 border-slate-200 dark:border-slate-800">
             <CardContent className="pt-6">
               <div className="text-center">
                 <h3 className="text-xl font-bold mb-2">Become an Ambassador</h3>

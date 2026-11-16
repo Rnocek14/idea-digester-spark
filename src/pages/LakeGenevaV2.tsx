@@ -1022,7 +1022,7 @@ const LakeGenevaV2 = () => {
                         rel={story.original_url ? 'noopener noreferrer' : undefined}
                         className="group flex items-start gap-3 py-3 hover:bg-slate-50/60 -mx-2 px-2 rounded-sm transition-colors"
                       >
-                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-slate-300 group-hover:bg-[hsl(var(--shore-terracotta))] transition-colors" />
+                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-slate-300 group-hover:bg-[var(--shore-terracotta)] transition-colors" />
                          <div className="flex-1 min-w-0">
                           <h3
                             className="text-[15px] sm:text-base text-slate-900 leading-snug group-hover:text-slate-600 transition-colors"

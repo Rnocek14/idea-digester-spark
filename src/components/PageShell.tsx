@@ -48,7 +48,7 @@ const PageShell: React.FC<PageShellProps> = ({
             <span className="sm:hidden">{shortDate}</span>
             <span className="hidden md:inline text-slate-400">·</span>
             <span
-              className="hidden md:inline text-[11px] uppercase tracking-[0.18em] text-[hsl(var(--shore-terracotta))]/80"
+              className="hidden md:inline text-[11px] uppercase tracking-[0.18em] text-[var(--shore-terracotta)]/80"
               style={{ fontFamily: "'Playfair Display', serif", letterSpacing: "0.14em" }}
             >
               {issueLine}
@@ -67,7 +67,7 @@ const PageShell: React.FC<PageShellProps> = ({
           {/* Logo / brand */}
           <Link to="/" className="flex items-baseline gap-2 group">
             <span
-              className="text-2xl tracking-tight text-slate-900 group-hover:text-[hsl(var(--lake-deep))] transition-colors leading-none"
+              className="text-2xl tracking-tight text-slate-900 group-hover:text-[var(--lake-deep)] transition-colors leading-none"
               style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700 }}
             >
               {city.site_name}
@@ -150,11 +150,11 @@ const PageShell: React.FC<PageShellProps> = ({
               {city.site_name}
             </span>
             <div className="flex items-center gap-3">
-              <span className="h-px w-8 bg-[hsl(var(--shore-terracotta))]/40" />
-              <span className="text-[11px] uppercase tracking-[0.22em] text-[hsl(var(--shore-terracotta))]/80">
+              <span className="h-px w-8 bg-[var(--shore-terracotta)]/40" />
+              <span className="text-[11px] uppercase tracking-[0.22em] text-[var(--shore-terracotta)]/80">
                 {city.theme.footer_kicker}
               </span>
-              <span className="h-px w-8 bg-[hsl(var(--shore-terracotta))]/40" />
+              <span className="h-px w-8 bg-[var(--shore-terracotta)]/40" />
             </div>
             <p
               className="max-w-md text-sm italic text-slate-600 leading-relaxed"
