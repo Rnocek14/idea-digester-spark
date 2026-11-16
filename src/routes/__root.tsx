@@ -10,7 +10,7 @@ import {
   Scripts,
   useRouter,
 } from "@tanstack/react-router";
-import { Helmet, HelmetProvider } from "react-helmet-async";
+import { HelmetProvider } from "react-helmet-async";
 
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -20,9 +20,6 @@ import NotFound from "@/pages/NotFound";
 import { reportLovableError } from "@/lib/lovable-error-reporting";
 import appCss from "../styles.css?url";
 
-const SITE_TITLE = "Lake Geneva Brief – Today's Local News & Things To Do";
-const SITE_DESCRIPTION =
-  "Today's local news, civic updates, events, dining, and nightlife in Lake Geneva, Wisconsin — curated daily.";
 const FONT_CSS =
   "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600;700&display=swap";
 
@@ -101,17 +98,6 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <HelmetProvider>
-      {/* Sitewide defaults. Pages render their own PageMeta, which is the innermost
-          Helmet and replaces these per route in the server-rendered HTML. */}
-      <Helmet>
-        <title>{SITE_TITLE}</title>
-        <meta name="description" content={SITE_DESCRIPTION} />
-        <meta property="og:type" content="website" />
-        <meta property="og:title" content={SITE_TITLE} />
-        <meta property="og:description" content={SITE_DESCRIPTION} />
-        <meta name="twitter:title" content={SITE_TITLE} />
-        <meta name="twitter:description" content={SITE_DESCRIPTION} />
-      </Helmet>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <Toaster />

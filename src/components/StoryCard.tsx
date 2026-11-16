@@ -166,8 +166,7 @@ export const StoryCard = ({
               height={featured ? 720 : 640}
               className="h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-[1.02]"
               loading={priority ? "eager" : "lazy"}
-              // @ts-expect-error fetchpriority is a valid HTML attr; React types lag
-              fetchpriority={priority ? "high" : undefined}
+              fetchPriority={priority ? "high" : "auto"}
               decoding={priority ? "sync" : "async"}
               onError={handleImageError}
             />
@@ -180,8 +179,7 @@ export const StoryCard = ({
             height={featured ? 720 : 640}
             className="h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-[1.02]"
             loading={priority ? "eager" : "lazy"}
-            // @ts-expect-error fetchpriority is a valid HTML attr; React types lag
-            fetchpriority={priority ? "high" : undefined}
+            fetchPriority={priority ? "high" : "auto"}
             decoding={priority ? "sync" : "async"}
             onError={handleImageError}
           />
