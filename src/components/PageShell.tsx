@@ -83,7 +83,7 @@ const PageShell: React.FC<PageShellProps> = ({
               <NavLink
                 key={item.to}
                 to={item.to}
-                className={({ isActive }) =>
+                className={({ isActive }: { isActive: boolean }) =>
                   [
                     "rounded-full px-3 py-1 transition-colors",
                     isActive
@@ -113,7 +113,7 @@ const PageShell: React.FC<PageShellProps> = ({
               <NavLink
                 key={item.to}
                 to={item.to}
-                className={({ isActive }) =>
+                className={({ isActive }: { isActive: boolean }) =>
                   [
                     "whitespace-nowrap rounded-full px-2 py-1",
                     isActive

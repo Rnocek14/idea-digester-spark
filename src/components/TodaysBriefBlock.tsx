@@ -109,7 +109,7 @@ export default function TodaysBriefBlock({ stories }: { stories: BriefStory[] })
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data } = await runCityScoped((scoped) =>
+      const { data } = await runCityScoped<{ body: string | null }>((scoped) =>
         maybeCity(supabase
         .from("daily_briefs")
         .select("body"), scoped)

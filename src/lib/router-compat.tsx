@@ -50,9 +50,9 @@ export function useNavigate(): NavigateFn {
     tsNav({
       to: pathname,
       search: search as never,
-      hash,
+      ...(hash !== undefined ? { hash } : {}),
       state: options?.state as never,
-      replace: options?.replace,
+      ...(options?.replace !== undefined ? { replace: options.replace } : {}),
     });
   }, [tsNav, router]) as NavigateFn;
 }
@@ -105,7 +105,7 @@ export function useSearchParams(): [URLSearchParams, (init: URLSearchParams | Re
             : new URLSearchParams(init);
       const searchObj: Record<string, string> = {};
       next.forEach((v, k) => { searchObj[k] = v; });
-      nav({ to: live.pathname, search: searchObj as never, replace: opts?.replace });
+      nav({ to: live.pathname, search: searchObj as never, ...(opts?.replace !== undefined ? { replace: opts.replace } : {}) });
     },
     [nav, router],
   );
@@ -131,9 +131,9 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>(function Link(
       ref={ref as never}
       to={pathname as never}
       search={search as never}
-      hash={hash}
-      replace={replace}
       state={state as never}
+      {...(hash !== undefined ? { hash } : {})}
+      {...(replace !== undefined ? { replace } : {})}
       {...((rest ?? {}) as Record<string, unknown>)}
     >
       {children}
@@ -146,13 +146,52 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>(function Link(
 
 export function Navigate({ to, replace, state }: { to: string; replace?: boolean | undefined; state?: unknown }) {
   const { pathname, search, hash } = parseTo(to);
-  return <TSNavigate to={pathname as never} search={search as never} hash={hash} state={state as never} replace={replace} />;
+  return (
+    <TSNavigate
+      to={pathname as never}
+      search={search as never}
+      state={state as never}
+      {...(hash !== undefined ? { hash } : {})}
+      {...(replace !== undefined ? { replace } : {})}
+    />
+  );
 }
 
 // ---------- Outlet ----------
 
 export const Outlet = TSOutlet;
 
-// ---------- NavLink (minimal) ----------
+// ---------- NavLink ----------
 
-export const NavLink = Link;
+type NavLinkRenderState = { isActive: boolean; isPending: boolean };
+
+export type NavLinkProps = Omit<LinkProps, "className" | "children"> & {
+  className?: string | ((state: NavLinkRenderState) => string | undefined) | undefined;
+  children?: ReactNode | ((state: NavLinkRenderState) => ReactNode) | undefined;
+  end?: boolean | undefined;
+};
+
+export const NavLink = forwardRef<HTMLAnchorElement, NavLinkProps>(function NavLink(
+  { className, children, end, to, ...rest },
+  ref,
+) {
+  const { pathname } = useLocation();
+  const target = parseTo(to).pathname;
+  const isActive =
+    target === "." ||
+    pathname === target ||
+    (!end && target !== "/" && pathname.startsWith(target.endsWith("/") ? target : `${target}/`));
+  const state: NavLinkRenderState = { isActive, isPending: false };
+  const resolvedClass = typeof className === "function" ? className(state) : className;
+  return (
+    <Link
+      ref={ref}
+      to={to}
+      {...(resolvedClass !== undefined ? { className: resolvedClass } : {})}
+      {...(isActive ? { "aria-current": "page" as const } : {})}
+      {...rest}
+    >
+      {typeof children === "function" ? children(state) : children}
+    </Link>
+  );
+});

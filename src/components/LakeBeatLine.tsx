@@ -22,7 +22,7 @@ export default function LakeBeatLine() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data } = await runCityScoped((scoped) =>
+      const { data } = await runCityScoped<{ body: string | null; temp_f: number | null }>((scoped) =>
         maybeCity(supabase
         .from("lake_beats")
         .select("body, temp_f"), scoped)

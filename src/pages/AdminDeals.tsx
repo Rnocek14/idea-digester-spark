@@ -202,7 +202,7 @@ const AdminDeals = () => {
                           <Switch
                             checked={deal.is_active ?? false}
                             onCheckedChange={() => handleToggleActive(deal)}
-                            disabled={isExpired}
+                            disabled={Boolean(isExpired)}
                           />
                           <Button
                             variant="ghost"
