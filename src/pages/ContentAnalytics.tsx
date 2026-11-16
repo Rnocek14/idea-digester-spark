@@ -211,7 +211,7 @@ export default function ContentAnalytics() {
                 {pillars.map((p) => (
                   <tr key={p.pillar} className="border-b border-slate-100">
                     <td className="py-2 pr-3">
-                      <Badge className={PILLAR_COLOR[p.pillar] ?? PILLAR_COLOR.other}>{p.pillar}</Badge>
+                      <Badge className={PILLAR_COLOR[p.pillar] ?? PILLAR_COLOR["other"]}>{p.pillar}</Badge>
                     </td>
                     <td className="py-2 pr-3 text-right tabular-nums">{p.impressions}</td>
                     <td className="py-2 pr-3 text-right tabular-nums">{p.homepage_clicks}</td>

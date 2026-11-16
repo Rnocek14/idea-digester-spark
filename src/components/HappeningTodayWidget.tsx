@@ -98,11 +98,11 @@ const formatTime = (timeStr: string | null): string => {
 // still surface here.
 const isNightlifeOnly = (metadata: Json): boolean => {
   if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return false;
-  const v = (metadata as Record<string, unknown>).verticals;
+  const v = (metadata as Record<string, unknown>)["verticals"];
   const arr: string[] = Array.isArray(v)
     ? (v as unknown[]).filter((x): x is string => typeof x === 'string')
-    : (typeof (metadata as Record<string, unknown>).vertical === 'string'
-        ? [(metadata as Record<string, unknown>).vertical as string]
+    : (typeof (metadata as Record<string, unknown>)["vertical"] === 'string'
+        ? [(metadata as Record<string, unknown>)["vertical"] as string]
         : []);
   if (arr.length === 0) return false;
   return arr.every((x) => x.toLowerCase() === 'nightlife');

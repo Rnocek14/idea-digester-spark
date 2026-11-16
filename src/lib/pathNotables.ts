@@ -58,22 +58,22 @@ export function normalizeNotables(raw: unknown): Notables | null {
   const num = (v: unknown, f: number) => (typeof v === "number" && isFinite(v) ? v : f);
 
   return {
-    total_walks: num(r.total_walks, 0),
-    min_stops: num(r.min_stops, 2),
-    season: typeof r.season === "string" ? r.season : null,
-    community: typeof r.community === "string" ? r.community : null,
-    hottest: walk(r.hottest),
-    coldest: walk(r.coldest),
-    busiest: walk(r.busiest),
-    emptiest: walk(r.emptiest),
-    largest_group: walk(r.largest_group),
-    most_stops: walk(r.most_stops),
-    longest_outing: walk(r.longest_outing),
-    earliest_start: walk(r.earliest_start),
-    latest_finish: walk(r.latest_finish),
-    linger: Array.isArray(r.linger) ? (r.linger as LingerRow[]) : [],
-    seasons_available: Array.isArray(r.seasons_available)
-      ? (r.seasons_available as string[])
+    total_walks: num(r["total_walks"], 0),
+    min_stops: num(r["min_stops"], 2),
+    season: typeof r["season"] === "string" ? r["season"] : null,
+    community: typeof r["community"] === "string" ? r["community"] : null,
+    hottest: walk(r["hottest"]),
+    coldest: walk(r["coldest"]),
+    busiest: walk(r["busiest"]),
+    emptiest: walk(r["emptiest"]),
+    largest_group: walk(r["largest_group"]),
+    most_stops: walk(r["most_stops"]),
+    longest_outing: walk(r["longest_outing"]),
+    earliest_start: walk(r["earliest_start"]),
+    latest_finish: walk(r["latest_finish"]),
+    linger: Array.isArray(r["linger"]) ? (r["linger"] as LingerRow[]) : [],
+    seasons_available: Array.isArray(r["seasons_available"])
+      ? (r["seasons_available"] as string[])
       : [],
   };
 }

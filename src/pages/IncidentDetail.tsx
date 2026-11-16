@@ -128,7 +128,7 @@ export default function IncidentDetail() {
   };
 
   const isLoading = incidentLoading || updatesLoading;
-  const status = incident ? statusConfig[incident.status] : statusConfig.active;
+  const status = incident ? statusConfig[incident.status] : statusConfig["active"];
 
   const metaTitle = incident
     ? `${incident.title.slice(0, 70)} — Lake Geneva Incidents`

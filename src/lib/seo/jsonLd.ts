@@ -115,10 +115,10 @@ export function stopsItemListJsonLd(opts: {
         name: s.name,
         url: `${site()}${opts.parentPath}#stop-${s.slug}`,
       };
-      if (s.description) attraction.description = s.description;
-      if (s.image) attraction.image = s.image;
+      if (s.description) attraction["description"] = s.description;
+      if (s.image) attraction["image"] = s.image;
       if (typeof s.latitude === "number" && typeof s.longitude === "number") {
-        attraction.geo = {
+        attraction["geo"] = {
           "@type": "GeoCoordinates",
           latitude: s.latitude,
           longitude: s.longitude,
@@ -262,14 +262,14 @@ export function jobPostingJsonLd(
   // state_code is what makes the locality unambiguous; the country follows
   // from it (city_config carries a US state code and nothing else).
   if (region) {
-    address.addressRegion = region;
-    address.addressCountry = "US";
+    address["addressRegion"] = region;
+    address["addressCountry"] = "US";
   }
 
   const jobLocation: Record<string, unknown> = { "@type": "Place", address };
   // The employer's own wording for where the work happens ("Downtown",
   // "Grand Geneva"). Kept as a name, never promoted to a street address.
-  if (place) jobLocation.name = place;
+  if (place) jobLocation["name"] = place;
 
   const node: Record<string, unknown> = {
     "@context": "https://schema.org",
@@ -291,10 +291,10 @@ export function jobPostingJsonLd(
   };
 
   const validThrough = isoOrNull(job.expires_at);
-  if (validThrough) node.validThrough = validThrough;
+  if (validThrough) node["validThrough"] = validThrough;
 
   const employmentType = EMPLOYMENT_TYPES[text(job.job_type).toLowerCase()];
-  if (employmentType) node.employmentType = employmentType;
+  if (employmentType) node["employmentType"] = employmentType;
 
   // baseSalary is emitted only from the numeric pay columns, and only when
   // pay_type says what those numbers mean. pay_display is free text ("DOE",
@@ -306,12 +306,12 @@ export function jobPostingJsonLd(
   if (unitText && (min || max)) {
     const value: Record<string, unknown> = { "@type": "QuantitativeValue", unitText };
     if (min && max && max > min) {
-      value.minValue = min;
-      value.maxValue = max;
+      value["minValue"] = min;
+      value["maxValue"] = max;
     } else {
-      value.value = min ?? max;
+      value["value"] = min ?? max;
     }
-    node.baseSalary = {
+    node["baseSalary"] = {
       "@type": "MonetaryAmount",
       currency: "USD",
       value,
@@ -368,9 +368,9 @@ export function localBusinessJsonLd(b: LocalBusinessSource): Record<string, unkn
       addressCountry: "US",
     },
   };
-  if (b.description) node.description = b.description;
-  if (b.telephone) node.telephone = b.telephone;
-  if (b.url) node.url = b.url;
-  if (b.openingHours && b.openingHours.length > 0) node.openingHours = b.openingHours;
+  if (b.description) node["description"] = b.description;
+  if (b.telephone) node["telephone"] = b.telephone;
+  if (b.url) node["url"] = b.url;
+  if (b.openingHours && b.openingHours.length > 0) node["openingHours"] = b.openingHours;
   return node;
 }

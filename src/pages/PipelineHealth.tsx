@@ -362,8 +362,8 @@ const PipelineHealth = () => {
         topSources24h?: Array<{ source_name: string; count: number }>;
       };
       const skipTotal24h = skipStats.total24h ?? 0;
-      const aiFailedCount = skipStats.byReason24h?.ai_failed ?? 0;
-      const eventCapCount = skipStats.byReason24h?.daily_event_cap_reached ?? 0;
+      const aiFailedCount = skipStats.byReason24h?.["ai_failed"] ?? 0;
+      const eventCapCount = skipStats.byReason24h?.["daily_event_cap_reached"] ?? 0;
       const aiFailedPct = safePct(aiFailedCount, skipTotal24h);
       const eventCapPct = safePct(eventCapCount, skipTotal24h);
 

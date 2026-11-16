@@ -179,10 +179,10 @@ export default function EditJobDialog({ job, open, onOpenChange, employerEmail }
                 value={formData.title}
                 onChange={(e) => updateField("title", e.target.value)}
                 placeholder="e.g., Line Cook, Server, Sales Associate"
-                className={errors.title ? "border-destructive" : ""}
+                className={errors["title"] ? "border-destructive" : ""}
               />
-              {errors.title && (
-                <p className="text-xs text-destructive mt-1">{errors.title}</p>
+              {errors["title"] && (
+                <p className="text-xs text-destructive mt-1">{errors["title"]}</p>
               )}
             </div>
 
@@ -193,7 +193,7 @@ export default function EditJobDialog({ job, open, onOpenChange, employerEmail }
                   value={formData.category}
                   onValueChange={(v) => updateField("category", v)}
                 >
-                  <SelectTrigger className={errors.category ? "border-destructive" : ""}>
+                  <SelectTrigger className={errors["category"] ? "border-destructive" : ""}>
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -212,7 +212,7 @@ export default function EditJobDialog({ job, open, onOpenChange, employerEmail }
                   value={formData.job_type}
                   onValueChange={(v) => updateField("job_type", v)}
                 >
-                  <SelectTrigger className={errors.job_type ? "border-destructive" : ""}>
+                  <SelectTrigger className={errors["job_type"] ? "border-destructive" : ""}>
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent>
@@ -234,10 +234,10 @@ export default function EditJobDialog({ job, open, onOpenChange, employerEmail }
                 onChange={(e) => updateField("description", e.target.value)}
                 placeholder="Describe the position, responsibilities, and requirements..."
                 rows={5}
-                className={errors.description ? "border-destructive" : ""}
+                className={errors["description"] ? "border-destructive" : ""}
               />
-              {errors.description && (
-                <p className="text-xs text-destructive mt-1">{errors.description}</p>
+              {errors["description"] && (
+                <p className="text-xs text-destructive mt-1">{errors["description"]}</p>
               )}
             </div>
 
@@ -289,10 +289,10 @@ export default function EditJobDialog({ job, open, onOpenChange, employerEmail }
                 value={formData.apply_url}
                 onChange={(e) => updateField("apply_url", e.target.value)}
                 placeholder="https://yourbusiness.com/careers"
-                className={errors.apply_url ? "border-destructive" : ""}
+                className={errors["apply_url"] ? "border-destructive" : ""}
               />
-              {errors.apply_url && (
-                <p className="text-xs text-destructive mt-1">{errors.apply_url}</p>
+              {errors["apply_url"] && (
+                <p className="text-xs text-destructive mt-1">{errors["apply_url"]}</p>
               )}
             </div>
           </div>

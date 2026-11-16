@@ -90,13 +90,13 @@ export default function LakeGenevaShorePathStop() {
     },
   };
   if (typeof stop.latitude === "number" && typeof stop.longitude === "number") {
-    attraction.geo = {
+    attraction["geo"] = {
       "@type": "GeoCoordinates",
       latitude: stop.latitude,
       longitude: stop.longitude,
     };
   }
-  if (stop.hero_image_url) attraction.image = stop.hero_image_url;
+  if (stop.hero_image_url) attraction["image"] = stop.hero_image_url;
 
   const jsonLd = [
     attraction,

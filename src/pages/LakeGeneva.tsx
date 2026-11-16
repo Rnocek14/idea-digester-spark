@@ -185,7 +185,7 @@ const LakeGeneva = () => {
   // Get deterministic fallback image based on story ID and category
   const getCategoryFallbackImage = (storyId: string, category: string | null): string => {
     const cat = category?.toLowerCase() || 'default';
-    const images = CATEGORY_FALLBACK_IMAGES[cat] || CATEGORY_FALLBACK_IMAGES.default;
+    const images = CATEGORY_FALLBACK_IMAGES[cat] || CATEGORY_FALLBACK_IMAGES["default"];
     const hash = storyId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
     return images[hash % images.length];
   };

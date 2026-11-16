@@ -61,7 +61,7 @@ const StoryReel = () => {
       (entries) => {
         entries.forEach((entry) => {
           if (!entry.isIntersecting || entry.intersectionRatio < 0.6) return;
-          const idx = Number((entry.target as HTMLElement).dataset.index);
+          const idx = Number((entry.target as HTMLElement).dataset["index"]);
           if (!Number.isNaN(idx)) setActiveIndex(idx);
           const story = reelStories[idx];
           if (story && !seenRef.current.has(story.id)) {

@@ -37,7 +37,7 @@ const getWeatherIcon = (code: number, size: "sm" | "lg" | "xs" = "lg") => {
     sm: "h-5 w-5",
     xs: "h-4 w-4",
   };
-  const className = map[size] || map.lg;
+  const className = map[size] || map["lg"];
 
   if (code === 0) return <Sun className={`${className} text-amber-500`} />;
   if (code >= 1 && code <= 2) return <CloudSun className={`${className} text-amber-400`} />;

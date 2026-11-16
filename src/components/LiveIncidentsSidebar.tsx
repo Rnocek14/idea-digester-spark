@@ -267,7 +267,7 @@ export default function LiveIncidentsSidebar({ onHide, showCloseButton = false }
               >
                 <div className="flex items-start gap-2">
                   <span className="text-muted-foreground mt-0.5">
-                    {typeIcons[incident.incident_type] || typeIcons.other}
+                    {typeIcons[incident.incident_type] || typeIcons["other"]}
                   </span>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium leading-tight line-clamp-2">

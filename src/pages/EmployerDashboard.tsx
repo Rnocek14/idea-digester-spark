@@ -376,7 +376,7 @@ export default function EmployerDashboard() {
         ) : jobs && jobs.length > 0 ? (
           <div className="space-y-4">
             {jobs.map((job) => {
-              const config = statusConfig[job.status] || statusConfig.pending;
+              const config = statusConfig[job.status] || statusConfig["pending"];
               const StatusIcon = config.icon;
               const daysLeft = getDaysUntilExpiry(job.expires_at);
               const isExpired = daysLeft <= 0;

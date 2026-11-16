@@ -116,14 +116,14 @@ export function normalizeAlmanac(raw: unknown): Almanac | null {
     v && typeof v === "object" && !Array.isArray(v) ? (v as T) : null;
 
   return {
-    min_samples: num(r.min_samples, 4),
-    total_visits: num(r.total_visits, 0),
-    total_with_crowd: num(r.total_with_crowd, 0),
-    by_season_hour: arr<SeasonHourCell>(r.by_season_hour),
-    by_season_daytype: arr<SeasonDayTypeCell>(r.by_season_daytype),
-    by_community: arr<CommunityCell>(r.by_community),
-    quietest: obj<Almanac["quietest"]>(r.quietest),
-    warmest: obj<Almanac["warmest"]>(r.warmest),
+    min_samples: num(r["min_samples"], 4),
+    total_visits: num(r["total_visits"], 0),
+    total_with_crowd: num(r["total_with_crowd"], 0),
+    by_season_hour: arr<SeasonHourCell>(r["by_season_hour"]),
+    by_season_daytype: arr<SeasonDayTypeCell>(r["by_season_daytype"]),
+    by_community: arr<CommunityCell>(r["by_community"]),
+    quietest: obj<Almanac["quietest"]>(r["quietest"]),
+    warmest: obj<Almanac["warmest"]>(r["warmest"]),
   };
 }
 

@@ -116,7 +116,7 @@ const hashString = (str: string): number => {
 
 const getFallbackImage = (category: string | null, title: string, id?: string): string => {
   const cat = category?.toLowerCase() || 'default';
-  const images = CATEGORY_FALLBACKS[cat] || CATEGORY_FALLBACKS.default;
+  const images = CATEGORY_FALLBACKS[cat] || CATEGORY_FALLBACKS["default"];
   // Use ID if available (more unique), otherwise fall back to title
   const hashInput = id || title;
   const hash = hashString(hashInput);

@@ -273,11 +273,11 @@ const Advertise = () => {
                 onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
                 className={`w-full rounded-xs border bg-slate-50 px-3 py-2 text-sm
                            focus:border-blue-500 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-100 ${
-                  errors.businessName ? "border-red-500" : "border-slate-200"
+                  errors["businessName"] ? "border-red-500" : "border-slate-200"
                 }`}
               />
-              {errors.businessName && (
-                <p className="mt-1 text-xs text-red-600">{errors.businessName}</p>
+              {errors["businessName"] && (
+                <p className="mt-1 text-xs text-red-600">{errors["businessName"]}</p>
               )}
             </div>
 
@@ -291,11 +291,11 @@ const Advertise = () => {
                 onChange={(e) => setFormData({ ...formData, contactName: e.target.value })}
                 className={`w-full rounded-xs border bg-slate-50 px-3 py-2 text-sm
                            focus:border-blue-500 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-100 ${
-                  errors.contactName ? "border-red-500" : "border-slate-200"
+                  errors["contactName"] ? "border-red-500" : "border-slate-200"
                 }`}
               />
-              {errors.contactName && (
-                <p className="mt-1 text-xs text-red-600">{errors.contactName}</p>
+              {errors["contactName"] && (
+                <p className="mt-1 text-xs text-red-600">{errors["contactName"]}</p>
               )}
             </div>
           </div>
@@ -312,11 +312,11 @@ const Advertise = () => {
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className={`w-full rounded-xs border bg-slate-50 px-3 py-2 text-sm
                            focus:border-blue-500 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-100 ${
-                  errors.email ? "border-red-500" : "border-slate-200"
+                  errors["email"] ? "border-red-500" : "border-slate-200"
                 }`}
               />
-              {errors.email && (
-                <p className="mt-1 text-xs text-red-600">{errors.email}</p>
+              {errors["email"] && (
+                <p className="mt-1 text-xs text-red-600">{errors["email"]}</p>
               )}
             </div>
 
@@ -361,11 +361,11 @@ const Advertise = () => {
               placeholder="Tell us about your advertising goals..."
               className={`w-full rounded-xs border bg-slate-50 px-3 py-2 text-sm
                          focus:border-blue-500 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-100 ${
-                errors.notes ? "border-red-500" : "border-slate-200"
+                errors["notes"] ? "border-red-500" : "border-slate-200"
               }`}
             />
-            {errors.notes && (
-              <p className="mt-1 text-xs text-red-600">{errors.notes}</p>
+            {errors["notes"] && (
+              <p className="mt-1 text-xs text-red-600">{errors["notes"]}</p>
             )}
           </div>
 
