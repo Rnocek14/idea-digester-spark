@@ -1006,7 +1006,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
         <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-200">
           <button
             onClick={() => setViewMode('tonight')}
-            className={`px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider transition-colors rounded-sm ${
+            className={`px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider transition-colors rounded-xs ${
               viewMode === 'tonight' 
                 ? 'bg-slate-900 text-white' 
                 : 'text-slate-500 hover:text-slate-900'
@@ -1016,7 +1016,7 @@ export default function NightlifeWidget({ tonightOnly = false, showTonightsPick 
           </button>
           <button
             onClick={() => setViewMode('weekend')}
-            className={`px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider transition-colors rounded-sm ${
+            className={`px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider transition-colors rounded-xs ${
               viewMode === 'weekend' 
                 ? 'bg-slate-900 text-white' 
                 : 'text-slate-500 hover:text-slate-900'

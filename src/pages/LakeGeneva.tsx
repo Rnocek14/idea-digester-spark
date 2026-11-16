@@ -1040,7 +1040,7 @@ const LakeGeneva = () => {
                                 rel={item.type === 'story' ? 'noopener noreferrer' : undefined}
                                 className="block group"
                               >
-                                <div className={`flex items-start gap-3 p-3 rounded-xl border transition-all hover:shadow-sm ${
+                                <div className={`flex items-start gap-3 p-3 rounded-xl border transition-all hover:shadow-xs ${
                                   item.type === 'incident' && item.status === 'active'
                                     ? 'bg-red-50/50 border-red-200 hover:border-red-300'
                                     : 'bg-white border-slate-200 hover:border-slate-300'

@@ -115,7 +115,7 @@ export default function FeatureInLaterButton({ story }: Props) {
                       key={n}
                       type="button"
                       onClick={() => setRank(rank === n ? "" : n)}
-                      className={`w-8 h-8 rounded border text-sm ${
+                      className={`w-8 h-8 rounded-sm border text-sm ${
                         rank === n
                           ? "bg-amber-500 text-white border-amber-500"
                           : "bg-white border-slate-300"

@@ -716,7 +716,7 @@ const LakeGenevaV2 = () => {
                   <div className="flex items-center gap-1 bg-slate-100 rounded-xs p-1">
                     <button
                       onClick={() => setViewMode('all')}
-                      className={`rounded-sm px-3 py-1.5 text-xs font-mono uppercase tracking-wider transition-colors ${
+                      className={`rounded-xs px-3 py-1.5 text-xs font-mono uppercase tracking-wider transition-colors ${
                         viewMode === 'all'
                           ? "bg-white text-slate-900 shadow-xs"
                           : "text-slate-500 hover:text-slate-700"
@@ -726,7 +726,7 @@ const LakeGenevaV2 = () => {
                     </button>
                     <button
                       onClick={() => setViewMode('topic')}
-                      className={`rounded-sm px-3 py-1.5 text-xs font-mono uppercase tracking-wider transition-colors ${
+                      className={`rounded-xs px-3 py-1.5 text-xs font-mono uppercase tracking-wider transition-colors ${
                         viewMode === 'topic'
                           ? "bg-white text-slate-900 shadow-xs"
                           : "text-slate-500 hover:text-slate-700"
@@ -739,7 +739,7 @@ const LakeGenevaV2 = () => {
                         setViewMode('recent');
                         setNewUpdatesCount(0);
                       }}
-                      className={`rounded-sm px-3 py-1.5 text-xs font-mono uppercase tracking-wider transition-colors flex items-center gap-1.5 ${
+                      className={`rounded-xs px-3 py-1.5 text-xs font-mono uppercase tracking-wider transition-colors flex items-center gap-1.5 ${
                         viewMode === 'recent'
                           ? "bg-white text-slate-900 shadow-xs"
                           : "text-slate-500 hover:text-slate-700"
@@ -797,7 +797,7 @@ const LakeGenevaV2 = () => {
                       <button
                         key={cat}
                         onClick={() => setActiveCategory(cat)}
-                        className={`rounded-sm px-2.5 py-1 text-[11px] font-mono uppercase border transition-colors ${
+                        className={`rounded-xs px-2.5 py-1 text-[11px] font-mono uppercase border transition-colors ${
                           activeCategory === cat
                             ? "bg-blue-600 text-white border-blue-600"
                             : "bg-white text-slate-600 border-slate-200 hover:border-blue-500"

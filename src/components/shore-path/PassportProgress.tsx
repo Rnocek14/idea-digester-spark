@@ -204,7 +204,7 @@ export function PassportProgress({
               return (
                 <div
                   key={s}
-                  className={`rounded border px-2 py-1.5 text-center ${
+                  className={`rounded-sm border px-2 py-1.5 text-center ${
                     done
                       ? "border-emerald-300 bg-emerald-50"
                       : "border-slate-200 bg-stone-50"
@@ -326,7 +326,7 @@ function TierRow({
 }) {
   return (
     <div
-      className={`flex items-center gap-3 rounded border px-3 py-2 ${
+      className={`flex items-center gap-3 rounded-sm border px-3 py-2 ${
         earned ? "border-amber-300 bg-amber-50" : "border-slate-200 bg-stone-50"
       }`}
     >

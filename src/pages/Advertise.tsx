@@ -271,7 +271,7 @@ const Advertise = () => {
                 id="businessName"
                 value={formData.businessName}
                 onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
-                className={`w-full rounded-sm border bg-slate-50 px-3 py-2 text-sm
+                className={`w-full rounded-xs border bg-slate-50 px-3 py-2 text-sm
                            focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 ${
                   errors.businessName ? "border-red-500" : "border-slate-200"
                 }`}
@@ -289,7 +289,7 @@ const Advertise = () => {
                 id="contactName"
                 value={formData.contactName}
                 onChange={(e) => setFormData({ ...formData, contactName: e.target.value })}
-                className={`w-full rounded-sm border bg-slate-50 px-3 py-2 text-sm
+                className={`w-full rounded-xs border bg-slate-50 px-3 py-2 text-sm
                            focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 ${
                   errors.contactName ? "border-red-500" : "border-slate-200"
                 }`}
@@ -310,7 +310,7 @@ const Advertise = () => {
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className={`w-full rounded-sm border bg-slate-50 px-3 py-2 text-sm
+                className={`w-full rounded-xs border bg-slate-50 px-3 py-2 text-sm
                            focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 ${
                   errors.email ? "border-red-500" : "border-slate-200"
                 }`}
@@ -359,7 +359,7 @@ const Advertise = () => {
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               rows={4}
               placeholder="Tell us about your advertising goals..."
-              className={`w-full rounded-sm border bg-slate-50 px-3 py-2 text-sm
+              className={`w-full rounded-xs border bg-slate-50 px-3 py-2 text-sm
                          focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 ${
                 errors.notes ? "border-red-500" : "border-slate-200"
               }`}

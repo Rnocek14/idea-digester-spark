@@ -195,7 +195,7 @@ const PublicDirectory = () => {
               return (
                 <article
                   key={business.id}
-                  className={`group relative flex flex-col rounded-sm border bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+                  className={`group relative flex flex-col rounded-xs border bg-white p-4 shadow-xs transition hover:-translate-y-0.5 hover:shadow-md ${
                     isSponsor
                       ? 'border-amber-200 ring-1 ring-amber-100/60'
                       : 'border-slate-100'
