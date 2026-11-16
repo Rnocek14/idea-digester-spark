@@ -315,7 +315,7 @@ export function SubscriberManagementModal({ open, onOpenChange }: SubscriberMana
             source: sourceIndex >= 0 ? (cols[sourceIndex]?.trim() || "csv_import") : "csv_import",
             status: "active",
           };
-        }).filter(s => s.email && s.email.includes("@"));
+        }).filter((s): s is typeof s & { email: string } => Boolean(s.email && s.email.includes("@")));
 
         if (toImport.length === 0) {
           toast.error("No valid emails found in CSV");

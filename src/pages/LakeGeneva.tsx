@@ -1127,7 +1127,7 @@ const LakeGeneva = () => {
                         </div>
 
                         <div className="grid gap-4 sm:gap-5 sm:grid-cols-2">
-                          {storiesByCategory[category]!.map((story) => {
+                          {storiesByCategory[category]!.map((story: Story) => {
                             const time = getRelativeTime(story.publish_date || story.created_at);
                             let source: string | null = (story as any).source?.name || null;
 
