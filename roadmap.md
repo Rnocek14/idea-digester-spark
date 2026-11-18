@@ -12,3 +12,6 @@
 - [x] Improve the existing Piggly Wiggly listing using verified store information.
 - [x] Verify corrections and record fully addressed findings; disclose any remaining delivery limitation.
 - [x] Unique per-page previews for non-JavaScript crawlers — site upgraded to server rendering; each page ships its own title, description and preview tags (takes effect on publish).
+## Freshness & return visits (2026-11-18)
+- [ ] Diagnose stale stories / 13-day-old "At a glance"; propose fixes to bring readers back
+- [ ] Ad campaign: paused at Meta connect step
