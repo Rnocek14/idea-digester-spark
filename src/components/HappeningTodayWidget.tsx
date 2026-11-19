@@ -1,3 +1,4 @@
+import { eventTitleKey } from "@/lib/eventDedupe";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -167,8 +168,7 @@ export default function HappeningTodayWidget({ enabled = true }: HappeningTodayW
           // Dedupe by performer/short-title so the same act doesn't appear twice
           // (e.g. a venue-feed entry + a generic "Live Music" entry for the same performer)
           const performer = (getMetaField(event.metadata, 'performer') || '').toLowerCase().trim();
-          const titleKey = performer || getShortTitle(event).toLowerCase().trim();
-          const normalizedTitleKey = titleKey.replace(/\s+/g, ' ');
+          const normalizedTitleKey = performer ? eventTitleKey(performer) : eventTitleKey(event.title);
           if (normalizedTitleKey && seenTitle.has(normalizedTitleKey)) return false;
 
           if (venue) seenVenue.add(venue);
